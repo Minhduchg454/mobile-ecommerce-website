@@ -1,0 +1,853 @@
+[{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab4d"
+  },
+  "title": "iPhone 16 Pro Max",
+  "slug": "iphone-16-pro-max",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 18</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A18 Pro 6 nh&acirc;n</p>\r\n<p>Tốc độ CPU: Kh&ocirc;ng c&ocirc;ng bố</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 6 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 241GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826777/cuahangdientu/zipjyxiaxuy6txgeqxsj.jpg",
+  "price": 34490000,
+  "category": "iPhone",
+  "quantity": 50,
+  "sold": 91,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826777/cuahangdientu/kzibhqgen2fwe3fe9krw.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826776/cuahangdientu/ltwkefkyxrdihc3prozr.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826776/cuahangdientu/amlzad32n9iimdkoqegh.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826777/cuahangdientu/wkgvwfsk8djopdz5yizp.jpg"
+  ],
+  "color": "Đen",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.240Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:31:21.597Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab50"
+  },
+  "title": "iPhone 16 Pro",
+  "slug": "iphone-16-pro",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 18</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A18 Pro 6 nh&acirc;n</p>\r\n<p>Tốc độ CPU: Kh&ocirc;ng c&ocirc;ng bố</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 6 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 113GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826977/cuahangdientu/ov40xzk5ys30h8zjirft.png",
+  "price": 28890000,
+  "category": "iPhone",
+  "quantity": 50,
+  "sold": 63,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826979/cuahangdientu/egee3fjgz3clnchs7vt5.png",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826980/cuahangdientu/n6srphgggx2r9im3a1im.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826980/cuahangdientu/km6m0kjnx1twedwxzn3c.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826980/cuahangdientu/powmgw2lwe1q95gk4thq.jpg"
+  ],
+  "color": "Vàng",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:31:31.082Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab51"
+  },
+  "title": "iPhone 16 Plus",
+  "slug": "iphone-16-plus",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 18</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A18 Pro 6 nh&acirc;n</p>\r\n<p>Tốc độ CPU: Kh&ocirc;ng c&ocirc;ng bố</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 5 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 113GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827015/cuahangdientu/hcwjdkpczvvrzutig18n.jpg",
+  "price": 25990000,
+  "category": "iPhone",
+  "quantity": 50,
+  "sold": 99,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827015/cuahangdientu/lruavpptruxty8d1mjgq.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827015/cuahangdientu/qmfxpbjl9wa682iufeeb.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827014/cuahangdientu/skku9r5gu2k5l7eod3pl.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827015/cuahangdientu/pvgz5qg3nfs0hhcyawib.jpg"
+  ],
+  "color": "Đen",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:31:41.320Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab4e"
+  },
+  "title": "iPhone 16",
+  "slug": "iphone-16",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 18</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A18 Pro 6 nh&acirc;n</p>\r\n<p>Tốc độ CPU: Kh&ocirc;ng c&ocirc;ng bố</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 5 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 113GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827061/cuahangdientu/ebdeibqnykvooyygxenr.png",
+  "price": 22290000,
+  "category": "iPhone",
+  "quantity": 50,
+  "sold": 8,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827063/cuahangdientu/zgm2uuo2nvmf8983hjnv.png",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827064/cuahangdientu/q1tlzu2aewcibzuhd3yy.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827064/cuahangdientu/hngejyahiuh4f6hcfsmj.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827064/cuahangdientu/q41uwvvpvvhyszgdk4rk.jpg"
+  ],
+  "color": "Xanh dương",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:31:50.041Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab4f"
+  },
+  "title": "iPhone 15 Pro Max",
+  "slug": "iphone-15-pro-max",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 17</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A17 Pro 6 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 3.78 GHz</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 6 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 241GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827089/cuahangdientu/yvabgel9jnzmyzjlnkrx.jpg",
+  "price": 29590000,
+  "category": "iPhone",
+  "quantity": 100,
+  "sold": 34,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827089/cuahangdientu/lc11stzzdixianymzizc.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827089/cuahangdientu/djtsnmtn6igkr6kjddrf.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827089/cuahangdientu/zzxf45sqkjhjf4iyhx8j.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827089/cuahangdientu/fa1zrirqn10dfshymfg1.jpg"
+  ],
+  "color": "Đen",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:31:58.811Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab52"
+  },
+  "title": "iPhone 15 Pro",
+  "slug": "iphone-15-pro",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 17</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A17 Pro 6 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 3.78 GHz</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 6 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 241GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827123/cuahangdientu/at7kjh27p2q3vitcbvoa.jpg",
+  "price": 28490000,
+  "category": "iPhone",
+  "quantity": 100,
+  "sold": 46,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827123/cuahangdientu/hncy2izzzvyfnl85xwwe.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827122/cuahangdientu/o9qleh0dqwefnz20bk7a.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827122/cuahangdientu/hbdwfknubkololyziysd.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827122/cuahangdientu/f0whw8izd8eea4xeaqlc.jpg"
+  ],
+  "color": "Đen",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:32:14.335Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab53"
+  },
+  "title": "iPhone 15 Plus",
+  "slug": "iphone-15-plus",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 17</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A17 Pro 6 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 3.46 GHz</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 5 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 113GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827171/cuahangdientu/tvechnqqakcsysdpw7g5.jpg",
+  "price": 22790000,
+  "category": "iPhone",
+  "quantity": 50,
+  "sold": 57,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827170/cuahangdientu/awt5x1xgjflswh2yx5vf.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827170/cuahangdientu/lqhv2aj16s7jse5ymbfd.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827171/cuahangdientu/rvcgjh9gmsklvzhixmea.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827171/cuahangdientu/e0rniiohkltatqhsll2m.jpg"
+  ],
+  "color": "Xanh lá",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:32:26.282Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab54"
+  },
+  "title": "iPhone 15",
+  "slug": "iphone-15",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 17</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A16 Bionic</p>\r\n<p>Tốc độ CPU: 3.46 GHz</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 5 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 113GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827209/cuahangdientu/gxps59m6oimcaotuigum.jpg",
+  "price": 19790000,
+  "category": "iPhone",
+  "quantity": 50,
+  "sold": 66,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827209/cuahangdientu/ji5hom0ij061e31vqey5.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827209/cuahangdientu/atn9uigulidxbbkz3dro.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827209/cuahangdientu/r6jlxxtsocrmehloknwm.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827208/cuahangdientu/tpmfznscidagypozyqqz.jpg"
+  ],
+  "color": "Hồng",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:32:40.203Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab57"
+  },
+  "title": "iPhone 14 Plus",
+  "slug": "iphone-14-plus",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: IOS 17</p>\r\n<p>Chip xử l&yacute; (CPU): Apple A17 Binoic</p>\r\n<p>Tốc độ CPU: Kh&ocirc;ng c&ocirc;ng bố</p>\r\n<p>Chip đồ họa: <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-apple-a14-bionic-hieu-nang-manh-den-1302095\" target=\"_blank\" rel=\"noopener\">Apple GPU 5 nh&acirc;n</a></p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 113GB</p>\r\n<p>Camera: Ch&iacute;nh 48 MP &amp; Phụ 48 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "apple",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827233/cuahangdientu/uej5fihxgrdwndqgezeu.jpg",
+  "price": 20090000,
+  "category": "iPhone",
+  "quantity": 100,
+  "sold": 12,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827233/cuahangdientu/vht4sav5fwuawcnkma9y.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827233/cuahangdientu/rm7ez8kjqn8i7ywwqgd4.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827233/cuahangdientu/pqn7btgoya9hjlzveh9w.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827233/cuahangdientu/nhitjgvtsjzctqhndpqj.jpg"
+  ],
+  "color": "Xám",
+  "totalRatings": 3,
+  "ratings": [
+    {
+      "star": 3,
+      "postedBy": {
+        "$oid": "673970fb5bab7a1d46fc031e"
+      },
+      "comment": "Ok",
+      "updatedAt": {
+        "$date": "2024-11-19T10:00:35.194Z"
+      },
+      "_id": {
+        "$oid": "673c61c31e28e3170d9520d1"
+      }
+    }
+  ],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-19T10:00:35.219Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab58"
+  },
+  "title": "Xiaomi Redmi Note 13",
+  "slug": "xiaomi-redmi-note-13",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 13</p>\r\n<p>Chip xử l&yacute; (CPU): <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/snapdragon-685-cpu-moi-nhat-cua-qualcomm-danh-cho-1522217\" target=\"_blank\" rel=\"noopener\">Snapdragon 685 8 nh&acirc;n</a></p>\r\n<p>Tốc độ CPU: 2.8 GHz</p>\r\n<p>Chip đồ họa: Adreno 610</p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 104GB</p>\r\n<p>Camera: Ch&iacute;nh 108 MP &amp; Phụ 8 MP, 2 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "xiaomi",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827289/cuahangdientu/bz4rjd6627chtvoduzuc.jpg",
+  "price": 4390000,
+  "category": "Xiaomi",
+  "quantity": 100,
+  "sold": 64,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827316/cuahangdientu/kfurbcyanezenawfmbhy.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827316/cuahangdientu/ikrq74lgy50xrzvmzoa9.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827317/cuahangdientu/ashwee9yvjiuxwn2yhu1.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827316/cuahangdientu/bpeqrdmmiarh2zxnuhef.jpg"
+  ],
+  "color": "Vàng",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:36:50.302Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab59"
+  },
+  "title": "Samsung Galaxy Z Flip6 5G",
+  "slug": "samsung-galaxy-z-flip6-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): Snapdragon 8 Gen 3 for Galaxy</p>\r\n<p>Tốc độ CPU: 3.39 GHz</p>\r\n<p>Chip đồ họa: Adreno 750</p>\r\n<p>RAM: 12GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 216GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "samsung",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827368/cuahangdientu/kphlec520nipewy7df7g.jpg",
+  "price": 26990000,
+  "category": "Samsung",
+  "quantity": 100,
+  "sold": 47,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827367/cuahangdientu/j46ewzmpxkkwvvzyygoy.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827368/cuahangdientu/ozdce41aqarsihfcqjyo.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827367/cuahangdientu/sxv0eyaatqnnoxmyb3jj.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827368/cuahangdientu/ewxm4jojc4mqe3molmfa.jpg"
+  ],
+  "color": "Xanh dương",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:34:59.652Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab5a"
+  },
+  "title": "Samsung Galaxy A55 5G",
+  "slug": "samsung-galaxy-a55-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): Exynos 1480 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 4 nh&acirc;n 2.7 GHz &amp; 4 nh&acirc;n 2 GHz</p>\r\n<p>Chip đồ họa: AMD Titan 1WGP</p>\r\n<p>RAM: 12GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 235GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "samsung",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827438/cuahangdientu/yp1sguqondeb1ljnxtuw.jpg",
+  "price": 10990000,
+  "category": "Samsung",
+  "quantity": 100,
+  "sold": 5,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827438/cuahangdientu/uipospwn4v22kqkeo8wq.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827438/cuahangdientu/tgbd8dm6da9mtgzy8jps.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827438/cuahangdientu/dyv459vs6ogcsfqscqe4.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827438/cuahangdientu/rcnxsbji9moodhhq7sbp.jpg"
+  ],
+  "color": "Trắng",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:35:09.229Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab5b"
+  },
+  "title": "Samsung Galaxy M54 5G",
+  "slug": "samsung-galaxy-m54-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 13</p>\r\n<p>Chip xử l&yacute; (CPU): <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/chip-exynos-1380-tang-suc-manh-tuyet-doi-cho-dien-1526330\" target=\"_blank\" rel=\"noopener\">Exynos 1380 8 nh&acirc;n</a></p>\r\n<p>Tốc độ CPU: 4 nh&acirc;n 2.4 GHz &amp; 4 nh&acirc;n 2 GHz</p>\r\n<p>Chip đồ họa: Mali-G68 MP5</p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 213GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "samsung",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827469/cuahangdientu/ckbsuknp1ggy1zrt1hfm.jpg",
+  "price": 7790000,
+  "category": "Samsung",
+  "quantity": 100,
+  "sold": 73,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827469/cuahangdientu/j2taaddh0chxrrcpeymo.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827469/cuahangdientu/r74g7fhpejhuzmpam4x9.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827469/cuahangdientu/t4aquuyk4eue1ejgm2lz.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827469/cuahangdientu/p4fl5v1ezncj6w74llqq.jpg"
+  ],
+  "color": "Đen",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:35:22.646Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab5c"
+  },
+  "title": "Samsung Galaxy A06",
+  "slug": "samsung-galaxy-a06",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-helio-g-series-cua-mediatek-1284166#helio-g85\" target=\"_blank\" rel=\"noopener\">MediaTek Helio G85</a></p>\r\n<p>Tốc độ CPU: 2 nh&acirc;n 2.0 GHz &amp; 6 nh&acirc;n 1.8 GHz</p>\r\n<p>Chip đồ họa: <a class=\"tzLink active\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-ve-chip-do-hoa-gpu-mali-g-series-1378479#mali-g52\" target=\"_blank\" rel=\"noopener\">Mali-G52</a></p>\r\n<p>RAM: 4GB</p>\r\n<p>Dung lượng lưu trữ: 64GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 45GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 2 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "samsung",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827521/cuahangdientu/om7y7oa30cirk0jleqbf.jpg",
+  "price": 2890000,
+  "category": "Samsung",
+  "quantity": 100,
+  "sold": 14,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827521/cuahangdientu/iltrezyrffb1hmxw93sl.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827521/cuahangdientu/yla37ogw4vdbpnbv794h.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827521/cuahangdientu/yvqpbdd4s9l7cszvq49t.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827521/cuahangdientu/fcugfgwhynpcnj9gm4sl.jpg"
+  ],
+  "color": "Xanh lá",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:35:31.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab5d"
+  },
+  "title": "Xiaomi 14T 5G",
+  "slug": "xiaomi-14t-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Xiaomi HyperOS (Android 14)</p>\r\n<p>Chip xử l&yacute; (CPU): MediaTek Dimensity 8300 Ultra 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 1 nh&acirc;n 3.35 GHz, 3 nh&acirc;n 3.2 GHz &amp; 4 nh&acirc;n 2.2 GHz</p>\r\n<p>Chip đồ họa: Mali-G615</p>\r\n<p>RAM: 12GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 243GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 50 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "xiaomi",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827578/cuahangdientu/eyf29vfl2wtxogs73cj6.jpg",
+  "price": 12990000,
+  "category": "Xiaomi",
+  "quantity": 100,
+  "sold": 48,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827579/cuahangdientu/bpjrbormhrsitv99wq0r.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827578/cuahangdientu/pzvoocipbmjkccbodosl.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827578/cuahangdientu/qlmhh1mme3smdvegfyqu.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827578/cuahangdientu/pyvx57kxnxikkp8fkyz6.jpg"
+  ],
+  "color": "Xám",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:37:01.529Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab5e"
+  },
+  "title": "Xiaomi 14T Pro 5G",
+  "slug": "xiaomi-14t-pro-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Xiaomi HyperOS (Android 14)</p>\r\n<p>Chip xử l&yacute; (CPU): MediaTek Dimensity 8300 Ultra 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 1 nh&acirc;n 3.35 GHz, 3 nh&acirc;n 3.2 GHz &amp; 4 nh&acirc;n 2.2 GHz</p>\r\n<p>Chip đồ họa: Mali-G615</p>\r\n<p>RAM: 12GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 243GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 50 MP, 12 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "xiaomi",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827612/cuahangdientu/cvucdghbjpbo0o1qz5py.jpg",
+  "price": 16990000,
+  "category": "Xiaomi",
+  "quantity": 50,
+  "sold": 62,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827612/cuahangdientu/nhye1sme3wwmp51rg27e.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827612/cuahangdientu/syd6ghaemjbnnarcxhlo.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827612/cuahangdientu/cgmse9savyprpbjox7pc.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827612/cuahangdientu/pv7cq8bfyp1iwz15wpkc.jpg"
+  ],
+  "color": "Xanh dương",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:37:10.993Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab5f"
+  },
+  "title": "Xiaomi Redmi Note 13 Pro",
+  "slug": "xiaomi-redmi-note-13-pro",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 13</p>\r\n<p>Chip xử l&yacute; (CPU): MediaTek Helio G99-Ultra 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 2.2 GHz</p>\r\n<p>Chip đồ họa: Mali-G57 MC2</p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 104GB</p>\r\n<p>Camera: Ch&iacute;nh 200 MP &amp; Phụ 8 MP, 2 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "xiaomi",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827681/cuahangdientu/bc8ke4xgxgvutsqcq9b2.jpg",
+  "price": 5990000,
+  "category": "Xiaomi",
+  "quantity": 50,
+  "sold": 8,
+  "images": [
+    "[object FileList]",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827993/cuahangdientu/j5yxfrte6aae1gc8uqtb.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827993/cuahangdientu/udkrco6nicg6uy0pe0bj.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827993/cuahangdientu/cth3wnmnvjrytebronof.jpg"
+  ],
+  "color": "Xanh lá",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:37:18.761Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab60"
+  },
+  "title": "Xiaomi Redmi 14C",
+  "slug": "xiaomi-redmi-14c",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): MediaTek Helio G99-Ultra 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 2 GHz</p>\r\n<p>Chip đồ họa: Mali-G57 MC2</p>\r\n<p>RAM: 6GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 104GB</p>\r\n<p>Camera: Ch&iacute;nh 200 MP &amp; Phụ 8 MP, 2 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "xiaomi",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731827742/cuahangdientu/lncxjolto8o3qjcocsnh.jpg",
+  "price": 3090000,
+  "category": "Xiaomi",
+  "quantity": 100,
+  "sold": 95,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828220/cuahangdientu/cdhtokdfhw5blu3l24dm.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828220/cuahangdientu/ut2jyqvrw9cbi5kwosjs.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828221/cuahangdientu/gipmsboyjkd7n1w2qv4s.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828220/cuahangdientu/up3auny9ntc2i3q2bcbc.jpg"
+  ],
+  "color": "Xanh dương",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:37:30.949Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab61"
+  },
+  "title": "Xiaomi Redmi 13",
+  "slug": "xiaomi-redmi-13",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): MediaTek Helio G99-Ultra 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 2 GHz</p>\r\n<p>Chip đồ họa: Mali-G57 MC2</p>\r\n<p>RAM: 6GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 104GB</p>\r\n<p>Camera: Ch&iacute;nh 200 MP &amp; Phụ 8 MP, 2 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "xiaomi",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828279/cuahangdientu/jtzy5bnzw2mn1f8esd5h.jpg",
+  "price": 3790000,
+  "category": "Xiaomi",
+  "quantity": 100,
+  "sold": 52,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828278/cuahangdientu/wu931othttp2ydfulkaj.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828278/cuahangdientu/wjxcuvczgpcfjpwlkhz7.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828278/cuahangdientu/zzghdvpjmxsshzbrlthu.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828278/cuahangdientu/trhhadrthrs753yvc4gf.jpg"
+  ],
+  "color": "Xanh dương",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:37:54.051Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab62"
+  },
+  "title": "Samsung Galaxy Z Fold6 5G",
+  "slug": "samsung-galaxy-z-fold6-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): Snapdragon 8 Gen 3 for Galaxy</p>\r\n<p>Tốc độ CPU: 3.39 GHz</p>\r\n<p>Chip đồ họa: Adreno 750</p>\r\n<p>RAM: 12GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 216GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "samsung",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828334/cuahangdientu/qm8h8iavmmnyf3c9rxk3.jpg",
+  "price": 41990000,
+  "category": "Samsung",
+  "quantity": 100,
+  "sold": 6,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828334/cuahangdientu/zjhjrhlalfpfjhzzuzkq.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828334/cuahangdientu/dmuekzofznjdr6myg9bs.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828334/cuahangdientu/wpebew7zyryhgrntukro.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828334/cuahangdientu/vqjuer9acgac9jg74unu.jpg"
+  ],
+  "color": "Xám",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:35:45.367Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab63"
+  },
+  "title": "Samsung Galaxy S24+ 5G",
+  "slug": "samsung-galaxy-s24+-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): Exynos 2400</p>\r\n<p>Tốc độ CPU: 3.2 GHz</p>\r\n<p>Chip đồ họa: Xclipse 940</p>\r\n<p>RAM: 12GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 216GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "samsung",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828441/cuahangdientu/ka07udox5bn7wocmbu0d.jpg",
+  "price": 20990000,
+  "category": "Samsung",
+  "quantity": 100,
+  "sold": 15,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828441/cuahangdientu/jb6zlnnlrqu3kvf1dz07.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828441/cuahangdientu/akpdhu4rc6xujadp8izd.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828441/cuahangdientu/pob8edfq3b9y8vr34vu9.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828441/cuahangdientu/cnv3ezlnz2ckosctkkfm.jpg"
+  ],
+  "color": "Tím",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:35:55.998Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab64"
+  },
+  "title": "OPPO Reno12 F",
+  "slug": "oppo-reno12-f",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/snapdragon-685-cpu-moi-nhat-cua-qualcomm-danh-cho-1522217\" target=\"_blank\" rel=\"noopener\">Snapdragon 685 8 nh&acirc;n</a></p>\r\n<p>Tốc độ CPU: 3.2 GHz</p>\r\n<p>Chip đồ họa: Adreno 610</p>\r\n<p>RAM: 8GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 216GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "oppo",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828483/cuahangdientu/dqajgqxxhxepweuodfud.jpg",
+  "price": 8490000,
+  "category": "Oppo",
+  "quantity": 100,
+  "sold": 27,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828483/cuahangdientu/d63u3jx5t7t9fsjikuug.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828483/cuahangdientu/srbhs5oo2vpbp88ydfij.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828484/cuahangdientu/bwy0n25tsv8zxegbduyb.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828484/cuahangdientu/ob63fklcpvs0jqapvtob.jpg"
+  ],
+  "color": "Xanh lá",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:38:35.883Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab55"
+  },
+  "title": "OPPO Reno12 5G",
+  "slug": "oppo-reno12-5g",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): MediaTek Dimensity 7300-Energy 5G 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 4 nh&acirc;n 2.5 GHz &amp; 4 nh&acirc;n 2 GHz</p>\r\n<p>Chip đồ họa: Mali-G615</p>\r\n<p>RAM: 12GB</p>\r\n<p>Dung lượng lưu trữ: 256GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 216GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "oppo",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828520/cuahangdientu/elfrqc9mlv2pj2696op7.jpg",
+  "price": 11900000,
+  "category": "Oppo",
+  "quantity": 100,
+  "sold": 35,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828520/cuahangdientu/ypeuipezo1qepkz7qdpb.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828520/cuahangdientu/sv9o5l7pm06dxuywoqv3.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828520/cuahangdientu/gwlaxr8dtioeltpkset0.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828520/cuahangdientu/rk7z9ug4krxwvypylwou.jpg"
+  ],
+  "color": "Trắng",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:38:43.753Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab56"
+  },
+  "title": "Oppo A36",
+  "slug": "oppo-a36",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 14</p>\r\n<p>Chip xử l&yacute; (CPU): Snapdragon 6s Gen 1 8 nh&acirc;n</p>\r\n<p>Tốc độ CPU: 4 nh&acirc;n 2.5 GHz &amp; 4 nh&acirc;n 2 GHz</p>\r\n<p>Chip đồ họa: Adreno 610</p>\r\n<p>RAM: 6GB</p>\r\n<p>Dung lượng lưu trữ: 128GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 104GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "oppo",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828546/cuahangdientu/rbxc0dxi0x0pdxlottbh.jpg",
+  "price": 4990000,
+  "category": "Oppo",
+  "quantity": 100,
+  "sold": 50,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828548/cuahangdientu/cirtf0tumrq2w2l6dvte.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828548/cuahangdientu/frsnzxwpx2gi8f8g9xxu.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828548/cuahangdientu/bo2e0xnla8s1qcub3iin.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731828548/cuahangdientu/r9mx5phl6f5vipz6yzqo.jpg"
+  ],
+  "color": "Tím",
+  "totalRatings": 0,
+  "ratings": [],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:38:52.521Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67396fc60d66502fe5b0ab67"
+  },
+  "title": "Oppo A18",
+  "slug": "oppo-a18",
+  "description": [
+    "<p>Hệ điều h&agrave;nh: Android 13</p>\r\n<p>Chip xử l&yacute; (CPU): <a class=\"tzLink\" href=\"https://www.thegioididong.com/hoi-dap/tim-hieu-chip-xu-ly-helio-g-series-cua-mediatek-1284166#helio-g85\" target=\"_blank\" rel=\"noopener\">MediaTek Helio G85</a></p>\r\n<p>Tốc độ CPU: 4 nh&acirc;n 2.5 GHz &amp; 4 nh&acirc;n 2 GHz</p>\r\n<p>Chip đồ họa: Mali-G52 MP2</p>\r\n<p>RAM: 4GB</p>\r\n<p>Dung lượng lưu trữ: 64GB</p>\r\n<p>Dung lượng lưu trữ khả dụng: 52GB</p>\r\n<p>Camera: Ch&iacute;nh 50 MP &amp; Phụ 12 MP, 10 MP</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>"
+  ],
+  "brand": "oppo",
+  "thumb": "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826215/cuahangdientu/lkoo6iqcq5yk8fd4vkum.jpg",
+  "price": 3290000,
+  "category": "Oppo",
+  "quantity": 100,
+  "sold": 63,
+  "images": [
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826490/cuahangdientu/i0sbyhaldyzmgb9f7ctq.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826490/cuahangdientu/f2gai5f1pc1uafabc8wg.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826490/cuahangdientu/pfopr2dvgiu5xj0u30fs.jpg",
+    "https://res.cloudinary.com/dedyoxsln/image/upload/v1731826490/cuahangdientu/ovkpwqhkypoiynqcwfpg.jpg"
+  ],
+  "color": "Xanh dương",
+  "totalRatings": 5,
+  "ratings": [
+    {
+      "star": 5,
+      "postedBy": {
+        "$oid": "6739714a5bab7a1d46fc0327"
+      },
+      "comment": "Tuyệt",
+      "updatedAt": {
+        "$date": "2024-11-17T06:58:11.942Z"
+      },
+      "_id": {
+        "$oid": "67399403109b0a7d72e433b6"
+      }
+    }
+  ],
+  "varriants": [],
+  "createdAt": {
+    "$date": "2024-11-17T04:23:34.241Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-17T07:39:01.799Z"
+  },
+  "__v": 0
+}]
