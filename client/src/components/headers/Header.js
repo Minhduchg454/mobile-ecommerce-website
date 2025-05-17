@@ -62,9 +62,8 @@ const Header = () => {
                 </span>
                 <BsHandbagFill size={20} color="red" />
               </span>
-              <span className="hidden md:inline-block">{`${
-                current?.cart?.length || 0
-              } item(s)`}</span>
+              <span className="hidden md:inline-block">{`${current?.cart?.length || 0
+                } item(s)`}</span>
             </div>
             <div
               className="flex cursor-pointer items-center justify-center px-6 gap-2 relative"

@@ -1,5 +1,6 @@
 import React, { useEffect } from "react"
 import { Route, Routes } from "react-router-dom"
+import Chatbot from "chatbot/Chatbot"
 import {
   Login,
   Home,
@@ -103,6 +104,7 @@ function App() {
       />
       {/* Same as */}
       <ToastContainer />
+      <Chatbot />
     </div>
   )
 }

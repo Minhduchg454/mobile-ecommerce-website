@@ -44,7 +44,7 @@ const Checkout = ({ dispatch, navigate }) => {
       products: currentCart,
       total: Math.round(
         +currentCart?.reduce((sum, el) => +el?.price * el.quantity + sum, 0) /
-          23500
+        23500
       ),
       address: current?.address,
     }

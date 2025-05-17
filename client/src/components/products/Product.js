@@ -92,8 +92,7 @@ const Product = ({
         className="w-full border p-[15px] flex flex-col items-center"
         onClick={(e) =>
           navigate(
-            `/${productData?.category?.toLowerCase()}/${productData?._id}/${
-              productData?.title
+            `/${productData?.category?.toLowerCase()}/${productData?._id}/${productData?.title
             }`
           )
         }
