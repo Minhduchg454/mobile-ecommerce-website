@@ -3,6 +3,7 @@ require("dotenv").config()
 const dbConnect = require("./config/dbconnect")
 const initRoutes = require("./routes")
 const initOrderRoutes = require("./routes/order")
+const initProductRoutes = require("./routes/product")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 
@@ -20,6 +21,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 dbConnect()
 initOrderRoutes(app)
+initProductRoutes(app)
 initRoutes(app)
 
 app.listen(port, () => {

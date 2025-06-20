@@ -2,8 +2,8 @@
 const brandRoutes = require('./branchRoutes')
 
 
-const initRoutesProduct = (app) => {
-    app.use('/api/brand', brandRoutes)
+const initProductRoutes = (app) => {
+    app.use('/api/brands', brandRoutes)
 }
 
-module.exports = initRoutesProduct
+module.exports = initProductRoutes
