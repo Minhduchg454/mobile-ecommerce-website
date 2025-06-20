@@ -32,13 +32,13 @@ const productSchema = new mongoose.Schema({
         default: 0
     },
     // Mối quan hệ với ProductCategory (Product "Thuộc danh mục" ProductCategory)
-    category: { // Đặt tên trường là 'category'
+    categoryId: { // Đặt tên trường là 'category'
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của ProductCategory
         ref: 'ProductCategory', // Tên model ProductCategory
         required: true
     },
     // Mối quan hệ với Brand (Product "Thuộc thương hiệu" Brand)
-    brand: {
+    brandId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Brand
         ref: 'Brand', // Tên model Brand
         required: true
