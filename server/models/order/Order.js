@@ -23,12 +23,6 @@ const orderSchema = new mongoose.Schema({
         ref: 'Address',
         required: true
     },
-    // Mối quan hệ với Payment (Order "Có phương thức" Payment)
-    payment: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Payment',
-        required: true
-    },
     // Mối quan hệ với ShippingProvider (Order "Gắn với" ShippingProvider)
     shippingProvider: {
         type: mongoose.Schema.Types.ObjectId,

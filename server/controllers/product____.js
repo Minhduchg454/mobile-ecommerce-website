@@ -11,7 +11,7 @@ const createProduct = asyncHandler(async (req, res) => {
     throw new Error("Missing inputs")
   req.body.slug = slugify(title)
   if (thumb) req.body.thumb = thumb
-  if (images) req.body.images = images
+  if (images) req.body.images = imagesr
   const newProduct = await Product.create(req.body)
   return res.status(200).json({
     success: newProduct ? true : false,

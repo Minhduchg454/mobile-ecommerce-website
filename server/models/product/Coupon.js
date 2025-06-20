@@ -2,6 +2,10 @@
 const mongoose = require('mongoose');
 
 const couponSchema = new mongoose.Schema({
+    description: { // Theo biểu đồ: description: String
+        type: String,
+        trim: true // Loại bỏ khoảng trắng ở đầu/cuối
+    },
     discount: { // Theo biểu đồ: discount: NumberDouble (mức giảm giá)
         type: Number,
         required: true,
@@ -13,10 +17,7 @@ const couponSchema = new mongoose.Schema({
         enum: ['percentage', 'fixed_amount'], // Ví dụ: 'percentage' (%), 'fixed_amount' (giá trị cố định)
         required: true
     },
-    description: { // Theo biểu đồ: description: String
-        type: String,
-        trim: true // Loại bỏ khoảng trắng ở đầu/cuối
-    },
+
     startDate: { // Theo biểu đồ: startDate: Date
         type: Date,
         default: Date.now // Mặc định là ngày hiện tại khi tạo
@@ -41,14 +42,15 @@ const couponSchema = new mongoose.Schema({
         type: Number,
         default: -1 // -1 có thể biểu thị không giới hạn
     },
+        miniOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
+        type: Number,
+        default: 0
+    },
     usedCount: { // Số lần coupon đã được sử dụng
         type: Number,
         default: 0
     },
-    minOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
-        type: Number,
-        default: 0
-    },
+
 }, {
     timestamps: true // Tự động thêm createdAt và updatedAt
 });

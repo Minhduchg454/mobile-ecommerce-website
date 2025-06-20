@@ -20,7 +20,12 @@ const paymentSchema = new mongoose.Schema({
     amount: {
         type: Number, // NumberDouble
         required: true
-    }
+    },
+    order: {
+        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Order
+        ref: 'Order', // Tên model mà chúng ta đang tham chiếu
+        required: true
+    },
 });
 
 module.exports = mongoose.model('Payment', paymentSchema);
