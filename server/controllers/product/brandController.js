@@ -1,4 +1,4 @@
-const Brand = require('../models/product/Brand')
+const Brand = require('../../models/product/Brand')
 const asyncHandler = require('express-async-handler')
 
 
