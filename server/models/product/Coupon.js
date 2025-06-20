@@ -42,7 +42,7 @@ const couponSchema = new mongoose.Schema({
         type: Number,
         default: -1 // -1 có thể biểu thị không giới hạn
     },
-        miniOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
+    miniOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
         type: Number,
         default: 0
     },
@@ -50,7 +50,6 @@ const couponSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-
 }, {
     timestamps: true // Tự động thêm createdAt và updatedAt
 });
