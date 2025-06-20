@@ -10,5 +10,9 @@ var productCategorySchema = new mongoose.Schema({
     timestamps: true
 });
 
+productCategorySchema.set('toJSON', {
+    versionKey: false
+})
+
 //Export the model
 module.exports = mongoose.model('ProductCategory', productCategorySchema);

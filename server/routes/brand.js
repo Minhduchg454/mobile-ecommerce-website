@@ -1,5 +1,6 @@
 const router = require('express').Router()
-const ctrls = require('../controllers/brand')
+//const ctrls = require('../../controllers/product/brandController')
+const ctrls = require('../controllers/product/brandController')
 const { verifyAccessToken, isAdmin } = require('../middlewares/verifyToken')
 
 router.post('/', [verifyAccessToken, isAdmin], ctrls.createNewBrand)

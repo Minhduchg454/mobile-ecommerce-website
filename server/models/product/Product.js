@@ -43,8 +43,11 @@ const productSchema = new mongoose.Schema({
         ref: 'Brand', // Tên model Brand
         required: true
     }
-}, {
-    timestamps: true // Tự động thêm createdAt và updatedAt (có thể trùng với createAt nếu muốn)
-});
+}
+);
+
+
+
+
 
 module.exports = mongoose.model('Product', productSchema);
