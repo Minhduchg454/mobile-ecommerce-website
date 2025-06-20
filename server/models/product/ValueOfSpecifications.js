@@ -8,12 +8,12 @@ const valueOfSpecificationsSchema = new mongoose.Schema({
         trim: true
     },
     // Mối quan hệ với Specifications (ValueOfSpecifications thuộc về một Specifications)
-    specificationType: { // Tham chiếu đến loại thông số kỹ thuật mà giá trị này thuộc về
+    specificationTypeId: { // Tham chiếu đến loại thông số kỹ thuật mà giá trị này thuộc về
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Specifications', // Tên model Specifications
         required: true
     },
-    productVariation: {
+    productVariationId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ProductVariation', // Giả sử bạn có model Product
         required: true

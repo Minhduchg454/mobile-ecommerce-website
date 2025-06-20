@@ -29,7 +29,7 @@ const productVariationSchema = new mongoose.Schema({
         trim: true
     },
     // Mối quan hệ với Product (ProductVariation thuộc về một Product)
-    product: {
+    productId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Product
         ref: 'Product', // Tên model Product
         required: true

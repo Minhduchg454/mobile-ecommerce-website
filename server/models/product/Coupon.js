@@ -50,8 +50,18 @@ const couponSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    userId:{
+        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Admin
+        ref: 'Admin', // Tên model User
+        required: true,
+        index: true // Tạo chỉ mục để tìm kiếm nhanh hơn
+    }
 }, {
     timestamps: true // Tự động thêm createdAt và updatedAt
 });
+
+brandSchema.set('toJSON', {
+    versionKey: false
+})
 
 module.exports = mongoose.model('Coupon', couponSchema);

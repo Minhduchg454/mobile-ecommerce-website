@@ -18,7 +18,7 @@ const warrantyCardSchema = new mongoose.Schema({
         required: true // Ngày hết hạn là bắt buộc
     },
     // Mối quan hệ với SpecificProduct (WarrantyCard thuộc về một SpecificProduct) - 1-1
-    specificProduct: {
+    specificProductId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của SpecificProduct
         ref: 'SpecificProduct', // Tên model SpecificProduct
         required: true,

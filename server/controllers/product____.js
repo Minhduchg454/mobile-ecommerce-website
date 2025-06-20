@@ -3,6 +3,8 @@ const asyncHandler = require("express-async-handler")
 const slugify = require("slugify")
 const makeSKU = require("uniqid")
 
+
+
 const createProduct = asyncHandler(async (req, res) => {
   const { title, price, description, brand, category, color } = req.body
   const thumb = req?.files?.thumb[0]?.path
@@ -18,6 +20,12 @@ const createProduct = asyncHandler(async (req, res) => {
     mes: newProduct ? "Created" : "Failed.",
   })
 })
+
+
+
+
+
+
 const getProduct = asyncHandler(async (req, res) => {
   const { pid } = req.params
   const product = await Product.findById(pid).populate({
