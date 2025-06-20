@@ -42,14 +42,15 @@ const couponSchema = new mongoose.Schema({
         type: Number,
         default: -1 // -1 có thể biểu thị không giới hạn
     },
+        miniOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
+        type: Number,
+        default: 0
+    },
     usedCount: { // Số lần coupon đã được sử dụng
         type: Number,
         default: 0
     },
-    miniOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
-        type: Number,
-        default: 0
-    },
+
 }, {
     timestamps: true // Tự động thêm createdAt và updatedAt
 });
