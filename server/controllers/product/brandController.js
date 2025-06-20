@@ -1,5 +1,6 @@
-const Brand = require('../models/brand')
+const Brand = require('../../models/product/Brand')
 const asyncHandler = require('express-async-handler')
+
 
 const createNewBrand = asyncHandler(async (req, res) => {
     const response = await Brand.create(req.body)
@@ -8,6 +9,7 @@ const createNewBrand = asyncHandler(async (req, res) => {
         createdBrand: response ? response : 'Cannot create new brand'
     })
 })
+
 const getBrands = asyncHandler(async (req, res) => {
     const response = await Brand.find()
     return res.json({
@@ -15,6 +17,8 @@ const getBrands = asyncHandler(async (req, res) => {
         brands: response ? response : 'Cannot get brand'
     })
 })
+
+
 const updateBrand = asyncHandler(async (req, res) => {
     const { bid } = req.params
     const response = await Brand.findByIdAndUpdate(bid, req.body, { new: true })
@@ -23,6 +27,7 @@ const updateBrand = asyncHandler(async (req, res) => {
         updatedBrand: response ? response : 'Cannot update brand'
     })
 })
+
 const deleteBrand = asyncHandler(async (req, res) => {
     const { bid } = req.params
     const response = await Brand.findByIdAndDelete(bid)
