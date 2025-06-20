@@ -46,7 +46,7 @@ const couponSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    minOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
+    miniOrderAmount: { // Số tiền đơn hàng tối thiểu để áp dụng coupon
         type: Number,
         default: 0
     },
