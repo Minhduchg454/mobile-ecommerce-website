@@ -17,7 +17,4 @@ brandSchema.set('toJSON', {
     versionKey: false
 })
 
-
-
-
 module.exports = mongoose.model('Brand', brandSchema);

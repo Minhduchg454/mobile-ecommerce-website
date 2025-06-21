@@ -1,12 +1,14 @@
+// Khai báo bảng dữ liệu Brand
 const Brand = require('../../models/product/Brand')
+// Khai báo các hàm xử lý liên quan đến Brand, không cần dùng try/catch vì đã sử dụng express-async-handler
 const asyncHandler = require('express-async-handler')
 
 
 const createNewBrand = asyncHandler(async (req, res) => {
     const response = await Brand.create(req.body)
     return res.json({
-        success: response ? true : false,
-        createdBrand: response ? response : 'Cannot create new brand'
+        success: response ? true : false, // Kiểm tra xem response có dữ liệu hay không, nếu có là true, nếu không thì false
+        createdBrand: response ? response : 'Cannot create new brand' // Trả về dữ liệu brand mới tạo, nếu không có thì trả về thông báo lỗi
     })
 })
 
