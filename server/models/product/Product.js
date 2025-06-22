@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
+ 
     productName: {
         type: String,
         required: true,
@@ -17,6 +18,10 @@ const productSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    thumb: {
+        type: String, // Đường dẫn đến hình ảnh thumbnail
+        required: true
+    },
     createAt: { // createAt trong biểu đồ
         type: Date,
         default: Date.now // Tự động điền ngày hiện tại khi tạo
@@ -27,7 +32,7 @@ const productSchema = new mongoose.Schema({
         min: 0,
         max: 5 // Điểm đánh giá thường từ 0 đến 5
     },
-    totalRating: { // Tổng số lượt đánh giá hoặc tổng điểm để tính rating trung bình
+    totalRating: { // Tổng số lượt đánh giá
         type: Number, // NumberDouble
         default: 0
     },

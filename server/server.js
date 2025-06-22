@@ -8,6 +8,9 @@ const cookieParser = require("cookie-parser")
 const cors = require("cors")
 
 const app = express()
+const port = process.env.PORT || 8888
+
+// 1. CORS và cookieParser
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -16,10 +19,13 @@ app.use(
   })
 )
 app.use(cookieParser())
-const port = process.env.PORT || 8888
+
+
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 dbConnect()
+
 initOrderRoutes(app)
 initProductRoutes(app)
 initRoutes(app)

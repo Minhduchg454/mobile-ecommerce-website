@@ -1,19 +1,19 @@
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const multer = require('multer');
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const multer = require("multer");
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
-    api_key: process.env.CLOUDINARY_KEY,
-    api_secret: process.env.CLOUDINARY_SECRET
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
 });
 
 const storage = new CloudinaryStorage({
-    cloudinary,
-    allowedFormats: ['jpg', 'png'],
-    params: {
-        folder: 'cuahangdientu'
-    }
+  cloudinary,
+  params: {
+    folder: "cuahangdientu", // thư mục trên Cloudinary
+    allowed_formats: ["jpg", "png", "jpeg", "webp"], // nên thêm vài loại khác nữa
+  },
 });
 
 const uploadCloud = multer({ storage });
