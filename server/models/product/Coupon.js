@@ -60,7 +60,7 @@ const couponSchema = new mongoose.Schema({
     timestamps: true // Tự động thêm createdAt và updatedAt
 });
 
-brandSchema.set('toJSON', {
+couponSchema.set('toJSON', {
     versionKey: false
 })
 
