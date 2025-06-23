@@ -2,6 +2,7 @@ const router = require('express').Router();
 const ctrls = require('../../controllers/product/productVariationController');
 const uploadCloud = require('../../config/cloudinary.config'); // middleware multer-cloudinary
 
+
 // Tạo biến thể sản phẩm
 router.post('/', ctrls.createNewProductVariation);
 
