@@ -236,8 +236,10 @@ const getProducts = asyncHandler(async (req, res) => {
 // Cập nhật thông tin sản phẩm
 const updateProduct = asyncHandler(async (req, res) => {
   const { pid } = req.params
-  const files = req?.files
-  if (files?.thumb) req.body.thumb = files?.thumb[0]?.path
+  const files = req.files;
+  if (files?.thumb?.length > 0) {
+    req.body.thumb = files.thumb[0].path;
+  }
   if (req.body && req.body.productName) req.body.slug = slugify(req.body.productName)
   const updatedProduct = await Product.findByIdAndUpdate(pid, req.body, {
     new: true,

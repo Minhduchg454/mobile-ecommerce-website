@@ -24,10 +24,10 @@ const productVariationSchema = new mongoose.Schema({
         default: 0,
         min: 0
     },
-    image: { // URL hình ảnh của biến thể
+    images: [{
         type: String,
         trim: true
-    },
+    }],
     // Mối quan hệ với Product (ProductVariation thuộc về một Product)
     productId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Product
