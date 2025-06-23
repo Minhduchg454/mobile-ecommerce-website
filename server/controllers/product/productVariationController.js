@@ -99,5 +99,6 @@ module.exports = {
   getProductVariations,
   getProductVariation,
   updateProductVariation,
-  deleteProductVariation
+  deleteProductVariation,
+  uploadImagesProductVariation
 }
