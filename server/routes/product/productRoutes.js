@@ -11,9 +11,9 @@ router.get('/', ctrls.getProducts)
 router.get('/:pid', ctrls.getProduct)
 
 // Update a product (PUT /api/products/:pid)
-router.put('/:pid', ctrls.updateProduct)
+router.put('/:pid', uploadCloud.fields([{ name: 'thumb', maxCount: 1 }]), ctrls.updateProduct)
 
 // Delete a product (DELETE /api/products/:pid)
 router.delete('/:pid', ctrls.deleteProduct)
-
+ 
 module.exports = router

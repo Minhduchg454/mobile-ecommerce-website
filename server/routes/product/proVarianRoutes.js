@@ -19,6 +19,6 @@ router.put('/:pvid', ctrls.updateProductVariation);
 router.delete('/:pvid', ctrls.deleteProductVariation);
 
 // Upload nhiều ảnh cho biến thể (multer xử lý)
-router.put('/upload/:pvid', uploadCloud.array('images', 10), ctrls.uploadImagesProductVariation);
+router.put('/uploadImage/:pvid', uploadCloud.array('images', 10), ctrls.uploadImagesProductVariation);
 
 module.exports = router;
