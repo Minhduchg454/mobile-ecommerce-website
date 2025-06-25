@@ -19,7 +19,7 @@ const cartItemSchema = new mongoose.Schema({
         required: true
     },
     // Mối quan hệ với Product/ProductVariations: Mỗi CartItem là một sản phẩm cụ thể
-    product: { // Có thể là Product hoặc ProductVariations tùy vào cấu trúc của bạn
+    productVariationId: { // Có thể là Product hoặc ProductVariations tùy vào cấu trúc của bạn
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ProductVariation', // Giả sử bạn tham chiếu đến ProductVariation
         required: true

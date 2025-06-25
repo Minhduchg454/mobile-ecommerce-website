@@ -26,7 +26,7 @@ const addressSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    user: {
+    userId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của StatusUser
         ref: 'User',
         required: true

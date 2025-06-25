@@ -26,18 +26,18 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    role: {
+    roleId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Role',
         required: true
     },
-    account: {
+    userName: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Account',
         unique: true,
         required: true
     },
-    status: {
+    statusUserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'StatusUser',
         required: true
