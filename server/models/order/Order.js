@@ -24,25 +24,17 @@ const orderSchema = new mongoose.Schema({
         required: true
     },
     // Mối quan hệ với ShippingProvider (Order "Gắn với" ShippingProvider)
-    shippingProvider: {
+    shippingProviderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ShippingProvider',
         required: true
     },
     // Bạn có thể muốn thêm trường để lưu trữ người dùng tạo đơn hàng
-    customer: {
+    customerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Customer',
         required: true
     },
-    // Hoặc danh sách các sản phẩm trong đơn hàng
-    // products: [
-    //     {
-    //         product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-    //         quantity: Number,
-    //         price: Number
-    //     }
-    // ]
 }, {
     timestamps: true // Tự động thêm createdAt và updatedAt
 });

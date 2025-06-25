@@ -13,7 +13,7 @@ const shippingProviderSchema = new mongoose.Schema({
         trim: true
     },
     providerHotline: {
-        type: Number // NumberDouble
+        type: String // NumberDouble
     }
 });
 
