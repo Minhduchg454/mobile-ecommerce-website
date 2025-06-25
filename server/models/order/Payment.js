@@ -1,5 +1,6 @@
 // models/Payment.js
 const mongoose = require('mongoose');
+const Order = require('./Order')
 
 const paymentSchema = new mongoose.Schema({
     paymentStatus: {
@@ -26,6 +27,20 @@ const paymentSchema = new mongoose.Schema({
         ref: 'Order', // Tên model mà chúng ta đang tham chiếu
         required: true
     },
+});
+
+// ✅ Hook kiểm tra orderId có tồn tại không
+paymentSchema.pre('save', async function (next) {
+    try {
+        const orderExists = await Order.findById(this.orderId);
+        console.log("hi")
+        if (!orderExists) {
+            return next(new Error('Đơn hàng không tồn tại với ID đã cung cấp.'));
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

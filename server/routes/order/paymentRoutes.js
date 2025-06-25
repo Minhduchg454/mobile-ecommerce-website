@@ -1,20 +1,29 @@
+// routes/payments.js
 const express = require('express');
+const {
+    getAllPayments,
+    getPaymentById,
+    createPayment,
+    updatePayment,
+    deletePayment
+} = require('../../controllers/order/paymentController'); // Đảm bảo đường dẫn này đúng
+
 const router = express.Router();
-const paymentController = require('../../controllers/order/paymentController');
 
-// Import middleware xác thực/phân quyền nếu bạn có
-// const { protect, authorize } = require('../middleware/authMiddleware');
-
-// Routes cho Payment
+// Route cho việc lấy tất cả thanh toán và tạo mới thanh toán
+// GET /api/payments        (Lấy tất cả)
+// POST /api/payments       (Tạo mới)
 router.route('/')
-    .post(paymentController.createPayment) // protect, authorize roles: 'asssdmin', 'user' (nếu user tự tạo payment)
-    .get(paymentController.getAllPayments); // protect, authorize roles: 'admin'
+    .get(getAllPayments)
+    .post(createPayment);
 
+// Route cho việc thao tác với một thanh toán cụ thể theo ID
+// GET /api/payments/:id    (Lấy theo ID)
+// PUT /api/payments/:id    (Cập nhật theo ID)
+// DELETE /api/payments/:id (Xóa theo ID)
 router.route('/:id')
-    .get(paymentController.getPaymentById) // protect, authorize roles: 'admin', 'user' (nếu là payment của user đó)
-    .put(paymentController.updatePayment) // protect, authorize roles: 'admin'
-    .delete(paymentController.deletePayment); // protect, authorize roles: 'admin'
-
-router.patch('/:id/status', paymentController.updatePaymentStatus); // protect, authorize roles: 'admin', 'webhook' (internal)
+    .get(getPaymentById)
+    .put(updatePayment)
+    .delete(deletePayment);
 
 module.exports = router;
