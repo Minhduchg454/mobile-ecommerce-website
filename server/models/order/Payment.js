@@ -21,7 +21,7 @@ const paymentSchema = new mongoose.Schema({
         type: Number, // NumberDouble
         required: true
     },
-    order: {
+    orderId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Order
         ref: 'Order', // Tên model mà chúng ta đang tham chiếu
         required: true
