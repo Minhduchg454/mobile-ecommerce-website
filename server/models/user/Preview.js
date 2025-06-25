@@ -17,13 +17,13 @@ const previewSchema = new mongoose.Schema({
         max: 5 // Điểm đánh giá thường đến 5
     },
     // Mối quan hệ với Customer: Mỗi Preview thuộc về một Customer
-    customer: {
+    customerId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Customer
         ref: 'Customer', // Tên model Customer
         required: true
     },
     // Mối quan hệ với ProductVariations: Mỗi Preview đánh giá một ProductVariations cụ thể
-    productVariation: { // Đặt tên rõ ràng hơn là productVariation
+    productVariationId: { // Đặt tên rõ ràng hơn là productVariation
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của ProductVariations
         ref: 'ProductVariations', // Tên model ProductVariations
         required: true

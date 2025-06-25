@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt'); // Để mã hóa mật khẩu
 
 const accountSchema = new mongoose.Schema({
-    username: { // Tên trường thường là 'username' thay vì 'UserName'
+    userName: { // Tên trường thường là 'username' thay vì 'UserName'
         type: String, // NumberInt trong biểu đồ, nhưng thường username là String
         required: true,
         unique: true,

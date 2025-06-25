@@ -7,21 +7,11 @@ const chatSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    // Mối quan hệ với User (Chat "Có đoạn chat" User)
-    // Một chat có thể có nhiều người dùng tham gia
-    participants: [{
+    // Nhieu nguoi co the tham gia vao mot chat nen dung mang
+    users: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    // Mối quan hệ với Message (Chat "Bao gồm" Message) - sẽ được xử lý từ phía Message
-    // Hoặc nếu muốn nhúng tin nhắn trực tiếp vào chat, có thể làm như sau:
-    // messages: [{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Message'
-    // }]
-    // Tuy nhiên, với số lượng tin nhắn lớn, thường tham chiếu là tốt hơn.
-    // Hoặc nhúng một phần (vd: 5 tin nhắn gần nhất) và tham chiếu phần còn lại.
-    // Trong trường hợp này, tôi sẽ để Message tham chiếu ngược lại Chat.
 }, {
     timestamps: true
 });
