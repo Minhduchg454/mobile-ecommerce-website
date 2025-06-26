@@ -1,23 +1,24 @@
 // models/Account.js
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt'); // Để mã hóa mật khẩu
+const bcrypt = require('bcrypt'); // Dùng để mã hóa mật khẩu
 
+// Định nghĩa schema cho tài khoản đăng nhập
 const accountSchema = new mongoose.Schema({
-    userName: { // Tên trường thường là 'username' thay vì 'UserName'
-        type: String, // NumberInt trong biểu đồ, nhưng thường username là String
+    userName: { // Tên đăng nhập, duy nhất
+        type: String,
         required: true,
         unique: true,
         trim: true,
         lowercase: true,
         index: true
     },
-    password: { // Tên trường thường là 'password' thay vì 'Password'
+    password: { // Mật khẩu đã được hash
         type: String,
         required: true
     }
 });
 
-// Middleware pre-save để hash mật khẩu trước khi lưu
+// Middleware: Tự động hash mật khẩu trước khi lưu vào DB
 accountSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         next();
@@ -27,7 +28,7 @@ accountSchema.pre('save', async function (next) {
     next();
 });
 
-// Phương thức để so sánh mật khẩu
+// Phương thức kiểm tra mật khẩu nhập vào có đúng không
 accountSchema.methods.isCorrectPassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };

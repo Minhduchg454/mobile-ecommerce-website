@@ -10,7 +10,7 @@ import {
   CustomSlider,
 } from "components"
 import Slider from "react-slick"
-import ReactImageMagnify from "react-image-magnify"
+import { GlassMagnifier } from 'react-image-magnifiers'
 import { formatMoney, fotmatPrice, renderStarFromNumber } from "ultils/helpers"
 import { productExtraInfomation } from "ultils/contants"
 import DOMPurify from "dompurify"
@@ -185,19 +185,10 @@ const DetailProduct = ({ isQuickView, data, location, dispatch, navigate }) => {
           className={clsx("flex flex-col gap-4 w-2/5", isQuickView && "w-1/2")}
         >
           <div className="w-[458px] h-[458px] border flex items-center overflow-hidden">
-            <ReactImageMagnify
-              {...{
-                smallImage: {
-                  alt: "",
-                  isFluidWidth: true,
-                  src: currentProduct.thumb || currentImage,
-                },
-                largeImage: {
-                  src: currentProduct.thumb || currentImage,
-                  width: 1800,
-                  height: 1500,
-                },
-              }}
+            <GlassMagnifier
+              imageSrc={currentProduct.thumb || currentImage}
+              imageAlt="Ảnh sản phẩm"
+              largeImageSrc={currentProduct.thumb || currentImage}
             />
           </div>
           <div className="w-[458px]">

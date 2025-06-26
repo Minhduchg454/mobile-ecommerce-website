@@ -1,31 +1,32 @@
 // models/Preview.js
 const mongoose = require('mongoose');
 
+// Định nghĩa schema cho đánh giá sản phẩm của khách hàng
 const previewSchema = new mongoose.Schema({
-    previewComment: { // previewComent trong biểu đồ, sửa thành previewComment cho rõ ràng
-        type: String,
+    previewComment: {
+        type: String, // Nội dung đánh giá
         trim: true
     },
     previewDate: {
-        type: Date,
-        default: Date.now // Tự động điền ngày hiện tại khi tạo
+        type: Date, // Ngày đánh giá
+        default: Date.now
     },
     previewRating: {
-        type: Number, // NumberInt
+        type: Number, // Điểm đánh giá (1-5)
         required: true,
-        min: 1, // Điểm đánh giá thường từ 1
-        max: 5 // Điểm đánh giá thường đến 5
+        min: 1,
+        max: 5
     },
-    // Mối quan hệ với Customer: Mỗi Preview thuộc về một Customer
-    customerId: {
-        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Customer
-        ref: 'Customer', // Tên model Customer
+    // Liên kết với User: mỗi Preview thuộc về một User (khách hàng)
+    userId: {
+        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến User
+        ref: 'User',
         required: true
     },
-    // Mối quan hệ với ProductVariations: Mỗi Preview đánh giá một ProductVariations cụ thể
-    productVariationId: { // Đặt tên rõ ràng hơn là productVariation
-        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của ProductVariations
-        ref: 'ProductVariations', // Tên model ProductVariations
+    // Liên kết với ProductVariation: mỗi Preview đánh giá một ProductVariation cụ thể
+    productVariationId: {
+        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến ProductVariation
+        ref: 'ProductVariation',
         required: true
     }
 }, {

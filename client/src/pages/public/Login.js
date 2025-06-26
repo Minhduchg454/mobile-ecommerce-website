@@ -15,6 +15,9 @@ import { useDispatch } from "react-redux"
 import { toast } from "react-toastify"
 import { validate } from "ultils/helpers"
 
+const DEFAULT_ROLE_ID = "685c40cb714483a0482a4569"; // id của role customer
+const DEFAULT_STATUS_ID = "685c40cb714483a0482a456b"; // id của status active
+
 const Login = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -60,7 +63,11 @@ const Login = () => {
     if (invalids === 0) {
       if (isRegister) {
         dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }))
-        const response = await apiRegister(payload)
+        const response = await apiRegister({
+          ...payload,
+          roleId: DEFAULT_ROLE_ID,
+          statusUserId: DEFAULT_STATUS_ID,
+        })
         dispatch(showModal({ isShowModal: false, modalChildren: null }))
         if (response.success) {
           setIsVerifiedEmail(true)

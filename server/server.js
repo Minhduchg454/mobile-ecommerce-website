@@ -27,6 +27,10 @@ initOrderRoutes(app)
 initProductRoutes(app)
 initRoutes(app)
 
-app.listen(port, () => {
-  console.log("Server running on the port: " + port)
-})
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log("Server running on the port: " + port)
+  })
+}
+
+module.exports = app;

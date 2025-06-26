@@ -1,33 +1,34 @@
 // models/Address.js
 const mongoose = require('mongoose');
 
+// Định nghĩa schema cho địa chỉ giao hàng của User
 const addressSchema = new mongoose.Schema({
     street: {
-        type: String,
+        type: String, // Địa chỉ đường/phố
         required: true,
         trim: true
     },
     ward: {
-        type: String,
+        type: String, // Phường/xã
         required: true,
         trim: true
     },
     district: {
-        type: String,
+        type: String, // Quận/huyện
         required: true,
         trim: true
     },
     country: {
-        type: String,
+        type: String, // Quốc gia
         required: true,
         trim: true
     },
     isDefault: {
-        type: Boolean,
+        type: Boolean, // Đánh dấu địa chỉ mặc định
         default: false
     },
     userId: {
-        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của StatusUser
+        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của User
         ref: 'User',
         required: true
     }
