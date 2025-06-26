@@ -1,9 +1,10 @@
 // models/StatusUser.js
 const mongoose = require('mongoose');
 
+// Định nghĩa schema cho trạng thái người dùng
 const statusUserSchema = new mongoose.Schema({
     statusUserName: {
-        type: String,
+        type: String, // Tên trạng thái (ví dụ: 'active', 'inactive', ...)
         required: true
     }
 });

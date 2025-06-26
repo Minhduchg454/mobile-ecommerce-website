@@ -1,283 +1,76 @@
-// const Order = require("../models/order")
-// const User = require("../models/user")
-// const Coupon = require("../models/coupon")
-// const asyncHandler = require("express-async-handler")
+// controllers/user/order.js
+// Controller xử lý các chức năng liên quan đến Order của User/Customer
+const Order = require('../../models/order/Order');
+const OrderDetail = require('../../models/order/OrderDetail');
+const Customer = require('../../models/user/Customer');
+const asyncHandler = require('express-async-handler');
 
-// const createOrder = asyncHandler(async (req, res) => {
-//   const { _id } = req.user
-//   const { products, total, address, status } = req.body
-//   if (address) {
-//     await User.findByIdAndUpdate(_id, { address, cart: [] })
-//   }
-//   const data = { products, total, orderBy: _id }
-//   if (status) data.status = status
-//   const rs = await Order.create(data)
-//   return res.json({
-//     success: rs ? true : false,
-//     rs: rs ? rs : "Something went wrong",
-//   })
-// })
-// const updateStatus = asyncHandler(async (req, res) => {
-//   const { oid } = req.params
-//   const { status } = req.body
-//   if (!status) throw new Error("Missing status")
-//   const response = await Order.findByIdAndUpdate(oid, { status }, { new: true })
-//   return res.json({
-//     success: response ? true : false,
-//     mes: response ? "Updated." : "Something went wrong",
-//   })
-// })
-// const getUserOrders = asyncHandler(async (req, res) => {
-//   const queries = { ...req.query }
-//   const { _id } = req.user
-//   // Tách các trường đặc biệt ra khỏi query
-//   const excludeFields = ["limit", "sort", "page", "fields"]
-//   excludeFields.forEach((el) => delete queries[el])
+// Tạo đơn hàng mới cho Customer
+const createOrder = asyncHandler(async (req, res) => {
+    const { _id } = req.user; // Lấy id user từ middleware xác thực
+    const { orderDetails, totalPrice, address, status } = req.body;
+    // Kiểm tra đầu vào
+    if (!orderDetails || !Array.isArray(orderDetails) || orderDetails.length === 0 || !totalPrice || !address) {
+        return res.status(400).json({ success: false, mes: 'Missing order information' });
+    }
+    // Tạo đơn hàng
+    const newOrder = await Order.create({
+        customerId: _id,
+        totalPrice,
+        address,
+        status
+    });
+    // Tạo chi tiết đơn hàng cho từng sản phẩm
+    for (const item of orderDetails) {
+        await OrderDetail.create({
+            orderId: newOrder._id,
+            productVariationId: item.productVariationId,
+            quantity: item.quantity,
+            price: item.price
+        });
+    }
+    return res.status(201).json({ success: true, order: newOrder });
+});
 
-//   // Format lại các operators cho đúng cú pháp mongoose
-//   let queryString = JSON.stringify(queries)
-//   queryString = queryString.replace(
-//     /\b(gte|gt|lt|lte)\b/g,
-//     (macthedEl) => `$${macthedEl}`
-//   )
-//   const formatedQueries = JSON.parse(queryString)
-//   const qr = { ...formatedQueries, orderBy: _id }
-//   console.log(qr)
-//   let queryCommand = Order.find(qr)
+// Lấy danh sách đơn hàng của user hiện tại
+const getUserOrders = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    const orders = await Order.find({ customerId: _id }).populate('customerId');
+    return res.json({ success: true, orders });
+});
 
-//   // Sorting
-//   if (req.query.sort) {
-//     const sortBy = req.query.sort.split(",").join(" ")
-//     queryCommand = queryCommand.sort(sortBy)
-//   }
+// Lấy chi tiết một đơn hàng (theo id, chỉ cho phép user xem đơn của mình)
+const getOrderDetail = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    const { orderId } = req.params;
+    const order = await Order.findOne({ _id: orderId, customerId: _id });
+    if (!order) return res.status(404).json({ success: false, mes: 'Order not found' });
+    const details = await OrderDetail.find({ orderId: order._id });
+    return res.json({ success: true, order, details });
+});
 
-//   // Fields limiting
-//   if (req.query.fields) {
-//     const fields = req.query.fields.split(",").join(" ")
-//     queryCommand = queryCommand.select(fields)
-//   }
+// Cập nhật trạng thái đơn hàng (chỉ admin hoặc chủ đơn hàng)
+const updateOrderStatus = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ success: false, mes: 'Missing status' });
+    const updated = await Order.findByIdAndUpdate(orderId, { status }, { new: true });
+    return res.json({ success: !!updated, order: updated || 'Update failed' });
+});
 
-//   // Pagination
-//   const page = +req.query.page || 1
-//   const limit = +req.query.limit || process.env.LIMIT_PRODUCTS
-//   const skip = (page - 1) * limit
-//   queryCommand.skip(skip).limit(limit)
-//   // Execute query
-//   // Số lượng sp thỏa mãn điều kiện !== số lượng sp trả về 1 lần gọi API
-//   queryCommand.exec(async (err, response) => {
-//     if (err) throw new Error(err.message)
-//     const counts = await Order.find(qr).countDocuments()
-//     return res.status(200).json({
-//       success: response ? true : false,
-//       counts,
-//       orders: response ? response : "Cannot get products",
-//     })
-//   })
-// })
-// const getOrders = asyncHandler(async (req, res) => {
-//   const queries = { ...req.query }
-//   // Tách các trường đặc biệt ra khỏi query
-//   const excludeFields = ["limit", "sort", "page", "fields"]
-//   excludeFields.forEach((el) => delete queries[el])
+// Xóa đơn hàng (chỉ admin hoặc chủ đơn hàng)
+const deleteOrder = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const deleted = await Order.findByIdAndDelete(orderId);
+    await OrderDetail.deleteMany({ orderId }); // Xóa luôn chi tiết đơn hàng
+    return res.json({ success: !!deleted, mes: deleted ? 'Order deleted' : 'Delete failed' });
+});
 
-//   // Format lại các operators cho đúng cú pháp mongoose
-//   let queryString = JSON.stringify(queries)
-//   queryString = queryString.replace(
-//     /\b(gte|gt|lt|lte)\b/g,
-//     (macthedEl) => `$${macthedEl}`
-//   )
-//   const formatedQueries = JSON.parse(queryString)
-//   const qr = { ...formatedQueries }
-//   let queryCommand = Order.find(qr).populate("orderBy", "firstname lastname")
-
-//   // Sorting
-//   if (req.query.sort) {
-//     const sortBy = req.query.sort.split(",").join(" ")
-//     queryCommand = queryCommand.sort(sortBy)
-//   }
-
-//   // Fields limiting
-//   if (req.query.fields) {
-//     const fields = req.query.fields.split(",").join(" ")
-//     queryCommand = queryCommand.select(fields)
-//   }
-
-//   // Pagination
-//   const page = +req.query.page || 1
-//   const limit = +req.query.limit || process.env.LIMIT_PRODUCTS
-//   const skip = (page - 1) * limit
-//   queryCommand.skip(skip).limit(limit)
-//   // Execute query
-//   // Số lượng sp thỏa mãn điều kiện !== số lượng sp trả về 1 lần gọi API
-//   queryCommand.exec(async (err, response) => {
-//     if (err) throw new Error(err.message)
-//     const counts = await Order.find(qr).countDocuments()
-//     return res.status(200).json({
-//       success: response ? true : false,
-//       counts,
-//       orders: response ? response : "Cannot get products",
-//     })
-//   })
-// })
-// const deleteOrderByAdmin = asyncHandler(async (req, res) => {
-//   const { id } = req.params
-//   const rs = await Order.findByIdAndDelete(id)
-//   return res.json({
-//     success: rs ? true : false,
-//     mes: rs ? "Deleted" : "Something went wrong",
-//   })
-// })
-// function getCountPreviousDay(count = 1, date = new Date()) {
-//   const previous = new Date(date.getTime())
-//   previous.setDate(date.getDate() - count)
-//   return previous
-// }
-// const getDashboard = asyncHandler(async (req, res) => {
-//   const { to, from, type } = req.query
-//   const format = type === "MTH" ? "%Y-%m" : "%Y-%m-%d"
-//   const start = from || getCountPreviousDay(7, new Date(to))
-//   const end = to || getCountPreviousDay(0)
-//   const [users, totalSuccess, totalFailed, soldQuantities, chartData, pieData] =
-//     await Promise.all([
-//       User.aggregate([
-//         {
-//           $match: {
-//             $and: [
-//               { createdAt: { $gte: new Date(start) } },
-//               { createdAt: { $lte: new Date(end) } },
-//             ],
-//           },
-//         },
-//         {
-//           $group: {
-//             _id: null,
-//             count: { $sum: 1 },
-//           },
-//         },
-//       ]),
-//       Order.aggregate([
-//         {
-//           $match: {
-//             $and: [
-//               { createdAt: { $gte: new Date(start) } },
-//               { createdAt: { $lte: new Date(end) } },
-//               { status: "Succeed" },
-//             ],
-//           },
-//         },
-//         {
-//           $group: {
-//             _id: null,
-//             count: { $sum: "$total" },
-//           },
-//         },
-//       ]),
-//       Order.aggregate([
-//         {
-//           $match: {
-//             $and: [
-//               { createdAt: { $gte: new Date(start) } },
-//               { createdAt: { $lte: new Date(end) } },
-//               { status: "Pending" },
-//             ],
-//           },
-//         },
-//         {
-//           $group: {
-//             _id: null,
-//             count: { $sum: "$total" },
-//           },
-//         },
-//       ]),
-//       Order.aggregate([
-//         {
-//           $match: {
-//             $and: [
-//               { createdAt: { $gte: new Date(start) } },
-//               { createdAt: { $lte: new Date(end) } },
-//               { status: "Succeed" },
-//             ],
-//           },
-//         },
-//         {
-//           $group: {
-//             _id: null,
-//             count: { $sum: { $sum: "$products.quantity" } },
-//           },
-//         },
-//       ]),
-//       Order.aggregate([
-//         {
-//           $match: {
-//             $and: [
-//               { createdAt: { $gte: new Date(start) } },
-//               { createdAt: { $lte: new Date(end) } },
-//               { status: "Succeed" },
-//             ],
-//           },
-//         },
-//         { $unwind: "$createdAt" },
-//         {
-//           $group: {
-//             _id: {
-//               $dateToString: {
-//                 format,
-//                 date: "$createdAt",
-//               },
-//             },
-//             sum: { $sum: "$total" },
-//           },
-//         },
-//         {
-//           $project: {
-//             date: "$_id",
-//             sum: 1,
-//             _id: 0,
-//           },
-//         },
-//       ]),
-//       Order.aggregate([
-//         {
-//           $match: {
-//             $and: [
-//               { createdAt: { $gte: new Date(start) } },
-//               { createdAt: { $lte: new Date(end) } },
-//             ],
-//           },
-//         },
-//         { $unwind: "$status" },
-//         {
-//           $group: {
-//             _id: "$status",
-//             sum: { $sum: 1 },
-//           },
-//         },
-//         {
-//           $project: {
-//             status: "$_id",
-//             sum: 1,
-//             _id: 0,
-//           },
-//         },
-//       ]),
-//     ])
-//   return res.json({
-//     success: true,
-//     data: {
-//       users,
-//       totalSuccess,
-//       totalFailed,
-//       soldQuantities,
-//       chartData,
-//       pieData,
-//     },
-//   })
-// })
-// module.exports = {
-//   createOrder,
-//   updateStatus,
-//   getUserOrders,
-//   getOrders,
-//   deleteOrderByAdmin,
-//   getDashboard,
-// }
+// Xuất các hàm controller
+module.exports = {
+    createOrder, // Tạo đơn hàng
+    getUserOrders, // Lấy danh sách đơn hàng của user
+    getOrderDetail, // Lấy chi tiết đơn hàng
+    updateOrderStatus, // Cập nhật trạng thái đơn hàng
+    deleteOrder // Xóa đơn hàng
+};
