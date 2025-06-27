@@ -5,7 +5,6 @@ const mongoose = require('mongoose'); // Import mongoose để kiểm tra Object
 // Import các models liên quan để kiểm tra sự tồn tại của ID
 const Address = require('../../models/user/Address'); // Cần model Address
 const ShippingProvider = require('../../models/order/ShippingProvider');
-const Customer = require('../../models/user/Customer'); // Cần model Customer
 const OrderDetail = require('../../models/order/OrderDetail')
 // @desc    Lấy tất cả các đơn hàng
 // @route   GET /api/orders

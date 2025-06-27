@@ -37,8 +37,12 @@ const updateProductVariationRating = async (productVariationId) => {
 exports.createPreview = asyncHandler(async (req, res) => {
     // Lấy dữ liệu từ body
     const { previewComment, previewRating, userId, productVariationId } = req.body;
-    if (!previewRating || !userId || !productVariationId) {
-        return res.status(400).json({ success: false, mes: 'Missing required fields' });
+    const missingFields = [];
+    if (previewRating === undefined) missingFields.push('previewRating');
+    if (!userId) missingFields.push('userId');
+    if (!productVariationId) missingFields.push('productVariationId');
+    if (missingFields.length > 0) {
+        return res.status(400).json({ success: false, mes: `Missing required field(s): ${missingFields.join(', ')}` });
     }
 
     //Kiểm tra xem người dùng đã từng đánh giá biến thể này chưa

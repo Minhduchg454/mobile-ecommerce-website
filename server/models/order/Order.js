@@ -32,7 +32,7 @@ const orderSchema = new mongoose.Schema({
     // Bạn có thể muốn thêm trường để lưu trữ người dùng tạo đơn hàng
     customerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: 'User',
         required: true
     },
 }, {

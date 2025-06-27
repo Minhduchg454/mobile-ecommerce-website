@@ -20,7 +20,7 @@ const previewSchema = new mongoose.Schema({
     // Liên kết với User: mỗi Preview thuộc về một User (khách hàng)
     userId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến User
-        ref: 'Customer',
+        ref: 'User',
         required: true
     },
     // Liên kết với ProductVariation: mỗi Preview đánh giá một ProductVariation cụ thể

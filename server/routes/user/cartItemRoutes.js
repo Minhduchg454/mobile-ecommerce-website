@@ -13,4 +13,7 @@ router.put('/:id', ctrls.updateCartItem); // PUT /api/cartitem/:id
 // Xóa CartItem
 router.delete('/:id', ctrls.deleteCartItem); // DELETE /api/cartitem/:id
 
+// Lấy CartItem theo id
+router.get('/:id', ctrls.getCartItem); // GET /api/cartitem/:id
+
 module.exports = router; 
