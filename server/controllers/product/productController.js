@@ -1,6 +1,9 @@
 //Giup tuong tac voi mongoDB products collection
 const Product = require("../../models/product/Product")
 const asyncHandler = require("express-async-handler")
+const ProductVariation = require('../../models/product/ProductVariation');
+
+
 
 // Thư viện slugify để tạo slug từ tiêu đề sản phẩm
 //vd: "Áo thun nam" => "ao-thun-nam", thuong dung de tao duuong dan url
@@ -263,6 +266,25 @@ const deleteProduct = asyncHandler(async (req, res) => {
   })
 })
 
+//Cap nhat đánh giá trung bình của sản phẩm từ tất cả các biến thể
+const updateProductRating = async (productId) => {
+  const variations = await ProductVariation.find({ productId });
+
+  let totalStars = 0;
+  let totalVotes = 0;
+
+  for (const variation of variations) {
+    totalStars += (variation.rating || 0) * (variation.totalRating || 0);
+    totalVotes += variation.totalRating || 0;
+  }
+
+  const average = totalVotes > 0 ? (totalStars / totalVotes).toFixed(1) : 0;
+
+  await Product.findByIdAndUpdate(productId, {
+    rating: average,
+    totalRating: totalVotes
+  });
+};
 
 
 
@@ -276,6 +298,7 @@ module.exports = {
   getProducts,
   updateProduct,
   deleteProduct,
+  updateProductRating
 }
 
 
