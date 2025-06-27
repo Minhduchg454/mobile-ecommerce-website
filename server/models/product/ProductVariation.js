@@ -28,6 +28,17 @@ const productVariationSchema = new mongoose.Schema({
         type: String,
         trim: true
     }],
+    rating: { // Đánh giá trung bình của biến thể này
+        type: Number, // Sử dụng NumberDouble để lưu trữ giá trị thập phâ
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    totalRating: { // Tổng số lượt đánh giá
+        type: Number, // Sử dụng NumberInt để lưu trữ số nguyên
+        default: 0,
+        min: 0
+    },
     // Mối quan hệ với Product (ProductVariation thuộc về một Product)
     productId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Product
