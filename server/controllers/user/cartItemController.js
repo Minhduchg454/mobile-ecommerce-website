@@ -33,4 +33,12 @@ exports.deleteCartItem = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const deleted = await CartItem.findByIdAndDelete(id);
     return res.json({ success: !!deleted, mes: deleted ? 'CartItem deleted' : 'Delete failed' });
+});
+
+// Lấy CartItem theo id
+exports.getCartItem = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const cartItem = await CartItem.findById(id);
+    if (!cartItem) return res.status(404).json({ success: false, mes: 'CartItem not found' });
+    return res.json({ success: true, cartItem });
 }); 

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Định nghĩa schema chung cho User, Customer, Admin
-const userSchema = new mongoose.Schema({
+const userBaseSchema = new mongoose.Schema({
     firstName: {
         type: String, // Họ
         required: true,
@@ -29,24 +29,30 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    roleId: {
-        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến Role
-        ref: 'Role',
-        required: true
-    },
     userName: {
-        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến Account
-        ref: 'Account',
+        type: String, // Tên đăng nhập duy nhất
         unique: true,
-        required: true
+        required: true,
+        trim: true
     },
     statusUserId: {
         type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến StatusUser
         ref: 'StatusUser',
-        required: true
+        required: false
+    },
+    roleId: {
+        type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến Role
+        ref: 'Role',
+        required: false
+    },
+    // Customer-specific fields (chỉ sử dụng khi role là customer)
+    shoppingCart: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ShoppingCart',
+        required: false
     }
 }, {
     timestamps: true // Tự động thêm createdAt và updatedAt
 });
 
-module.exports = userSchema;
+module.exports = userBaseSchema;

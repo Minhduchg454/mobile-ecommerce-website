@@ -13,4 +13,7 @@ router.put('/:id', ctrls.updateCart); // PUT /api/shoppingcart/:id
 // Xóa giỏ hàng
 router.delete('/:id', ctrls.deleteCart); // DELETE /api/shoppingcart/:id
 
+// Lấy tất cả giỏ hàng
+router.get('/', ctrls.getAllCarts); // GET /api/shoppingcart
+
 module.exports = router; 

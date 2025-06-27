@@ -6,7 +6,7 @@ const cartItemSchema = new mongoose.Schema({
     quantity: {
         type: Number, // Số lượng sản phẩm
         required: true,
-        min: 1 // Số lượng ít nhất là 1
+        min: [1, 'Quantity must be at least 1'] // Số lượng ít nhất là 1
     },
     // Giá của mặt hàng này khi thêm vào giỏ (có thể là giá hiện tại của sản phẩm)
     price: {

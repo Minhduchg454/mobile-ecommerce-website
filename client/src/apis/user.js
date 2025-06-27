@@ -73,3 +73,62 @@ export const apiUpdateWishlist = (pid) =>
     url: `/user/wishlist/` + pid,
     method: "put",
   })
+
+// ========== CUSTOMER API ENDPOINTS ==========
+export const apiCreateCustomer = (data) =>
+  axios({
+    url: "/user/customer",
+    method: "post",
+    data,
+  })
+
+export const apiGetCustomerInfo = (id) =>
+  axios({
+    url: `/user/customer/${id}`,
+    method: "get",
+  })
+
+export const apiGetCustomerCart = (id) =>
+  axios({
+    url: `/user/customer/${id}/cart`,
+    method: "get",
+  })
+
+export const apiGetCustomerOrders = (id) =>
+  axios({
+    url: `/user/customer/${id}/orders`,
+    method: "get",
+  })
+
+export const apiGetCustomerPreviews = (id) =>
+  axios({
+    url: `/user/customer/${id}/previews`,
+    method: "get",
+  })
+
+// ========== ADMIN API ENDPOINTS ==========
+export const apiCreateAdmin = (data) =>
+  axios({
+    url: "/user/admin",
+    method: "post",
+    data,
+  })
+
+export const apiGetAdminInfo = (id) =>
+  axios({
+    url: `/user/admin/${id}`,
+    method: "get",
+  })
+
+export const apiUpdateAdmin = (data) =>
+  axios({
+    url: "/user/admin/current",
+    method: "put",
+    data,
+  })
+
+export const apiDeleteAdmin = (id) =>
+  axios({
+    url: `/user/admin/${id}`,
+    method: "delete",
+  })
