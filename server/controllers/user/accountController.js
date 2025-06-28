@@ -20,7 +20,8 @@ exports.createAccount = async (req, res) => {
     if (existed) return res.status(400).json({ error: 'Account already exists with this userName' });
     // 4. Tạo account mới (password sẽ được hash tự động)
     const account = await Account.create({ userName, password });
-    res.status(201).json({ account });
+    const { password: pw, ...accountWithoutPassword } = account.toObject();
+    res.status(201).json({ account: accountWithoutPassword });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -29,7 +30,7 @@ exports.createAccount = async (req, res) => {
 // Lấy danh sách tất cả account
 exports.getAccounts = async (req, res) => {
   try {
-    const accounts = await Account.find();
+    const accounts = await Account.find().select('-password');
     res.json(accounts);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -39,7 +40,7 @@ exports.getAccounts = async (req, res) => {
 // Lấy chi tiết account theo id
 exports.getAccountById = async (req, res) => {
   try {
-    const account = await Account.findById(req.params.id);
+    const account = await Account.findById(req.params.id).select('-password');
     if (!account) return res.status(404).json({ error: 'Account not found' });
     res.json(account);
   } catch (err) {

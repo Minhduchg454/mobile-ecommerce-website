@@ -57,12 +57,15 @@ const register = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ success: false, mes: 'Missing email or password' });
-    // Tìm user theo email, populate roleId để lấy roleName
-    const user = await User.findOne({ email }).populate('roleId userName');
-    if (!user) return res.status(404).json({ success: false, mes: 'User not found' });
+    // Tìm account theo userName (email)
+    const account = await Account.findOne({ userName: email });
+    if (!account) return res.status(404).json({ success: false, mes: 'Account not found' });
     // Kiểm tra mật khẩu
-    const isMatch = await user.userName.isCorrectPassword(password);
+    const isMatch = await account.isCorrectPassword(password);
     if (!isMatch) return res.status(401).json({ success: false, mes: 'Invalid password' });
+    // Tìm user theo email
+    const user = await User.findOne({ email }).populate('roleId');
+    if (!user) return res.status(404).json({ success: false, mes: 'User not found' });
     // Xác định role: nếu roleName === 'admin' thì role = 1945, ngược lại role = 0
     let roleValue = 0;
     let roleName = user.roleId && user.roleId.roleName ? user.roleId.roleName : '';
@@ -130,6 +133,13 @@ const getUsers = asyncHandler(async (req, res) => {
     return res.json({ success: true, users });
 });
 
+// Lấy user theo id (không cần token)
+const getUserById = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id).populate('roleId');
+    if (!user) return res.status(404).json({ success: false, mes: 'User not found' });
+    return res.json({ success: true, user });
+});
+
 // Xuất các hàm controller
 module.exports = {
     // User functions
@@ -139,4 +149,5 @@ module.exports = {
     updateUser, // Cập nhật user
     deleteUser, // Xóa user
     getUsers, // Lấy danh sách user
+    getUserById,
 }; 
