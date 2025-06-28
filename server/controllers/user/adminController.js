@@ -16,7 +16,7 @@ exports.createAdmin = async (req, res) => {
     if (!emailRegex.test(req.body.email)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
-    // Kiểm tra email đã tồn tại chưa (User hoặc Admin)
+    // Kiểm tra email đã tồn tại chưa (User)
     const existedUser = await User.findOne({ email: req.body.email });
     if (existedUser) return res.status(400).json({ error: 'Email already exists' });
     // Luôn tự động gán statusUserId là 'active'
@@ -27,9 +27,10 @@ exports.createAdmin = async (req, res) => {
     const adminRole = await Role.findOne({ roleName: 'admin' });
     if (!adminRole) return res.status(400).json({ error: 'Role admin not found' });
     const roleId = adminRole._id;
-    // Tạo user và admin đồng bộ
+    // Tạo user
     const user = await User.create({ ...req.body, statusUserId, roleId, userName: req.body.email });
-    const admin = await Admin.create({ ...user.toObject(), _id: user._id });
+    // Tạo admin chỉ chứa _id
+    const admin = await Admin.create({ _id: user._id });
     res.status(201).json({ admin });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -38,7 +39,7 @@ exports.createAdmin = async (req, res) => {
 
 exports.getAdminById = async (req, res) => {
   try {
-    const admin = await Admin.findById(req.params.id);
+    const admin = await Admin.findById(req.params.id).populate('_id');
     if (!admin) return res.status(404).json({ message: 'Admin not found' });
     res.json(admin);
   } catch (err) {
@@ -48,10 +49,12 @@ exports.getAdminById = async (req, res) => {
 
 exports.updateAdmin = async (req, res) => {
   try {
-    const admin = await Admin.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Tìm admin
+    const admin = await Admin.findById(req.params.id);
     if (!admin) return res.status(404).json({ message: 'Admin not found' });
-    await User.findByIdAndUpdate(req.params.id, req.body); // Sync User
-    res.json(admin);
+    // Cập nhật user liên kết
+    const updatedUser = await User.findByIdAndUpdate(admin._id, req.body, { new: true });
+    res.json({ admin: { ...admin.toObject(), _id: updatedUser } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -59,10 +62,12 @@ exports.updateAdmin = async (req, res) => {
 
 exports.deleteAdmin = async (req, res) => {
   try {
+    // Tìm admin
     const admin = await Admin.findByIdAndDelete(req.params.id);
-    await User.findByIdAndDelete(req.params.id); // Sync User
     if (!admin) return res.status(404).json({ message: 'Admin not found' });
-    res.json({ message: 'Admin deleted' });
+    // Xóa user liên kết
+    const user = await User.findByIdAndDelete(admin._id);
+    res.json({ message: 'Admin and related User deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -70,7 +75,7 @@ exports.deleteAdmin = async (req, res) => {
 
 exports.getAllAdmins = async (req, res) => {
   try {
-    const admins = await Admin.find();
+    const admins = await Admin.find().populate('_id');
     res.json(admins);
   } catch (err) {
     res.status(500).json({ error: err.message });
