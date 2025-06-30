@@ -25,7 +25,18 @@ app.use(
 app.use(cookieParser());
 
 // Import unified user router
+//const userRouter = require('./routes/user');
+//const orderRouter = require('./routes/order')
+const initProductRoutes = require('./routes/product/index.js');
+const initOrderRoutes = require('./routes/order/index.js')
+const initChatBotRoutes = require('./routes/chatbot/index.js')
+
+
+// Import unified user router
 const userRouter = require('./routes/user');
+initProductRoutes(app);
+initOrderRoutes(app);
+initChatBotRoutes(app);
 
 // Mount unified user router
 app.use('/api', userRouter);
