@@ -1,3 +1,4 @@
+// services/searchProduct.js
 const Product = require("../models/product/ProductVariation");
 const Fuse = require("fuse.js");
 const he = require("he");
@@ -9,7 +10,7 @@ const searchProduct = async (query) => {
         const cleanProducts = products.map(p => ({
             ...p._doc,
             descriptionText: he.decode(
-                p.description.join(" ").replace(/<[^>]+>/g, "")
+                Array.isArray(p.description) ? p.description.join(" ").replace(/<[^>]+>/g, "") : ""
             ),
         }));
 
