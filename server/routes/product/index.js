@@ -24,3 +24,12 @@ function initProductRoutes(app) {
 }
 
 module.exports = initProductRoutes
+
+
+/*
+    Tao thuong hieu:
+    
+    {
+    "brandName": "Oppo"
+    }
+*/
