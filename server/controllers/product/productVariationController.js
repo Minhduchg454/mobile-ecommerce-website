@@ -1,31 +1,58 @@
 
 const ProductVariation = require('../../models/product/ProductVariation')
 const asyncHandler = require('express-async-handler')
+const slugify = require("slugify")
+
 
 // Tạo mới biến thể sản phẩm
 const createProductVariation = asyncHandler(async (req, res) => {
-  const {
+  let {
     productVariationName,
     price,
     stockQuantity,
-    sold,
-    image,
     productId
-  } = req.body
+  } = req.body;
 
-  if (!productVariationName || price == null || stockQuantity == null || sold == null || !productId) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing required fields.'
-    })
+  // Ép kiểu vì form-data gửi chuỗi
+  price = Number(price);
+  stockQuantity = Number(stockQuantity);
+
+  // Xử lý slug
+  if (!req.body.slug && productVariationName) {
+    req.body.slug = slugify(productVariationName);
   }
 
-  const response = await ProductVariation.create(req.body)
+  // Xử lý hình ảnh
+  if (req.files && req.files.length > 0) {
+    req.body.images = req.files.map(file => file.path);
+  }
+
+  // Kiểm tra thiếu
+  const missingFields = [];
+  if (!productVariationName) missingFields.push("productVariationName");
+  if (isNaN(price)) missingFields.push("price");
+  if (isNaN(stockQuantity)) missingFields.push("stockQuantity");
+  if (!productId) missingFields.push("productId");
+
+  if (missingFields.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: `Missing required fields: ${missingFields.join(', ')}`
+    });
+  }
+
+  // Gán lại sau khi ép kiểu
+  req.body.price = price;
+  req.body.stockQuantity = stockQuantity;
+
+  const response = await ProductVariation.create(req.body);
   return res.json({
     success: !!response,
-    createdVariation: response || 'Cannot create variation'
-  })
-})
+    createdVariation: response || "Cannot create variation"
+  });
+});
+
+
 
 // Lấy tất cả biến thể sản phẩm
 const getProductVariations = asyncHandler(async (req, res) => {
@@ -50,13 +77,30 @@ const getProductVariation = asyncHandler(async (req, res) => {
 
 // Cập nhật một biến thể
 const updateProductVariation = asyncHandler(async (req, res) => {
-  const { pvid } = req.params
-  const response = await ProductVariation.findByIdAndUpdate(pvid, req.body, { new: true })
+  const { pvid } = req.params;
+
+  // Nếu có file ảnh mới
+  if (req.files && req.files.length > 0) {
+    req.body.images = req.files.map(file => file.path);
+  }
+
+  // Ép kiểu nếu cần
+  if (req.body.price) req.body.price = Number(req.body.price);
+  if (req.body.stockQuantity) req.body.stockQuantity = Number(req.body.stockQuantity);
+  if (req.body.sold) req.body.sold = Number(req.body.sold);
+
+  // Nếu có tên nhưng chưa có slug
+  if (req.body.productVariationName && !req.body.slug) {
+    req.body.slug = slugify(req.body.productVariationName);
+  }
+
+  const response = await ProductVariation.findByIdAndUpdate(pvid, req.body, { new: true });
+
   return res.json({
     success: !!response,
     updatedVariation: response || 'Cannot update variation'
-  })
-})
+  });
+});
 
 // Xoá một biến thể
 const deleteProductVariation = asyncHandler(async (req, res) => {

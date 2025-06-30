@@ -124,6 +124,8 @@ const getProducts = asyncHandler(async (req, res) => {
 
   // 6. Tạo câu truy vấn
   let queryCommand = Product.find(finalQuery)
+      .populate("brandId", "brandName") // lấy tên thương hiệu
+      .populate("categoryId", "productCategoryName") // lấy tên danh mục
 
   // 7. Sắp xếp nếu có (?sort=price,-createdAt)
   if (req.query.sort) {
