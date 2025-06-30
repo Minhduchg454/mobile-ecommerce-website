@@ -4,6 +4,7 @@ const dbConnect = require("./config/dbconnect")
 const initRoutes = require("./routes")
 const initOrderRoutes = require("./routes/order")
 const initProductRoutes = require("./routes/product")
+const initChatBotRoutes = require("./routes/chatbot")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 
@@ -25,6 +26,7 @@ dbConnect()
 
 initOrderRoutes(app)
 initProductRoutes(app)
+initChatBotRoutes(app)
 initRoutes(app)
 
 if (process.env.NODE_ENV !== 'test') {
