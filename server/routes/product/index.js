@@ -28,8 +28,31 @@ module.exports = initProductRoutes
 
 /*
     Tao thuong hieu:
-    
+    Post : http://localhost:5000/api/brands
     {
-    "brandName": "Oppo"
+    "brandName": "Samsung"
     }
+     id: 6855b34620fcb06c67f0a1a6
+
+    Tao danh muc: 
+    Post: http://localhost:5000/api/productCategories
+    {
+        "productCategoryName": "Điện Thoại"
+    }
+     => id: 6855ba0fdffd1bd4e14fb9ff
+
+    Tao product
+    Post: http://localhost:5000/api/products
+    {
+        "productName": "Samsung Galaxy S25 Ultra",
+        "description": "Smartphone cao cấp với camera siêu nét và hiệu năng vượt trội.",
+        "brandId": "<Dung Id của brandId>",
+        "categoryId": "<Dung Id của CategoryId>"
+    }
+
+    
+
+    
+
+
 */

@@ -7,6 +7,12 @@ const productVariationSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    slug: { // URL thân thiện, thường được tạo từ productName
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true
+    },
     price: { // Theo biểu đồ: price: NumberDouble
         type: Number,
         required: true,
@@ -20,7 +26,6 @@ const productVariationSchema = new mongoose.Schema({
     },
     sold: { // Số lượng đã bán của biến thể này
         type: Number, // NumberInt
-        required: true,
         default: 0,
         min: 0
     },

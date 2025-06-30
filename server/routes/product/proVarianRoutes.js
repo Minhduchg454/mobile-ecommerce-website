@@ -4,7 +4,7 @@ const uploadCloud = require('../../config/cloudinary.config'); // middleware mul
 
 
 // Tạo biến thể sản phẩm
-router.post('/', ctrls.createProductVariation);
+router.post('/', uploadCloud.array('images', 10), ctrls.createProductVariation);
 
 // Lấy toàn bộ biến thể sản phẩm
 router.get('/', ctrls.getProductVariations);
