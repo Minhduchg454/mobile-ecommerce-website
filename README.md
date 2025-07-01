@@ -1,9 +1,9 @@
 #0 Set up project:<br>
-  clone repo
+  clone repo<br>
   npm install
 
-#1 Run server::<br>
+#1 Run server:<br>
   npm run dev
 
-#2 Run client::<br>
+#2 Run client:<br>
   npm start
