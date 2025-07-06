@@ -1,6 +1,6 @@
-import React, { useEffect } from "react"
-import { Route, Routes } from "react-router-dom"
-import Chatbot from "chatbot/Chatbot"
+import React, { useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
+import Chatbot from "chatbot/Chatbot";
 import {
   Login,
   Home,
@@ -8,12 +8,13 @@ import {
   FAQ,
   Services,
   DetailProduct,
+  DetailProduct1,
   DetailBlogs,
   Products,
   FinalRegister,
   ResetPassword,
   DetailCart,
-} from "pages/public"
+} from "pages/public";
 import {
   AdminLayout,
   ManageOrder,
@@ -23,30 +24,30 @@ import {
   Dashboard,
   CreateBlog,
   ManageBlog,
-} from "pages/admin"
+} from "pages/admin";
 import {
   MemberLayout,
   Personal,
   History,
   Wishlist,
   Checkout,
-} from "pages/member"
-import path from "ultils/path"
-import { getCategories } from "store/app/asyncActions"
-import { useDispatch, useSelector } from "react-redux"
-import { ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
-import { Cart, Modal } from "components"
-import { showCart } from "store/app/appSlice"
+} from "pages/member";
+import path from "ultils/path";
+import { getCategories } from "store/app/asyncActions";
+import { useDispatch, useSelector } from "react-redux";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Cart, Modal } from "components";
+import { showCart } from "store/app/appSlice";
 
 function App() {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
   const { isShowModal, modalChildren, isShowCart } = useSelector(
     (state) => state.app
-  )
+  );
   useEffect(() => {
-    dispatch(getCategories())
-  }, [])
+    dispatch(getCategories());
+  }, []);
   return (
     <div className="font-jp">
       {isShowCart && (
@@ -65,7 +66,7 @@ function App() {
           <Route path={path.BLOGS__ID__TITLE} element={<DetailBlogs />} />
           <Route
             path={path.DETAIL_PRODUCT__CATEGORY__PID__TITLE}
-            element={<DetailProduct />}
+            element={<DetailProduct1 />}
           />
           <Route path={path.FAQ} element={<FAQ />} />
           <Route path={path.OUR_SERVICES} element={<Services />} />
@@ -106,7 +107,7 @@ function App() {
       <ToastContainer />
       <Chatbot />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
