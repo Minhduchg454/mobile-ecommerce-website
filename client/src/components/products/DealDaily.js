@@ -11,6 +11,7 @@ import moment from "moment";
 import { useSelector } from "react-redux";
 import withBaseComponent from "hocs/withBaseComponent";
 import { getDealDaily } from "store/products/productSlice";
+import { useNavigate } from "react-router-dom";
 
 const { AiOutlineMenu } = icons;
 
@@ -19,6 +20,7 @@ const DealDaily = ({ dispatch }) => {
   const [minute, setMinute] = useState(0);
   const [second, setSecond] = useState(0);
   const { dealDaily } = useSelector((s) => s.products);
+  const navigate = useNavigate();
 
   // Hàm gọi API lấy sản phẩm ngẫu nhiên
   const fetchDealDaily = async () => {
@@ -30,7 +32,7 @@ const DealDaily = ({ dispatch }) => {
       dispatch(
         getDealDaily({
           data: randomProduct,
-          time: Date.now() + 24 * 60 * 60 * 1000, // 24 giờ
+          time: Date.now() + 12 * 60 * 60 * 1000, // 12 giờ
         })
       );
     } else {
@@ -44,6 +46,17 @@ const DealDaily = ({ dispatch }) => {
       fetchDealDaily();
     }
   }, []);
+
+  const handleRedirect = () => {
+    const data = dealDaily?.data;
+    if (data?._id && data?.slug && data?.categoryId?.productCategoryName) {
+      navigate(
+        `/${data.categoryId.productCategoryName.toLowerCase()}/${data._id}/${
+          data.slug
+        }`
+      );
+    }
+  };
 
   // Cập nhật thời gian đếm ngược mỗi khi dealDaily thay đổi
   useEffect(() => {
@@ -84,7 +97,10 @@ const DealDaily = ({ dispatch }) => {
         </span>
       </div>
 
-      <div className="w-full flex flex-col items-center pt-8 px-4 gap-2">
+      <div
+        className="w-full flex flex-col items-center pt-8 px-4 gap-2"
+        onClick={handleRedirect}
+      >
         <img
           src={
             dealDaily?.data?.thumb ||
@@ -97,7 +113,7 @@ const DealDaily = ({ dispatch }) => {
           {dealDaily?.data?.productName}
         </span>
         <span className="flex h-4">
-          {renderStarFromNumber(dealDaily?.data?.totalRatings, 20)?.map(
+          {renderStarFromNumber(dealDaily?.data?.rating, 20)?.map(
             (el, index) => (
               <span key={index}>{el}</span>
             )
@@ -112,13 +128,6 @@ const DealDaily = ({ dispatch }) => {
           <Countdown unit={"Minutes"} number={minute} />
           <Countdown unit={"Seconds"} number={second} />
         </div>
-        <button
-          type="button"
-          className="flex gap-2 items-center justify-center w-full bg-main hover:bg-gray-800 text-white font-medium py-2"
-        >
-          <AiOutlineMenu />
-          <span>Tùy chọn</span>
-        </button>
       </div>
     </div>
   );

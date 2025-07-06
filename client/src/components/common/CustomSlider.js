@@ -2,6 +2,7 @@ import React, { memo } from "react"
 import Slider from "react-slick"
 import { Product } from "components"
 
+
 const CustomSlider = ({ products, activedTab, normal, slidesToShow = 3 }) => {
   const settings = {
     dots: false,
