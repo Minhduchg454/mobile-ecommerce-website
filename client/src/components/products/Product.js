@@ -7,7 +7,7 @@ import { SelectOption } from "components";
 import icons from "ultils/icons";
 import withBaseComponent from "hocs/withBaseComponent";
 import { showModal } from "store/app/appSlice";
-import { DetailProduct } from "pages/public";
+import { DetailProduct1 } from "pages/public";
 import { apiUpdateCart, apiUpdateWishlist } from "apis";
 import { toast } from "react-toastify";
 import { getCurrent } from "store/user/asyncActions";
@@ -77,7 +77,7 @@ const Product = ({
         showModal({
           isShowModal: true,
           modalChildren: (
-            <DetailProduct
+            <DetailProduct1
               data={{
                 pid: productData?._id,
                 category: productData?.categoryId?.productCategoryName,

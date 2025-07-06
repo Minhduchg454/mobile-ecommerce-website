@@ -7,7 +7,6 @@ import {
   Public,
   FAQ,
   Services,
-  DetailProduct,
   DetailProduct1,
   DetailBlogs,
   Products,

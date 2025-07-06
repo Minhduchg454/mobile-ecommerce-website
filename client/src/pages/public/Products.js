@@ -1,85 +1,100 @@
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback } from "react";
 import {
   useParams,
   useSearchParams,
   createSearchParams,
   useNavigate,
-} from "react-router-dom"
+} from "react-router-dom";
 import {
   Breadcrumb,
   Product,
   SearchItem,
   InputSelect,
   Pagination,
-} from "../../components"
-import { apiGetProducts } from "../../apis"
-import Masonry from "react-masonry-css"
-import { sorts } from "../../ultils/contants"
+} from "../../components";
+import { apiGetProducts, apiGetCategoryIdByName } from "../../apis";
+import Masonry from "react-masonry-css";
+import { sorts } from "../../ultils/contants";
 
 const breakpointColumnsObj = {
   default: 4,
   1100: 3,
   700: 2,
   500: 1,
-}
+};
 
 const Products = () => {
-  const navigate = useNavigate()
-  const [products, setProducts] = useState(null)
-  const [activeClick, setActiveClick] = useState(null)
-  const [params] = useSearchParams()
-  const [sort, setSort] = useState("")
-  const { category } = useParams()
+  const navigate = useNavigate();
+  const [products, setProducts] = useState(null);
+  const [activeClick, setActiveClick] = useState(null);
+  const [params] = useSearchParams();
+  const [sort, setSort] = useState("");
+  const { category } = useParams();
 
   const fetchProductsByCategory = async (queries) => {
-    if (category && category !== "products") queries.category = category
-    const response = await apiGetProducts(queries)
-    if (response.success) setProducts(response)
-  }
+    if (category && category !== "products") {
+      try {
+        const response = await apiGetCategoryIdByName(category);
+        if (response.success) {
+          const categoryId = response.categoryId;
+          console.log(categoryId);
+          queries.categoryId = categoryId;
+        } else {
+          queries.categoryId = null; // fallback nếu không có
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi lấy categoryId từ tên:", err);
+      }
+    }
+
+    const response = await apiGetProducts(queries);
+    if (response.success) setProducts(response);
+  };
+
   useEffect(() => {
-    const queries = Object.fromEntries([...params])
-    let priceQuery = {}
+    const queries = Object.fromEntries([...params]);
+    let priceQuery = {};
     if (queries.to && queries.from) {
       priceQuery = {
         $and: [
           { price: { gte: queries.from } },
           { price: { lte: queries.to } },
         ],
-      }
-      delete queries.price
+      };
+      delete queries.price;
     } else {
-      if (queries.from) queries.price = { gte: queries.from }
-      if (queries.to) queries.price = { lte: queries.to }
+      if (queries.from) queries.price = { gte: queries.from };
+      if (queries.to) queries.price = { lte: queries.to };
     }
 
-    delete queries.to
-    delete queries.from
-    const q = { ...priceQuery, ...queries }
-    fetchProductsByCategory(q)
-    window.scrollTo(0, 0)
-  }, [params])
+    delete queries.to;
+    delete queries.from;
+    const q = { ...priceQuery, ...queries };
+    fetchProductsByCategory(q);
+    window.scrollTo(0, 0);
+  }, [params]);
   const changeActiveFitler = useCallback(
     (name) => {
-      if (activeClick === name) setActiveClick(null)
-      else setActiveClick(name)
+      if (activeClick === name) setActiveClick(null);
+      else setActiveClick(name);
     },
     [activeClick]
-  )
+  );
   const changeValue = useCallback(
     (value) => {
-      setSort(value)
+      setSort(value);
     },
     [sort]
-  )
+  );
 
   useEffect(() => {
     if (sort) {
       navigate({
         pathname: `/${category}`,
         search: createSearchParams({ sort }).toString(),
-      })
+      });
     }
-  }, [sort])
+  }, [sort]);
   return (
     <div className="w-full">
       <div className="h-[81px] flex justify-center items-center bg-gray-100">
@@ -126,7 +141,7 @@ const Products = () => {
       </div>
       <div className="w-full h-[100px]"></div>
     </div>
-  )
-}
+  );
+};
 
-export default Products
+export default Products;
