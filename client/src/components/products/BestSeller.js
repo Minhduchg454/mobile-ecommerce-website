@@ -1,40 +1,40 @@
-import React, { useState, useEffect, memo } from "react"
-import { apiGetProducts } from "apis/product"
-import { CustomSlider } from "components"
-import { getNewProducts } from "store/products/asynsActions"
-import { useDispatch, useSelector } from "react-redux"
-import sell1 from '../../assets/sell1.jpg'
-import sell2 from '../../assets/sell2.jpg'
-import clsx from "clsx"
+import React, { useState, useEffect, memo } from "react";
+import { apiGetProducts } from "apis/product";
+import { CustomSlider } from "components";
+import { getNewProducts } from "store/products/asynsActions";
+import { useDispatch, useSelector } from "react-redux";
+import sell1 from "../../assets/sell1.jpg";
+import sell2 from "../../assets/sell2.jpg";
+import clsx from "clsx";
 
 const tabs = [
   { id: 1, name: "BÁN CHẠY NHẤT" },
   { id: 2, name: "MỚI NHẤT" },
-]
+];
 
 const BestSeller = () => {
-  const [bestSellers, setBestSellers] = useState(null)
-  const [activedTab, setActivedTab] = useState(1)
-  const [products, setProducts] = useState(null)
-  const dispatch = useDispatch()
-  const { newProducts } = useSelector((state) => state.products)
-  const { isShowModal } = useSelector((state) => state.app)
+  const [bestSellers, setBestSellers] = useState(null);
+  const [activedTab, setActivedTab] = useState(1);
+  const [products, setProducts] = useState(null);
+  const dispatch = useDispatch();
+  const { newProducts } = useSelector((state) => state.products);
+  const { isShowModal } = useSelector((state) => state.app);
 
   const fetchProducts = async () => {
-    const response = await apiGetProducts({ sort: "-sold" })
+    const response = await apiGetProducts({ sort: "-sold" });
     if (response.success) {
-      setBestSellers(response.products)
-      setProducts(response.products)
+      setBestSellers(response.products);
+      setProducts(response.products);
     }
-  }
+  };
   useEffect(() => {
-    fetchProducts()
-    dispatch(getNewProducts())
-  }, [])
+    fetchProducts();
+    dispatch(getNewProducts());
+  }, []);
   useEffect(() => {
-    if (activedTab === 1) setProducts(bestSellers)
-    if (activedTab === 2) setProducts(newProducts)
-  }, [activedTab])
+    if (activedTab === 1) setProducts(bestSellers);
+    if (activedTab === 2) setProducts(newProducts);
+  }, [activedTab]);
   return (
     <div className={clsx(isShowModal ? "hidden" : "")}>
       <div className="flex text-[20px] ml-[-32px]">
@@ -61,19 +61,11 @@ const BestSeller = () => {
         />
       </div>
       <div className="w-[440px] flex flex-col md:flex-row gap-4 mt-4">
-        <img
-          src={sell1}
-          alt="banner"
-          className="flex-1 object-contain"
-        />
-        <img
-          src={sell2}
-          alt="banner"
-          className="flex-1 object-contain"
-        />
+        <img src={sell1} alt="banner" className="flex-1 object-contain" />
+        <img src={sell2} alt="banner" className="flex-1 object-contain" />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default memo(BestSeller)
+export default memo(BestSeller);
