@@ -1,48 +1,49 @@
 const model_gemini = require('../../config/genmini');
-const { getCurrentWeather, searchProduct } = require('./functioncalling/utilities');
+const { getCurrentWeather, searchProductForChatBot } = require('./functioncalling/utilities');
 
 // Định nghĩa hàm mapping để gọi các hàm thực tế
 const availableFunctions = {
     get_current_temperature: getCurrentWeather,
-    search_product: searchProduct
+    search_product: searchProductForChatBot
 };
 
 // Định nghĩa các công cụ (tools) cho Gemini
 const tools = [{
-    function_declarations: [{
-        name: 'get_current_temperature',
-        description: 'Gets the current temperature for a given location.',
-        parameters: {
-            type: 'object',
-            properties: {
-                location: {
-                    type: 'string',
-                    description: 'The city name, e.g. San Francisco',
+    function_declarations: [
+        {
+            name: 'get_current_temperature',
+            description: 'Gets the current temperature for a given location.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    location: {
+                        type: 'string',
+                        description: 'The city name, e.g. San Francisco',
+                    },
+                    // Nếu hàm getCurrentWeather của bạn có tham số 'unit', hãy thêm vào đây
+                    // unit: {
+                    //     type: 'string',
+                    //     enum: ["celsius", "fahrenheit"],
+                    //     description: "Đơn vị nhiệt độ (mặc định là celsius).",
+                    // },
                 },
-                // Nếu hàm getCurrentWeather của bạn có tham số 'unit', hãy thêm vào đây
-                // unit: {
-                //     type: 'string',
-                //     enum: ["celsius", "fahrenheit"],
-                //     description: "Đơn vị nhiệt độ (mặc định là celsius).",
-                // },
+                required: ['location'],
             },
-            required: ['location'],
         },
-    },
-    {
-        name: 'search_product',
-        description: 'Tìm kiếm sản phẩm theo từ khóa mô tả do người dùng cung cấp.',
-        parameters: {
-            type: 'object',
-            properties: {
-                query: {
-                    type: 'string',
-                    description: 'Từ khóa hoặc mô tả sản phẩm cần tìm, ví dụ: "Laptop mỏng nhẹ màu xám".'
-                }
-            },
-            required: ['query']
+        {
+            name: 'search_product',
+            description: 'Tìm kiếm sản phẩm theo từ khóa mô tả do người dùng cung cấp.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    query: {
+                        type: 'string',
+                        description: 'Từ khóa hoặc mô tả sản phẩm cần tìm, ví dụ: "Laptop mỏng nhẹ màu xám".'
+                    }
+                },
+                required: ['query']
+            }
         }
-    }
     ],
 }];
 
@@ -118,7 +119,7 @@ exports.getResponse = async (req, res) => {
 
                 // Thực thi hàm và lấy kết quả
                 // Đảm bảo getCurrentWeather là async nếu nó thực hiện các hoạt động bất đồng bộ
-                const callResult = await functionToCall(functionArgs.location, functionArgs.unit);
+                const callResult = await functionToCall(functionArgs);
 
                 // Gửi kết quả của hàm trở lại Gemini
                 // RẤT QUAN TRỌNG: Gửi kết quả dưới dạng một Content object

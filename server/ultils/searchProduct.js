@@ -1,42 +1,53 @@
-// services/searchProduct.js
-const getCategoriesWithAllChild = require('./getCategoriesWithAllChild')
-const Product = require("../models/product/ProductVariation");
+const getCategoriesWithAllChild = require('./getCategoriesWithAllChild');
 const Fuse = require("fuse.js");
 const he = require("he");
 
 const searchProduct = async (query) => {
     try {
-        const data = await getCategoriesWithAllChild();
+        const categories = await getCategoriesWithAllChild();
         const allProductVariations = [];
-        for (const category of data) {
-            console.log(category)
-            for (const product of category.products || []) {
-                for (const productVariation of product.productVariations) {
+
+        for (const category of categories) {
+            const products = category.products || [];
+
+            for (const product of products) {
+                const variations = Array.isArray(product.variations) ? product.variations : [];
+
+                for (const variation of variations) {
+
+                    const specifications = (variation.valueOfSpecifications || []).map(v => {
+                        return {
+                            type: v.specificationTypeId?.typeSpecifications || 'Không rõ',
+                            value: v.value
+                        };
+                    });
+
                     allProductVariations.push({
-                        ...productVariation,
-                        categoryName: category.productCategoryName,
+                        // ...variation,
+                        variationId: variation._id?.toString() || null,
+                        title: `${product.productName} - ${variation.color || ''} ${variation.storage || ''}`.trim(),
                         productName: product.productName,
-                        description: product.description,
-                        brand: product.brandId, // nếu cần
-                        slug: product.slug,     // nếu cần
+                        slug: product.slug,
+                        brand: product.brandId,
+                        categoryName: category.productCategoryName,
+                        descriptionText: he.decode(
+                            typeof product.description === 'string'
+                                ? product.description.replace(/<[^>]+>/g, "")
+                                : ""
+                        ),
+                        price: variation.price,
+                        image: Array.isArray(variation.images) ? variation.images[0] : null,
+                        specifications,
                     });
                 }
             }
         }
-        console.log(allProductVariations)
 
-        const products = await Product.find({});
-
-        const cleanProducts = products.map(p => ({
-            ...p._doc,
-            descriptionText: he.decode(
-                Array.isArray(p.description) ? p.description.join(" ").replace(/<[^>]+>/g, "") : ""
-            ),
-        }));
+        // console.log(allProductVariations[0])
 
         const options = {
             includeScore: true,
-            threshold: 0.6,
+            threshold: 0.5,
             ignoreLocation: true,
             minMatchCharLength: 2,
             keys: [
@@ -44,24 +55,20 @@ const searchProduct = async (query) => {
                 "slug",
                 "descriptionText",
                 "brand",
-                "category",
+                "categoryName",
                 "color",
-            ],
+                "storage",
+                "specifications.type",   // ✅ tìm theo loại thông số
+                "specifications.value"   // ✅ tìm theo giá trị thông số
+            ]
         };
 
-        const fuse = new Fuse(cleanProducts, options);
+        const fuse = new Fuse(allProductVariations, options);
+        const results = fuse.search(query);
 
-        const result = fuse.search(query);
-
-        return result.map(r => ({
-            title: r.item.title,
-            price: r.item.price,
-            color: r.item.color,
-            description: r.item.descriptionText,
-            score: r.score,
-        }));
+        return results;
     } catch (err) {
-        console.error("Lỗi khi tìm kiếm:", err);
+        console.error("❌ Lỗi khi tìm kiếm:", err);
         return [];
     }
 };

@@ -23,40 +23,26 @@ async function getCurrentWeather(location) { // Thêm async nếu bạn đang g�
         return errorResult;
     }
 
-    // --- Nếu bạn có code gọi API thời tiết thực tế, hãy đảm bảo nó hoạt động ---
-    /*
-    // Ví dụ gọi OpenWeatherMap API (Bạn cần đăng ký API key và bỏ comment ra)
-    // const apiKey = process.env.OPENWEATHER_API_KEY; // Hoặc một biến môi trường khác
-    // if (!apiKey) {
-    //     console.error("OPENWEATHER_API_KEY không được đặt!");
-    //     return { error: "Thiếu cấu hình API key thời tiết." };
-    // }
-    // const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`;
-    // try {
-    //     const fetch = require('node-fetch'); // Cần install node-fetch: npm install node-fetch
-    //     const response = await fetch(apiUrl);
-    //     const data = await response.json();
-
-    //     if (response.ok && data.main && data.weather) {
-    //         const weatherData = {
-    //             location: data.name,
-    //             temperature: data.main.temp.toString(),
-    //             unit: "celsius",
-    //             conditions: data.weather[0].description,
-    //         };
-    //         console.log("[getCurrentWeather] Trả về (API):", weatherData);
-    //         return weatherData;
-    //     } else {
-    //         console.error("[getCurrentWeather] Lỗi từ API thời tiết:", data.message || "Không có dữ liệu.");
-    //         return { error: data.message || "Không tìm thấy dữ liệu thời tiết từ API.", location: location };
-    //     }
-    // } catch (error) {
-    //     console.error("[getCurrentWeather] Lỗi khi gọi API thời tiết:", error);
-    //     return { error: "Lỗi kết nối API thời tiết.", location: location };
-    // }
-    */
 }
 
+// const { Query } = require("mongoose");
 const searchProduct = require("../../../ultils/searchProduct");
 
-module.exports = { getCurrentWeather, searchProduct };
+async function searchProductForChatBot(query) {
+    console.log(query);
+
+    const result = await searchProduct(query.query); // trả về danh sách sản phẩm
+    if (!Array.isArray(result) || result.length === 0) {
+        return { suggestions: "❌ Không tìm thấy sản phẩm nào phù hợp với yêu cầu." };
+    }
+
+    // Chuyển thành đoạn text ngắn gọn
+    const textResult = result.map((product, index) => {
+        const item = product.item;
+        return `🔹 ${index + 1}. ${item.productName} - ${item.price.toLocaleString()}₫ (${item.categoryName})`;
+    }).join("\n");
+
+    return { suggestions: textResult }; // bọc text trong object để tương thích với Gemini
+};
+
+module.exports = { getCurrentWeather, searchProductForChatBot };

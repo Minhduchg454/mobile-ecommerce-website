@@ -11,8 +11,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/your-db-n
     console.log('✅ Đã kết nối MongoDB');
 
     // Gọi hàm searchProduct
-    const result = await searchProduct('samsung'); // Thay từ khóa tại đây
+    const result = await searchProduct('samsung 8Gb'); // Thay từ khóa tại đây
     console.log('🔍 Kết quả tìm kiếm:', result);
+    const util = require('util');
+    console.log(util.inspect(result, { depth: null, colors: true }));
 
     mongoose.disconnect();
 }).catch((err) => {

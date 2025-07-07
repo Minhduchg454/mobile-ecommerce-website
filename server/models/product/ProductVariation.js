@@ -54,4 +54,18 @@ const productVariationSchema = new mongoose.Schema({
     timestamps: true // Tự động thêm createdAt và updatedAt
 });
 
+
+productVariationSchema.virtual('valueOfSpecifications', {
+    ref: 'ValueOfSpecifications',
+    localField: '_id',
+    foreignField: 'productVariationId'
+});
+
+
+productVariationSchema.set('toObject', { virtuals: true });
+productVariationSchema.set('toJSON', { virtuals: true });
+productVariationSchema.set('toJSON', {
+    versionKey: false
+})
+
 module.exports = mongoose.model('ProductVariation', productVariationSchema);
