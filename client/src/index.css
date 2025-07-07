@@ -115,3 +115,9 @@ code {
 .my-auto {
   margin: auto 0;
 }
+
+@layer components {
+  .card-default {
+    @apply bg-card-bg shadow-card rounded-xl transition transform hover:scale-103;
+  }
+}

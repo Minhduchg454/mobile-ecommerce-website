@@ -22,13 +22,13 @@ const Home = ({ navigate }) => {
 
   return (
     <div className="w-full px-4">
-      <div className="my-8 w-main m-auto">
+      <div className="my-8 w-main m-auto ">
         <CategoryList />
       </div>
       <div className="md:w-main m-auto flex flex-col md:flex-row mt-6">
-        <div className="flex flex-col gap-5 md:w-[25%] flex-auto">
-          <Sidebar />
+        <div className="flex flex-col gap-5 md:w-[25%] flex-auto border-none">
           <DealDaily />
+          <Sidebar />
         </div>
         <div className="flex flex-col gap-5 md:pl-5 md:w-[75%] flex-auto">
           <Banner />

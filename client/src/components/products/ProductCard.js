@@ -20,7 +20,7 @@ const ProductCard = ({
           `/${category?.productCategoryName.toLowerCase()}/${pid}/${productName}`
         )
       }
-      className="cursor-pointer max-w-[320px]"
+      className="card-default  cursor-pointer max-w-[320px]"
     >
       <div className="flex w-full border rounded-md shadow-sm overflow-hidden">
         <img

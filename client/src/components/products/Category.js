@@ -21,7 +21,7 @@ const CategoryList = ({ navigate }) => {
         {categories?.map((el) => (
           <div
             key={el._id}
-            className="flex items-center gap-3 border p-3 rounded-md shadow-sm hover:shadow-md cursor-pointer transition min-h-[80px]"
+            className="card-default flex items-center gap-3 border p-3 cursor-pointer min-h-[80px]"
             onClick={() => navigate(`/${el.slug}`)}
           >
             <img

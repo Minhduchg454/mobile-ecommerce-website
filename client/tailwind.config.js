@@ -33,6 +33,7 @@ module.exports = {
       },
       colors: {
         main: "#ee3131",
+        "card-bg": "#fefefe",
       },
       flex: {
         2: "2 2 0%",
@@ -94,10 +95,16 @@ module.exports = {
         "scale-up-center":
           "scale-up-center 0.15s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;",
       },
+      scale: {
+        103: "1.02",
+      },
+      boxShadow: {
+        card: "0 4px 10px rgba(0, 0, 0, 0.1)", // shadow mềm
+      },
     },
   },
   plugins: [
     require("@tailwindcss/line-clamp"),
     require("@tailwindcss/forms")({ strategy: "class" }),
   ],
-}
+};

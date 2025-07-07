@@ -8,11 +8,7 @@ import icons from "ultils/icons";
 import withBaseComponent from "hocs/withBaseComponent";
 import { showModal } from "store/app/appSlice";
 import { DetailProduct1 } from "pages/public";
-import {
-  apiUpdateCart,
-  apiUpdateWishlist,
-  apiGetAllProductCategories,
-} from "apis";
+import { apiUpdateCart, apiUpdateWishlist } from "apis";
 import { toast } from "react-toastify";
 import { getCurrent } from "store/user/asyncActions";
 import { useSelector } from "react-redux";
@@ -96,7 +92,7 @@ const Product = ({
   return (
     <div className={clsx("w-full col-span-1 text-base px-[10px]", className)}>
       <div
-        className="w-full border p-[15px] flex flex-col items-center"
+        className="card-default w-full border p-[15px] flex flex-col items-center"
         onClick={(e) =>
           navigate(
             `/${productData?.categoryId?.slug}/${productData?._id}/${productData?.slug}`

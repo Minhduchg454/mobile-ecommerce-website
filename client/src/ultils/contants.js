@@ -314,7 +314,17 @@ export const priceRanges = [
   },
   {
     id: "4",
-    value: "2000000-999999999",
-    text: "Trên 2 triệu",
+    value: "2000000-10000000",
+    text: "2 - 10 triệu",
+  },
+  {
+    id: "5",
+    value: "10000000-20000000",
+    text: "10 - 20 triệu",
+  },
+  {
+    id: "6",
+    value: "20000000-9999999999",
+    text: "Trên 20 triệu",
   },
 ];
