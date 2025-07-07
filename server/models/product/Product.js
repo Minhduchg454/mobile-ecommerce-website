@@ -31,6 +31,10 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now, // Tự động điền ngày hiện tại khi tạo
   },
+  totalSold: { //Tong so luong bien the ban ra
+    type: Number,
+    default: 0,
+  },
   rating: {
     // Điểm đánh giá trung bình
     type: Number, // NumberInt

@@ -124,32 +124,32 @@ export const sorts = [
   },
   {
     id: 2,
-    value: "-title",
+    value: "-productName",
     text: "Sắp xếp theo tên từ Z-A",
   },
   {
     id: 3,
-    value: "title",
+    value: "productName",
     text: "Sắp xếp theo tên từ A-Z",
   },
   {
     id: 4,
-    value: "-price",
+    value: "-minPrice",
     text: "Giá từ cao tới thấp",
   },
   {
     id: 5,
-    value: "price",
+    value: "minPrice",
     text: "Giá từ thấp tới cao",
   },
   {
     id: 6,
-    value: "-createdAt",
+    value: "createAt",
     text: "Cũ nhất",
   },
   {
     id: 7,
-    value: "createdAt",
+    value: "-createAt",
     text: "Mới nhất",
   },
 ];

@@ -193,12 +193,12 @@ const ProductDetail1 = ({
   const handleAddToCart = async () => {};
 
   // Debug log
-  useEffect(() => {
-    console.log("🔍 Sản phẩm:", product);
-    console.log("🔍 Biến thể:", variations);
-    console.log("🔍 Liên quan:", relatedProducts);
-    console.log("🔍 Biến thể hiện được chọn:", currentProduct);
-  }, [product, variations, relatedProducts, currentProduct]);
+  // useEffect(() => {
+  //   console.log("🔍 Sản phẩm:", product);
+  //   console.log("🔍 Biến thể:", variations);
+  //   console.log("🔍 Liên quan:", relatedProducts);
+  //   console.log("🔍 Biến thể hiện được chọn:", currentProduct);
+  // }, [product, variations, relatedProducts, currentProduct]);
 
   return (
     <div className={clsx("w-full")}>
@@ -210,7 +210,7 @@ const ProductDetail1 = ({
             </h3>
             <Breadcrumb
               title={product?.slug || "Sản phẩm"}
-              category={product?.categoryId?.productCategoryName || "Danh mục"}
+              category={product?.categoryId?.slug || "Danh mục"}
             />
           </div>
         </div>

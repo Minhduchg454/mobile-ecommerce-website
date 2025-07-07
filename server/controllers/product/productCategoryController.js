@@ -1,55 +1,85 @@
+// controllers/productCategory.js
 const ProductCategory = require("../../models/product/ProductCategory");
 const asyncHandler = require("express-async-handler");
+const slugify = require("slugify");
 
+// CREATE
 const createCategory = asyncHandler(async (req, res) => {
-  const response = await ProductCategory.create(req.body);
-  return res.json({
-    success: response ? true : false,
-    createdCategory: response ? response : "Cannot create new product-category",
-  });
-});
-const getCategories = asyncHandler(async (req, res) => {
-  const response = await ProductCategory.find();
-  return res.json({
-    success: response ? true : false,
-    prodCategories: response ? response : "Cannot get product-category",
-  });
-});
-const updateCategory = asyncHandler(async (req, res) => {
-  const { pcid } = req.params;
-  const response = await ProductCategory.findByIdAndUpdate(pcid, req.body, {
-    new: true,
-  });
-  return res.json({
-    success: response ? true : false,
-    updatedCategory: response ? response : "Cannot update product-category",
-  });
-});
-const deleteCategory = asyncHandler(async (req, res) => {
-  const { pcid } = req.params;
-  const response = await ProductCategory.findByIdAndDelete(pcid);
-  return res.json({
-    success: response ? true : false,
-    deletedCategory: response ? response : "Cannot delete product-category",
-  });
-});
-const getCategoryIdByName = asyncHandler(async (req, res) => {
-  const { productCategoryName } = req.query;
+  const { productCategoryName } = req.body;
+  const file = req?.file;
 
-  if (!productCategoryName) {
+  if (!productCategoryName || !file)
     return res.status(400).json({
       success: false,
-      message: "Missing category name",
+      message: "Missing productCategoryName or thumbnail image",
     });
-  }
 
-  const response = await ProductCategory.findOne({
-    productCategoryName: productCategoryName,
+  const slug = slugify(productCategoryName, { lower: true });
+
+  const category = await ProductCategory.create({
+    productCategoryName,
+    slug,
+    thumb: file.path, // Cloudinary trả về link URL tại đây
   });
+
   return res.json({
-    success: response ? true : false,
-    categoryId: response?._id || null,
-    category: response || "Cannot find category with this name",
+    success: category ? true : false,
+    createdCategory: category || "Cannot create new product category",
+  });
+});
+
+// GET ALL
+const getCategories = asyncHandler(async (req, res) => {
+  const categories = await ProductCategory.find();
+  return res.json({
+    success: categories ? true : false,
+    prodCategories: categories || "Cannot get product categories",
+  });
+});
+
+// UPDATE
+const updateCategory = asyncHandler(async (req, res) => {
+  const { pcid } = req.params;
+  const file = req?.file;
+
+  let dataUpdate = { ...req.body };
+
+  if (dataUpdate.productCategoryName)
+    dataUpdate.slug = slugify(dataUpdate.productCategoryName, { lower: true });
+
+  if (file) dataUpdate.thumb = file.path; // Cloudinary URL
+
+  const updated = await ProductCategory.findByIdAndUpdate(pcid, dataUpdate, {
+    new: true,
+  });
+
+  return res.json({
+    success: updated ? true : false,
+    updatedCategory: updated || "Cannot update product category",
+  });
+});
+
+// DELETE
+const deleteCategory = asyncHandler(async (req, res) => {
+  const { pcid } = req.params;
+  const deleted = await ProductCategory.findByIdAndDelete(pcid);
+  return res.json({
+    success: deleted ? true : false,
+    deletedCategory: deleted || "Cannot delete product category",
+  });
+});
+
+// GET CATEGORY BY NAME
+const getCategoryIdByName = asyncHandler(async (req, res) => {
+  const { productCategoryName } = req.query;
+  if (!productCategoryName)
+    return res.status(400).json({ success: false, message: "Missing name" });
+
+  const category = await ProductCategory.findOne({ slug: productCategoryName });
+  return res.json({
+    success: category ? true : false,
+    categoryId: category?._id,
+    category: category || "Cannot find category with this name",
   });
 });
 

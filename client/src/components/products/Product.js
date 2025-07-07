@@ -8,7 +8,11 @@ import icons from "ultils/icons";
 import withBaseComponent from "hocs/withBaseComponent";
 import { showModal } from "store/app/appSlice";
 import { DetailProduct1 } from "pages/public";
-import { apiUpdateCart, apiUpdateWishlist } from "apis";
+import {
+  apiUpdateCart,
+  apiUpdateWishlist,
+  apiGetAllProductCategories,
+} from "apis";
 import { toast } from "react-toastify";
 import { getCurrent } from "store/user/asyncActions";
 import { useSelector } from "react-redux";
@@ -17,7 +21,7 @@ import path from "ultils/path";
 import { BsFillCartCheckFill, BsFillCartPlusFill } from "react-icons/bs";
 import { createSearchParams } from "react-router-dom";
 import clsx from "clsx";
-
+import { ProductCard } from "components";
 const { AiFillEye, BsFillSuitHeartFill } = icons;
 
 const Product = ({
@@ -95,9 +99,7 @@ const Product = ({
         className="w-full border p-[15px] flex flex-col items-center"
         onClick={(e) =>
           navigate(
-            `/${productData?.categoryId?.productCategoryName.toLowerCase()}/${
-              productData?._id
-            }/${productData?.slug}`
+            `/${productData?.categoryId?.slug}/${productData?._id}/${productData?.slug}`
           )
         }
         onMouseEnter={(e) => {
@@ -167,12 +169,15 @@ const Product = ({
           )}
         </div>
         <div className="flex flex-col mt-[15px] items-start gap-1 w-full">
-          <span className="flex h-4">
+          <span className="flex h-4 items-center gap-1">
             {renderStarFromNumber(productData?.totalRating)?.map(
               (el, index) => (
                 <span key={index}>{el}</span>
               )
             )}
+            <span className="text-gray-500 ml-2">
+              {"Đã bán " + productData?.totalSold}
+            </span>
           </span>
           <span className="line-clamp-1">{productData?.productName}</span>
           <span>{`${formatMoney(productData?.minPrice)} VND`}</span>
