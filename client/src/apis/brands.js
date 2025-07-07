@@ -3,7 +3,7 @@ import axios from "../axios";
 // Lấy danh sách tất cả thương hiệu
 export const apiGetBrands = (params) =>
   axios({
-    url: "/brand/",
+    url: "/brands/",
     method: "get",
     params,
   });
@@ -11,7 +11,7 @@ export const apiGetBrands = (params) =>
 // Tạo mới một thương hiệu
 export const apiCreateBrand = (data) =>
   axios({
-    url: "/brand/",
+    url: "/brands/",
     method: "post",
     data,
   });
@@ -19,7 +19,7 @@ export const apiCreateBrand = (data) =>
 // Cập nhật thương hiệu theo ID
 export const apiUpdateBrand = (bid, data) =>
   axios({
-    url: `/brand/${bid}`,
+    url: `/brands/${bid}`,
     method: "put",
     data,
   });
@@ -27,6 +27,6 @@ export const apiUpdateBrand = (bid, data) =>
 // Xoá thương hiệu theo ID
 export const apiDeleteBrand = (bid) =>
   axios({
-    url: `/brand/${bid}`,
+    url: `/brands/${bid}`,
     method: "delete",
   });

@@ -1,9 +1,15 @@
 import React from "react";
 
-const SelectableList = ({ title, items, selectedId, onSelect }) => {
+const SelectableList = ({
+  title,
+  items,
+  selectedId,
+  onSelect,
+  labelField = "productCategoryName", // Mặc định danh mục
+  valueField = "_id",
+}) => {
   return (
     <div className="flex flex-col gap-2 max-w-[200px]">
-      <label className="font-semibold text-sm">{title}</label>
       <select
         value={selectedId}
         onChange={(e) => onSelect(e.target.value)}
@@ -11,8 +17,8 @@ const SelectableList = ({ title, items, selectedId, onSelect }) => {
       >
         <option value="">-- Chọn {title.toLowerCase()} --</option>
         {(items || []).map((item) => (
-          <option key={item._id} value={item._id}>
-            {item.productCategoryName || item.brandName}
+          <option key={item[valueField]} value={item[valueField]}>
+            {item[labelField]}
           </option>
         ))}
       </select>
