@@ -1,38 +1,43 @@
 //Giup tuong tac voi mongoDB products collection
-const Product = require("../../models/product/Product")
-const asyncHandler = require("express-async-handler")
-const ProductVariation = require('../../models/product/ProductVariation');
-
-
+const Product = require("../../models/product/Product");
+const asyncHandler = require("express-async-handler");
+const ProductVariation = require("../../models/product/ProductVariation");
 
 // Thư viện slugify để tạo slug từ tiêu đề sản phẩm
 //vd: "Áo thun nam" => "ao-thun-nam", thuong dung de tao duuong dan url
-const slugify = require("slugify")
+const slugify = require("slugify");
 
 // Tạo ra một chuỗi ID ngắn duy nhất, ví dụ dùng cho mã sản phẩm (SKU).
-const makeSKU = require("uniqid")
-
+const makeSKU = require("uniqid");
 
 // Tạo sản phẩm mới
 const createProduct = asyncHandler(async (req, res) => {
-  const thumb = req?.file?.path
-  if (thumb) req.body.thumb = thumb
+  const thumb = req?.file?.path;
+  if (thumb) req.body.thumb = thumb;
 
-  const requiredFields = ["productName", "description", "brandId", "categoryId", "thumb"]
-  const missing = requiredFields.filter(field => !req.body[field])
+  const requiredFields = [
+    "productName",
+    "description",
+    "brandId",
+    "categoryId",
+    "thumb",
+  ];
+  const missing = requiredFields.filter((field) => !req.body[field]);
   if (missing.length) {
-    return res.status(400).json({ success: false, mes: `Missing fields: ${missing.join(", ")}` })
+    return res
+      .status(400)
+      .json({ success: false, mes: `Missing fields: ${missing.join(", ")}` });
   }
-  if (!req.body.slug && req.body.productName) { 
-    req.body.slug = slugify(req.body.productName)
+  if (!req.body.slug && req.body.productName) {
+    req.body.slug = slugify(req.body.productName);
   }
-  
-  const newProduct = await Product.create(req.body)
+
+  const newProduct = await Product.create(req.body);
   return res.status(200).json({
     success: newProduct ? true : false,
     mes: newProduct ? "Created" : "Failed.",
-  })
-})
+  });
+});
 /*
   postman kiểm thử:
   POST http://localhost:5000/api/products
@@ -45,121 +50,113 @@ const createProduct = asyncHandler(async (req, res) => {
 }
 */
 
-
-
 //// Lấy thông tin sản phẩm theo ID và bao gồm thông tin đánh giá của sản phẩm
 const getProduct = asyncHandler(async (req, res) => {
-  const { pid } = req.params
+  const { pid } = req.params;
 
   const product = await Product.findById(pid)
     .populate("brandId", "brandName") // lấy tên thương hiệu
-    .populate("categoryId", "productCategoryName") // lấy tên danh mục
+    .populate("categoryId", "productCategoryName"); // lấy tên danh mục
 
   return res.status(200).json({
     success: !!product,
     productData: product || "Cannot get product",
-  })
-})
-
-
+  });
+});
 
 // Lấy danh sách sản phẩm với các tùy chọn lọc, sắp xếp và phân trang
 const getProducts = asyncHandler(async (req, res) => {
   // Lấy tất cả các query từ request
-  const queries = { ...req.query }
+  const queries = { ...req.query };
 
   // 1. Loại bỏ các field không dùng để filter, chỉ giữ lại các trường có thể lọc trực tiếp
-      //q: là tư khoá tông quát, không dùng để lọc
-      //sort: là sắp xếp, không dùng để lọc
-      //page: là phân trang, không dùng để lọc
-      //fields: là giới hạn trường trả về, không dùng để lọc
-      //limit: là giới hạn số lượng sản phẩm trả về, không dùng để lọc
-  const excludeFields = ["limit", "sort", "page", "fields", "q"]
-  excludeFields.forEach((el) => delete queries[el])
+  //q: là tư khoá tông quát, không dùng để lọc
+  //sort: là sắp xếp, không dùng để lọc
+  //page: là phân trang, không dùng để lọc
+  //fields: là giới hạn trường trả về, không dùng để lọc
+  //limit: là giới hạn số lượng sản phẩm trả về, không dùng để lọc
+  const excludeFields = ["limit", "sort", "page", "fields", "q"];
+  excludeFields.forEach((el) => delete queries[el]);
 
   // 2. Format lại các toán tử như gte, lte, gt, lt...
-  let queryString = JSON.stringify(queries)
+  let queryString = JSON.stringify(queries);
   queryString = queryString.replace(
     /\b(gte|gt|lt|lte)\b/g,
     (match) => `$${match}`
-  )
- 
+  );
 
   // 3. Tìm kiếm theo keyword toàn cục nếu có (?q=iphone)
-    // Áp dụng cho chuỗi
-  let searchQuery = {}
+  // Áp dụng cho chuỗi
+  let searchQuery = {};
   if (req.query.q) {
-    const keyword = req.query.q
+    const keyword = req.query.q;
     searchQuery = {
       $or: [
         { productName: { $regex: keyword, $options: "i" } },
         { description: { $regex: keyword, $options: "i" } },
       ],
-    }
+    };
   }
 
-  const formatedQueries = JSON.parse(queryString)
+  const formatedQueries = JSON.parse(queryString);
   // 3.1 Nếu có tìm kiếm theo tên sản phẩm (productName) → dùng regex
   if (queries?.productName) {
-  formatedQueries.productName = {
-    $regex: queries.productName,
-    $options: "i",
+    formatedQueries.productName = {
+      $regex: queries.productName,
+      $options: "i",
+    };
   }
-  } 
 
   // 4. Nếu người dùng gửi brandId hoặc categoryId (ở dạng ObjectId) → lọc trực tiếp (không dùng regex)
   if (req.query.brandId) {
-    formatedQueries.brandId = req.query.brandId
+    formatedQueries.brandId = req.query.brandId;
   }
 
   if (req.query.categoryId) {
-    formatedQueries.categoryId = req.query.categoryId
+    formatedQueries.categoryId = req.query.categoryId;
   }
 
   // 5. Tổng hợp điều kiện lọc (filter + search)
   const finalQuery = {
     ...formatedQueries,
     ...searchQuery,
-  }
+  };
 
   // 6. Tạo câu truy vấn
   let queryCommand = Product.find(finalQuery)
+    .populate("brandId", "brandName") // lấy tên thương hiệu
+    .populate("categoryId", "productCategoryName"); // lấy tên danh mục
 
   // 7. Sắp xếp nếu có (?sort=price,-createdAt)
   if (req.query.sort) {
-    const sortBy = req.query.sort.split(",").join(" ")
-    queryCommand = queryCommand.sort(sortBy)
+    const sortBy = req.query.sort.split(",").join(" ");
+    queryCommand = queryCommand.sort(sortBy);
   }
 
   // 8. Giới hạn trường nếu có (?fields=productName,price)
   if (req.query.fields) {
-    const fields = req.query.fields.split(",").join(" ")
-    queryCommand = queryCommand.select(fields)
+    const fields = req.query.fields.split(",").join(" ");
+    queryCommand = queryCommand.select(fields);
   }
 
   // 9. Phân trang
   // Giúp chia danh sách sản phẩm thành từng trang nhỏ thay vì trả về toàn bộ dữ liệu cùng lúc.
-  const page = +req.query.page || 1
-  const limit = +req.query.limit || +process.env.LIMIT_PRODUCTS || 10 // Mặc định là 10 sản phẩm mỗi trang
-  const skip = (page - 1) * limit // Tính số lượng sản phẩm cần bỏ qua
-  queryCommand = queryCommand.skip(skip).limit(limit)
+  const page = +req.query.page || 1;
+  const limit = +req.query.limit || +process.env.LIMIT_PRODUCTS || 10; // Mặc định là 10 sản phẩm mỗi trang
+  const skip = (page - 1) * limit; // Tính số lượng sản phẩm cần bỏ qua
+  queryCommand = queryCommand.skip(skip).limit(limit);
 
   // 10. Thực thi truy vấn
   queryCommand.exec(async (err, response) => {
-    if (err) throw new Error(err.message)
-    const total = await Product.countDocuments(finalQuery)
+    if (err) throw new Error(err.message);
+    const total = await Product.countDocuments(finalQuery);
     return res.status(200).json({
       success: true,
       total,
       products: response || [],
-    })
-  })
-})
-
-
-
-
-
+    });
+  });
+});
 
 /*
   câu truy vấn GET /api/products?q=iphone&brandId=665fabc9&price[gte]=100&price[lte]=1000&sort=price,-createdAt&page=2&limit=5
@@ -228,43 +225,33 @@ const getProducts = asyncHandler(async (req, res) => {
   // Thực thi truy vấn
 */
 
-
-
-
-
-
-
-
-
 // Cập nhật thông tin sản phẩm
 const updateProduct = asyncHandler(async (req, res) => {
-  const { pid } = req.params
+  const { pid } = req.params;
   const files = req.files;
   if (files?.thumb?.length > 0) {
     req.body.thumb = files.thumb[0].path;
   }
-  if (req.body && req.body.productName) req.body.slug = slugify(req.body.productName)
+  if (req.body && req.body.productName)
+    req.body.slug = slugify(req.body.productName);
   const updatedProduct = await Product.findByIdAndUpdate(pid, req.body, {
     new: true,
-  })
+  });
   return res.status(200).json({
     success: updatedProduct ? true : false,
     mes: updatedProduct ? "Updated." : "Cannot update product",
-  })
-})
-
-
-
+  });
+});
 
 // Xóa sản phẩm
 const deleteProduct = asyncHandler(async (req, res) => {
-  const { pid } = req.params
-  const deletedProduct = await Product.findByIdAndDelete(pid)
+  const { pid } = req.params;
+  const deletedProduct = await Product.findByIdAndDelete(pid);
   return res.status(200).json({
     success: deletedProduct ? true : false,
     mes: deletedProduct ? "Deleted." : "Cannot delete product",
-  })
-})
+  });
+});
 
 //Cap nhat đánh giá trung bình của sản phẩm từ tất cả các biến thể
 const updateProductRating = async (productId) => {
@@ -282,15 +269,20 @@ const updateProductRating = async (productId) => {
 
   await Product.findByIdAndUpdate(productId, {
     rating: average,
-    totalRating: totalVotes
+    totalRating: totalVotes,
   });
 };
 
+const updateMinPrice = async (productId) => {
+  const variations = await ProductVariation.find({ productId });
+  if (!variations || variations.length === 0) {
+    await Product.findByIdAndUpdate(productId, { minPrice: 0 });
+    return;
+  }
 
-
-
-
-
+  const minPrice = Math.min(...variations.map((v) => v.price));
+  await Product.findByIdAndUpdate(productId, { minPrice });
+};
 
 module.exports = {
   createProduct,
@@ -298,10 +290,9 @@ module.exports = {
   getProducts,
   updateProduct,
   deleteProduct,
-  updateProductRating
-}
-
-
+  updateProductRating,
+  updateMinPrice,
+};
 
 /*
   cũ
@@ -323,7 +314,6 @@ const getProduct = asyncHandler(async (req, res) => {
   })
 })
 */
-
 
 /*
 
@@ -472,8 +462,6 @@ const updateProduct = asyncHandler(async (req, res) => {
 })
 */
 
-
-
 // Đánh giá sản phẩm
 /*
 const ratings = asyncHandler(async (req, res) => {
@@ -546,8 +534,6 @@ const uploadImagesProduct = asyncHandler(async (req, res) => {
   })
 })
 */
-
-
 
 /*
 // Thêm mảng biến thể (variant) cho sản phẩm

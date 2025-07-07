@@ -1,91 +1,106 @@
-import React, { useState, useEffect, memo } from "react"
-import icons from "ultils/icons"
-import { apiGetProducts } from "apis/product"
-import { renderStarFromNumber, formatMoney, secondsToHms } from "ultils/helpers"
-import { Countdown } from "components"
-import moment from "moment"
-import { useSelector } from "react-redux"
-import withBaseComponent from "hocs/withBaseComponent"
-import { getDealDaily } from "store/products/productSlice"
+import React, { useState, useEffect, memo } from "react";
+import icons from "ultils/icons";
+import { apiGetProducts } from "apis/product";
+import {
+  renderStarFromNumber,
+  formatMoney,
+  secondsToHms,
+} from "ultils/helpers";
+import { Countdown } from "components";
+import moment from "moment";
+import { useSelector } from "react-redux";
+import withBaseComponent from "hocs/withBaseComponent";
+import { getDealDaily } from "store/products/productSlice";
+import { useNavigate } from "react-router-dom";
 
-const { AiFillStar, AiOutlineMenu } = icons
-let idInterval
+const { AiOutlineMenu } = icons;
+
 const DealDaily = ({ dispatch }) => {
-  const [hour, setHour] = useState(0)
-  const [minute, setMinute] = useState(0)
-  const [second, setSecond] = useState(0)
-  const [expireTime, setExpireTime] = useState(false)
-  const { dealDaily } = useSelector((s) => s.products)
+  const [hour, setHour] = useState(0);
+  const [minute, setMinute] = useState(0);
+  const [second, setSecond] = useState(0);
+  const { dealDaily } = useSelector((s) => s.products);
+  const navigate = useNavigate();
 
+  // Hàm gọi API lấy sản phẩm ngẫu nhiên
   const fetchDealDaily = async () => {
-    const response = await apiGetProducts({ sort: "-totalRatings", limit: 20 })
-    if (response.success) {
-      const pr = response.products[Math.round(Math.random() * 20)]
-      dispatch(
-        getDealDaily({ data: pr, time: Date.now() + 24 * 60 * 60 * 1000 })
-      )
+    const response = await apiGetProducts({ sort: "-totalRating", limit: 20 });
+    if (response.success && response.products?.length > 0) {
+      const randomProduct =
+        response.products[Math.floor(Math.random() * response.products.length)];
 
-      //   const today = `${moment().format("MM/DD/YYYY")} 7:00:00`
-      //   const seconds =
-      //     new Date(today).getTime() - new Date().getTime() + 24 * 3600 * 1000
-      //   const number = secondsToHms(seconds)
-      //   setHour(number.h)
-      //   setMinute(number.m)
-      //   setSecond(number.s)
-      // } else {
-      //   setHour(0)
-      //   setMinute(59)
-      //   setSecond(59)
+      dispatch(
+        getDealDaily({
+          data: randomProduct,
+          time: Date.now() + 12 * 60 * 60 * 1000, // 12 giờ
+        })
+      );
+    } else {
+      console.warn("Không có sản phẩm hoặc lỗi khi gọi API");
     }
-  }
-  //   console.log(dealDaily)
-  // useEffect(() => {
-  //     fetchDealDaily()
-  // }, [])
+  };
+
+  // Gọi API lần đầu nếu chưa có dữ liệu
+  useEffect(() => {
+    if (!dealDaily?.time) {
+      fetchDealDaily();
+    }
+  }, []);
+
+  const handleRedirect = () => {
+    const data = dealDaily?.data;
+    if (data?._id && data?.slug && data?.categoryId?.productCategoryName) {
+      navigate(
+        `/${data.categoryId.productCategoryName.toLowerCase()}/${data._id}/${
+          data.slug
+        }`
+      );
+    }
+  };
+
+  // Cập nhật thời gian đếm ngược mỗi khi dealDaily thay đổi
   useEffect(() => {
     if (dealDaily?.time) {
-      const deltaTime = dealDaily.time - Date.now()
-      const number = secondsToHms(deltaTime)
-      setHour(number.h)
-      setMinute(number.m)
-      setSecond(number.s)
+      const deltaTime = dealDaily.time - Date.now();
+      const time = secondsToHms(deltaTime);
+      setHour(time.h);
+      setMinute(time.m);
+      setSecond(time.s);
     }
-  }, [dealDaily])
+  }, [dealDaily]);
+
+  // Đếm ngược
   useEffect(() => {
-    idInterval && clearInterval(idInterval)
-    if (moment(moment(dealDaily?.time).format("MM/DD/YYYY")).isBefore(moment()))
-      fetchDealDaily()
-  }, [expireTime])
-  useEffect(() => {
-    idInterval = setInterval(() => {
-      if (second > 0) setSecond((prev) => prev - 1)
-      else {
-        if (minute > 0) {
-          setMinute((prev) => prev - 1)
-          setSecond(59)
-        } else {
-          if (hour > 0) {
-            setHour((prev) => prev - 1)
-            setMinute(59)
-            setSecond(59)
-          } else {
-            setExpireTime(!expireTime)
-          }
-        }
+    const interval = setInterval(() => {
+      if (second > 0) setSecond((prev) => prev - 1);
+      else if (minute > 0) {
+        setMinute((prev) => prev - 1);
+        setSecond(59);
+      } else if (hour > 0) {
+        setHour((prev) => prev - 1);
+        setMinute(59);
+        setSecond(59);
+      } else {
+        clearInterval(interval);
+        fetchDealDaily(); // hết giờ thì gọi sản phẩm mới
       }
-    }, 1000)
-    return () => {
-      clearInterval(idInterval)
-    }
-  }, [second, minute, hour, expireTime])
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [hour, minute, second]);
+
   return (
     <div className="border hidden lg:block w-full flex-auto">
       <div className="flex items-center justify-center p-4 w-full">
-        <span className="flex-8 font-semibold text-[20px] flex justify-center text-gray-700">
+        <span className="font-semibold text-[20px] flex justify-center text-gray-700">
           ĐANG GIẢM GIÁ
         </span>
       </div>
-      <div className="w-full flex flex-col items-center pt-8 px-4 gap-2">
+
+      <div
+        className="w-full flex flex-col items-center pt-8 px-4 gap-2"
+        onClick={handleRedirect}
+      >
         <img
           src={
             dealDaily?.data?.thumb ||
@@ -95,33 +110,27 @@ const DealDaily = ({ dispatch }) => {
           className="w-full object-contain"
         />
         <span className="line-clamp-1 text-center">
-          {dealDaily?.data?.title}
+          {dealDaily?.data?.productName}
         </span>
         <span className="flex h-4">
-          {renderStarFromNumber(dealDaily?.data?.totalRatings, 20)?.map(
+          {renderStarFromNumber(dealDaily?.data?.rating, 20)?.map(
             (el, index) => (
               <span key={index}>{el}</span>
             )
           )}
         </span>
-        <span>{`${formatMoney(dealDaily?.data?.price)} VNĐ`}</span>
+        <span>{`${formatMoney(dealDaily?.data?.minPrice)} VNĐ`}</span>
       </div>
+
       <div className="px-4 mt-8">
         <div className="flex justify-center gap-2 items-center mb-4">
           <Countdown unit={"Hours"} number={hour} />
           <Countdown unit={"Minutes"} number={minute} />
           <Countdown unit={"Seconds"} number={second} />
         </div>
-        <button
-          type="button"
-          className="flex gap-2 items-center justify-center w-full bg-main hover:bg-gray-800 text-white font-medium py-2"
-        >
-          <AiOutlineMenu />
-          <span>Tùy chọn</span>
-        </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default withBaseComponent(memo(DealDaily))
+export default withBaseComponent(memo(DealDaily));
