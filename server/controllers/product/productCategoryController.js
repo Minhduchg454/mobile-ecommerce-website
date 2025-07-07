@@ -15,6 +15,30 @@ const getCategories = asyncHandler(async (req, res) => {
         prodCategories: response ? response : 'Cannot get product-category'
     })
 })
+
+const getCategoriesWithAllChild = asyncHandler(async (req, res) => {
+    try {
+        const categories = await ProductCategory.find()
+            .populate({
+                path: 'products',
+                populate: {
+                    path: 'variations'
+                }
+            })
+            .lean();
+        return res.json({
+            success: true,
+            prodCategoriesTree: categories,
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Cannot get product categories with children'
+        });
+    }
+});
+
 const updateCategory = asyncHandler(async (req, res) => {
     const { pcid } = req.params
     const response = await ProductCategory.findByIdAndUpdate(pcid, req.body, { new: true })
@@ -36,5 +60,6 @@ module.exports = {
     createCategory,
     getCategories,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    getCategoriesWithAllChild
 }

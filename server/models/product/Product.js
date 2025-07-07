@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
- 
+
     productName: {
         type: String,
         required: true,
@@ -51,6 +51,14 @@ const productSchema = new mongoose.Schema({
 }
 );
 
+productSchema.virtual('variations', {
+    ref: 'ProductVariation',
+    localField: '_id',
+    foreignField: 'productId'
+});
+
+productSchema.set('toObject', { virtuals: true });
+productSchema.set('toJSON', { virtuals: true });
 
 
 

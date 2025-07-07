@@ -10,6 +10,14 @@ var productCategorySchema = new mongoose.Schema({
     timestamps: true
 });
 
+productCategorySchema.virtual('products', {
+    ref: 'Product',
+    localField: '_id',
+    foreignField: 'categoryId'
+});
+
+productCategorySchema.set('toObject', { virtuals: true });
+productCategorySchema.set('toJSON', { virtuals: true });
 productCategorySchema.set('toJSON', {
     versionKey: false
 })

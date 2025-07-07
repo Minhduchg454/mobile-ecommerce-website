@@ -7,6 +7,7 @@ router.post('/', ctrls.createCategory)
 router.get('/', ctrls.getCategories)
 router.put('/:pcid', ctrls.updateCategory)
 router.delete('/:pcid', ctrls.deleteCategory)
+router.get('/allchild', ctrls.getCategoriesWithAllChild)
 
 
 /*,
