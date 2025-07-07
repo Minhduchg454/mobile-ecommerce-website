@@ -56,7 +56,7 @@ const getProduct = asyncHandler(async (req, res) => {
 
   const product = await Product.findById(pid)
     .populate("brandId", "brandName") // lấy tên thương hiệu
-    .populate("categoryId", "productCategoryName"); // lấy tên danh mục
+    .populate("categoryId", "productCategoryName slug"); // lấy tên danh mục
 
   return res.status(200).json({
     success: !!product,
@@ -125,7 +125,7 @@ const getProducts = asyncHandler(async (req, res) => {
   // 6. Tạo câu truy vấn
   let queryCommand = Product.find(finalQuery)
     .populate("brandId", "brandName") // lấy tên thương hiệu
-    .populate("categoryId", "productCategoryName"); // lấy tên danh mục
+    .populate("categoryId", "productCategoryName slug"); // lấy tên danh mục
 
   // 7. Sắp xếp nếu có (?sort=price,-createdAt)
   if (req.query.sort) {
@@ -283,6 +283,9 @@ const updateMinPrice = async (productId) => {
   const minPrice = Math.min(...variations.map((v) => v.price));
   await Product.findByIdAndUpdate(productId, { minPrice });
 };
+
+//Cap nhat tong so luong mua cua san pham
+const updateTotalSolde = async (productId) => {};
 
 module.exports = {
   createProduct,

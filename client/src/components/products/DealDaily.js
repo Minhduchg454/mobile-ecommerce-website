@@ -7,7 +7,6 @@ import {
   secondsToHms,
 } from "ultils/helpers";
 import { Countdown } from "components";
-import moment from "moment";
 import { useSelector } from "react-redux";
 import withBaseComponent from "hocs/withBaseComponent";
 import { getDealDaily } from "store/products/productSlice";
@@ -22,54 +21,40 @@ const DealDaily = ({ dispatch }) => {
   const { dealDaily } = useSelector((s) => s.products);
   const navigate = useNavigate();
 
-  // Hàm gọi API lấy sản phẩm ngẫu nhiên
+  // Gọi API và dispatch deal mới
   const fetchDealDaily = async () => {
     const response = await apiGetProducts({ sort: "-totalRating", limit: 20 });
     if (response.success && response.products?.length > 0) {
       const randomProduct =
         response.products[Math.floor(Math.random() * response.products.length)];
-
       dispatch(
         getDealDaily({
           data: randomProduct,
           time: Date.now() + 12 * 60 * 60 * 1000, // 12 giờ
         })
       );
-    } else {
-      console.warn("Không có sản phẩm hoặc lỗi khi gọi API");
     }
   };
 
-  // Gọi API lần đầu nếu chưa có dữ liệu
+  // Gọi 1 lần đầu nếu chưa có
   useEffect(() => {
     if (!dealDaily?.time) {
       fetchDealDaily();
     }
-  }, []);
+  }, [dealDaily?.time]);
 
-  const handleRedirect = () => {
-    const data = dealDaily?.data;
-    if (data?._id && data?.slug && data?.categoryId?.productCategoryName) {
-      navigate(
-        `/${data.categoryId.productCategoryName.toLowerCase()}/${data._id}/${
-          data.slug
-        }`
-      );
-    }
-  };
-
-  // Cập nhật thời gian đếm ngược mỗi khi dealDaily thay đổi
+  // Reset lại bộ đếm khi có time mới
   useEffect(() => {
     if (dealDaily?.time) {
       const deltaTime = dealDaily.time - Date.now();
-      const time = secondsToHms(deltaTime);
-      setHour(time.h);
-      setMinute(time.m);
-      setSecond(time.s);
+      const { h, m, s } = secondsToHms(deltaTime);
+      setHour(h);
+      setMinute(m);
+      setSecond(s);
     }
-  }, [dealDaily]);
+  }, [dealDaily?.time]);
 
-  // Đếm ngược
+  // Tạo interval đếm ngược
   useEffect(() => {
     const interval = setInterval(() => {
       if (second > 0) setSecond((prev) => prev - 1);
@@ -82,12 +67,27 @@ const DealDaily = ({ dispatch }) => {
         setSecond(59);
       } else {
         clearInterval(interval);
-        fetchDealDaily(); // hết giờ thì gọi sản phẩm mới
+        fetchDealDaily(); // hết giờ → gọi sản phẩm mới
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [hour, minute, second]);
+  }, [hour, minute, second, dealDaily?.time]);
+
+  const handleRedirect = () => {
+    const data = dealDaily?.data;
+
+    console.log(
+      "Kich hoat onclick0",
+      data?._id,
+      data?.slug,
+      data?.categoryId?.slug
+    );
+    if (data?._id && data?.slug && data?.categoryId?.slug) {
+      console.log("Kich hoat onclick1");
+      navigate(`/${data.categoryId.slug}/${data._id}/${data.slug}`);
+    }
+  };
 
   return (
     <div className="border hidden lg:block w-full flex-auto">
@@ -98,7 +98,7 @@ const DealDaily = ({ dispatch }) => {
       </div>
 
       <div
-        className="w-full flex flex-col items-center pt-8 px-4 gap-2"
+        className="w-full flex flex-col items-center pt-8 px-4 gap-2 cursor-pointer"
         onClick={handleRedirect}
       >
         <img
@@ -122,11 +122,20 @@ const DealDaily = ({ dispatch }) => {
         <span>{`${formatMoney(dealDaily?.data?.minPrice)} VNĐ`}</span>
       </div>
 
+      {/* <div className="flex justify-center mb-4">
+        <button
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          onClick={fetchDealDaily}
+        >
+          ÉP ĐỔI DEAL
+        </button>
+      </div> */}
+
       <div className="px-4 mt-8">
         <div className="flex justify-center gap-2 items-center mb-4">
-          <Countdown unit={"Hours"} number={hour} />
-          <Countdown unit={"Minutes"} number={minute} />
-          <Countdown unit={"Seconds"} number={second} />
+          <Countdown unit="Giờ" number={hour} />
+          <Countdown unit="Phút" number={minute} />
+          <Countdown unit="Giây" number={second} />
         </div>
       </div>
     </div>

@@ -4,8 +4,9 @@ import { renderStarFromNumber, formatMoney } from "ultils/helpers";
 import path from "ultils/path";
 
 const ProductCard = ({
+  totalSold,
   minPrice,
-  totalRating,
+  rating,
   productName,
   thumb,
   pid,
@@ -16,27 +17,30 @@ const ProductCard = ({
     <div
       onClick={(e) =>
         navigate(
-          `/${category?.productCategoryName.ptoLowerCase()}/${pid}/${productName}`
+          `/${category?.productCategoryName.toLowerCase()}/${pid}/${productName}`
         )
       }
-      className="col-span-1 cursor-pointer"
+      className="cursor-pointer max-w-[320px]"
     >
-      <div className="flex w-full border min-h-[150px]">
+      <div className="flex w-full border rounded-md shadow-sm overflow-hidden">
         <img
           src={thumb}
           alt="products"
-          className="w-[120px] object-contain p-4"
+          className="w-[120px] h-[200px] object-contain p-2"
         />
-        <div className="flex flex-col mt-[15px] items-start gap-1 w-full text-xs">
-          <span className="line-clamp-1 capitalize text-sm">
+        <div className="flex flex-col justify-center gap-2 p-2 text-xs w-full">
+          <span className="line-clamp-2 capitalize text-sm font-medium">
             {productName?.toLowerCase()}
           </span>
-          <span className="flex h-4">
-            {renderStarFromNumber(totalRating, 14)?.map((el, index) => (
+          <span className="flex h-4 items-center gap-1 text-yellow-500">
+            {renderStarFromNumber(rating, 14)?.map((el, index) => (
               <span key={index}>{el}</span>
             ))}
+            <span className="text-gray-500 ml-2">{`Đã bán ${totalSold}`}</span>
           </span>
-          <span>{`${formatMoney(minPrice)} VNĐ`}</span>
+          <span className="text-main font-semibold">
+            {`${formatMoney(minPrice)} VNĐ`}
+          </span>
         </div>
       </div>
     </div>
