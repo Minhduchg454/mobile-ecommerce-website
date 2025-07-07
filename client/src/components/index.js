@@ -13,6 +13,8 @@ export { default as CustomizeVarriants } from "./products/CustomizeVarriants";
 export { default as ProductCard } from "./products/ProductCard";
 export { default as QuickView } from "./products/QuickView";
 export { default as CustomSlider } from "./common/CustomSlider";
+export { default as FeatureInfo } from "./products/FeatureInfo";
+export { default as FeatureInfoSlider } from "./common/FeatureInfoSlider";
 // export { default as TopHeader } from './headers/TopHeader'
 export { default as Footer } from "./footer/Footer";
 export { default as InputField } from "./inputs/InputField";

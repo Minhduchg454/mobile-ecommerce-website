@@ -5,10 +5,8 @@ import {
   BestSeller,
   DealDaily,
   FeatureProducts,
-  CustomSlider,
-  Blogs,
-  Product,
   CategoryList,
+  FeatureInfo,
 } from "../../components";
 import { useSelector } from "react-redux";
 import icons from "../../ultils/icons";
@@ -35,17 +33,20 @@ const Home = ({ navigate }) => {
           <BestSeller />
         </div>
       </div>
-      <div className="my-8 w-main m-auto">
+      <div className="flex flex-col my-8 w-main m-auto">
         <FeatureProducts
           title="ĐIỆN THOẠI ĐƯỢC ĐÁNH GIÁ CAO"
           query={{ sort: "-rating", categoryId: "6855ba0fdffd1bd4e14fb9ff" }}
         />
       </div>
-      <div className="my-8 w-main m-auto">
+      <div className="flex flex-col my-8 w-main m-auto">
         <FeatureProducts
           title="PHỤ KIỆN ĐIỆN THOẠI ĐƯỢC ĐÁNH GIÁ CAO"
           query={{ sort: "-rating", categoryId: "6855ba84634ab410b39b8bce" }}
         />
+      </div>
+      <div className="flex flex-col flex-wrap my-8 w-main m-auto">
+        <FeatureInfo />
       </div>
     </div>
   );

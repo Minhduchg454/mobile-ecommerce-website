@@ -90,7 +90,7 @@ const DealDaily = ({ dispatch }) => {
   };
 
   return (
-    <div className="card-default card border hidden lg:block w-full flex-auto">
+    <div className="card-default card border lg:block w-full flex-auto">
       <div className="flex items-center justify-center p-4 w-full">
         <span className="font-semibold text-[20px] flex justify-center text-gray-700">
           ĐANG GIẢM GIÁ
