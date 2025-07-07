@@ -50,10 +50,10 @@ const BestSeller = () => {
           </span>
         ))}
       </div>
-      <div className="mt-4 hidden md:block mx-[-10px] border-t-2 border-main pt-4">
+      <div className="mt-4 hidden md:block mx-[-10px] border-t-2 border-main pt-2">
         <CustomSlider products={products} activedTab={activedTab} />
       </div>
-      <div className="mt-4 md:hidden block mx-[-10px] border-t-2 border-main pt-4">
+      <div className="my-4 md:hidden block mx-[-10px] border-t-2 border-main pt-2">
         <CustomSlider
           products={products}
           slidesToShow={1}
