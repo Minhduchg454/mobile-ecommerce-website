@@ -1,10 +1,11 @@
 const router = require("express").Router();
 const ctrls = require("../../controllers/product/productCategoryController");
+const uploadCloud = require("../../config/cloudinary.config"); // đường dẫn đúng của bạn
 
-router.post("/", ctrls.createCategory);
+router.post("/", uploadCloud.single("thumb"), ctrls.createCategory);
 router.get("/", ctrls.getCategories);
 router.get("/by-name", ctrls.getCategoryIdByName);
-router.put("/:pcid", ctrls.updateCategory);
+router.put("/:pcid", uploadCloud.single("thumb"), ctrls.updateCategory); // Cập nhật ảnh mới nếu có
 router.delete("/:pcid", ctrls.deleteCategory);
 
 module.exports = router;

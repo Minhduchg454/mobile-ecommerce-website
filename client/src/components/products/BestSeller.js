@@ -21,16 +21,18 @@ const BestSeller = () => {
   const { isShowModal } = useSelector((state) => state.app);
 
   const fetchProducts = async () => {
-    const response = await apiGetProducts({ sort: "-sold" });
+    const response = await apiGetProducts({ sort: "-totalSold" });
     if (response.success) {
       setBestSellers(response.products);
       setProducts(response.products);
     }
   };
+
   useEffect(() => {
     fetchProducts();
     dispatch(getNewProducts());
   }, []);
+
   useEffect(() => {
     if (activedTab === 1) setProducts(bestSellers);
     if (activedTab === 2) setProducts(newProducts);
