@@ -12,6 +12,8 @@ const { RiPhoneFill, MdEmail, BsHandbagFill, FaUserCircle } = icons
 const Header = () => {
   const dispatch = useDispatch()
   const { current } = useSelector((state) => state.user)
+  // Log giá trị current để debug đăng nhập
+  console.log('Header user.current:', current);
   const [isShowOption, setIsShowOption] = useState(false)
   useEffect(() => {
     const handleClickoutOptions = (e) => {
@@ -51,6 +53,7 @@ const Header = () => {
           <span>Hỗ trợ 24/7</span>
         </div>
         {current && (
+          // Nếu current tồn tại, coi như đã đăng nhập
           <Fragment>
             <div
               onClick={() => dispatch(showCart())}

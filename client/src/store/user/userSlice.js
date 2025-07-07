@@ -16,6 +16,7 @@ export const userSlice = createSlice({
         login: (state, action) => {
             state.isLoggedIn = action.payload.isLoggedIn
             state.token = action.payload.token
+            state.current = action.payload.userData // Lưu luôn userData vào current
         },
         logout: (state, action) => {
             state.isLoggedIn = false
@@ -43,9 +44,11 @@ export const userSlice = createSlice({
         });
         builder.addCase(actions.getCurrent.fulfilled, (state, action) => {
             state.isLoading = false;
-            state.current = action.payload;
-            state.isLoggedIn = true
-            state.currentCart = action.payload.cart
+            // Lấy user từ action.payload.user nếu có, fallback về action.payload nếu không
+            const userObj = action.payload && action.payload.user ? action.payload.user : action.payload;
+            state.current = userObj;
+            state.isLoggedIn = true;
+            state.currentCart = (userObj && userObj.cart) ? userObj.cart : [];
         });
         builder.addCase(actions.getCurrent.rejected, (state, action) => {
             state.isLoading = false;

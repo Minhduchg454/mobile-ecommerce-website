@@ -18,8 +18,8 @@ const Personal = ({ navigate }) => {
     const [searchParams] = useSearchParams()
     useEffect(() => {
         reset({
-            firstname: current?.firstname,
-            lastname: current?.lastname,
+            firstName: current?.firstName,
+            lastName: current?.lastName,
             mobile: current?.mobile,
             email: current?.email,
             avatar: current?.avatar,
@@ -49,7 +49,7 @@ const Personal = ({ navigate }) => {
                     label='Tên'
                     register={register}
                     errors={errors}
-                    id='firstname'
+                    id='firstName'
                     validate={{
                         required: 'Need fill this field'
                     }}
@@ -58,7 +58,7 @@ const Personal = ({ navigate }) => {
                     label='Họ'
                     register={register}
                     errors={errors}
-                    id='lastname'
+                    id='lastName'
                     validate={{
                         required: 'Need fill this field'
                     }}

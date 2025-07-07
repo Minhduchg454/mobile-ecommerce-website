@@ -2,75 +2,76 @@ import axios from "../axios"
 
 export const apiRegister = (data) =>
   axios({
-    url: "/user/register",
+    url: "/customers",
     method: "post",
     data,
+    headers: { "Content-Type": "application/json" }
   })
 export const apiFinalRegister = (token) =>
   axios({
-    url: "/user/finalregister/" + token,
+    url: "/users/finalregister/" + token,
     method: "put",
   })
 export const apiLogin = (data) =>
   axios({
-    url: "/user/login",
+    url: "/users/login",
     method: "post",
     data,
   })
 export const apiForgotPassword = (data) =>
   axios({
-    url: "/user/forgotpassword",
+    url: "/users/forgotpassword",
     method: "post",
     data,
   })
 export const apiResetPassword = (data) =>
   axios({
-    url: "/user/resetpassword",
+    url: "/users/resetpassword",
     method: "put",
     data,
   })
 export const apiGetCurrent = () =>
   axios({
-    url: "/user/current",
+    url: "/users/current",
     method: "get",
   })
 export const apiGetUsers = (params) =>
   axios({
-    url: "/user/",
+    url: "/users/",
     method: "get",
     params,
   })
 export const apiUpdateUser = (data, uid) =>
   axios({
-    url: "/user/" + uid,
+    url: "/users/" + uid,
     method: "put",
     data,
   })
 export const apiDeleteUser = (uid) =>
   axios({
-    url: "/user/" + uid,
+    url: "/users/" + uid,
     method: "delete",
   })
 export const apiUpdateCurrent = (data) =>
   axios({
-    url: "/user/current",
+    url: "/users/current",
     method: "put",
     data,
   })
 export const apiUpdateCart = (data) =>
   axios({
-    url: "/user/cart",
-    method: "put",
+    url: "/cartitem",
+    method: "post",
     data,
   })
 export const apiRemoveCart = (pid, color) =>
   axios({
-    url: `/user/remove-cart/${pid}/${color}`,
+    url: `/users/remove-cart/${pid}/${color}`,
     method: "delete",
   })
 export const apiUpdateWishlist = (pid) =>
   axios({
-    url: `/user/wishlist/` + pid,
+    url: `/users/wishlist/` + pid,
     method: "put",
   })
 

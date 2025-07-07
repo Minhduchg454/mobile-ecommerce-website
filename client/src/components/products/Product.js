@@ -53,12 +53,10 @@ const Product = ({
             });
         });
       const response = await apiUpdateCart({
-        pid: productData?._id,
-        color: productData?.color,
+        shoppingCart: current?.shoppingCart,
+        productVariationId: productData?._id,
         quantity: 1,
         price: productData?.price,
-        thumbnail: productData?.thumb,
-        title: productData?.title,
       });
       if (response.success) {
         toast.success(response.mes);
