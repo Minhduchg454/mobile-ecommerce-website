@@ -1,12 +1,12 @@
-import React, { memo } from "react"
-import { NavLink } from "react-router-dom"
-import { createSlug } from "ultils/helpers"
-import { useSelector } from "react-redux"
+import React, { memo } from "react";
+import { NavLink } from "react-router-dom";
+import { createSlug } from "ultils/helpers";
+import { useSelector } from "react-redux";
 
 const Sidebar = () => {
-  const { categories } = useSelector((state) => state.app)
+  const { categories } = useSelector((state) => state.app);
   return (
-    <div className="hidden md:flex flex-col border">
+    <div className="hidden md:flex flex-col border-none">
       {categories?.map((el) => (
         <NavLink
           key={createSlug(el.title)}
@@ -21,7 +21,7 @@ const Sidebar = () => {
         </NavLink>
       ))}
     </div>
-  )
-}
+  );
+};
 
-export default memo(Sidebar)
+export default memo(Sidebar);

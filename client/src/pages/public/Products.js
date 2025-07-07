@@ -37,6 +37,7 @@ const Products = () => {
   const [sort, setSort] = useState("");
   const { category } = useParams();
 
+  const [categoryName, setCategoryName] = useState("");
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -50,7 +51,16 @@ const Products = () => {
         apiGetBrands(),
       ]);
 
-      if (res1.success) setCategories(res1.prodCategories);
+      if (res1.success) {
+        setCategories(res1.prodCategories);
+        // tìm danh mục theo slug
+        const matchedCategory = res1.prodCategories.find(
+          (item) => item.slug === category
+        );
+        if (matchedCategory) {
+          setCategoryName(matchedCategory.productCategoryName);
+        }
+      }
       if (res2.success) setBrands(res2.brands);
     };
 
@@ -128,7 +138,7 @@ const Products = () => {
     <div className="w-full">
       <div className="h-[81px] flex justify-center items-center bg-gray-100">
         <div className="lg:w-main w-screen px-4 lg:px-0">
-          <h3 className="font-semibold uppercase">{category}</h3>
+          <h3 className="font-semibold uppercase">{categoryName}</h3>
           <Breadcrumb category={category} />
         </div>
       </div>
