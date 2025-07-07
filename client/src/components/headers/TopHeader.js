@@ -38,7 +38,7 @@ const TopHeaders = () => {
         </span>
         {isLoggedIn && current ? (
           <div className=" flex gap-4 w-full md:w-fit text-sm justify-between md:justify-start items-center">
-            <span className="pl-2">{`Xin chào, ${current?.lastname} ${current?.firstname}`}</span>
+            <span className="pl-2">{`Xin chào, ${current?.firstName} ${current?.lastName}`}</span>
             <span
               onClick={() => dispatch(logout())}
               className="hover:rounded-full hover:bg-gray-200 cursor-pointer hover:text-main p-2"

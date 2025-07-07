@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const userCtrl = require('../../controllers/user/userController');
+const { verifyAccessToken } = require('../../middlewares/verifyToken');
 
 router.post('/login', userCtrl.login);
 router.post('/', userCtrl.register);
+// Route lấy user hiện tại, cần xác thực token
+router.get('/current', verifyAccessToken, userCtrl.getCurrent);
+// Nếu có route /cart, hãy thêm ở đây trước /:id
+// router.get('/cart', ...);
+
 router.get('/:id', userCtrl.getUserById);
 router.put('/:id', userCtrl.updateUser);
 router.delete('/:id', userCtrl.deleteUser);

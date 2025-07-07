@@ -72,19 +72,39 @@ const login = asyncHandler(async (req, res) => {
     if (roleName === 'admin') {
         roleValue = 1945;
     }
-    // Log để debug nếu cần
-    console.log('Login user:', user.email, '| roleName:', roleName, '| roleValue:', roleValue);
     // Tạo access token (ví dụ dùng JWT)
     const token = jwt.sign({ id: user._id, role: roleValue }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    return res.json({ success: true, token, user });
+    // Đảm bảo user trả về có trường role là số
+    const userObj = user.toObject();
+    userObj.role = roleValue;
+    return res.json({ success: true, token, user: userObj });
 });
 
 // Lấy thông tin user hiện tại (dựa vào token)
 const getCurrent = asyncHandler(async (req, res) => {
-    const { id } = req.user;
-    const user = await User.findById(id).populate('roleId userName');
-    if (!user) return res.status(404).json({ success: false, mes: 'User not found' });
-    return res.json({ success: true, user });
+    // Bắt đầu xử lý request lấy user hiện tại
+    try {
+        // Lấy id từ req.user (nếu middleware không gán đúng sẽ lỗi ở đây)
+        const { id } = req.user;
+        // Truy vấn DB lấy user theo id, populate roleId và userName
+        const user = await User.findById(id).populate('roleId userName');
+        // Nếu không tìm thấy user, trả về 404
+        if (!user) return res.status(404).json({ success: false, mes: 'User not found' });
+        // Đảm bảo user trả về có trường role là số
+        let roleValue = 0;
+        let roleName = user.roleId && user.roleId.roleName ? user.roleId.roleName : '';
+        if (roleName === 'admin') {
+            roleValue = 1945;
+        }
+        const userObj = user.toObject();
+        userObj.role = roleValue;
+        // Trả về user thành công
+        return res.json({ success: true, user: userObj });
+    } catch (err) {
+        // Log lỗi chi tiết nếu có exception
+        console.error('Lỗi khi xử lý /users/current:', err);
+        res.status(500).json({ success: false, mes: 'Server error', error: err.message });
+    }
 });
 
 // Cập nhật thông tin user (chỉ cho phép cập nhật một số trường)
@@ -124,6 +144,11 @@ const deleteUser = asyncHandler(async (req, res) => {
 
     // Xóa user
     const deleted = await User.findByIdAndDelete(id);
+    // Xóa admin/customer liên kết (nếu có)
+    const Admin = require('../../models/user/Admin');
+    const Customer = require('../../models/user/Customer');
+    await Admin.findByIdAndDelete(id);
+    await Customer.findByIdAndDelete(id);
     return res.json({ success: !!deleted, mes: deleted ? 'User and all related data deleted' : 'Delete failed' });
 });
 

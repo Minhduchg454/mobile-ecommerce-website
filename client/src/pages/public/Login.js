@@ -1,19 +1,14 @@
 import React, { useState, useCallback, useEffect } from "react"
-import { InputField, Button, Loading } from "components"
-import {
-  apiRegister,
-  apiLogin,
-  apiForgotPassword,
-  apiFinalRegister,
-} from "apis/user"
+import { apiRegister, apiLogin } from "apis/user"
 import Swal from "sweetalert2"
 import { useNavigate, Link, useSearchParams } from "react-router-dom"
 import path from "ultils/path"
 import { login } from "store/user/userSlice"
 import { showModal } from "store/app/appSlice"
-import { useDispatch } from "react-redux"
-import { toast } from "react-toastify"
-import { validate } from "ultils/helpers"
+import { useDispatch, useSelector } from "react-redux"
+import { getCurrent } from 'store/user/asyncActions';
+// import { validate } from "ultils/helpers"
+import { FaUser, FaLock, FaEnvelope, FaPhone, FaEye, FaEyeSlash, FaMobileAlt, FaLaptop, FaTabletAlt, FaHeadphones } from 'react-icons/fa';
 
 const DEFAULT_ROLE_ID = "685c40cb714483a0482a4569"; // id của role customer
 const DEFAULT_STATUS_ID = "685c40cb714483a0482a456b"; // id của status active
@@ -28,11 +23,10 @@ const Login = () => {
     lastname: "",
     mobile: "",
   })
-  const [isVerifiedEmail, setIsVerifiedEmail] = useState(false)
-  const [invalidFields, setInvalidFields] = useState([])
+  // const [invalidFields, setInvalidFields] = useState([])
   const [isRegister, setIsRegister] = useState(false)
-  const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [searchParams] = useSearchParams()
+  const [showPassword, setShowPassword] = useState(false);
   const resetPayload = () => {
     setPayload({
       email: "",
@@ -42,212 +36,132 @@ const Login = () => {
       mobile: "",
     })
   }
-  const [token, setToken] = useState("")
-  const [email, setEmail] = useState("")
-  const handleForgotPassword = async () => {
-    const response = await apiForgotPassword({ email })
-    if (response.success) {
-      toast.success(response.mes, { theme: "colored" })
-    } else toast.info(response.mes, { theme: "colored" })
+  const handleInput = (e) => {
+    setPayload(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
-  useEffect(() => {
-    resetPayload()
-  }, [isRegister])
-  // SUBMIT
   const handleSubmit = useCallback(async () => {
     const { firstname, lastname, mobile, ...data } = payload
-
-    const invalids = isRegister
-      ? validate(payload, setInvalidFields)
-      : validate(data, setInvalidFields)
-    if (invalids === 0) {
+    // const invalids = isRegister
+    //   ? validate(payload, setInvalidFields)
+    //   : validate(data, setInvalidFields)
+    // if (invalids === 0) {
       if (isRegister) {
-        dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }))
+        dispatch(showModal({ isShowModal: true, modalChildren: <div>Đang xử lý...</div> }))
         const response = await apiRegister({
-          ...payload,
-          roleId: DEFAULT_ROLE_ID,
-          statusUserId: DEFAULT_STATUS_ID,
+          firstName: payload.firstname,
+          lastName: payload.lastname,
+          email: payload.email,
+          mobile: payload.mobile,
+          password: payload.password,
         })
         dispatch(showModal({ isShowModal: false, modalChildren: null }))
         if (response.success) {
-          setIsVerifiedEmail(true)
-        } else Swal.fire("Oops!", response.mes, "error")
+          setIsRegister(false)
+          resetPayload()
+          Swal.fire("Thành công!", "Đăng ký thành công, hãy đăng nhập.", "success")
+        } else {
+          // Luôn show lỗi chi tiết từ backend (mes hoặc error)
+          Swal.fire("Oops!", response.mes || response.error || "Đăng ký thất bại!", "error")
+        }
       } else {
         const rs = await apiLogin(data)
-        if (rs.success) {
+        console.log('API login response:', rs);
+        let token = rs.token || rs.accessToken
+        const user = rs.user || rs.userData
+        // Đảm bảo token là string hợp lệ
+        if (token && typeof token !== 'string') token = String(token)
+        if (rs.success && token && user) {
           dispatch(
             login({
               isLoggedIn: true,
-              token: rs.accessToken,
-              userData: rs.userData,
+              token,
+              userData: user,
             })
           )
-          searchParams.get("redirect")
-            ? navigate(searchParams.get("redirect"))
-            : navigate(`/${path.HOME}`)
-        } else Swal.fire("Oops!", rs.mes, "error")
+          // Gọi luôn getCurrent để cập nhật current ngay sau khi login
+          dispatch(getCurrent());
+          // Log trước khi chuyển trang
+          console.log('Trước navigate, Redux user state:', userState);
+          if (searchParams.get("redirect")) {
+            console.log('Chuyển trang đến:', searchParams.get("redirect"));
+            navigate(searchParams.get("redirect"))
+          } else {
+            console.log('Chuyển trang đến:', `/${path.HOME}`);
+            navigate(`/${path.HOME}`)
+          }
+          // Log sau khi gọi navigate (sẽ không chạy nếu navigate chuyển trang thành công)
+          console.log('Đã gọi navigate');
+        } else {
+          Swal.fire("Oops!", rs.mes || "Đăng nhập thất bại!", "error")
+        }
       }
-    }
-  }, [payload, isRegister])
+    // }
+  }, [payload, isRegister, dispatch, navigate, searchParams])
 
-  const finalRegister = async () => {
-    const response = await apiFinalRegister(token)
-    if (response.success) {
-      Swal.fire("Congratulation", response.mes, "success").then(() => {
-        setIsRegister(false)
-        resetPayload()
-      })
-    } else Swal.fire("Oops!", response.mes, "error")
-    setIsVerifiedEmail(false)
-    setToken("")
-  }
+  const userState = useSelector(state => state.user);
+  useEffect(() => {
+    console.log('Redux user state:', userState);
+  }, [userState]);
+
+  useEffect(() => { resetPayload() }, [isRegister])
 
   return (
-    <div className="w-screen h-screen relative">
-      {isVerifiedEmail && (
-        <div className="absolute top-0 left-0 right-0 bottom-0 bg-overlay z-50 flex flex-col justify-center items-center">
-          <div className="bg-white w-[90%] max-w-[500px] rounded-md p-8">
-            <h4 className="mb-4">
-              MÃ XÁC NHẬN ĐÃ ĐƯỢC GỬI, NHẬP
-              MÃ XÁC NHẬN:
-            </h4>
-            <input
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              className="p-2 border rounded-md outline-none"
-            />
-            <button
-              type="button"
-              className="px-4 py-2 mt-4 mx-auto bg-blue-500 font-semibold text-white rounded-md ml-4"
-              onClick={finalRegister}
-            >
-              XÁC NHẬN
-            </button>
-          </div>
-        </div>
-      )}
-      {isForgotPassword && (
-        <div className="absolute animate-slide-right top-0 left-0 bottom-0 right-0 bg-white flex flex-col items-center px-4 py-8 z-50">
-          <div className="flex w-full flex-col gap-4">
-            <label htmlFor="email">Nhập email:</label>
-            <input
-              type="text"
-              id="email"
-              className="md:w-[800px] w-full pb-2 border-b outline-none placeholder:text-sm"
-              placeholder="Exp: email@gmail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <div className="flex items-center justify-end w-full gap-4">
-              <Button
-                name="Submit"
-                handleOnClick={handleForgotPassword}
-                style="px-4 py-2 rounded-md text-white bg-blue-500 text-semibold my-2"
-              >
-                Xác nhận
-              </Button>
-              <Button
-                name="Back"
-                handleOnClick={() => setIsForgotPassword(false)}
-              >
-                Trở lại
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      <img
-        src="https://img.freepik.com/premium-photo/shopping-cart-card-icon-discounts_116441-26066.jpg"
-        alt=""
-        className="w-full h-full object-cover"
-      />
-      <div className="absolute top-0 bottom-0 left-0 right-0 items-center justify-center flex">
-        <div className="p-8 bg-white flex flex-col items-center rounded-md md:min-w-[500px]">
-          <h1 className="text-[28px] font-semibold text-main mb-8">
-            {isRegister ? "Register" : "Login"}
-          </h1>
+    <div className="min-h-screen flex items-center justify-center bg-[#00afff] relative overflow-hidden">
+      {/* Icon trang trí */}
+      <FaMobileAlt className="absolute left-8 top-8 text-white/30 text-6xl animate-bounce-slow" />
+      <FaLaptop className="absolute right-8 top-16 text-white/20 text-7xl animate-float" />
+      <FaTabletAlt className="absolute left-12 bottom-12 text-white/20 text-5xl animate-float2" />
+      <FaMobileAlt className="absolute right-16 bottom-8 text-white/10 text-8xl animate-bounce-slow2" />
+      <FaHeadphones className="absolute left-1/2 -translate-x-1/2 top-4 text-white/30 text-5xl animate-float" />
+      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl flex flex-col items-center z-10">
+        <h1 className="text-2xl font-bold text-gray-800 mb-8 tracking-wide drop-shadow">{isRegister ? "Đăng ký tài khoản" : "Đăng nhập"}</h1>
+        <form className="w-full flex flex-col gap-4" onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
           {isRegister && (
-            <div className="flex items-center gap-2">
-              <InputField
-                value={payload.firstname}
-                setValue={setPayload}
-                nameKey="firstname"
-                invalidFields={invalidFields}
-                setInvalidFieds={setInvalidFields}
-              />
-              <InputField
-                value={payload.lastname}
-                setValue={setPayload}
-                nameKey="lastname"
-                invalidFields={invalidFields}
-                setInvalidFieds={setInvalidFields}
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <FaUser className="absolute left-3 top-3 text-gray-400" />
+                <input type="text" name="firstname" value={payload.firstname} onChange={handleInput} placeholder="Họ" className="pl-10 py-2 rounded border border-gray-200 bg-white text-gray-800 placeholder-gray-400 w-full focus:ring-2 focus:ring-cyan-200 outline-none" />
+              </div>
+              <div className="relative flex-1">
+                <FaUser className="absolute left-3 top-3 text-gray-400" />
+                <input type="text" name="lastname" value={payload.lastname} onChange={handleInput} placeholder="Tên" className="pl-10 py-2 rounded border border-gray-200 bg-white text-gray-800 placeholder-gray-400 w-full focus:ring-2 focus:ring-cyan-200 outline-none" />
+              </div>
             </div>
           )}
-          <InputField
-            value={payload.email}
-            setValue={setPayload}
-            nameKey="email"
-            invalidFields={invalidFields}
-            setInvalidFieds={setInvalidFields}
-            fullWidth
-          />
-          {isRegister && (
-            <InputField
-              value={payload.mobile}
-              setValue={setPayload}
-              nameKey="mobile"
-              invalidFields={invalidFields}
-              setInvalidFieds={setInvalidFields}
-              fullWidth
-            />
-          )}
-          <InputField
-            value={payload.password}
-            setValue={setPayload}
-            nameKey="password"
-            type="password"
-            invalidFields={invalidFields}
-            setInvalidFieds={setInvalidFields}
-            fullWidth
-          />
-          <Button handleOnClick={handleSubmit} fw>
-            {isRegister ? "Register" : "Login"}
-          </Button>
-          <div className="flex items-center justify-between my-2 w-full text-sm">
-            {!isRegister && (
-              <span
-                onClick={() => setIsForgotPassword(true)}
-                className="text-blue-500 hover:underline cursor-pointer"
-              >
-                Quên mật khẩu?
-              </span>
-            )}
-            {!isRegister && (
-              <span
-                className="text-blue-500 hover:underline cursor-pointer"
-                onClick={() => setIsRegister(true)}
-              >
-                Đăng ký
-              </span>
-            )}
-            {isRegister && (
-              <span
-                className="text-blue-500 hover:underline cursor-pointer w-full text-center"
-                onClick={() => setIsRegister(false)}
-              >
-                Đi đến đăng nhập
-              </span>
-            )}
+          <div className="relative">
+            <FaEnvelope className="absolute left-3 top-3 text-gray-400" />
+            <input type="email" name="email" value={payload.email} onChange={handleInput} placeholder="Email" className="pl-10 py-2 rounded border border-gray-200 bg-white text-gray-800 placeholder-gray-400 w-full focus:ring-2 focus:ring-cyan-200 outline-none" />
           </div>
-          <Link
-            className="text-blue-500 text-sm hover:underline cursor-pointer"
-            to={`/${path.HOME}`}
-          >
-            Trang chủ
-          </Link>
+          {isRegister && (
+            <div className="relative">
+              <FaPhone className="absolute left-3 top-3 text-gray-400" />
+              <input type="text" name="mobile" value={payload.mobile} onChange={handleInput} placeholder="Số điện thoại" className="pl-10 py-2 rounded border border-gray-200 bg-white text-gray-800 placeholder-gray-400 w-full focus:ring-2 focus:ring-cyan-200 outline-none" />
+            </div>
+          )}
+          <div className="relative">
+            <FaLock className="absolute left-3 top-3 text-gray-400" />
+            <input type={showPassword ? "text" : "password"} name="password" value={payload.password} onChange={handleInput} placeholder="Mật khẩu" className="pl-10 pr-10 py-2 rounded border border-gray-200 bg-white text-gray-800 placeholder-gray-400 w-full focus:ring-2 focus:ring-cyan-200 outline-none" />
+            <span className="absolute right-3 top-3 text-gray-400 cursor-pointer" onClick={() => setShowPassword(v => !v)}>
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
+          <button type="submit" className="w-full py-2 mt-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded shadow transition-all">
+            {isRegister ? "Đăng ký" : "Đăng nhập"}
+          </button>
+        </form>
+        <div className="flex items-center justify-between mt-4 w-full text-sm">
+          {!isRegister && (
+            <span className="text-cyan-700 hover:underline cursor-pointer" onClick={() => setIsRegister(true)}>
+              Đăng ký
+            </span>
+          )}
+          {isRegister && (
+            <span className="text-cyan-700 hover:underline cursor-pointer w-full text-center" onClick={() => setIsRegister(false)}>
+              Đi đến đăng nhập
+            </span>
+          )}
         </div>
+        <Link className="text-cyan-700 text-sm hover:underline cursor-pointer mt-2" to={`/${path.HOME}`}>Trang chủ</Link>
       </div>
     </div>
   )

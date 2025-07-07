@@ -2,6 +2,7 @@ const Admin = require('../../models/user/Admin');
 const User = require('../../models/user/User');
 const StatusUser = require('../../models/user/StatusUser');
 const Role = require('../../models/user/Role');
+const Account = require('../../models/user/Account');
 
 exports.createAdmin = async (req, res) => {
   try {
@@ -19,6 +20,12 @@ exports.createAdmin = async (req, res) => {
     // Kiểm tra email đã tồn tại chưa (User)
     const existedUser = await User.findOne({ email: req.body.email });
     if (existedUser) return res.status(400).json({ error: 'Email already exists' });
+    // Kiểm tra account đã tồn tại chưa (Account)
+    const existedAccount = await Account.findOne({ userName: req.body.email });
+    if (existedAccount) return res.status(400).json({ error: 'Account already exists with this email' });
+    // Kiểm tra mobile đã tồn tại chưa (User)
+    const existedMobile = await User.findOne({ mobile: req.body.mobile });
+    if (existedMobile) return res.status(400).json({ error: 'Mobile already exists' });
     // Luôn tự động gán statusUserId là 'active'
     const activeStatus = await StatusUser.findOne({ statusUserName: 'active' });
     if (!activeStatus) return res.status(400).json({ error: 'Status active not found' });
@@ -27,6 +34,8 @@ exports.createAdmin = async (req, res) => {
     const adminRole = await Role.findOne({ roleName: 'admin' });
     if (!adminRole) return res.status(400).json({ error: 'Role admin not found' });
     const roleId = adminRole._id;
+    // Tạo account (username là email, password hash)
+    await Account.create({ userName: req.body.email, password: req.body.password });
     // Tạo user
     const user = await User.create({ ...req.body, statusUserId, roleId, userName: req.body.email });
     // Tạo admin chỉ chứa _id
@@ -67,7 +76,12 @@ exports.deleteAdmin = async (req, res) => {
     if (!admin) return res.status(404).json({ message: 'Admin not found' });
     // Xóa user liên kết
     const user = await User.findByIdAndDelete(admin._id);
-    res.json({ message: 'Admin and related User deleted' });
+    // Xóa account liên kết (nếu user tồn tại)
+    // userName là email
+    if (user && user.email) {
+      await Account.findOneAndDelete({ userName: user.email });
+    }
+    res.json({ message: 'Admin and related User/Account deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

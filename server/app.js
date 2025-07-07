@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: false }));
 // Middleware CORS và cookieParser
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: 'http://localhost:3000',
     methods: ['POST', 'PUT', 'GET', 'DELETE'],
     credentials: true,
   })

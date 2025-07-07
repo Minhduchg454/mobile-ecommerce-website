@@ -28,7 +28,7 @@ const MemberSidebar = () => {
           alt="logo"
           className="w-16 h-16 object-cover"
         />
-        <small>{`${current?.lastname} ${current?.firstname}`}</small>
+        <small>{`${current?.firstName} ${current?.lastName}`}</small>
       </div>
       <div>
         {memberSidebar.map((el, idx) => (
