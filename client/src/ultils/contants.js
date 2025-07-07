@@ -295,3 +295,26 @@ export const statusOrders = [
     value: "Succeed",
   },
 ];
+
+export const priceRanges = [
+  {
+    id: "1",
+    value: "0-500000",
+    text: "Dưới 500K",
+  },
+  {
+    id: "2",
+    value: "500000-1000000",
+    text: "500K - 1 triệu",
+  },
+  {
+    id: "3",
+    value: "1000000-2000000",
+    text: "1 - 2 triệu",
+  },
+  {
+    id: "4",
+    value: "2000000-999999999",
+    text: "Trên 2 triệu",
+  },
+];

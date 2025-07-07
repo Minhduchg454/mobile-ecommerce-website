@@ -99,6 +99,17 @@ const getProducts = asyncHandler(async (req, res) => {
   }
 
   const formatedQueries = JSON.parse(queryString);
+  // 👉 Chuyển 'minPrice.$gte' => { minPrice: { $gte: ... } }
+  Object.keys(formatedQueries).forEach((key) => {
+    if (key.includes("$")) {
+      const [field, operator] = key.split(".");
+      formatedQueries[field] = {
+        ...(formatedQueries[field] || {}),
+        [operator]: +formatedQueries[key], // ép kiểu số luôn
+      };
+      delete formatedQueries[key];
+    }
+  });
   // 3.1 Nếu có tìm kiếm theo tên sản phẩm (productName) → dùng regex
   if (queries?.productName) {
     formatedQueries.productName = {

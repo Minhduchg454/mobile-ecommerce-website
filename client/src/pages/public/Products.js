@@ -19,7 +19,7 @@ import {
   apiGetBrands,
 } from "../../apis";
 import Masonry from "react-masonry-css";
-import { sorts } from "../../ultils/contants";
+import { sorts, priceRanges } from "../../ultils/contants";
 import SelectableList from "../../components/search/SelectableList";
 
 const breakpointColumnsObj = {
@@ -52,7 +52,6 @@ const Products = () => {
 
       if (res1.success) setCategories(res1.prodCategories);
       if (res2.success) setBrands(res2.brands);
-      console.log(res2.brands);
     };
 
     fetchData();
@@ -77,25 +76,24 @@ const Products = () => {
 
   //Goi API moi khi params thay doi
   useEffect(() => {
-    const queries = Object.fromEntries([...params]);
-    let priceQuery = {};
-    if (queries.to && queries.from) {
-      priceQuery = {
-        $and: [
-          { price: { gte: queries.from } },
-          { price: { lte: queries.to } },
-        ],
-      };
-      delete queries.price;
-    } else {
-      if (queries.from) queries.price = { gte: queries.from };
-      if (queries.to) queries.price = { lte: queries.to };
+    const queries = Object.fromEntries([...params.entries()]);
+
+    // Clone để không thay đổi trực tiếp object từ URL
+    const queryObject = { ...queries };
+
+    // Tạo lại cấu trúc minPrice.gte và minPrice.lte đúng chuẩn cho backend
+    if (queries.from || queries.to) {
+      if (queries.from) {
+        queryObject["minPrice.gte"] = queries.from;
+      }
+      if (queries.to) {
+        queryObject["minPrice.lte"] = queries.to;
+      }
+      delete queryObject.from;
+      delete queryObject.to;
     }
 
-    delete queries.to;
-    delete queries.from;
-    const q = { ...priceQuery, ...queries };
-    fetchProductsByCategory(q);
+    fetchProductsByCategory(queryObject);
     window.scrollTo(0, 0);
   }, [params.toString()]);
 
@@ -118,9 +116,10 @@ const Products = () => {
   //Khi sort thay doi => cap nhat lai url => params doi => goi API lai
   useEffect(() => {
     if (sort) {
+      const currentParams = Object.fromEntries([...params.entries()]);
       navigate({
         pathname: `/${category}`,
-        search: createSearchParams({ sort }).toString(),
+        search: createSearchParams({ ...currentParams, sort }).toString(),
       });
     }
   }, [sort]);
@@ -135,43 +134,77 @@ const Products = () => {
       </div>
       <div className="lg:w-main border p-4 flex lg:pr-4 pr-8 flex-col md:flex-row gap-4 md:justify-between mt-8 m-auto">
         <div className="w-4/5 flex-auto flex flex-wrap gap-4">
-          {/* Lọc theo giá */}
-          <div className="flex flex-col gap-2">
-            <span className="font-semibold text-sm">Lọc</span>
-            <SearchItem
-              name="Giá"
-              activeClick={activeClick}
-              changeActiveFitler={changeActiveFitler}
-              type="input"
-            />
-          </div>
+          <SelectableList
+            title={"Giá"}
+            items={priceRanges}
+            selectedId={
+              params.get("minPrice.gte") && params.get("minPrice.lte")
+                ? `${params.get("minPrice.gte")}-${params.get("minPrice.lte")}`
+                : ""
+            }
+            onSelect={(value) => {
+              setSearchParams((prevParams) => {
+                const current = Object.fromEntries([...prevParams.entries()]);
+
+                // Xóa các giá trị cũ
+                delete current["minPrice.gte"];
+                delete current["minPrice.lte"];
+                delete current.from;
+                delete current.to;
+
+                if (value) {
+                  const [from, to] = value.split("-");
+                  return createSearchParams({
+                    ...current,
+                    "minPrice.gte": from,
+                    "minPrice.lte": to,
+                  });
+                } else {
+                  return createSearchParams(current);
+                }
+              });
+            }}
+            labelField="text"
+            valueField="value"
+          />
 
           {/* Danh mục */}
           <SelectableList
-            title="Danh mục"
+            title={"danh mục"}
             items={categories}
             selectedId={params.get("categoryId") || ""}
             onSelect={(id) => {
-              setSelectedCategoryId(id);
               setSearchParams((prevParams) => {
                 const current = Object.fromEntries([...prevParams.entries()]);
-                return createSearchParams({
-                  ...current,
-                  categoryId: id,
-                });
+                return createSearchParams({ ...current, categoryId: id });
               });
             }}
           />
+
+          {/* Thuong hieu */}
+          <SelectableList
+            title={"thương hiệu"}
+            items={brands}
+            selectedId={params.get("brandId") || ""}
+            onSelect={(id) => {
+              setSearchParams((prevParams) => {
+                const current = Object.fromEntries([...prevParams.entries()]);
+                return createSearchParams({ ...current, brandId: id });
+              });
+            }}
+            labelField="brandName"
+            valueField="_id"
+          />
         </div>
         <div className="w-1/5 flex flex-col gap-3">
-          <span className="font-semibold text-sm">Sắp xếp</span>
-          <div className="w-full">
-            <InputSelect
-              changeValue={changeValue}
-              value={sort}
-              options={sorts}
-            />
-          </div>
+          <SelectableList
+            title={"sắp xếp"}
+            items={sorts}
+            selectedId={sort}
+            onSelect={(value) => setSort(value)}
+            labelField="text"
+            valueField="value"
+          />
         </div>
       </div>
       <div className="mt-8 w-main m-auto grid lg:grid-cols-4 md:grid-cols-3 grid-cols-1 gap-4">
