@@ -1,24 +1,24 @@
-import React, { useState, memo } from "react"
-import { formatMoney } from "ultils/helpers"
-import label from "assets/new.png"
-import trending from "assets/trending.png"
-import { renderStarFromNumber } from "ultils/helpers"
-import { SelectOption } from "components"
-import icons from "ultils/icons"
-import withBaseComponent from "hocs/withBaseComponent"
-import { showModal } from "store/app/appSlice"
-import { DetailProduct } from "pages/public"
-import { apiUpdateCart, apiUpdateWishlist } from "apis"
-import { toast } from "react-toastify"
-import { getCurrent } from "store/user/asyncActions"
-import { useSelector } from "react-redux"
-import Swal from "sweetalert2"
-import path from "ultils/path"
-import { BsFillCartCheckFill, BsFillCartPlusFill } from "react-icons/bs"
-import { createSearchParams } from "react-router-dom"
-import clsx from "clsx"
+import React, { useState, memo } from "react";
+import { formatMoney } from "ultils/helpers";
+import label from "assets/new.png";
+import trending from "assets/trending.png";
+import { renderStarFromNumber } from "ultils/helpers";
+import { SelectOption } from "components";
+import icons from "ultils/icons";
+import withBaseComponent from "hocs/withBaseComponent";
+import { showModal } from "store/app/appSlice";
+import { DetailProduct1 } from "pages/public";
+import { apiUpdateCart, apiUpdateWishlist } from "apis";
+import { toast } from "react-toastify";
+import { getCurrent } from "store/user/asyncActions";
+import { useSelector } from "react-redux";
+import Swal from "sweetalert2";
+import path from "ultils/path";
+import { BsFillCartCheckFill, BsFillCartPlusFill } from "react-icons/bs";
+import { createSearchParams } from "react-router-dom";
+import clsx from "clsx";
 
-const { AiFillEye, BsFillSuitHeartFill } = icons
+const { AiFillEye, BsFillSuitHeartFill } = icons;
 
 const Product = ({
   productData,
@@ -30,10 +30,10 @@ const Product = ({
   pid,
   className,
 }) => {
-  const [isShowOption, setIsShowOption] = useState(false)
-  const { current } = useSelector((state) => state.user)
+  const [isShowOption, setIsShowOption] = useState(false);
+  const { current } = useSelector((state) => state.user);
   const handleClickOptions = async (e, flag) => {
-    e.stopPropagation()
+    e.stopPropagation();
     if (flag === "CART") {
       if (!current)
         return Swal.fire({
@@ -50,8 +50,8 @@ const Product = ({
               search: createSearchParams({
                 redirect: location.pathname,
               }).toString(),
-            })
-        })
+            });
+        });
       const response = await apiUpdateCart({
         pid: productData?._id,
         color: productData?.color,
@@ -59,50 +59,54 @@ const Product = ({
         price: productData?.price,
         thumbnail: productData?.thumb,
         title: productData?.title,
-      })
+      });
       if (response.success) {
-        toast.success(response.mes)
-        dispatch(getCurrent())
-      } else toast.error(response.mes)
+        toast.success(response.mes);
+        dispatch(getCurrent());
+      } else toast.error(response.mes);
     }
     if (flag === "WISHLIST") {
-      const response = await apiUpdateWishlist(pid)
+      const response = await apiUpdateWishlist(pid);
       if (response.success) {
-        dispatch(getCurrent())
-        toast.success(response.mes)
-      } else toast.error(response.mes)
+        dispatch(getCurrent());
+        toast.success(response.mes);
+      } else toast.error(response.mes);
     }
     if (flag === "QUICK_VIEW") {
       dispatch(
         showModal({
           isShowModal: true,
           modalChildren: (
-            <DetailProduct
-              data={{ pid: productData?._id, category: productData?.category }}
+            <DetailProduct1
+              data={{
+                pid: productData?._id,
+                category: productData?.categoryId?.productCategoryName,
+              }}
               isQuickView
             />
           ),
         })
-      )
+      );
     }
-  }
+  };
   return (
     <div className={clsx("w-full col-span-1 text-base px-[10px]", className)}>
       <div
         className="w-full border p-[15px] flex flex-col items-center"
         onClick={(e) =>
           navigate(
-            `/${productData?.category?.toLowerCase()}/${productData?._id}/${productData?.title
-            }`
+            `/${productData?.categoryId?.productCategoryName.toLowerCase()}/${
+              productData?._id
+            }/${productData?.slug}`
           )
         }
         onMouseEnter={(e) => {
-          e.stopPropagation()
-          setIsShowOption(true)
+          e.stopPropagation();
+          setIsShowOption(true);
         }}
         onMouseLeave={(e) => {
-          e.stopPropagation()
-          setIsShowOption(false)
+          e.stopPropagation();
+          setIsShowOption(false);
         }}
       >
         <div className="w-full relative">
@@ -164,18 +168,18 @@ const Product = ({
         </div>
         <div className="flex flex-col mt-[15px] items-start gap-1 w-full">
           <span className="flex h-4">
-            {renderStarFromNumber(productData?.totalRatings)?.map(
+            {renderStarFromNumber(productData?.totalRating)?.map(
               (el, index) => (
                 <span key={index}>{el}</span>
               )
             )}
           </span>
-          <span className="line-clamp-1">{productData?.title}</span>
-          <span>{`${formatMoney(productData?.price)} VND`}</span>
+          <span className="line-clamp-1">{productData?.productName}</span>
+          <span>{`${formatMoney(productData?.minPrice)} VND`}</span>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default withBaseComponent(memo(Product))
+export default withBaseComponent(memo(Product));

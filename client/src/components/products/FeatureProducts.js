@@ -1,17 +1,17 @@
-import React, { useState, useEffect, memo } from "react"
-import { ProductCard } from "components"
-import { apiGetProducts } from "apis"
+import React, { useState, useEffect, memo } from "react";
+import { ProductCard } from "components";
+import { apiGetProducts } from "apis";
 
 const FeatureProducts = () => {
-  const [products, setProducts] = useState(null)
+  const [products, setProducts] = useState(null);
 
   const fetchProducts = async () => {
-    const response = await apiGetProducts({ limit: 9, sort: "-totalRatings" })
-    if (response.success) setProducts(response.products)
-  }
+    const response = await apiGetProducts({ limit: 9, sort: "-totalRating" });
+    if (response.success) setProducts(response.products);
+  };
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    fetchProducts();
+  }, []);
 
   return (
     <div className="w-full">
@@ -24,7 +24,7 @@ const FeatureProducts = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default memo(FeatureProducts)
+export default memo(FeatureProducts);
