@@ -3,13 +3,11 @@ import { apiGetProducts } from "apis/product";
 import { CustomSlider } from "components";
 import { getNewProducts } from "store/products/asynsActions";
 import { useDispatch, useSelector } from "react-redux";
-import sell1 from "../../assets/sell1.jpg";
-import sell2 from "../../assets/sell2.jpg";
 import clsx from "clsx";
 
 const tabs = [
   { id: 1, name: "BÁN CHẠY NHẤT" },
-  { id: 2, name: "MỚI NHẤT" },
+  { id: 2, name: "THIẾT BỊ MỚI NHẤT" },
 ];
 
 const BestSeller = () => {
@@ -61,10 +59,6 @@ const BestSeller = () => {
           slidesToShow={1}
           activedTab={activedTab}
         />
-      </div>
-      <div className="w-[440px] flex flex-col md:flex-row gap-4 mt-4">
-        <img src={sell1} alt="banner" className="flex-1 object-contain" />
-        <img src={sell2} alt="banner" className="flex-1 object-contain" />
       </div>
     </div>
   );

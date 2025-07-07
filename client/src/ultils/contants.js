@@ -1,5 +1,11 @@
 import path from "./path";
 import icons from "./icons";
+import {
+  MdAutorenew,
+  MdPayment,
+  MdTagFaces,
+  MdLocalShipping,
+} from "react-icons/md";
 
 export const navigation = [
   {
@@ -326,5 +332,32 @@ export const priceRanges = [
     id: "6",
     value: "20000000-9999999999",
     text: "Trên 20 triệu",
+  },
+];
+
+export const infoCards = [
+  {
+    icon: <MdAutorenew />,
+    title: "Đổi trả dễ dàng",
+    description: "Đổi thiết bị trong 7 ngày nếu có lỗi.",
+    color: "#007aff",
+  },
+  {
+    icon: <MdPayment />,
+    title: "Trả góp 0%",
+    description: "Thanh toán linh hoạt, không lãi suất.",
+    color: "#34c759",
+  },
+  {
+    icon: <MdTagFaces />,
+    title: "Cá nhân hoá miễn phí",
+    description: "Khắc tên, biểu tượng, không tính phí.",
+    color: "#af52de",
+  },
+  {
+    icon: <MdLocalShipping />,
+    title: "Giao hàng nhanh",
+    description: "Giao trong ngày tại TP.HCM.",
+    color: "#ff9500",
   },
 ];
