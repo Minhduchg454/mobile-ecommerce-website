@@ -1,7 +1,6 @@
-import React, { memo } from "react"
-import Slider from "react-slick"
-import { Product } from "components"
-
+import React, { memo } from "react";
+import Slider from "react-slick";
+import { Product } from "components";
 
 const CustomSlider = ({ products, activedTab, normal, slidesToShow = 3 }) => {
   const settings = {
@@ -10,7 +9,7 @@ const CustomSlider = ({ products, activedTab, normal, slidesToShow = 3 }) => {
     speed: 500,
     slidesToShow,
     slidesToScroll: 1,
-  }
+  };
   return (
     <>
       {products && (
@@ -27,7 +26,7 @@ const CustomSlider = ({ products, activedTab, normal, slidesToShow = 3 }) => {
         </Slider>
       )}
     </>
-  )
-}
+  );
+};
 
-export default memo(CustomSlider)
+export default memo(CustomSlider);

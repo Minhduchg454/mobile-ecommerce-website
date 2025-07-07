@@ -19,8 +19,6 @@ const CategoryList = ({ navigate }) => {
     <div className="w-full bg-white">
       {/* Container cha giúp giới hạn chiều rộng và căn giữa */}
       <div className="max-w-screen-xl mx-auto px-4">
-        <h3 className="text-xl font-semibold mb-4">Danh mục sản phẩm</h3>
-
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {categories?.map((el) => (
             <div

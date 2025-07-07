@@ -357,7 +357,7 @@ export const infoCards = [
   {
     icon: <MdLocalShipping />,
     title: "Giao hàng nhanh",
-    description: "Giao trong ngày tại TP.HCM.",
+    description: "Giao trong ngày tại TP.Cần Thơ.",
     color: "#ff9500",
   },
 ];
