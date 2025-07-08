@@ -23,6 +23,7 @@ import {
   Dashboard,
   CreateBlog,
   ManageBlog,
+  CreateVariation,
 } from "pages/admin";
 import {
   MemberLayout,
@@ -81,6 +82,7 @@ function App() {
           <Route path={path.CREATE_PRODUCTS} element={<CreateProducts />} />
           <Route path={path.CREATE_BLOG} element={<CreateBlog />} />
           <Route path={path.MANAGE_BLOGS} element={<ManageBlog />} />
+          <Route path={path.CREATE_VARIATION} element={<CreateVariation />} />
         </Route>
         <Route path={path.MEMBER} element={<MemberLayout />}>
           <Route path={path.PERSONAL} element={<Personal />} />

@@ -211,6 +211,10 @@ export const adminSidebar = [
         path: `/${path.ADMIN}/${path.CREATE_PRODUCTS}`,
       },
       {
+        text: "THÊM BIẾN THỂ SẢN PHẨM",
+        path: `/${path.ADMIN}/${path.CREATE_VARIATION}`,
+      },
+      {
         text: "QUẢN LÝ KHO HÀNG",
         path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS}`,
       },

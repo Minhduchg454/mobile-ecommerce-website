@@ -34,7 +34,8 @@ const createProduct = asyncHandler(async (req, res) => {
 
   const newProduct = await Product.create(req.body);
   return res.status(200).json({
-    success: newProduct ? true : false,
+    success: !!newProduct,
+    createdProduct: newProduct, // 👈 Thêm dòng này
     mes: newProduct ? "Created" : "Failed.",
   });
 });

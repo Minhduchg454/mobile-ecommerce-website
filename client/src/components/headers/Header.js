@@ -7,7 +7,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "store/user/userSlice";
 import withBaseComponent from "hocs/withBaseComponent";
 import { showCart } from "store/app/appSlice";
-import { ConfirmLogoutModa, InputFormSearch } from "../../components";
+import {
+  ConfirmLogoutModa,
+  InputFormSearch,
+  ConfirmModal,
+} from "../../components";
 import { useForm } from "react-hook-form";
 import { NavLink, createSearchParams, useNavigate } from "react-router-dom";
 import { MdOutlineShoppingCart } from "react-icons/md";
@@ -161,7 +165,11 @@ const Header = () => {
         )}
       </div>
       {isConfirmingLogout && (
-        <ConfirmLogoutModa
+        <ConfirmModal
+          title="Xác nhận đăng xuất"
+          message="Bạn có chắc muốn đăng xuất không?"
+          confirmText="Đăng xuất"
+          cancelText="Hủy"
           onCancel={() => setIsConfirmingLogout(false)}
           onConfirm={() => {
             dispatch(logout());

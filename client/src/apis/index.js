@@ -5,3 +5,4 @@ export * from "./productVariation";
 export * from "./valueOfSpecifications";
 export * from "./productCategories";
 export * from "./brands";
+export * from "./specifications";
