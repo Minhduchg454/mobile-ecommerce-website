@@ -1,51 +1,69 @@
-import React, { useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import path from "ultils/path"
-import { getCurrent } from "store/user/asyncActions"
-import { useSelector, useDispatch } from "react-redux"
-import icons from "ultils/icons"
-import { logout, clearMessage } from "store/user/userSlice"
-import Swal from "sweetalert2"
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import path from "ultils/path";
+import { getCurrent } from "store/user/asyncActions"; //lay thong tin nguoi dung tu token
+import { useSelector, useDispatch } from "react-redux";
+import icons from "ultils/icons";
+import { logout, clearMessage } from "store/user/userSlice"; //logout: dang xuat, clearMessage xoa thong bao loi
+import Swal from "sweetalert2";
 
-const { AiOutlineLogout } = icons
+const { AiOutlineMail, AiOutlinePhone, AiOutlineClockCircle } = icons;
 
 const TopHeaders = () => {
-  const { isLoggedIn, current, mes } = useSelector((state) => state.user)
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const { isLoggedIn, current, mes } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  //Lay thong tin nguoi dung, tranh goi api qua som hoac lien tuc
   useEffect(() => {
     const setTimeoutId = setTimeout(() => {
-      if (isLoggedIn) dispatch(getCurrent())
-    }, 300)
+      if (isLoggedIn) dispatch(getCurrent());
+    }, 300);
 
     return () => {
-      clearTimeout(setTimeoutId)
-    }
-  }, [dispatch, isLoggedIn])
+      clearTimeout(setTimeoutId);
+    };
+  }, [dispatch, isLoggedIn]);
 
+  //Xu ly neu co loi, thi chuyen ve trang dang nhap
   useEffect(() => {
     if (mes)
       Swal.fire("Oops!", mes, "info").then(() => {
-        dispatch(clearMessage())
-        navigate(`/${path.LOGIN}`)
-      })
-  }, [mes])
+        dispatch(clearMessage());
+        navigate(`/${path.LOGIN}`);
+      });
+  }, [mes]);
+
   return (
-    <div className="h-[38px] w-full bg-main flex items-center justify-center">
-      <div className="w-main flex items-center justify-between text-xs text-white">
+    <div className="min-h-7 p-1 w-full bg-main flex flex-wrap items-center justify-between text-xs text-white">
+      {/* Bên trái - Thông tin cửa hàng */}
+      <div className="hidden md:flex flex-wrap items-center gap-2">
         <span className="hidden md:inline-block">
           CỬA HÀNG BÁN ĐIỆN THOẠI DI ĐỘNG TOÀN QUỐC
         </span>
+        <span className="hidden md:inline-block">|</span>
+        <span className="flex items-center gap-1">
+          <AiOutlineClockCircle size={14} />
+          8:00AM - 23:00PM
+        </span>
+        <span className="hidden md:inline-block">|</span>
+        <span className="flex items-center gap-1">
+          <AiOutlinePhone size={14} /> 0909 567 999
+        </span>
+        <span className="hidden md:inline-block">|</span>
+        <span className="flex items-center gap-1">
+          <AiOutlineMail size={14} /> hotro@student.ctu.edu.vn
+        </span>
+      </div>
+
+      {/* Bên phải - lời chào hoặc link đăng nhập */}
+      <div className="w-full md:w-fit flex justify-end mr-1 md:mt-0">
         {isLoggedIn && current ? (
-          <div className=" flex gap-4 w-full md:w-fit text-sm justify-between md:justify-start items-center">
-            <span className="pl-2">{`Xin chào, ${current?.firstName} ${current?.lastName}`}</span>
-            <span
-              onClick={() => dispatch(logout())}
-              className="hover:rounded-full hover:bg-gray-200 cursor-pointer hover:text-main p-2"
-            >
-              <AiOutlineLogout size={18} />
-            </span>
-          </div>
+          <span className="text-xs italic">
+            {current.roleId?.roleName === "admin"
+              ? "Chào quản trị viên, chúc bạn một ngày làm việc hiệu quả"
+              : "Chúc bạn một ngày mua sắm vui vẻ"}
+          </span>
         ) : (
           <Link className="hover:text-gray-800" to={`/${path.LOGIN}`}>
             Đăng nhập hoặc Đăng ký
@@ -53,7 +71,7 @@ const TopHeaders = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TopHeaders
+export default TopHeaders;

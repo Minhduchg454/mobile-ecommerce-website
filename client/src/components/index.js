@@ -42,5 +42,7 @@ export { default as Paypal } from "./common/Paypal";
 export { default as AdminSidebar } from "./sidebar/AdminSidebar";
 export { default as MemberSidebar } from "./sidebar/MemberSidebar";
 export { default as InputForm } from "./inputs/InputForm";
+export { default as InputFormSearch } from "./inputs/InputFormSearch";
 export { default as Select } from "./inputs/Select";
 export { default as MarkdownEditor } from "./inputs/MarkdownEditor";
+export { default as ConfirmLogoutModa } from "./common/ConfirmLogoutModal";
