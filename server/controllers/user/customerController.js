@@ -99,4 +99,28 @@ exports.getAllCustomers = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+};
+
+exports.checkEmailExists = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ exists: false, error: 'Missing email' });
+    const existedUser = await User.findOne({ email });
+    if (existedUser) return res.json({ exists: true });
+    return res.json({ exists: false });
+  } catch (err) {
+    res.status(500).json({ exists: false, error: err.message });
+  }
+};
+
+exports.checkMobileExists = async (req, res) => {
+  try {
+    const { mobile } = req.query;
+    if (!mobile) return res.status(400).json({ exists: false, error: 'Missing mobile' });
+    const existedUser = await User.findOne({ mobile });
+    if (existedUser) return res.json({ exists: true });
+    return res.json({ exists: false });
+  } catch (err) {
+    res.status(500).json({ exists: false, error: err.message });
+  }
 }; 
