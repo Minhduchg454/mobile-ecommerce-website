@@ -133,3 +133,17 @@ export const apiDeleteAdmin = (id) =>
     url: `/user/admin/${id}`,
     method: "delete",
   })
+
+export const apiCheckEmailExists = (email) =>
+  axios({
+    url: `/customers/check-email`,
+    method: "get",
+    params: { email },
+  })
+
+export const apiCheckMobileExists = (mobile) =>
+  axios({
+    url: `/customers/check-mobile`,
+    method: "get",
+    params: { mobile },
+  })
