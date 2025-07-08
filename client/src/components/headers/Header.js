@@ -67,7 +67,7 @@ const Header = () => {
 
   console.log("Header", current);
   return (
-    <div className="md:w-main w-full flex items-center justify-between md:h-[110px] py-[8px]">
+    <div className="md:w-main w-full flex items-center justify-between md:h-[90px] py-[8px]">
       <Link
         to={`/${path.HOME}`}
         className="h-16 flex items-center justify-center px-2"
