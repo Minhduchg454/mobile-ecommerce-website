@@ -11,6 +11,8 @@ import {
   SearchItem,
   InputSelect,
   Pagination,
+  ProductCard,
+  ReusableBanner,
 } from "../../components";
 import {
   apiGetProducts,
@@ -40,8 +42,16 @@ const Products = () => {
   const [categoryName, setCategoryName] = useState("");
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedBrandId, setSelectedBrandId] = useState("");
+
+  const banner1 = [
+    require("assets/banner-iphone.webp"),
+    require("assets/banner-apple.webp"),
+  ];
+
+  const banner2 = [
+    require("assets/banner-samsung.webp"),
+    require("assets/banner-combo.webp"),
+  ];
 
   //Truy xuat danh muc tat ca danh muc
   useEffect(() => {
@@ -63,7 +73,6 @@ const Products = () => {
       }
       if (res2.success) setBrands(res2.brands);
     };
-
     fetchData();
   }, []);
 
@@ -136,11 +145,15 @@ const Products = () => {
 
   return (
     <div className="w-full">
-      <div className="h-[81px] flex justify-center items-center bg-gray-100">
+      <div className="md:w-main m-auto h-[81px] flex justify-start items-center p-2 bg-gray-100">
         <div className="lg:w-main w-screen px-4 lg:px-0">
-          <h3 className="font-semibold uppercase">{categoryName}</h3>
+          <h3 className="font-semibold uppercase  mb-2">{categoryName}</h3>
           <Breadcrumb category={category} />
         </div>
+      </div>
+      <div className="md:w-main p-2  my-8 m-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ReusableBanner images={banner1} aspectRatio="3/1" />
+        <ReusableBanner images={banner2} aspectRatio="3/1" />
       </div>
       <div className="lg:w-main border p-4 flex lg:pr-4 pr-8 flex-col md:flex-row gap-4 md:justify-between mt-8 m-auto">
         <div className="w-4/5 flex-auto flex flex-wrap gap-4">
@@ -217,9 +230,17 @@ const Products = () => {
           />
         </div>
       </div>
-      <div className="mt-8 w-main m-auto grid lg:grid-cols-4 md:grid-cols-3 grid-cols-1 gap-4">
+      <div className="md:w-main m-auto my-4 gap-4 flex flex-wrap">
         {products?.products?.map((el) => (
-          <Product key={el._id} pid={el._id} productData={el} normal={true} />
+          <div className="mr-6">
+            <ProductCard
+              pid={el.id}
+              key={el._id}
+              image={el.thumb}
+              slugCategory={el.categoryId?.slug}
+              {...el}
+            />
+          </div>
         ))}
       </div>
 

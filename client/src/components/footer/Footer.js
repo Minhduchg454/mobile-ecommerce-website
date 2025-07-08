@@ -1,49 +1,73 @@
-import React, { memo }  from "react";
+import React, { memo } from "react";
 
-const Footer = () =>{
-    return (
-        <div className="w-full">
-            <div className="h-[280px] bg-[#00AFFF] w-full flex items-center justify-center">
-                <div className="w-main flex text-white text-[13px]">
-                    <div className="flex-2 flex flex-col gap-2">
-                        <h3 className="mb-[20px] text-[15px] font-medium border-l-2 border-main pl-[15p]">LIÊN HỆ</h3>
-                        <span>
-                            <span>Địa chỉ: </span>
-                            <span className="opacity-70">CTU</span>
-                        </span>
-                        <span>
-                            <span className="opacity-70">Điện thoại: </span>
-                            <span>0123456789</span>
-                        </span>
-                        <span>
-                            <span className="opacity-70">Email: </span>
-                            <span>hotro@student.ctu.edu.vn</span>
-                        </span>
-                    </div>
-                    <div className="flex-1 flex flex-col gap-2">
-                        <h3 className="mb-[20px] text-[15px] font-medium border-l-2 border-main pl-[15p]">THÔNG TIN</h3>
-                        <span><a href="#">Tra cứu hóa đơn điện tử</a></span>
-                        <span><a href="#">Tra cứu ưu đãi của bạn</a></span>
-                        <span><a href="#">Trung tâm bảo hành</a></span>
-                    </div>
-                    <div className="flex-1 flex flex-col gap-2">
-                        <h3 className="mb-[20px] text-[15px] font-medium border-l-2 border-main pl-[15p]">CHÍNH SÁCH</h3>
-                        <span><a href="#">Chính sách bảo hành</a></span>
-                        <span><a href="#">Chính sách đổi trả</a></span>
-                        <span><a href="#">Chính sách giao hàng</a></span>
-                        <span><a href="#">Chính sách khui hộp</a></span>
-                        <span><a href="#">Chính sách bảo vệ dữ liệu cá nhân</a></span>
-                    </div>
-                    <div className="flex-1 flex flex-col gap-2">
-                        <h3 className="mb-[20px] text-[15px] font-medium border-l-2 border-main pl-[15p]">TƯ VẤN ĐẶT HÀNG</h3>
-                        <span><a href="#">Phương thức thanh toán</a></span>
-                        <span><a href="#">Hướng dẫn đặt hàng</a></span>
-                        <span><a href="#">Góp ý, khiếu nại</a></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
+const sections = [
+  {
+    title: "LIÊN HỆ",
+    content: (
+      <>
+        <p>
+          Địa chỉ: <span className="opacity-70">CTU</span>
+        </p>
+        <p>
+          Điện thoại: <span className="opacity-70">0909 567 999</span>
+        </p>
+        <p>
+          Email: <span className="opacity-70">hotro@student.ctu.edu.vn</span>
+        </p>
+      </>
+    ),
+  },
+  {
+    title: "THÔNG TIN",
+    links: [
+      "Tra cứu hóa đơn điện tử",
+      "Tra cứu ưu đãi của bạn",
+      "Trung tâm bảo hành",
+    ],
+  },
+  {
+    title: "CHÍNH SÁCH",
+    links: [
+      "Chính sách bảo hành",
+      "Chính sách đổi trả",
+      "Chính sách giao hàng",
+      "Chính sách khui hộp",
+      "Chính sách bảo vệ dữ liệu cá nhân",
+    ],
+  },
+  {
+    title: "TƯ VẤN ĐẶT HÀNG",
+    links: ["Phương thức thanh toán", "Hướng dẫn đặt hàng", "Góp ý, khiếu nại"],
+  },
+];
 
-export default memo(Footer)
+const Footer = () => {
+  return (
+    <footer className="w-full bg-[#00AFFF] text-white text-sm mt-10">
+      <div className="max-w-main mx-auto px-4 py-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {sections.map((section, index) => (
+          <div key={index} className="min-w-[200px] bg-white/10 rounded-md p-4">
+            <h3 className="text-base font-semibold mb-4 border-l-4 border-white pl-2 text-left uppercase">
+              {section.title}
+            </h3>
+            {section.content ? (
+              section.content
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {section.links.map((link, idx) => (
+                  <li key={idx}>
+                    <a href="#" className="hover:underline">
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </footer>
+  );
+};
+
+export default memo(Footer);

@@ -1,36 +1,36 @@
-import React, { memo, useEffect, useState } from "react"
-import { navigation } from "ultils/contants"
-import { NavLink, createSearchParams, useNavigate } from "react-router-dom"
-import InputForm from "components/inputs/InputForm"
-import { useForm } from "react-hook-form"
-import path from "ultils/path"
-import { IoMenuSharp } from "react-icons/io5"
+import React, { memo, useEffect, useState } from "react";
+import { navigation } from "ultils/contants";
+import { NavLink, createSearchParams, useNavigate } from "react-router-dom";
+import InputForm from "components/inputs/InputForm";
+import { useForm } from "react-hook-form";
+import path from "ultils/path";
+import { IoMenuSharp } from "react-icons/io5";
 
 const Navigation = () => {
   const {
     register,
     formState: { errors, isDirty },
     watch,
-  } = useForm()
-  const q = watch("q")
-  const navigate = useNavigate()
-  const [showMenu, setShowMenu] = useState(false)
+  } = useForm();
+  const q = watch("q");
+  const navigate = useNavigate();
+  const [showMenu, setShowMenu] = useState(false);
   useEffect(() => {
     const handleEnter = (e) => {
       if (e.keyCode === 13) {
         navigate({
           pathname: `/${path.PRODUCTS}`,
           search: createSearchParams({ q }).toString(),
-        })
+        });
       }
-    }
-    if (isDirty) window.addEventListener("keyup", handleEnter)
-    else window.removeEventListener("keyup", handleEnter)
+    };
+    if (isDirty) window.addEventListener("keyup", handleEnter);
+    else window.removeEventListener("keyup", handleEnter);
 
     return () => {
-      window.removeEventListener("keyup", handleEnter)
-    }
-  }, [isDirty, q])
+      window.removeEventListener("keyup", handleEnter);
+    };
+  }, [isDirty, q]);
   return (
     <div className="md:w-main w-full h-[48px] flex items-center px-4 md:px-0 justify-between border-y">
       {showMenu && (
@@ -80,15 +80,15 @@ const Navigation = () => {
           </NavLink>
         ))}
       </div>
-      <InputForm
+      {/* <InputForm
         id="q"
         register={register}
         errors={errors}
         placeholder="Tìm kiếm..."
         style="flex-none border-none outline-none"
-      />
+      /> */}
     </div>
-  )
-}
+  );
+};
 
-export default memo(Navigation)
+export default memo(Navigation);

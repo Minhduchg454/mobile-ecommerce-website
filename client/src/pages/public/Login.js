@@ -40,8 +40,8 @@ const Login = () => {
       firstname: "",
       lastname: "",
       mobile: "",
-    })
-  }
+    });
+  };
   const handleInput = (e) => {
     setPayload(prev => ({ ...prev, [e.target.name]: e.target.value }))
     if (isRegister) {
@@ -344,10 +344,13 @@ const Login = () => {
   }, [payload.email, payload.password, isRegister]);
 
   useEffect(() => {
-    console.log('Redux user state:', userState);
+    console.log("Redux user state:", userState);
   }, [userState]);
 
-  useEffect(() => { resetPayload() }, [isRegister])
+  useEffect(() => {
+    resetPayload();
+  }, [isRegister]);
+  console.log(payload);
 
   // Thêm hàm kiểm tra hợp lệ toàn bộ form đăng ký
   const isRegisterFormValid =
@@ -378,8 +381,16 @@ const Login = () => {
       <FaMobileAlt className="absolute right-16 bottom-8 text-white/10 text-8xl animate-bounce-slow2" />
       <FaHeadphones className="absolute left-1/2 -translate-x-1/2 top-4 text-white/30 text-5xl animate-float" />
       <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl flex flex-col items-center z-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-8 tracking-wide drop-shadow">{isRegister ? "Đăng ký tài khoản" : "Đăng nhập"}</h1>
-        <form className="w-full flex flex-col gap-4" onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
+        <h1 className="text-2xl font-bold text-gray-800 mb-8 tracking-wide drop-shadow">
+          {isRegister ? "Đăng ký tài khoản" : "Đăng nhập"}
+        </h1>
+        <form
+          className="w-full flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
           {isRegister && (
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -435,22 +446,33 @@ const Login = () => {
             {isRegister ? "Đăng ký" : "Đăng nhập"}
           </button>
         </form>
-        <div className="flex items-center justify-between mt-4 w-full text-sm">
+        <div className="flex items-center justify-center mt-4 w-full text-sm">
           {!isRegister && (
-            <span className="text-cyan-700 hover:underline cursor-pointer" onClick={() => setIsRegister(true)}>
-              Đăng ký
+            <span
+              className="text-cyan-700 hover:underline cursor-pointer"
+              onClick={() => setIsRegister(true)}
+            >
+              Chưa có tài khoản? Đăng ký
             </span>
           )}
           {isRegister && (
-            <span className="text-cyan-700 hover:underline cursor-pointer w-full text-center" onClick={() => setIsRegister(false)}>
+            <span
+              className="text-cyan-700 hover:underline cursor-pointer w-full text-center"
+              onClick={() => setIsRegister(false)}
+            >
               Đi đến đăng nhập
             </span>
           )}
         </div>
-        <Link className="text-cyan-700 text-sm hover:underline cursor-pointer mt-2" to={`/${path.HOME}`}>Trang chủ</Link>
+        <Link
+          className="text-gray-600 text-center text-sm hover:text-cyan-600 hover:underline cursor-pointer mt-2"
+          to={`/${path.HOME}`}
+        >
+          Quay lại trang chủ
+        </Link>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

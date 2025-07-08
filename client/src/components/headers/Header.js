@@ -1,113 +1,184 @@
-import React, { Fragment, memo, useEffect, useState } from "react"
-import logo from "assets/logo.jpg"
-import icons from "ultils/icons"
-import { Link } from "react-router-dom"
-import path from "ultils/path"
-import { useDispatch, useSelector } from "react-redux"
-import { logout } from "store/user/userSlice"
-import withBaseComponent from "hocs/withBaseComponent"
-import { showCart } from "store/app/appSlice"
+import React, { Fragment, memo, useEffect, useState } from "react";
+import logo from "assets/logo.jpg";
+import icons from "ultils/icons";
+import { Link } from "react-router-dom";
+import path from "ultils/path";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "store/user/userSlice";
+import withBaseComponent from "hocs/withBaseComponent";
+import { showCart } from "store/app/appSlice";
+import {
+  ConfirmLogoutModa,
+  InputFormSearch,
+  ConfirmModal,
+} from "../../components";
+import { useForm } from "react-hook-form";
+import { NavLink, createSearchParams, useNavigate } from "react-router-dom";
+import { MdOutlineShoppingCart } from "react-icons/md";
 
-const { RiPhoneFill, MdEmail, BsHandbagFill, FaUserCircle } = icons
+const { AiOutlineSearch, BsHandbagFill, FaUserCircle } = icons;
+
 const Header = () => {
-  const dispatch = useDispatch()
-  const { current } = useSelector((state) => state.user)
+  const {
+    register,
+    formState: { errors, isDirty },
+    watch,
+  } = useForm();
+  const dispatch = useDispatch();
+  const { current } = useSelector((state) => state.user);
   // Log giá trị current để debug đăng nhập
-  console.log('Header user.current:', current);
-  const [isShowOption, setIsShowOption] = useState(false)
+  console.log("Header user.current:", current);
+  const [isShowOption, setIsShowOption] = useState(false);
+  const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
   useEffect(() => {
     const handleClickoutOptions = (e) => {
-      const profile = document.getElementById("profile")
-      if (!profile?.contains(e.target)) setIsShowOption(false)
-    }
+      const profile = document.getElementById("profile");
+      if (!profile?.contains(e.target)) setIsShowOption(false);
+    };
 
-    document.addEventListener("click", handleClickoutOptions)
+    document.addEventListener("click", handleClickoutOptions);
 
     return () => {
-      document.removeEventListener("click", handleClickoutOptions)
-    }
-  }, [])
+      document.removeEventListener("click", handleClickoutOptions);
+    };
+  }, []);
 
+  const handleSearch = () => {
+    if (!q?.trim()) return;
+    navigate({
+      pathname: `/${path.PRODUCTS}`,
+      search: createSearchParams({ q }).toString(),
+    });
+  };
+
+  const q = watch("q");
+  const navigate = useNavigate();
+  const [showMenu, setShowMenu] = useState(false);
+  useEffect(() => {
+    const handleEnter = (e) => {
+      if (e.keyCode === 13) {
+        navigate({
+          pathname: `/${path.PRODUCTS}`,
+          search: createSearchParams({ q }).toString(),
+        });
+      }
+    };
+    if (isDirty) window.addEventListener("keyup", handleEnter);
+    else window.removeEventListener("keyup", handleEnter);
+
+    return () => {
+      window.removeEventListener("keyup", handleEnter);
+    };
+  }, [isDirty, q]);
+
+  console.log("Header", current);
   return (
-    <div className="md:w-main w-full flex justify-between md:h-[110px] py-[8px]">
-      <Link className="w-fit h-fit px-4" to={`/${path.HOME}`}>
-        <img
-          src={logo}
-          alt="logo"
-          className="h-[20px] md:w-[200px] md:h-fit object-contain"
-        />
+    <div className="md:w-main w-full flex items-center justify-between md:h-[90px] py-[8px]">
+      <Link
+        to={`/${path.HOME}`}
+        className="h-16 flex items-center justify-center px-2"
+      >
+        <img src={logo} alt="logo" className="h-full w-auto object-contain" />
       </Link>
-      <div className="flex text-[13px] py-[28px]">
-        <div className="md:flex hidden flex-col px-6 border-r items-center">
-          <span className="flex gap-4 items-center">
-            <RiPhoneFill color="red" />
-            <span className="font-semibold">0123456789</span>
-          </span>
-          <span>Mở cửa từ 8:00AM - 23:00PM</span>
-        </div>
-        <div className="md:flex hidden flex-col items-center px-6 border-r">
-          <span className="flex gap-4 items-center">
-            <MdEmail color="red" />
-            <span className="font-semibold">hotro@student.ctu.edu.vn</span>
-          </span>
-          <span>Hỗ trợ 24/7</span>
-        </div>
+
+      <div className="w-full md:w-[700px] px-1">
+        <InputFormSearch
+          id="q"
+          register={register}
+          errors={errors}
+          placeholder="Tìm kiếm sản phẩm..."
+          wrapperStyle="flex-1 px-4"
+          style="bg-gray-100 p-3 rounded-full text-sm border-none focus:outline-none"
+          icon={<AiOutlineSearch size={18} />}
+          iconPosition="left"
+          onIconClick={handleSearch}
+        />
+      </div>
+
+      <div className="flex h-full text-[16px] py-[28px]">
         {current && (
           // Nếu current tồn tại, coi như đã đăng nhập
-          <Fragment>
+          <div className="flex items-center gap-4 px-4 relative">
+            {/* Giỏ hàng */}
             <div
               onClick={() => dispatch(showCart())}
-              className="cursor-pointer flex items-center justify-center gap-2 px-6 border-r"
+              className="relative cursor-pointer"
             >
-              <span className="relative md:hidden inline-block">
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 flex items-center justify-center text-[10px] text-white rounded-full">
-                  {current?.cart?.length || 0}
+              <MdOutlineShoppingCart size={30} className="text-blue-500" />
+              {current?.cart?.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                  {current?.cart?.length}
                 </span>
-                <BsHandbagFill size={20} color="red" />
-              </span>
-              <span className="hidden md:inline-block">{`${current?.cart?.length || 0
-                } item(s)`}</span>
+              )}
             </div>
+
+            {/* Avatar và menu */}
             <div
-              className="flex cursor-pointer items-center justify-center px-6 gap-2 relative"
-              onClick={() => setIsShowOption((prev) => !prev)}
               id="profile"
+              className="relative cursor-pointer flex items-center gap-2"
+              onClick={() => setIsShowOption((prev) => !prev)}
             >
-              <FaUserCircle size={20} color="red" />
-              <span className="hidden md:inline-block">Tài khoản</span>
+              {current?.avatar ? (
+                <img
+                  src={current.avatar}
+                  alt="avatar"
+                  className="w-10 h-10 object-cover rounded-full border"
+                />
+              ) : (
+                <FaUserCircle size={28} className="text-blue-600 w-10 h-10" /> // ❗ Màu đen
+              )}
+              {/* ✅ Tên người dùng */}
+              <span className="hidden md:inline-block ml-2 text-xl font-medium text-black">
+                {current.firstName}
+              </span>
+
+              {/* Menu tùy chọn */}
               {isShowOption && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-full flex-col flex right-4 md:left-[16px] bg-gray-100 border md:min-w-[150px] py-2"
+                  className="absolute top-full right-0 md:left-0 bg-gray-100 border rounded shadow-md z-50 min-w-[150px] py-2"
                 >
                   <Link
-                    className="p-2 w-full hover:bg-sky-100"
+                    className="block p-2 hover:bg-sky-100"
                     to={`/${path.MEMBER}/${path.PERSONAL}`}
                   >
                     Thông tin cá nhân
                   </Link>
                   {+current.role === 1945 && (
                     <Link
-                      className="p-2 w-full hover:bg-sky-100"
+                      className="block p-2 hover:bg-sky-100"
                       to={`/${path.ADMIN}/${path.DASHBOARD}`}
                     >
                       Quản lý cửa hàng
                     </Link>
                   )}
                   <span
-                    onClick={() => dispatch(logout())}
-                    className="p-2 w-full hover:bg-sky-100"
+                    onClick={() => setIsConfirmingLogout(true)}
+                    className="block p-2 hover:bg-sky-100 cursor-pointer"
                   >
                     Đăng xuất
                   </span>
                 </div>
               )}
             </div>
-          </Fragment>
+          </div>
         )}
       </div>
+      {isConfirmingLogout && (
+        <ConfirmModal
+          title="Xác nhận đăng xuất"
+          message="Bạn có chắc muốn đăng xuất không?"
+          confirmText="Đăng xuất"
+          cancelText="Hủy"
+          onCancel={() => setIsConfirmingLogout(false)}
+          onConfirm={() => {
+            dispatch(logout());
+            setIsConfirmingLogout(false);
+          }}
+        />
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;
