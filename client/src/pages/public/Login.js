@@ -225,13 +225,13 @@ const Login = () => {
             {isRegister ? "Đăng ký" : "Đăng nhập"}
           </button>
         </form>
-        <div className="flex items-center justify-between mt-4 w-full text-sm">
+        <div className="flex items-center justify-center mt-4 w-full text-sm">
           {!isRegister && (
             <span
               className="text-cyan-700 hover:underline cursor-pointer"
               onClick={() => setIsRegister(true)}
             >
-              Đăng ký
+              Chưa có tài khoản? Đăng ký
             </span>
           )}
           {isRegister && (
@@ -244,10 +244,10 @@ const Login = () => {
           )}
         </div>
         <Link
-          className="text-cyan-700 text-sm hover:underline cursor-pointer mt-2"
+          className="text-gray-600 text-center text-sm hover:text-cyan-600 hover:underline cursor-pointer mt-2"
           to={`/${path.HOME}`}
         >
-          Trang chủ
+          Quay lại trang chủ
         </Link>
       </div>
     </div>
