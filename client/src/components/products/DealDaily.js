@@ -95,7 +95,7 @@ const DealDaily = ({ dispatch }) => {
             "https://apollobattery.com.au/wp-content/uploads/2022/08/default-product-image.png"
           }
           alt=""
-          className="w-full object-contain"
+          className="w-[250px] h-[274px] object-contain"
         />
         <span className="line-clamp-1 text-center">{product.productName}</span>
         <span className="flex h-4 items-center gap-1">

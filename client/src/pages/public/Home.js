@@ -28,8 +28,8 @@ const Home = ({ navigate }) => {
       <div className="md:w-main m-auto">
         <CategoryList />
       </div>
-      <div className="md:w-main m-auto flex flex-col md:flex-row mt-6 py-2">
-        <div className="flex flex-col gap-5 md:w-[25%] flex-auto border-none">
+      <div className="md:w-main m-auto flex flex-col md:flex-row mt-6 px-2 gap-4">
+        <div className="flex flex-col gap-5 md:w-[25%] flex-auto border-none ">
           <DealDaily />
         </div>
         <div className="flex flex-col gap-5 md:pl-5 md:w-[75%] flex-auto border-none">

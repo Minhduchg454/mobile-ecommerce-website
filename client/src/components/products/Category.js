@@ -17,7 +17,7 @@ const CategoryList = ({ navigate }) => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-wrap gap-6 my-4">
+      <div className="flex flex-wrap gap-12 my-4">
         {categories?.map((el) => (
           <div
             key={el._id}

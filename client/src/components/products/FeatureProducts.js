@@ -21,9 +21,15 @@ const FeatureProducts = ({ title = "SẢN PHẨM", query = {} }) => {
   return (
     <div className="w-full">
       <h3 className="text-[20px] font-semibold py-[15px]">{title}</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-4">
+      <div className="flex justify-start gap-4 flex-wrap">
         {products?.map((el) => (
-          <ProductCard key={el._id} pid={el._id} image={el.thumb} {...el} />
+          <ProductCard
+            key={el._id}
+            pid={el._id}
+            image={el.thumb}
+            slugCategory={el.categoryId?.slug}
+            {...el}
+          />
         ))}
       </div>
     </div>
