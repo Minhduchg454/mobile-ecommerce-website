@@ -10,6 +10,8 @@ import { showCart } from "store/app/appSlice";
 import { ConfirmLogoutModa, InputFormSearch } from "../../components";
 import { useForm } from "react-hook-form";
 import { NavLink, createSearchParams, useNavigate } from "react-router-dom";
+import { MdOutlineShoppingCart } from "react-icons/md";
+
 const { AiOutlineSearch, BsHandbagFill, FaUserCircle } = icons;
 
 const Header = () => {
@@ -89,7 +91,7 @@ const Header = () => {
         />
       </div>
 
-      <div className="flex text-[13px] py-[28px]">
+      <div className="flex h-full text-[16px] py-[28px]">
         {current && (
           // Nếu current tồn tại, coi như đã đăng nhập
           <div className="flex items-center gap-4 px-4 relative">
@@ -98,7 +100,7 @@ const Header = () => {
               onClick={() => dispatch(showCart())}
               className="relative cursor-pointer"
             >
-              <BsHandbagFill size={24} className="text-blue-500" />
+              <MdOutlineShoppingCart size={30} className="text-blue-500" />
               {current?.cart?.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
                   {current?.cart?.length}
@@ -116,13 +118,13 @@ const Header = () => {
                 <img
                   src={current.avatar}
                   alt="avatar"
-                  className="w-8 h-8 object-cover rounded-full border"
+                  className="w-10 h-10 object-cover rounded-full border"
                 />
               ) : (
-                <FaUserCircle size={28} className="text-blue-600" /> // ❗ Màu đen
+                <FaUserCircle size={28} className="text-blue-600 w-10 h-10" /> // ❗ Màu đen
               )}
               {/* ✅ Tên người dùng */}
-              <span className="hidden md:inline-block text-sm font-medium text-black">
+              <span className="hidden md:inline-block ml-2 text-xl font-medium text-black">
                 {current.firstName}
               </span>
 

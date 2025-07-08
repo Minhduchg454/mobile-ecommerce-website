@@ -1,23 +1,20 @@
-import React, { memo, useState, useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
-const banners = [
-  require("../../assets/banner-iphone.webp"),
-  require("../../assets/banner-apple.webp"),
-  require("../../assets/banner-samsung.webp"),
-  require("../../assets/banner-combo.webp"),
-];
-
-const Banner = () => {
+const ReusableBanner = ({
+  images = [],
+  aspectRatio = "3/1",
+  className = "",
+}) => {
   const [index, setIndex] = useState(0);
   const intervalRef = useRef(null);
 
   const nextSlide = () => {
-    setIndex((prev) => (prev + 1) % banners.length);
+    setIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevSlide = () => {
-    setIndex((prev) => (prev - 1 + banners.length) % banners.length);
+    setIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const resetInterval = () => {
@@ -40,14 +37,17 @@ const Banner = () => {
     resetInterval();
   };
 
+  if (!images.length) return null;
+
   return (
-    <div className="w-full aspect-[3/1] bg-gray-100 relative overflow-hidden rounded-xl">
-      {/* Slide container */}
+    <div
+      className={`relative overflow-hidden rounded-xl bg-gray-100 aspect-[${aspectRatio}] ${className}`}
+    >
       <div
         className="flex transition-transform duration-700 ease-in-out w-full h-full"
         style={{ transform: `translateX(-${index * 100}%)` }}
       >
-        {banners.map((img, i) => (
+        {images.map((img, i) => (
           <img
             key={i}
             src={img}
@@ -75,4 +75,4 @@ const Banner = () => {
   );
 };
 
-export default memo(Banner);
+export default memo(ReusableBanner);

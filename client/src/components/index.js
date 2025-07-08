@@ -15,6 +15,7 @@ export { default as QuickView } from "./products/QuickView";
 export { default as CustomSlider } from "./common/CustomSlider";
 export { default as FeatureInfo } from "./products/FeatureInfo";
 export { default as FeatureInfoSlider } from "./common/FeatureInfoSlider";
+export { default as ReusableBanner } from "./common/ReusableBanner";
 // export { default as TopHeader } from './headers/TopHeader'
 export { default as Footer } from "./footer/Footer";
 export { default as InputField } from "./inputs/InputField";
