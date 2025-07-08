@@ -42,8 +42,6 @@ const Products = () => {
   const [categoryName, setCategoryName] = useState("");
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedBrandId, setSelectedBrandId] = useState("");
 
   const banner1 = [
     require("assets/banner-iphone.webp"),

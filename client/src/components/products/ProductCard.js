@@ -72,7 +72,6 @@ const ProductCard = ({
     }
     dispatch(getCurrent());
   };
-  console.log("slug cua danh muc", slugCategory);
 
   return (
     <div
