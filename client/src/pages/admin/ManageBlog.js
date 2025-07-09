@@ -1,47 +1,48 @@
-import { apiDeleteBlog, apiGetBlogs } from "apis/blog"
-import { InputForm, Pagination } from "components"
-import withBaseComponent from "hocs/withBaseComponent"
-import useDebounce from "hooks/useDebounce"
-import moment from "moment"
-import React, { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import { BiEdit } from "react-icons/bi"
-import { RiDeleteBin6Line } from "react-icons/ri"
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { showModal } from "store/app/appSlice"
-import UpdateBlog from "./UpdateBlog"
-import { toast } from "react-toastify"
-import { useSelector } from "react-redux"
-import Swal from "sweetalert2"
+import { apiDeleteBlog, apiGetBlogs } from "apis/blog";
+import { InputForm, Pagination } from "components";
+import withBaseComponent from "hocs/withBaseComponent";
+import useDebounce from "hooks/useDebounce";
+import moment from "moment";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { showModal } from "store/app/appSlice";
+import UpdateBlog from "./UpdateBlog";
+import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
+import Swal from "sweetalert2";
+import clsx from "clsx";
 
 const ManageBlog = ({ dispatch }) => {
-  const [params] = useSearchParams()
-  const [update, setUpdate] = useState(false)
-  const [counts, setCounts] = useState(0)
-  const [blogs, setBlogs] = useState()
-  const { isShowModal } = useSelector((s) => s.app)
+  const [params] = useSearchParams();
+  const [update, setUpdate] = useState(false);
+  const [counts, setCounts] = useState(0);
+  const [blogs, setBlogs] = useState();
+  const { isShowModal } = useSelector((s) => s.app);
   const {
     register,
     formState: { errors },
     watch,
-  } = useForm()
+  } = useForm();
+
   const fetchBlogs = async (param) => {
     const response = await apiGetBlogs({
       ...param,
       limit: process.env.REACT_APP_LIMIT,
-    })
+    });
     if (response.success) {
-      setCounts(response.counts)
-      setBlogs(response.blogs)
+      setCounts(response.counts);
+      setBlogs(response.blogs);
     }
-  }
+  };
 
-  const queryDebounce = useDebounce(watch("q"), 800)
+  const queryDebounce = useDebounce(watch("q"), 800);
   useEffect(() => {
-    const searchParams = Object.fromEntries([...params])
-    if (queryDebounce) searchParams.q = queryDebounce
-    if (!isShowModal) fetchBlogs(searchParams)
-  }, [params, update, queryDebounce, isShowModal])
+    const searchParams = Object.fromEntries([...params]);
+    if (queryDebounce) searchParams.q = queryDebounce;
+    if (!isShowModal) fetchBlogs(searchParams);
+  }, [params, update, queryDebounce, isShowModal]);
+
   const handleDeleteBolg = async (id) => {
     Swal.fire({
       icon: "warning",
@@ -53,93 +54,110 @@ const ManageBlog = ({ dispatch }) => {
       cancelButtonText: "Quay lại",
     }).then(async (rs) => {
       if (rs.isConfirmed) {
-        const response = await apiDeleteBlog(id)
+        const response = await apiDeleteBlog(id);
         if (response.success) {
-          setUpdate(!update)
-          toast.success(response.mes)
-        } else toast.error(response.mes)
+          setUpdate(!update);
+          toast.success(response.mes);
+        } else toast.error(response.mes);
       }
-    })
-  }
+    });
+  };
+
   return (
-    <div className="w-full flex flex-col gap-4 min-h-screen bg-gray-50 relative">
-      <div className="h-[69px] w-full"></div>
-      <div className="p-4 border-b w-full bg-gray-50 flex items-center fixed top-0">
-        <h1 className="text-3xl font-bold tracking-tight">QUẢN LÝ TIN TỨC</h1>
-      </div>
-      <div className="flex justify-end items-center px-4">
-        <form className="w-[45%]">
+    <div className="w-full bg-gray-50 min-h-screen p-4">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4 flex justify-between items-center">
+        <form className="w-full">
           <InputForm
             id="q"
             register={register}
             errors={errors}
             fullWidth
-            placeholder="Tìm kiếm..."
+            placeholder="🔍 Tìm kiếm bài viết..."
           />
         </form>
       </div>
-      <div className="px-4 w-full">
-        <table className="table-auto w-full">
-          <thead>
-            <tr className="border bg-sky-900 text-white border-white">
-              <th className="text-center py-2">STT</th>
-              <th className="text-center py-2">Tiêu đề</th>
-              <th className="text-center py-2">Thẻ</th>
-              <th className="text-center py-2">Lượt xem</th>
-              <th className="text-center py-2">Liked</th>
-              <th className="text-center py-2">Disliked</th>
-              <th className="text-center py-2">Ngày đăng</th>
-              <th className="text-center py-2">Tùy chọn</th>
+
+      {/* Nội dung bảng */}
+      <div className="bg-white rounded-xl shadow p-4">
+        <table className="table-auto w-full border-collapse text-sm">
+          <thead className="bg-sky-800 text-white uppercase">
+            <tr>
+              <th className="py-3 px-2 text-center">STT</th>
+              <th className="py-3 px-2 text-center">Tiêu đề</th>
+              <th className="py-3 px-2 text-center">Thẻ</th>
+              <th className="py-3 px-2 text-center">Lượt xem</th>
+              <th className="py-3 px-2 text-center">Liked</th>
+              <th className="py-3 px-2 text-center">Disliked</th>
+              <th className="py-3 px-2 text-center">Ngày đăng</th>
+              <th className="py-3 px-2 text-center">Tùy chọn</th>
             </tr>
           </thead>
           <tbody>
             {blogs?.map((el, idx) => (
-              <tr className="border-b" key={el._id}>
-                <td className="text-center py-2">
+              <tr
+                key={el._id}
+                className="border-b hover:bg-sky-50 transition-all"
+              >
+                <td className="text-center py-3 px-2 font-semibold">
                   {(+params.get("page") > 1 ? +params.get("page") - 1 : 0) *
                     process.env.REACT_APP_LIMIT +
                     idx +
                     1}
                 </td>
-                <td className="text-center">{el.title}</td>
-                <td className="text-center">{el.hashtags}</td>
-                <td className="text-center">{el.numberViews}</td>
-                <td className="text-center">{el.likes?.length}</td>
-                <td className="text-center">{el.dislikes?.length}</td>
-                <td className="text-center">
+                <td className="text-center py-3 px-2">{el.title}</td>
+                <td className="text-center py-3 px-2">{el.hashtags}</td>
+                <td className="text-center py-3 px-2">{el.numberViews}</td>
+                <td className="text-center py-3 px-2">{el.likes?.length}</td>
+                <td className="text-center py-3 px-2">{el.dislikes?.length}</td>
+                <td className="text-center py-3 px-2">
                   {moment(el.createdAt).format("DD/MM/YYYY")}
                 </td>
-                <td className="text-center py-2">
-                  <span
-                    onClick={() =>
-                      dispatch(
-                        showModal({
-                          isShowModal: true,
-                          modalChildren: <UpdateBlog {...el} />,
-                        })
-                      )
-                    }
-                    className="text-blue-500 hover:text-orange-500 inline-block hover:underline cursor-pointer px-1"
-                  >
-                    <BiEdit size={20} />
-                  </span>
-                  <span
-                    onClick={() => handleDeleteBolg(el.id)}
-                    className="text-blue-500 hover:text-orange-500 inline-block hover:underline cursor-pointer px-1"
-                  >
-                    <RiDeleteBin6Line size={20} />
-                  </span>
+                <td className="text-center py-3 px-2">
+                  <div className="flex justify-center gap-2 items-center text-orange-600 text-sm">
+                    <span
+                      onClick={() =>
+                        dispatch(
+                          showModal({
+                            isShowModal: true,
+                            modalChildren: <UpdateBlog {...el} />,
+                          })
+                        )
+                      }
+                      className="hover:underline cursor-pointer"
+                    >
+                      Sửa
+                    </span>
+                    <span
+                      onClick={() => handleDeleteBolg(el._id)}
+                      className="hover:underline cursor-pointer"
+                    >
+                      Xoá
+                    </span>
+                  </div>
                 </td>
               </tr>
             ))}
+            {blogs?.length === 0 && (
+              <tr>
+                <td
+                  colSpan="8"
+                  className="text-center py-6 text-gray-500 italic"
+                >
+                  Không có bài viết nào.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-      </div>
-      <div className="w-full px-4 flex justify-end my-8">
-        <Pagination totalCount={counts} />
+
+        {/* Pagination */}
+        <div className="w-full flex justify-end mt-8">
+          <Pagination totalCount={counts} />
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default withBaseComponent(ManageBlog)
+export default withBaseComponent(ManageBlog);

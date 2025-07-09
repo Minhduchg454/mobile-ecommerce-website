@@ -34,6 +34,8 @@ module.exports = {
       colors: {
         main: "#ee3131",
         "card-bg": "#fefefe",
+        "gray-sidebar": "#E0E2E6", // sidebar nền nhẹ
+        "blue-selected": "#57A0FF", // màu xanh dương chọn (blue-600)
       },
       flex: {
         2: "2 2 0%",

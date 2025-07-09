@@ -5,48 +5,71 @@ const { updateMinPrice } = require("./productController");
 
 // Tạo mới biến thể sản phẩm
 const createProductVariation = asyncHandler(async (req, res) => {
-  let { productVariationName, price, stockQuantity, productId } = req.body;
+  try {
+    let { productVariationName, price, stockQuantity, productId } = req.body;
 
-  // Ép kiểu vì form-data gửi chuỗi
-  price = Number(price);
-  stockQuantity = Number(stockQuantity);
+    // Ép kiểu vì form-data gửi chuỗi
+    price = Number(price);
+    stockQuantity = Number(stockQuantity);
 
-  // Xử lý slug
-  if (!req.body.slug && productVariationName) {
-    req.body.slug = slugify(productVariationName);
-  }
+    // Kiểm tra thiếu
+    const missingFields = [];
+    if (!productVariationName) missingFields.push("productVariationName");
+    if (isNaN(price)) missingFields.push("price");
+    if (isNaN(stockQuantity)) missingFields.push("stockQuantity");
+    if (!productId) missingFields.push("productId");
 
-  // Xử lý hình ảnh
-  if (req.files && req.files.length > 0) {
-    req.body.images = req.files.map((file) => file.path);
-  }
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(", ")}`,
+      });
+    }
 
-  // Kiểm tra thiếu
-  const missingFields = [];
-  if (!productVariationName) missingFields.push("productVariationName");
-  if (isNaN(price)) missingFields.push("price");
-  if (isNaN(stockQuantity)) missingFields.push("stockQuantity");
-  if (!productId) missingFields.push("productId");
+    // Tạo slug nếu chưa có
+    const slug = req.body.slug || slugify(productVariationName);
 
-  if (missingFields.length > 0) {
-    return res.status(400).json({
+    // Xử lý hình ảnh (multer-cloudinary trả về mảng path)
+    const images =
+      req.files && req.files.length > 0
+        ? req.files.map((file) => file.path)
+        : [];
+
+    // Tạo đối tượng để lưu vào DB
+    const newVariation = {
+      productVariationName,
+      price,
+      stockQuantity,
+      productId,
+      slug,
+      images,
+    };
+
+    const response = await ProductVariation.create(newVariation);
+
+    if (response) {
+      await updateMinPrice(productId);
+    }
+
+    return res.json({
+      success: !!response,
+      createdVariation: response || "Cannot create variation",
+    });
+  } catch (error) {
+    if (error.code === 11000 && error.keyPattern?.slug) {
+      return res.status(400).json({
+        success: false,
+        message: `Slug đã tồn tại. Vui lòng đổi tên biến thể.`,
+      });
+    }
+
+    console.error("Lỗi khi tạo biến thể:", error);
+    return res.status(500).json({
       success: false,
-      message: `Missing required fields: ${missingFields.join(", ")}`,
+      message: "Tạo biến thể thất bại",
+      error: error.message,
     });
   }
-
-  // Gán lại sau khi ép kiểu
-  req.body.price = price;
-  req.body.stockQuantity = stockQuantity;
-
-  const response = await ProductVariation.create(req.body);
-  if (response) {
-    await updateMinPrice(productId);
-  }
-  return res.json({
-    success: !!response,
-    createdVariation: response || "Cannot create variation",
-  });
 });
 
 // Lấy tất cả biến thể sản phẩm

@@ -1,204 +1,104 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { InputForm, Button, Loading } from "components";
-import { getBase64 } from "ultils/helpers";
-import {
-  apiCreateProductVariation,
-  apiGetProduct,
-  apiGetSpecifications,
-  apiCreateValueOfSpec,
-} from "apis"; // <-- ✅ Thêm ở đây
+import React, { useEffect, useState } from "react";
+import { apiGetVariationsByProductId, apiDeleteProductVariation } from "apis";
 import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
-import { showModal } from "store/app/appSlice";
+import Swal from "sweetalert2";
+import CreateVariantForm from "./CreateVariantForm"; // tách form tạo riêng để gọn
 
-const CreateVariation = () => {
-  const dispatch = useDispatch();
-  const { productId } = useParams();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    watch,
-  } = useForm();
+const CreateVariation = ({ productId, productName, onDone }) => {
+  const [variants, setVariants] = useState([]);
+  const [editVariant, setEditVariant] = useState(null);
 
-  const [previews, setPreviews] = useState([]);
-  const [productName, setProductName] = useState("");
-  const [specifications, setSpecifications] = useState([]);
-  const [specValues, setSpecValues] = useState({});
+  const fetchVariants = async () => {
+    const res = await apiGetVariationsByProductId(productId);
+    if (res.success) setVariants(res.variations);
+  };
 
   useEffect(() => {
-    const fetchSpecifications = async () => {
-      const res = await apiGetSpecifications();
-      if (res.success) setSpecifications(res.specifications);
-    };
-    fetchSpecifications();
-  }, []);
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!productId) return;
-      const res = await apiGetProduct(productId);
-      if (res.success) {
-        setProductName(res.productData.productName);
-      } else {
-        toast.error("Không thể lấy thông tin sản phẩm");
-      }
-    };
-    fetchProduct();
+    fetchVariants();
   }, [productId]);
 
-  useEffect(() => {
-    const files = watch("images");
-    if (files && files.length > 0) {
-      const fileArray = Array.from(files);
-      Promise.all(fileArray.map((file) => getBase64(file))).then(setPreviews);
-    } else {
-      setPreviews([]);
-    }
-  }, [watch("images")]);
-
-  const onSubmit = async (data) => {
-    if (!productId) return toast.error("Không tìm thấy productId!");
-
-    const formData = new FormData();
-    formData.append("productVariationName", data.productVariationName);
-    formData.append("price", data.price);
-    formData.append("stockQuantity", data.stockQuantity);
-    formData.append("productId", productId);
-    for (let file of data.images) {
-      formData.append("images", file);
-    }
-
-    dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
-    const res = await apiCreateProductVariation(formData);
-    dispatch(showModal({ isShowModal: false, modalChildren: null }));
-
-    if (res.success) {
-      toast.success("✅ Tạo biến thể thành công");
-      reset();
-      setPreviews([]);
-
-      const variationId = res.createdVariation._id;
-
-      // ✅ Chuẩn hóa dữ liệu cấu hình
-      const specPayload = Object.entries(specValues)
-        .filter(([, value]) => value?.trim() !== "")
-        .map(([specId, value]) => ({
-          productVariationId: variationId,
-          specificationTypeId: specId,
-          value: value.trim(),
-        }));
-
-      console.log("📦 Thông số gửi lên server:", specPayload); // 👁 Debug
-
-      try {
-        await Promise.all(
-          specPayload.map((item) => apiCreateValueOfSpec(item))
-        );
-        toast.success("✅ Gắn thông số kỹ thuật thành công");
-      } catch (err) {
-        toast.error("❌ Gắn thông số kỹ thuật thất bại");
-        console.error("❌ Lỗi gửi cấu hình:", err);
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Bạn có chắc muốn xoá biến thể?",
+      icon: "warning",
+      showCancelButton: true,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const res = await apiDeleteProductVariation(id);
+        if (res.success) {
+          toast.success("Đã xoá!");
+          fetchVariants();
+        } else {
+          toast.error("Lỗi xoá!");
+        }
       }
-    }
+    });
   };
 
   return (
-    <div className="w-full">
-      <h1 className="text-2xl font-bold px-4 py-4 border-b">
-        TẠO BIẾN THỂ
-        {productName && (
-          <span className="text-lg block text-gray-600 mt-1">
-            Cho sản phẩm:{" "}
-            <span className="text-main font-semibold">{productName}</span>
-          </span>
-        )}
-      </h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4">
-        <InputForm
-          label="Tên biến thể"
-          id="productVariationName"
-          register={register}
-          errors={errors}
-          validate={{ required: "Không được để trống" }}
-          placeholder="VD: Black 16/256"
-        />
-        <InputForm
-          label="Giá bán"
-          id="price"
-          type="number"
-          register={register}
-          errors={errors}
-          validate={{ required: "Không được để trống" }}
-          placeholder="VD: 25000000"
-        />
-        <InputForm
-          label="Số lượng kho"
-          id="stockQuantity"
-          type="number"
-          register={register}
-          errors={errors}
-          validate={{ required: "Không được để trống" }}
-          placeholder="VD: 10"
-        />
+    <div className="p-4 bg-white min-h-screen">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">
+          Biến thể sản phẩm: <span className="text-main">{productName}</span>
+        </h1>
+        <button
+          onClick={onDone}
+          className="px-4 py-2 text-white bg-gray-600 rounded"
+        >
+          ⬅ Quay lại
+        </button>
+      </div>
 
-        <div>
-          <label className="font-semibold block mb-1">Hình ảnh</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            {...register("images", { required: "Vui lòng chọn ảnh" })}
-          />
-          {errors.images && (
-            <small className="text-red-500 text-xs">
-              {errors.images.message}
-            </small>
+      <CreateVariantForm
+        productId={productId}
+        editVariant={editVariant}
+        onDone={() => {
+          setEditVariant(null);
+          fetchVariants();
+        }}
+      />
+
+      <h2 className="text-xl font-semibold mt-8 mb-4">Danh sách biến thể</h2>
+      <table className="w-full table-auto border">
+        <thead>
+          <tr className="bg-gray-200 text-left">
+            <th className="p-2">Tên biến thể</th>
+            <th className="p-2">Giá</th>
+            <th className="p-2">Kho</th>
+            <th className="p-2">Tuỳ chọn</th>
+          </tr>
+        </thead>
+        <tbody>
+          {variants.map((v) => (
+            <tr key={v._id} className="border-t">
+              <td className="p-2">{v.productVariationName}</td>
+              <td className="p-2">{v.price.toLocaleString()}₫</td>
+              <td className="p-2">{v.stockQuantity}</td>
+              <td className="p-2">
+                <button
+                  onClick={() => setEditVariant(v)}
+                  className="text-blue-600 mr-4"
+                >
+                  Sửa
+                </button>
+                <button
+                  onClick={() => handleDelete(v._id)}
+                  className="text-red-600"
+                >
+                  Xoá
+                </button>
+              </td>
+            </tr>
+          ))}
+          {variants.length === 0 && (
+            <tr>
+              <td colSpan="4" className="text-center italic py-4 text-gray-500">
+                Chưa có biến thể nào
+              </td>
+            </tr>
           )}
-
-          {previews.length > 0 && (
-            <div className="flex gap-4 mt-4 flex-wrap">
-              {previews.map((src, idx) => (
-                <img
-                  key={idx}
-                  src={src}
-                  alt={`preview-${idx}`}
-                  className="w-[100px] h-[100px] object-cover rounded shadow"
-                />
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="mt-6">
-          <h2 className="font-semibold text-lg mb-2">Thông số kỹ thuật</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {specifications.map((spec) => (
-              <div key={spec._id} className="flex flex-col">
-                <label className="font-medium text-sm mb-1">
-                  {`${spec.typeSpecifications}  (${spec.unitOfMeasure || ""})`}
-                </label>
-                <input
-                  type="text"
-                  className="border border-gray-300 p-2 rounded text-sm"
-                  placeholder={`Nhập giá trị cho ${spec.typeSpecifications}`}
-                  value={specValues[spec._id] || ""}
-                  onChange={(e) =>
-                    setSpecValues((prev) => ({
-                      ...prev,
-                      [spec._id]: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Button type="submit">Thêm biến thể</Button>
-      </form>
+        </tbody>
+      </table>
     </div>
   );
 };
