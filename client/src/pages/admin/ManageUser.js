@@ -237,7 +237,7 @@ const ManageUser = () => {
                       ) : (
                         <span
                           onClick={() => setEditElm(el)}
-                          className="hover:underline cursor-pointer"
+                          className="hover:underline cursor-pointer text-blue-600"
                         >
                           Sửa
                         </span>

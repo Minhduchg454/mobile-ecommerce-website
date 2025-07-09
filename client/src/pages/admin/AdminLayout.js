@@ -7,6 +7,8 @@ import path from "ultils/path";
 const getPageTitle = (pathname) => {
   if (pathname.includes("dashboard")) return "THỐNG KÊ";
   if (pathname.includes("manage-user")) return "QUẢN LÝ TÀI KHOẢN";
+  if (pathname.includes("manage-products-categories"))
+    return "QUẢN LÝ DANH MỤC";
   if (pathname.includes("manage-products")) return "QUẢN LÝ KHO HÀNG";
   if (pathname.includes("create-products")) return "THÊM SẢN PHẨM";
   if (pathname.includes("manage-order")) return "QUẢN LÝ ĐƠN HÀNG";

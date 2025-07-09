@@ -5,7 +5,7 @@ import clsx from "clsx";
 const Button = ({
   children,
   handleOnClick,
-  className, // 👈 Đổi từ `style` → `className` để đúng chuẩn
+  className,
   fw,
   type = "button",
   disabled,
@@ -16,7 +16,7 @@ const Button = ({
       className={clsx(
         "px-4 py-2 rounded-md text-white flex items-center justify-center bg-main font-semibold my-2",
         fw ? "w-full" : "w-fit",
-        className // 👈 Kết hợp với class từ props
+        className
       )}
       onClick={() => {
         handleOnClick && handleOnClick();
