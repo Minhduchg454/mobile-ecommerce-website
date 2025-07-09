@@ -206,26 +206,33 @@ export const adminSidebar = [
   {
     id: 2,
     type: "SINGLE",
+    text: "Quản lý đơn hàng",
+    path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
+    icon: <MdOutlineLocalShipping size={20} />,
+  },
+  {
+    id: 3,
+    type: "SINGLE",
     text: "Quản lý tài khoản",
     path: `/${path.ADMIN}/${path.MANAGE_USER}`,
     icon: <MdGroups size={20} />,
   },
   {
-    id: 3,
+    id: 4,
     type: "SINGLE",
     text: "Quản lý thương hiệu",
     icon: <FaTrademark size={20} />,
     path: `/${path.ADMIN}/${path.MANAGE_BRANDS}`,
   },
   {
-    id: 4,
+    id: 5,
     type: "SINGLE",
     text: "Quản lý danh mục",
     path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS_CATEGORIES}`,
     icon: <MdCategory size={20} />,
   },
   {
-    id: 5,
+    id: 6,
     type: "PARENT",
     text: "Quản lý sản phẩm",
     icon: <MdInventory size={20} />,
@@ -237,29 +244,6 @@ export const adminSidebar = [
       {
         text: "Quản lý kho hàng",
         path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS}`,
-      },
-    ],
-  },
-  {
-    id: 6,
-    type: "SINGLE",
-    text: "Quản lý đơn hàng",
-    path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
-    icon: <MdOutlineLocalShipping size={20} />,
-  },
-  {
-    id: 7,
-    type: "PARENT",
-    text: "Quản lý tin tức",
-    icon: <MdOutlineLibraryBooks size={20} />,
-    submenu: [
-      {
-        text: "Thêm tin tức",
-        path: `/${path.ADMIN}/${path.CREATE_BLOG}`,
-      },
-      {
-        text: "Quản lý kho tin",
-        path: `/${path.ADMIN}/${path.MANAGE_BLOGS}`,
       },
     ],
   },

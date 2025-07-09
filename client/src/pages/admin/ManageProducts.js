@@ -196,7 +196,7 @@ const ManageProducts = () => {
                         setCurrentProductForVariant(null); // Tắt biến thể nếu đang mở
                         setEditProduct(el);
                       }}
-                      className="hover:underline cursor-pointer"
+                      className="hover:underline cursor-pointer text-blue-500"
                     >
                       Sửa
                     </span>
@@ -205,7 +205,7 @@ const ManageProducts = () => {
                         setEditProduct(null); // Tắt sửa nếu đang mở
                         setCurrentProductForVariant(el);
                       }}
-                      className="hover:underline cursor-pointer"
+                      className="hover:underline cursor-pointer text-yellow-400"
                     >
                       Biến thể
                     </span>

@@ -35,9 +35,9 @@ const TopHeaders = () => {
   }, [mes]);
 
   return (
-    <div className="min-h-7 p-1 w-full bg-main flex flex-wrap items-center justify-between text-xs text-white">
+    <div className="min-h-7 p-1 w-full bg-header-footer flex flex-wrap items-center justify-between text-xs text-black">
       {/* Bên trái - Thông tin cửa hàng */}
-      <div className="hidden md:flex flex-wrap items-center gap-2">
+      <div className="hidden lg:flex flex-wrap items-center gap-2">
         <span className="hidden md:inline-block">
           CỬA HÀNG BÁN ĐIỆN THOẠI DI ĐỘNG TOÀN QUỐC
         </span>

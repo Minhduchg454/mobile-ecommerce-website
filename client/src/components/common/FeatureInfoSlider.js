@@ -9,10 +9,10 @@ const FeatureInfoSlider = ({ data }) => {
         {data.map((item, index) => (
           <div
             key={index}
-            className="flex flex-col justify-center items-center card-default p-3"
+            className=" h-[200px] flex flex-col justify-center items-center card-default p-2"
           >
             <div
-              className="w-30 h-16  flex items-center justify-center rounded-full text-2xl"
+              className="w-[120px] h-[120px] flex items-center justify-center rounded-full text-6xl"
               style={{ color: item.color }}
             >
               {item.icon}

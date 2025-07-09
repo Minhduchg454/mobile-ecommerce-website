@@ -43,11 +43,11 @@ const sections = [
 
 const Footer = () => {
   return (
-    <footer className="w-full bg-[#00AFFF] text-white text-sm mt-10">
-      <div className="max-w-main mx-auto px-4 py-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+    <footer className="w-full bg-header-footer text-black text-sm mt-10">
+      <div className="w-[50vv] mx-auto px-8 py-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {sections.map((section, index) => (
-          <div key={index} className="min-w-[200px] bg-white/10 rounded-md p-4">
-            <h3 className="text-base font-semibold mb-4 border-l-4 border-white pl-2 text-left uppercase">
+          <div key={index} className="min-w-[200px] rounded-md p-4">
+            <h3 className="text-base font-semibold mb-4 border-l-4 border-gray-400 pl-2 text-left uppercase">
               {section.title}
             </h3>
             {section.content ? (
