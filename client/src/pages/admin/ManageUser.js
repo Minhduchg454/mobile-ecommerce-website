@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiGetUsers, apiUpdateUser, apiDeleteUser } from "apis/user";
-import { roles, blockStatus } from "ultils/contants";
-import moment from "moment";
+import { roles as staticRoles, blockStatus } from "ultils/contants";
 import { InputField, Pagination, InputForm, Select, Button } from "components";
 import useDebounce from "hooks/useDebounce";
 import { useSearchParams } from "react-router-dom";
@@ -15,82 +14,92 @@ const ManageUser = () => {
     handleSubmit,
     register,
     formState: { errors },
-    reset,
-  } = useForm({
-    emai: "",
-    firstname: "",
-    lastname: "",
-    role: "",
-    phone: "",
-    isBlocked: "",
-  });
-  const [users, setUsers] = useState(null);
-  const [queries, setQueries] = useState({
-    q: "",
-  });
+  } = useForm();
+
+  const [users, setUsers] = useState([]);
+  const [queries, setQueries] = useState({ q: "" });
   const [update, setUpdate] = useState(false);
   const [editElm, setEditElm] = useState(null);
   const [params] = useSearchParams();
+
   const fetchUsers = async (params) => {
-    const response = await apiGetUsers({
-      ...params,
-      limit: process.env.REACT_APP_LIMIT,
-    });
-    if (response.success) setUsers(response);
+    const response = await apiGetUsers({ ...params });
+    if (response.success) setUsers(response.users);
   };
 
-  const render = useCallback(() => {
-    setUpdate(!update);
-  }, [update]);
+  const render = useCallback(() => setUpdate((prev) => !prev), []);
+
   const queriesDebounce = useDebounce(queries.q, 800);
 
   useEffect(() => {
-    const queries = Object.fromEntries([...params]);
-    if (queriesDebounce) queries.q = queriesDebounce;
-    fetchUsers(queries);
+    const search = Object.fromEntries([...params]);
+    if (queriesDebounce) search.q = queriesDebounce;
+    fetchUsers(search);
   }, [queriesDebounce, params, update]);
+
   const handleUpdate = async (data) => {
-    const response = await apiUpdateUser(data, editElm._id);
+    const payload = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      mobile: data.mobile,
+      roleId: data.roleId,
+      isBlocked: data.isBlocked,
+    };
+    const response = await apiUpdateUser(payload, editElm._id);
     if (response.success) {
+      toast.success(response.mes);
       setEditElm(null);
       render();
-      toast.success(response.mes);
     } else toast.error(response.mes);
   };
+
   const handleDeleteUser = (uid) => {
     Swal.fire({
-      title: "Are you sure...",
-      text: "Are you ready remove this user?",
+      title: "Xác nhận",
+      text: "Bạn có chắc muốn xoá tài khoản này?",
       showCancelButton: true,
     }).then(async (result) => {
       if (result.isConfirmed) {
         const response = await apiDeleteUser(uid);
         if (response.success) {
-          render();
           toast.success(response.mes);
+          render();
         } else toast.error(response.mes);
       }
     });
   };
+
+  const roleOptions = staticRoles.map((role) => ({
+    code: role._id,
+    value: role.roleName,
+  }));
+
   return (
     <div
       className={clsx("w-full bg-gray-50 min-h-screen p-4", editElm && "pl-16")}
     >
-      {/* Thanh tìm kiếm */}
-      <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4 flex justify-between items-center">
-        <form className="w-full max-w-lg">
-          <InputField
-            nameKey={"q"}
-            value={queries.q}
-            setValue={setQueries}
-            style={"w-full"}
-            placeholder="🔍 Tìm kiếm tài khoản..."
-            isHideLabel
+      {/* Tìm kiếm */}
+      <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4">
+        <form className="w-full">
+          <InputForm
+            id="q"
+            label=""
+            placeholder="🔍 Tìm kiếm tài khoản theo email, tên, ..."
+            fullWidth
+            defaultValue={queries.q}
+            register={(name, options) => ({
+              name,
+              onChange: (e) => setQueries({ ...queries, q: e.target.value }),
+              ...options,
+            })}
+            errors={{}}
+            validate={{}}
           />
         </form>
       </div>
 
-      {/* Vùng nội dung */}
+      {/* Danh sách người dùng */}
       <div className="bg-white rounded-xl shadow p-4">
         <form onSubmit={handleSubmit(handleUpdate)}>
           {editElm && (
@@ -106,13 +115,13 @@ const ManageUser = () => {
                 <th className="py-3 px-2">Tên</th>
                 <th className="py-3 px-2">Họ</th>
                 <th className="py-3 px-2">Vai trò</th>
-                <th className="py-3 px-2">Số điện thoại</th>
+                <th className="py-3 px-2">SĐT</th>
                 <th className="py-3 px-2">Trạng thái</th>
                 <th className="py-3 px-2">Tùy chọn</th>
               </tr>
             </thead>
             <tbody>
-              {users?.users?.map((el, idx) => (
+              {users?.map((el, idx) => (
                 <tr
                   key={el._id}
                   className="border-b hover:bg-sky-50 transition-all text-sm"
@@ -122,17 +131,17 @@ const ManageUser = () => {
                     {editElm?._id === el._id ? (
                       <InputForm
                         register={register}
-                        fullWidth
                         errors={errors}
-                        defaultValue={editElm?.email}
-                        id={"email"}
+                        id="email"
+                        defaultValue={el.email}
                         validate={{
-                          required: "Require fill.",
+                          required: "Bắt buộc nhập",
                           pattern: {
                             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: "Invalid email address",
+                            message: "Email không hợp lệ",
                           },
                         }}
+                        fullWidth
                       />
                     ) : (
                       <span>{el.email}</span>
@@ -142,62 +151,60 @@ const ManageUser = () => {
                     {editElm?._id === el._id ? (
                       <InputForm
                         register={register}
-                        fullWidth
                         errors={errors}
-                        defaultValue={editElm?.firstname}
-                        id={"firstname"}
-                        validate={{ required: "Require fill." }}
+                        id="firstName"
+                        defaultValue={el.firstName}
+                        validate={{ required: "Bắt buộc nhập" }}
+                        fullWidth
                       />
                     ) : (
-                      <span>{el.firstname}</span>
+                      <span>{el.firstName}</span>
                     )}
                   </td>
                   <td className="text-center py-3 px-2">
                     {editElm?._id === el._id ? (
                       <InputForm
                         register={register}
-                        fullWidth
                         errors={errors}
-                        defaultValue={editElm?.lastname}
-                        id={"lastname"}
-                        validate={{ required: "Require fill." }}
+                        id="lastName"
+                        defaultValue={el.lastName}
+                        validate={{ required: "Bắt buộc nhập" }}
+                        fullWidth
                       />
                     ) : (
-                      <span>{el.lastname}</span>
+                      <span>{el.lastName}</span>
                     )}
                   </td>
                   <td className="text-center py-3 px-2">
                     {editElm?._id === el._id ? (
                       <Select
                         register={register}
-                        fullWidth
                         errors={errors}
-                        defaultValue={+el.role}
-                        id={"role"}
-                        validate={{ required: "Require fill." }}
-                        options={roles}
+                        id="roleId"
+                        defaultValue={el.roleId?._id}
+                        validate={{ required: "Bắt buộc chọn" }}
+                        options={roleOptions}
+                        fullWidth
                       />
                     ) : (
-                      <span>
-                        {roles.find((role) => +role.code === +el.role)?.value}
-                      </span>
+                      <span>{el.roleId?.roleName || "Không rõ"}</span>
                     )}
                   </td>
                   <td className="text-center py-3 px-2">
                     {editElm?._id === el._id ? (
                       <InputForm
                         register={register}
-                        fullWidth
                         errors={errors}
-                        defaultValue={editElm?.mobile}
-                        id={"mobile"}
+                        id="mobile"
+                        defaultValue={el.mobile}
                         validate={{
-                          required: "Require fill.",
+                          required: "Bắt buộc nhập",
                           pattern: {
-                            value: /^[62|0]+\d{9}/gi,
-                            message: "Invalid phone number",
+                            value: /^0\d{9}$/,
+                            message: "SĐT không hợp lệ",
                           },
                         }}
+                        fullWidth
                       />
                     ) : (
                       <span>{el.mobile}</span>
@@ -207,25 +214,25 @@ const ManageUser = () => {
                     {editElm?._id === el._id ? (
                       <Select
                         register={register}
-                        fullWidth
                         errors={errors}
+                        id="isBlocked"
                         defaultValue={el.isBlocked}
-                        id={"isBlocked"}
-                        validate={{ required: "Require fill." }}
+                        validate={{ required: "Bắt buộc chọn" }}
                         options={blockStatus}
+                        fullWidth
                       />
                     ) : (
                       <span>{el.isBlocked ? "Đã khóa" : "Đang hoạt động"}</span>
                     )}
                   </td>
                   <td className="text-center py-3 px-2">
-                    <div className="flex justify-center gap-2 items-center text-orange-600">
+                    <div className="flex justify-center gap-2 text-orange-600">
                       {editElm?._id === el._id ? (
                         <span
                           onClick={() => setEditElm(null)}
                           className="hover:underline cursor-pointer"
                         >
-                          Về
+                          Hủy
                         </span>
                       ) : (
                         <span
@@ -245,7 +252,7 @@ const ManageUser = () => {
                   </td>
                 </tr>
               ))}
-              {users?.users?.length === 0 && (
+              {users?.length === 0 && (
                 <tr>
                   <td
                     colSpan="8"
@@ -259,9 +266,9 @@ const ManageUser = () => {
           </table>
         </form>
 
-        {/* Phân trang */}
+        {/* Phân trang nếu backend có hỗ trợ */}
         <div className="w-full flex justify-end mt-8">
-          <Pagination totalCount={users?.counts} />
+          <Pagination totalCount={users?.length || 0} />
         </div>
       </div>
     </div>

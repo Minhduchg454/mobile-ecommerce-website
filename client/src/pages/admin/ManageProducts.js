@@ -26,6 +26,7 @@ const ManageProducts = () => {
     register,
     formState: { errors },
     watch,
+    setValue,
   } = useForm();
 
   const [products, setProducts] = useState(null);
@@ -98,7 +99,7 @@ const ManageProducts = () => {
     <div className={clsx("w-full bg-gray-50 min-h-screen p-4", editProduct)}>
       {/* Header tìm kiếm */}
       <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4 flex justify-between items-center">
-        <form className="w-full">
+        <form className="w-full" onSubmit={(e) => e.preventDefault()}>
           <InputForm
             id="q"
             register={register}
@@ -106,6 +107,10 @@ const ManageProducts = () => {
             fullWidth
             placeholder="🔍 Tìm kiếm sản phẩm..."
             isHideLabel
+            onChange={(e) => setValue("q", e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.preventDefault();
+            }}
           />
         </form>
       </div>
