@@ -1,32 +1,37 @@
-import React, { memo, Fragment, useState } from "react"
-import logo from "assets/logo.jpg"
-import { adminSidebar } from "ultils/contants"
-import { NavLink, Link, useNavigate } from "react-router-dom"
-import clsx from "clsx"
-import { AiOutlineCaretDown, AiOutlineCaretRight } from "react-icons/ai"
-import { RiShareForwardLine } from "react-icons/ri"
-import withBaseComponent from "hocs/withBaseComponent"
+import React, { memo, Fragment, useState } from "react";
+import logo from "assets/logo-removebg-preview-Photoroom.png";
+import { adminSidebar } from "ultils/contants";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import clsx from "clsx";
+import { AiOutlineCaretDown, AiOutlineCaretRight } from "react-icons/ai";
+import { RiShareForwardLine } from "react-icons/ri";
+import withBaseComponent from "hocs/withBaseComponent";
 
 const activedStyle =
-  "px-4 py-2 flex items-center gap-2  bg-blue-500 text-gray-100"
-const notActivedStyle = "px-4 py-2 flex items-center gap-2  hover:bg-blue-100"
+  "px-4 py-2 flex items-center gap-2 bg-blue-selected text-white rounded-xl border border-blue-selected";
+const notActivedStyle =
+  "px-4 py-2 flex items-center gap-2 hover:bg-blue-100 rounded-xl transition-all";
 
 const AdminSidebar = () => {
-  const navigate = useNavigate()
-  const [actived, setActived] = useState([])
+  const navigate = useNavigate();
+  const [actived, setActived] = useState([]);
   const handleShowTabs = (tabID) => {
     if (actived.some((el) => el === tabID))
-      setActived((prev) => prev.filter((el) => el !== tabID))
-    else setActived((prev) => [...prev, tabID])
-  }
+      setActived((prev) => prev.filter((el) => el !== tabID));
+    else setActived((prev) => [...prev, tabID]);
+  };
 
   return (
-    <div className=" bg-white h-full py-4">
+    <div className=" bg-gray-sidebar h-full p-4 shadow">
       <Link
         to={"/"}
         className="flex flex-col justify-center items-center p-4 gap-2"
       >
-        <img src={logo} alt="logo" className="w-[200px] h-[80px] object-contain" />
+        <img
+          src={logo}
+          alt="logo"
+          className="w-[200px] h-[80px] object-contain"
+        />
         <small>QUẢN LÝ CỬA HÀNG</small>
       </Link>
       <div>
@@ -48,7 +53,7 @@ const AdminSidebar = () => {
                 onClick={() => handleShowTabs(+el.id)}
                 className="flex flex-col"
               >
-                <div className="flex items-center justify-between px-4 py-2 hover:bg-blue-100 cursor-pointer">
+                <div className="flex items-center justify-between px-4 py-2 rounded-xl hover:bg-blue-100 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <span>{el.icon}</span>
                     <span>{el.text}</span>
@@ -87,11 +92,11 @@ const AdminSidebar = () => {
           <span>
             <RiShareForwardLine />
           </span>
-          <span>VỀ TRANG CHỦ</span>
+          <span>Về trang chủ</span>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default withBaseComponent(AdminSidebar)
+export default withBaseComponent(AdminSidebar);

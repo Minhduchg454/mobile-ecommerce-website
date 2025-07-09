@@ -189,33 +189,29 @@ export const adminSidebar = [
   {
     id: 1,
     type: "SINGLE",
-    text: "THỐNG KÊ",
+    text: "Thống kê",
     path: `/${path.ADMIN}/${path.DASHBOARD}`,
     icon: <AiOutlineDashboard size={20} />,
   },
   {
     id: 2,
     type: "SINGLE",
-    text: "QUẢN LÝ TÀI KHOẢN",
+    text: "Quản lý tài khoản",
     path: `/${path.ADMIN}/${path.MANAGE_USER}`,
     icon: <MdGroups size={20} />,
   },
   {
     id: 3,
     type: "PARENT",
-    text: "QUẢN LÝ SẢN PHẨM",
+    text: "Quản lý sản phẩm",
     icon: <TbBrandProducthunt size={20} />,
     submenu: [
       {
-        text: "THÊM SẢN PHẨM",
+        text: "Thêm sản phẩm",
         path: `/${path.ADMIN}/${path.CREATE_PRODUCTS}`,
       },
       {
-        text: "THÊM BIẾN THỂ SẢN PHẨM",
-        path: `/${path.ADMIN}/${path.CREATE_VARIATION}`,
-      },
-      {
-        text: "QUẢN LÝ KHO HÀNG",
+        text: "Quản lý kho hàng",
         path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS}`,
       },
     ],
@@ -223,53 +219,54 @@ export const adminSidebar = [
   {
     id: 4,
     type: "SINGLE",
-    text: "QUẢN LÝ ĐƠN HÀNG",
+    text: "Quản lý đơn hàng",
     path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
     icon: <RiBillLine size={20} />,
   },
   {
     id: 31,
     type: "PARENT",
-    text: " QUẢN LÝ TIN TỨC",
+    text: " Quản lý tin tức",
     icon: <TbBrandProducthunt size={20} />,
     submenu: [
       {
-        text: "THÊM TIN TỨC",
+        text: "Thêm tin tức",
         path: `/${path.ADMIN}/${path.CREATE_BLOG}`,
       },
       {
-        text: "QUẢN LÝ KHO TIN",
+        text: "Quản lý kho tin",
         path: `/${path.ADMIN}/${path.MANAGE_BLOGS}`,
       },
     ],
   },
 ];
+
 export const memberSidebar = [
   {
     id: 1,
     type: "SINGLE",
-    text: "THÔNG TIN CÁ NHÂN",
+    text: "Thông tin cá nhân",
     path: `/${path.MEMBER}/${path.PERSONAL}`,
     icon: <AiOutlineDashboard size={20} />,
   },
   {
     id: 2,
     type: "SINGLE",
-    text: "GIỎ HÀNG",
+    text: "Giỏ hàng",
     path: `/${path.MEMBER}/${path.MY_CART}`,
     icon: <MdGroups size={20} />,
   },
   {
     id: 4,
     type: "SINGLE",
-    text: "LỊCH SỬ MUA HÀNG",
+    text: "Lịch sử mua hàng",
     path: `/${path.MEMBER}/${path.HISTORY}`,
     icon: <RiBillLine size={20} />,
   },
   {
     id: 40,
     type: "SINGLE",
-    text: "DANH SÁCH YÊU THÍCH",
+    text: "Danh sách yêu thích",
     path: `/${path.MEMBER}/${path.WISHLIST}`,
     icon: <RiBillLine size={20} />,
   },

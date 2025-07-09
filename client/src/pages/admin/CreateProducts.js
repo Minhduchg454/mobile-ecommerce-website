@@ -15,11 +15,12 @@ import {
   apiCreateProduct,
   apiGetBrands,
   apiGetAllProductCategories,
+  apiUpdateProduct,
 } from "apis";
 import { showModal } from "store/app/appSlice";
 import { useNavigate } from "react-router-dom";
 
-const CreateProducts = () => {
+const CreateProducts = ({ editProduct = null, render = () => {} }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -28,15 +29,15 @@ const CreateProducts = () => {
   const [preview, setPreview] = useState(null);
   const [invalidFields, setInvalidFields] = useState([]);
   const [payload, setPayload] = useState({ description: "" });
-
-  const [isConfirmingNext, setIsConfirmingNext] = useState(false); // ✨
-  const [createdProductId, setCreatedProductId] = useState(null); // ✨
+  const [isConfirmingNext, setIsConfirmingNext] = useState(false);
+  const [createdProductId, setCreatedProductId] = useState(null);
 
   const {
     register,
     formState: { errors },
     reset,
     handleSubmit,
+    setValue,
     watch,
   } = useForm();
 
@@ -49,62 +50,99 @@ const CreateProducts = () => {
 
       if (res1.success) setCategories(res1.prodCategories);
       if (res2.success) setBrands(res2.brands);
+
+      // ✅ Nếu là sửa thì gán lại dữ liệu vào form
+      if (editProduct) {
+        reset({
+          productName: editProduct.productName,
+          category: editProduct.categoryId?._id,
+          brand: editProduct.brandId?._id,
+        });
+        setPayload({ description: editProduct.description || "" });
+        setPreview(editProduct.thumb); // nếu thumb là URL đã upload sẵn
+      }
     };
+
     fetchData();
   }, []);
 
+  // 🔁 Nếu là edit, pre-fill dữ liệu
+  useEffect(() => {
+    if (editProduct) {
+      setValue("productName", editProduct.productName);
+      setValue("category", editProduct.categoryId?._id);
+      setValue("brand", editProduct.brandId?._id);
+      setPayload({ description: editProduct.description });
+      setPreview(editProduct.thumb);
+    }
+  }, [editProduct, setValue]);
+
   const changeValue = useCallback((e) => {
-    setPayload((prev) => ({
-      ...prev,
-      ...e,
-    }));
+    setPayload((prev) => ({ ...prev, ...e }));
   }, []);
 
   useEffect(() => {
     const file = watch("thumb")?.[0];
-    if (file) {
-      getBase64(file).then((base64) => setPreview(base64));
-    }
+    if (file) getBase64(file).then((base64) => setPreview(base64));
   }, [watch("thumb")]);
 
-  const handleCreateProduct = async (data) => {
+  const handleCreateOrUpdate = async (data) => {
     const invalids = validate(payload, setInvalidFields);
-    if (invalids === 0) {
-      const formData = new FormData();
-      formData.append("productName", data.productName);
-      formData.append("categoryId", data.category);
-      formData.append("brandId", data.brand);
+    if (invalids > 0) return;
 
-      // ✅ Loại bỏ thẻ HTML khỏi mô tả
-      const stripHtml = (html) => html.replace(/<[^>]*>?/gm, "").trim();
-      formData.append("description", stripHtml(payload.description));
+    const formData = new FormData();
+    formData.append("productName", data.productName);
+    formData.append("categoryId", data.category);
+    formData.append("brandId", data.brand);
 
+    const stripHtml = (html) => html.replace(/<[^>]*>?/gm, "").trim();
+    formData.append("description", stripHtml(payload.description));
+
+    if (data.thumb?.[0]) {
       formData.append("thumb", data.thumb[0]);
+    }
 
-      dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
-      const response = await apiCreateProduct(formData);
-      dispatch(showModal({ isShowModal: false, modalChildren: null }));
+    dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
 
-      if (response.success) {
-        toast.success("🎉 Tạo sản phẩm thành công!");
-        reset();
-        setPayload({ description: "" });
-        setPreview(null);
+    let response;
+    if (editProduct) {
+      // 🛠 Gọi API cập nhật nếu có editProduct
+      response = await apiUpdateProduct(formData, editProduct._id);
+    } else {
+      // 🛠 Gọi API tạo mới
+      response = await apiCreateProduct(formData);
+    }
+
+    dispatch(showModal({ isShowModal: false, modalChildren: null }));
+
+    if (response.success) {
+      toast.success(
+        editProduct ? "✅ Cập nhật thành công!" : "✅ Tạo sản phẩm thành công!"
+      );
+      reset();
+      setPayload({ description: "" });
+      setPreview(null);
+      render(); // Gọi reload lại danh sách
+
+      // Nếu tạo mới thì hỏi thêm biến thể
+      if (!editProduct) {
         setCreatedProductId(response.createdProduct._id);
         setIsConfirmingNext(true);
       } else {
-        toast.error(response.mes || "❌ Tạo sản phẩm thất bại");
+        // Nếu sửa thì tự đóng modal (nếu bạn đang đặt nó trong modal)
       }
+    } else {
+      toast.error(response.mes || "❌ Đã xảy ra lỗi");
     }
   };
 
   return (
     <div className="w-full">
       <h1 className="h-[75px] flex justify-between items-center text-3xl font-bold px-4 border-b">
-        <span>THÊM SẢN PHẨM</span>
+        <span>{editProduct ? "CẬP NHẬT SẢN PHẨM" : "THÊM SẢN PHẨM"}</span>
       </h1>
       <div className="p-4">
-        <form onSubmit={handleSubmit(handleCreateProduct)}>
+        <form onSubmit={handleSubmit(handleCreateOrUpdate)}>
           <InputForm
             label="Tên sản phẩm"
             register={register}
@@ -128,8 +166,8 @@ const CreateProducts = () => {
               style="flex-auto"
               errors={errors}
               fullWidth
+              defaultValue={editProduct?.categoryId?._id}
             />
-
             <Select
               label="Thương hiệu"
               options={brands.map((el) => ({
@@ -142,6 +180,7 @@ const CreateProducts = () => {
               style="flex-auto"
               errors={errors}
               fullWidth
+              defaultValue={editProduct?.brandId?._id}
             />
           </div>
 
@@ -151,6 +190,7 @@ const CreateProducts = () => {
             label="Mô tả sản phẩm"
             invalidFields={invalidFields}
             setInvalidFields={setInvalidFields}
+            value={payload.description}
           />
 
           <div className="flex flex-col gap-2 mt-8">
@@ -160,7 +200,9 @@ const CreateProducts = () => {
             <input
               type="file"
               id="thumb"
-              {...register("thumb", { required: "Không được để trống" })}
+              {...register("thumb", {
+                required: editProduct ? false : "Không được để trống",
+              })}
               accept="image/*"
             />
             {errors.thumb && (
@@ -181,13 +223,14 @@ const CreateProducts = () => {
           )}
 
           <div className="my-6">
-            <Button type="submit">Thêm sản phẩm</Button>
+            <Button type="submit">
+              {editProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
+            </Button>
           </div>
         </form>
       </div>
 
-      {/* ✨ Modal xác nhận chuyển bước tiếp theo */}
-      {isConfirmingNext && (
+      {!editProduct && isConfirmingNext && (
         <ConfirmModal
           title="Tạo sản phẩm thành công"
           message="Bạn có muốn thêm biến thể cho sản phẩm này không?"
