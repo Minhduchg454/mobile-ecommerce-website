@@ -9,6 +9,9 @@ import { toast } from "react-toastify";
 import { useSearchParams } from "react-router-dom";
 import withBaseComponent from "hocs/withBaseComponent";
 import { FaLock, FaCheckCircle } from "react-icons/fa";
+import { ConfirmModal, Loading } from "../../components";
+import { useState } from "react";
+import { showModal } from "store/app/appSlice";
 
 const Personal = ({ navigate }) => {
   const {
@@ -21,6 +24,8 @@ const Personal = ({ navigate }) => {
   const { current } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   // Reset form với dữ liệu hiện tại
   useEffect(() => {
@@ -36,21 +41,45 @@ const Personal = ({ navigate }) => {
 
   const handleUpdateInfor = async (data) => {
     const formData = new FormData();
-
     if (data.avatar?.length > 0) formData.append("avatar", data.avatar[0]);
 
-    // Đảm bảo các field được append đúng cách
     ["firstName", "lastName", "mobile", "address"].forEach((key) => {
       if (data[key]) formData.append(key, data[key]);
     });
-    console.log(data, current._id);
-    const response = await apiUpdateCurrent(formData, current._id);
-    if (response.success) {
-      dispatch(getCurrent());
-      toast.success(response.mes);
-      if (searchParams.get("redirect")) navigate(searchParams.get("redirect"));
-    } else toast.error(response.mes);
+
+    dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> })); // 🔒
+
+    try {
+      const response = await apiUpdateCurrent(formData, current._id);
+
+      if (response.success) {
+        dispatch(getCurrent());
+        setShowSuccessModal(true);
+        setAvatarPreview(null);
+        if (searchParams.get("redirect"))
+          navigate(searchParams.get("redirect"));
+      } else {
+        toast.error(response.mes || "Cập nhật thất bại");
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi cập nhật. Vui lòng thử lại.");
+      console.error("Update error:", error);
+    } finally {
+      dispatch(showModal({ isShowModal: false }));
+    }
   };
+
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === "avatar" && value.avatar?.length > 0) {
+        const file = value.avatar[0];
+        const reader = new FileReader();
+        reader.onloadend = () => setAvatarPreview(reader.result);
+        reader.readAsDataURL(file);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const isBlocked = current?.isBlocked;
 
@@ -164,7 +193,7 @@ const Personal = ({ navigate }) => {
           <div className="flex flex-col items-center gap-3">
             <label htmlFor="file" className="cursor-pointer">
               <img
-                src={current?.avatar || avatar}
+                src={avatarPreview || current?.avatar || avatar}
                 alt="avatar"
                 className="w-28 h-28 object-cover rounded-full border border-gray-300"
               />
@@ -176,6 +205,15 @@ const Personal = ({ navigate }) => {
           </div>
         </div>
       </form>
+      {showSuccessModal && (
+        <ConfirmModal
+          title="Cập nhật thành công"
+          message="Thông tin cá nhân đã được cập nhật."
+          confirmText="Đóng"
+          onConfirm={() => setShowSuccessModal(false)}
+          onCancel={() => setShowSuccessModal(false)}
+        />
+      )}
     </div>
   );
 };
