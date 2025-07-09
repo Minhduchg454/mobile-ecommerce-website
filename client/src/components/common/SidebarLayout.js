@@ -30,7 +30,7 @@ const SidebarLayout = ({
       {/* Logo + tiêu đề */}
       <Link
         to="/"
-        className="flex flex-col justify-center items-center p-5 gap-2 "
+        className="flex flex-col justify-center items-center p-5 gap-2"
       >
         <img
           src={logo}
@@ -45,14 +45,14 @@ const SidebarLayout = ({
       </Link>
 
       {/* Menu điều hướng */}
-      <div>
+      <div className="mt-4">
         {sidebarItems.map((el) => (
           <Fragment key={el.id}>
             {el.type === "SINGLE" && (
               <NavLink
                 to={el.path}
                 className={({ isActive }) =>
-                  clsx(isActive ? activedStyle : notActivedStyle)
+                  clsx(isActive ? activedStyle : notActivedStyle, "mb-2")
                 }
               >
                 <span>{el.icon}</span>
@@ -63,7 +63,7 @@ const SidebarLayout = ({
             {el.type === "PARENT" && (
               <div
                 onClick={() => handleShowTabs(el.id)}
-                className="flex flex-col"
+                className="flex flex-col mb-2"
               >
                 <div className="flex items-center justify-between px-4 py-2 rounded-xl hover:bg-blue-100 cursor-pointer">
                   <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ const SidebarLayout = ({
                         className={({ isActive }) =>
                           clsx(
                             isActive ? activedStyle : notActivedStyle,
-                            "pl-16"
+                            "pl-16 mb-1"
                           )
                         }
                       >
@@ -102,7 +102,10 @@ const SidebarLayout = ({
 
         {/* Nút về trang chủ */}
         {showBackHome && (
-          <div onClick={() => navigate(`/`)} className={notActivedStyle}>
+          <div
+            onClick={() => navigate(`/`)}
+            className={clsx(notActivedStyle, "cursor-pointer mb-2")}
+          >
             <span>
               <RiShareForwardLine />
             </span>

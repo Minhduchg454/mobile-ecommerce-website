@@ -25,6 +25,8 @@ const path = {
   CREATE_BLOG: "create-blog",
   MANAGE_BLOGS: "manage-blogs",
   CREATE_VARIATION: "/admin/create-variation/:productId",
+  MANAGE_PRODUCTS_CATEGORIES: "manage-products-categories",
+  MANAGE_BRANDS: "manage-brands",
 
   // Member
   MEMBER: "member",

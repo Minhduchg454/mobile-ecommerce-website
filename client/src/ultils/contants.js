@@ -6,6 +6,17 @@ import {
   MdTagFaces,
   MdLocalShipping,
 } from "react-icons/md";
+import { AiOutlineDashboard } from "react-icons/ai";
+import {
+  MdGroups,
+  MdCategory,
+  MdStore,
+  MdInventory,
+  MdOutlineLibraryBooks,
+  MdOutlineLocalShipping,
+} from "react-icons/md";
+import { RiBillLine } from "react-icons/ri";
+import { FaTrademark } from "react-icons/fa"; // cho thương hiệu
 
 export const navigation = [
   {
@@ -184,7 +195,6 @@ export const voteOptions = [
     text: "Rất tốt",
   },
 ];
-const { AiOutlineDashboard, MdGroups, TbBrandProducthunt, RiBillLine } = icons;
 export const adminSidebar = [
   {
     id: 1,
@@ -202,9 +212,23 @@ export const adminSidebar = [
   },
   {
     id: 3,
+    type: "SINGLE",
+    text: "Quản lý thương hiệu",
+    icon: <FaTrademark size={20} />,
+    path: `/${path.ADMIN}/${path.MANAGE_BRANDS}`,
+  },
+  {
+    id: 4,
+    type: "SINGLE",
+    text: "Quản lý danh mục",
+    path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS_CATEGORIES}`,
+    icon: <MdCategory size={20} />,
+  },
+  {
+    id: 5,
     type: "PARENT",
     text: "Quản lý sản phẩm",
-    icon: <TbBrandProducthunt size={20} />,
+    icon: <MdInventory size={20} />,
     submenu: [
       {
         text: "Thêm sản phẩm",
@@ -217,17 +241,17 @@ export const adminSidebar = [
     ],
   },
   {
-    id: 4,
+    id: 6,
     type: "SINGLE",
     text: "Quản lý đơn hàng",
     path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
-    icon: <RiBillLine size={20} />,
+    icon: <MdOutlineLocalShipping size={20} />,
   },
   {
-    id: 31,
+    id: 7,
     type: "PARENT",
-    text: " Quản lý tin tức",
-    icon: <TbBrandProducthunt size={20} />,
+    text: "Quản lý tin tức",
+    icon: <MdOutlineLibraryBooks size={20} />,
     submenu: [
       {
         text: "Thêm tin tức",
