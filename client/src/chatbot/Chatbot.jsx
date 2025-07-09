@@ -6,6 +6,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { data_chatbot } from "./data_chatbot";
+import { apiSendMessageToChatbot } from "apis/chatbot";
+
 
 function Chatbot() {
   const [messages, setMessages] = useState([]);
@@ -46,17 +48,28 @@ function Chatbot() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+    console.log("Hi 1")
     const userMessage = { role: "user", text: input.trim() };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
     try {
-      const response = await chat.sendMessage(userMessage.text);
-      const botMessage = { role: "bot", text: response.response.text() };
+      console.log("Hi 2")
+      const res = await apiSendMessageToChatbot({ message: userMessage.text });
+      console.log(res.text)
+      console.log("Hi 3")
+      const botMessage = {
+        role: "bot",
+        text: res?.text || "Không có phản hồi từ chatbot.",
+      };
+
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Lỗi gửi:", error);
-      const errorMessage = { role: "bot", text: "Xin lỗi, đã có lỗi xảy ra." };
+      const errorMessage = {
+        role: "bot",
+        text: "Xin lỗi, đã có lỗi xảy ra.",
+      };
       setMessages((prev) => [...prev, errorMessage]);
     }
   };
@@ -76,7 +89,7 @@ function Chatbot() {
           <div className="bg-blue-600 text-white p-4 rounded-t-xl flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <img
-                src="%PUBLIC_URL%/favicon.ico"
+                src="/favicon.ico"
                 alt="Admin avatar"
                 className="w-8 h-8 rounded-full border-2 border-white"
               />
@@ -100,16 +113,14 @@ function Chatbot() {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
               >
                 <div
-                  className={`px-4 py-2 rounded-lg max-w-[70%] text-sm ${
-                    msg.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-900"
-                  }`}
+                  className={`px-4 py-2 rounded-lg max-w-[70%] text-sm ${msg.role === "user"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-900"
+                    }`}
                 >
                   {msg.text}
                 </div>
