@@ -17,6 +17,7 @@ const MemberSidebar = () => {
       title={userName}
       sidebarItems={memberSidebar}
       showBackHome={true}
+      isAvatar={true}
     />
   );
 };

@@ -14,6 +14,7 @@ const SidebarLayout = ({
   title,
   sidebarItems = [],
   showBackHome = true,
+  isAvatar = false,
 }) => {
   const navigate = useNavigate();
   const [actived, setActived] = useState([]);
@@ -34,7 +35,11 @@ const SidebarLayout = ({
         <img
           src={logo}
           alt="logo"
-          className="w-[200px] h-[80px] object-contain"
+          className={clsx(
+            isAvatar
+              ? "w-28 h-28 object-cover rounded-full border border-gray-300"
+              : "w-[200px] h-[80px] object-contain"
+          )}
         />
         <p className="font-bold">{title}</p>
       </Link>

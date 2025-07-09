@@ -52,12 +52,14 @@ export const apiDeleteUser = (uid) =>
     url: "/users/" + uid,
     method: "delete",
   });
+
 export const apiUpdateCurrent = (data, uid) =>
   axios({
     url: "/users/" + uid, // uid là current._id
     method: "put",
     data,
   });
+
 export const apiUpdateCart = (data) =>
   axios({
     url: "/cartitem",
