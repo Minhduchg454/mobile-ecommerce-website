@@ -6,7 +6,7 @@ import path from "ultils/path";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "store/user/userSlice";
 import withBaseComponent from "hocs/withBaseComponent";
-import { showCart } from "store/app/appSlice";
+import { showCart, showWishlist } from "store/app/appSlice";
 import {
   ConfirmLogoutModa,
   InputFormSearch,
@@ -15,6 +15,7 @@ import {
 import { useForm } from "react-hook-form";
 import { NavLink, createSearchParams, useNavigate } from "react-router-dom";
 import { MdOutlineShoppingCart } from "react-icons/md";
+import { FaRegHeart } from "react-icons/fa"; // 👈 outline
 
 const { AiOutlineSearch, BsHandbagFill, FaUserCircle } = icons;
 
@@ -98,7 +99,20 @@ const Header = () => {
       <div className="flex h-full text-[16px] py-[28px]">
         {current && (
           // Nếu current tồn tại, coi như đã đăng nhập
+
           <div className="flex items-center gap-4 px-4 relative">
+            {/*Danh sách sản phẩm yêu thich*/}
+            <div
+              onClick={() => dispatch(showWishlist())}
+              className="relative cursor-pointer"
+            >
+              <FaRegHeart size={26} className="text-pink-500" />
+              {current?.wishlist?.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                  {current?.wishlist?.length}
+                </span>
+              )}
+            </div>
             {/* Giỏ hàng */}
             <div
               onClick={() => dispatch(showCart())}

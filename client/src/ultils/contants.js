@@ -252,22 +252,8 @@ export const memberSidebar = [
   {
     id: 2,
     type: "SINGLE",
-    text: "Giỏ hàng",
-    path: `/${path.MEMBER}/${path.MY_CART}`,
-    icon: <MdGroups size={20} />,
-  },
-  {
-    id: 4,
-    type: "SINGLE",
     text: "Lịch sử mua hàng",
     path: `/${path.MEMBER}/${path.HISTORY}`,
-    icon: <RiBillLine size={20} />,
-  },
-  {
-    id: 40,
-    type: "SINGLE",
-    text: "Danh sách yêu thích",
-    path: `/${path.MEMBER}/${path.WISHLIST}`,
     icon: <RiBillLine size={20} />,
   },
 ];

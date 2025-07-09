@@ -1,27 +1,32 @@
 import React from "react";
+import CustomSelect from "../inputs/CustomSelect"; // đường dẫn thích hợp
 
 const SelectableList = ({
   title,
   items,
   selectedId,
   onSelect,
-  labelField = "productCategoryName", // Mặc định danh mục
+  labelField = "productCategoryName",
   valueField = "_id",
 }) => {
+  const options = items?.map((item) => ({
+    value: item[valueField],
+    label: item[labelField],
+  }));
+
+  const selectedOption =
+    options?.find((opt) => opt.value === selectedId) || null;
+
   return (
-    <div className="flex flex-col gap-2 max-w-[200px]">
-      <select
-        value={selectedId}
-        onChange={(e) => onSelect(e.target.value)}
-        className="px-3 py-2 rounded border text-sm bg-white shadow-sm"
-      >
-        <option value="">-- Chọn {title.toLowerCase()} --</option>
-        {(items || []).map((item) => (
-          <option key={item[valueField]} value={item[valueField]}>
-            {item[labelField]}
-          </option>
-        ))}
-      </select>
+    <div className="max-w-[250px]">
+      <CustomSelect
+        label={title}
+        options={options}
+        value={selectedOption}
+        onChange={(val) => onSelect(val?.value)}
+        wrapClassname="w-full"
+        placeholder={`-- Chọn ${title.toLowerCase()} --`}
+      />
     </div>
   );
 };
