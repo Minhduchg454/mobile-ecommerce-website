@@ -1,5 +1,5 @@
 import React, { Fragment, memo, useEffect, useState } from "react";
-import logo from "assets/logo.jpg";
+import logo from "assets/logo-removebg-preview-Photoroom.png";
 import icons from "ultils/icons";
 import { Link } from "react-router-dom";
 import path from "ultils/path";
@@ -74,7 +74,7 @@ const Header = () => {
 
   console.log("Header", current);
   return (
-    <div className="md:w-main w-full flex items-center justify-between md:h-[90px] py-[8px]">
+    <div className="w-full bg-header-footer flex items-center justify-between md:h-[60px] py-[8px]">
       <Link
         to={`/${path.HOME}`}
         className="h-16 flex items-center justify-center px-2"
@@ -82,14 +82,14 @@ const Header = () => {
         <img src={logo} alt="logo" className="h-full w-auto object-contain" />
       </Link>
 
-      <div className="w-full md:w-[700px] px-1">
+      <div className="w-full md:w-[700px] px-1 shadow rounded-xl bg-gray-200">
         <InputFormSearch
           id="q"
           register={register}
           errors={errors}
           placeholder="Tìm kiếm sản phẩm..."
           wrapperStyle="flex-1 px-4"
-          style="bg-gray-100 p-3 rounded-full text-sm border-none focus:outline-none"
+          style="bg-gray-200 p-3 rounded-full text-sm border-none focus:outline-none"
           icon={<AiOutlineSearch size={18} />}
           iconPosition="left"
           onIconClick={handleSearch}

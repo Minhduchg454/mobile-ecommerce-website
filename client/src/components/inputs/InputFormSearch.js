@@ -47,10 +47,10 @@ const InputFormSearch = ({
           disabled={disabled}
           placeholder={placeholder}
           className={clsx(
-            "w-full bg-gray-100 p-3 rounded-xl text-sm border-none focus:outline-none",
+            "w-full p-3 rounded-xl text-sm border-none focus:outline-none",
             icon && iconPosition === "left" && "pl-10",
             icon && iconPosition === "right" && "pr-10",
-            style
+            style || "bg-gray-100"
           )}
           defaultValue={defaultValue}
           readOnly={readOnly}

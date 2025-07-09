@@ -145,13 +145,13 @@ const Products = () => {
 
   return (
     <div className="w-full">
-      <div className="md:w-main m-auto h-[81px] flex justify-start items-center p-2 bg-gray-100">
+      <div className="md:w-main m-auto h-[81px] flex justify-start items-center p-2 ">
         <div className="lg:w-main w-screen px-4 lg:px-0">
-          <h3 className="font-semibold uppercase  mb-2">{categoryName}</h3>
           <Breadcrumb category={category} />
+          <h3 className="font-semibold uppercase  mb-2">{categoryName}</h3>
         </div>
       </div>
-      <div className="md:w-main p-2  my-8 m-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="md:w-main p-2  my-2 m-auto grid grid-cols-1 md:grid-cols-2 gap-4">
         <ReusableBanner images={banner1} aspectRatio="3/1" />
         <ReusableBanner images={banner2} aspectRatio="3/1" />
       </div>
