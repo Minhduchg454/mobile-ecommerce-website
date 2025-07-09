@@ -1,65 +1,154 @@
-import Button from 'components/buttons/Button'
-import withBaseComponent from 'hocs/withBaseComponent'
-import React, { memo } from 'react'
-import { AiFillCloseCircle } from 'react-icons/ai'
-import { useSelector } from 'react-redux'
-import { showCart } from 'store/app/appSlice'
-import { formatMoney } from 'ultils/helpers'
-import { ImBin } from 'react-icons/im'
-import { apiRemoveCart } from 'apis'
-import { getCurrent } from 'store/user/asyncActions'
-import { toast } from 'react-toastify'
-import path from 'ultils/path'
+import React, { memo } from "react";
+import { useSelector } from "react-redux";
+import { AiFillCloseCircle } from "react-icons/ai";
+import { ImBin } from "react-icons/im";
+import clsx from "clsx";
+import Button from "components/buttons/Button";
+import withBaseComponent from "hocs/withBaseComponent";
+import { showCart } from "store/app/appSlice";
+import { apiRemoveCart, apiUpdateCart } from "apis";
+import { getCurrent } from "store/user/asyncActions";
+import { formatMoney } from "ultils/helpers";
+import { toast } from "react-toastify";
+import path from "ultils/path";
 
 const Cart = ({ dispatch, navigate }) => {
-    const { currentCart } = useSelector(state => state.user)
-    const removeCart = async (pid, color) => {
-        const response = await apiRemoveCart(pid, color)
-        if (response.success) {
-            dispatch(getCurrent())
-        }
-        else toast.error(response.mes)
-    }
+  const { currentCart } = useSelector((state) => state.user);
 
-    // Fix category page
-    // Payment method
-    return (
-        <div onClick={e => e.stopPropagation()} className='w-[400px] h-screen bg-black grid grid-rows-10 text-white p-6'>
-            <header className='border-b border-gray-500 flex justify-between items-center row-span-1 h-full font-bold text-2xl'>
-                <span>GIỎ HÀNG</span>
-                <span onClick={() => dispatch(showCart())} className='p-2 cursor-pointer'><AiFillCloseCircle size={24} /></span>
-            </header>
-            <section className='row-span-7 flex flex-col gap-3 h-full max-h-full overflow-y-auto py-3'>
-                {!currentCart && <span className='text-xs italic'>Chưa có sản phẩm trong giỏ hàng</span>}
-                {currentCart && currentCart?.map(el => (
-                    <div key={el._id} className='flex justify-between items-center'>
-                        <div className='flex gap-2'>
-                            <img src={el.thumbnail} alt="thumb" className='w-16 h-20 object-cover' />
-                            <div className='flex flex-col gap-1'>
-                                <span className='text-sm text-main'>{el.title}</span>
-                                <span className='text-[10px]'>{`Màu: ${el.color}`}</span>
-                                <span className='text-[10px]'>{`Số lượng: ${el.quantity}`}</span>
-                                <span className='text-sm'>{'Giá: ' + formatMoney(el.price) + ' VND'}</span>
-                            </div>
-                        </div>
-                        <span onClick={() => removeCart(el.product?._id, el.color)} className='h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-700 cursor-pointer'><ImBin size={16} /></span>
-                    </div>
-                ))}
-            </section>
-            <div className='row-span-2 flex flex-col justify-between h-full'>
-                <div className='flex items-center justify-between pt-4 border-t'>
-                    <span>TỔNG:</span>
-                    <span>{formatMoney(currentCart?.reduce((sum, el) => sum + Number(el.price) * el.quantity, 0)) + ' VND'}</span>
+  const removeCart = async (pid, color) => {
+    const response = await apiRemoveCart(pid, color);
+    if (response.success) dispatch(getCurrent());
+    else toast.error(response.mes);
+  };
+
+  const updateQuantity = async (pid, color, quantity) => {
+    if (quantity < 1) return;
+
+    const response = await apiUpdateCart({ product: pid, color, quantity });
+    if (response.success) dispatch(getCurrent());
+    else toast.error(response.mes);
+  };
+
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className={clsx(
+        "w-full md:w-[40vw] md:max-w-[800px] h-screen bg-white text-gray-800 flex flex-col relative"
+      )}
+    >
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-white shadow px-4 py-3 flex justify-between items-center border-b">
+        <h2 className="text-lg font-semibold">🛒 Giỏ hàng của bạn</h2>
+        <span
+          onClick={() => dispatch(showCart())}
+          className="cursor-pointer text-gray-500 hover:text-red-500"
+        >
+          <AiFillCloseCircle size={24} />
+        </span>
+      </div>
+
+      {/* Tiêu đề bảng */}
+      <div className="grid grid-cols-6 font-semibold text-sm text-gray-600 px-4 py-2 border-b bg-gray-50 sticky top-[58px] z-10">
+        <span className="text-center">STT</span>
+        <span className="col-span-2">Sản phẩm</span>
+        <span className="text-center">Số lượng</span>
+        <span className="text-center">Giá</span>
+        <span className="text-center">Xoá</span>
+      </div>
+
+      {/* Danh sách sản phẩm */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3">
+        {currentCart?.length > 0 ? (
+          currentCart.map((el, idx) => (
+            <div
+              key={el._id}
+              className="grid grid-cols-6 border-b pb-2 gap-2 text-sm items-center"
+            >
+              <span className="text-center">{idx + 1}</span>
+
+              {/* Sản phẩm */}
+              <div className="col-span-2 flex gap-2">
+                <img
+                  src={el.thumbnail}
+                  alt="thumb"
+                  className="w-14 h-16 object-cover rounded"
+                />
+                <div className="flex flex-col">
+                  <span className="font-medium text-main">{el.title}</span>
+                  <span className="text-xs text-gray-500">{`Màu: ${el.color}`}</span>
                 </div>
-                <span className='text-center text-gray-700 italic text-xs'>Chưa bao gồm VAT</span>
-                <Button handleOnClick={() => {
-                    dispatch(showCart())
-                    navigate(`/${path.MEMBER}/${path.DETAIL_CART}`)
-                }} style='rounded-none w-full bg-main py-3' >THANH TOÁN</Button>
+              </div>
+
+              {/* Số lượng */}
+              <div className="flex justify-center items-center gap-2">
+                <button
+                  onClick={() =>
+                    updateQuantity(el.product?._id, el.color, el.quantity - 1)
+                  }
+                  className="w-6 h-6 border rounded hover:bg-gray-200"
+                >
+                  -
+                </button>
+                <span className="w-6 text-center">{el.quantity}</span>
+                <button
+                  onClick={() =>
+                    updateQuantity(el.product?._id, el.color, el.quantity + 1)
+                  }
+                  className="w-6 h-6 border rounded hover:bg-gray-200"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Giá */}
+              <span className="text-center">
+                {formatMoney(el.price * el.quantity)} VND
+              </span>
+
+              {/* Xoá */}
+              <div className="flex justify-center items-center">
+                <span
+                  onClick={() => removeCart(el.product?._id, el.color)}
+                  className="cursor-pointer hover:text-red-600"
+                  title="Xoá"
+                >
+                  <ImBin size={16} />
+                </span>
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center italic text-gray-400 py-6">
+            Giỏ hàng hiện đang trống.
+          </div>
+        )}
+      </div>
 
+      {/* Footer */}
+      <div className="border-t p-4 shadow-[0_-2px_6px_rgba(0,0,0,0.08)] bg-white z-10">
+        <div className="flex justify-between font-semibold mb-1">
+          <span>Tổng cộng:</span>
+          <span>
+            {formatMoney(
+              currentCart?.reduce((sum, el) => sum + el.price * el.quantity, 0)
+            ) + " VND"}
+          </span>
         </div>
-    )
-}
+        <span className="text-xs italic text-gray-500 mb-2 block">
+          (Chưa bao gồm VAT)
+        </span>
+        <Button
+          handleOnClick={() => {
+            dispatch(showCart());
+            navigate(`/${path.MEMBER}/${path.DETAIL_CART}`);
+          }}
+          style="w-full bg-main py-3 rounded-md"
+        >
+          Thanh toán
+        </Button>
+      </div>
+    </div>
+  );
+};
 
-export default withBaseComponent(memo(Cart))
+export default withBaseComponent(memo(Cart));
