@@ -1,6 +1,6 @@
-import clsx from "clsx"
-import React from "react"
-import Select from "react-select"
+import clsx from "clsx";
+import React from "react";
+import Select from "react-select";
 
 const CustomSelect = ({
   label,
@@ -13,7 +13,6 @@ const CustomSelect = ({
 }) => {
   return (
     <div className={clsx(wrapClassname)}>
-      {label && <h3 className="font-medium">{label}</h3>}
       <Select
         placeholder={placeholder}
         isClearable
@@ -29,7 +28,7 @@ const CustomSelect = ({
         className={{ control: () => clsx("border-2 py-[2px]", classname) }}
       />
     </div>
-  )
-}
+  );
+};
 
-export default CustomSelect
+export default CustomSelect;

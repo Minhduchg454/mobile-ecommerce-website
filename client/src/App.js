@@ -38,18 +38,25 @@ import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Cart, Modal } from "components";
-import { showCart } from "store/app/appSlice";
+import { showCart, showWishlist } from "store/app/appSlice";
 
 function App() {
   const dispatch = useDispatch();
-  const { isShowModal, modalChildren, isShowCart } = useSelector(
-    (state) => state.app
-  );
+  const { isShowModal, modalChildren, isShowCart, isShowWishlist } =
+    useSelector((state) => state.app);
   useEffect(() => {
     dispatch(getCategories());
   }, []);
   return (
     <div className="font-jp">
+      {isShowWishlist && (
+        <div
+          onClick={() => dispatch(showWishlist())}
+          className="absolute inset-0 bg-overlay z-50 flex justify-end"
+        >
+          <Wishlist />
+        </div>
+      )}
       {isShowCart && (
         <div
           onClick={() => dispatch(showCart())}
