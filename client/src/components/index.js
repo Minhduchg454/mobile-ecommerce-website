@@ -50,3 +50,4 @@ export { default as InputFormSearch } from "./inputs/InputFormSearch";
 export { default as Select } from "./inputs/Select";
 export { default as MarkdownEditor } from "./inputs/MarkdownEditor";
 export { default as ConfirmLogoutModa } from "./common/ConfirmLogoutModal";
+export { default as SidebarLayout } from "./common/SidebarLayout";

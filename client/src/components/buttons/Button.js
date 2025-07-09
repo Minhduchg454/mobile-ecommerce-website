@@ -1,9 +1,11 @@
-import React, { memo } from "react"
-import { CgSpinner } from "react-icons/cg"
+import React, { memo } from "react";
+import { CgSpinner } from "react-icons/cg";
+import clsx from "clsx";
+
 const Button = ({
   children,
   handleOnClick,
-  style,
+  className, // 👈 Đổi từ `style` → `className` để đúng chuẩn
   fw,
   type = "button",
   disabled,
@@ -11,25 +13,24 @@ const Button = ({
   return (
     <button
       type={type}
-      className={
-        style
-          ? style
-          : `px-4 py-2 rounded-md text-white flex items-center justify-center bg-main text-semibold my-2 ${
-              fw ? "w-full" : "w-fit"
-            }`
-      }
+      className={clsx(
+        "px-4 py-2 rounded-md text-white flex items-center justify-center bg-main font-semibold my-2",
+        fw ? "w-full" : "w-fit",
+        className // 👈 Kết hợp với class từ props
+      )}
       onClick={() => {
-        handleOnClick && handleOnClick()
+        handleOnClick && handleOnClick();
       }}
+      disabled={disabled}
     >
       {disabled && (
-        <span className="animate-spin">
+        <span className="animate-spin mr-2">
           <CgSpinner size={18} />
         </span>
       )}
       {children}
     </button>
-  )
-}
+  );
+};
 
-export default memo(Button)
+export default memo(Button);

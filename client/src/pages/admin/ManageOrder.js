@@ -120,7 +120,7 @@ const ManageOrder = () => {
       {/* Nội dung */}
       <div className="bg-white rounded-xl shadow p-4">
         <table className="table-auto w-full border-collapse text-sm">
-          <thead className="bg-sky-800 text-white uppercase">
+          <thead className="bg-title-table text-white uppercase">
             <tr>
               <th className="py-3 px-2">STT</th>
               <th className="py-3 px-2">Người mua</th>
