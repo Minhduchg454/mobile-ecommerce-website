@@ -20,15 +20,14 @@ const DealDaily = ({ dispatch }) => {
 
   const fetchDealDaily = async () => {
     const response = await apiGetProducts({ sort: "-totalRating", limit: 20 });
-    if (response.success && response.products?.length > 1) {
+    if (response.success && response.products?.length > 0) {
       const shuffled = response.products.sort(() => 0.5 - Math.random());
-      const [product1, product2] = shuffled;
+      const product1 = shuffled[0];
 
       dispatch(
         getDealDaily({
           data: {
             product1: { ...product1, discountPercent: 20 },
-            product2: { ...product2, discountPercent: 10 },
           },
           time: Date.now() + 12 * 60 * 60 * 1000, // 12 giờ
         })
@@ -76,7 +75,6 @@ const DealDaily = ({ dispatch }) => {
   };
 
   const product1 = dealDaily?.data?.product1;
-  const product2 = dealDaily?.data?.product2;
 
   const renderProduct = (product) => {
     const discountPercent = product?.discountPercent || 0;
@@ -107,12 +105,10 @@ const DealDaily = ({ dispatch }) => {
           </span>
         </span>
 
-        {/* Dòng 1: Giá giảm */}
         <span className="text-red-600 font-semibold text-[16px]">
           {formatMoney(discountedPrice)} VNĐ
         </span>
 
-        {/* Dòng 2: Giá gốc + % giảm nếu có */}
         {discountPercent > 0 && (
           <div className="flex items-center gap-2">
             <span className="line-through text-xs text-gray-500">
@@ -123,6 +119,7 @@ const DealDaily = ({ dispatch }) => {
             </span>
           </div>
         )}
+
         {typeof product?.description === "string" && (
           <div
             className="text-sm text-center text-gray-500 my-3 pl-0"
@@ -138,11 +135,8 @@ const DealDaily = ({ dispatch }) => {
   return (
     <div className="card-default card border lg:block w-full flex-auto">
       <div className="flex flex-col items-center justify-center p-4 w-full">
-        <span className="font-semibold text-[20px] flex justify-center text-gray-700">
-          SALE RỰC RỠ
-        </span>
-        <span className="font-semibold text-[20px] flex justify-center text-gray-700">
-          GIÁ GIẢM BẤT NGỜ
+        <span className="font-semibold text-[20px] text-gray-700 text-center">
+          SALE RỰC RỠ - GIÁ GIẢM BẤT NGỜ
         </span>
       </div>
 
@@ -167,17 +161,18 @@ const DealDaily = ({ dispatch }) => {
       </div>
 
       {product1 && renderProduct(product1)}
-      {/* {product2 && renderProduct(product2)} */}
 
-      {/*  <div className="flex justify-center mt-2">
-        <button
-          onClick={fetchDealDaily}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-        >
-          Lấy Deal Mới
-        </button>
-      </div> */}
-      {/* div className="mb-4"> </div> */}
+      {/* Bat khi can */}
+      {/* {product1 && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={fetchDealDaily}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+          >
+            🔄 Làm mới Deal
+          </button>
+        </div>
+      )} */}
     </div>
   );
 };
