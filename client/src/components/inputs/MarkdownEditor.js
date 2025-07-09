@@ -9,6 +9,7 @@ const MarkdownEditor = ({
   invalidFields,
   setInvalidFields,
   setIsFocusDescription,
+  height = 500, // 👈 chiều cao mặc định
 }) => {
   return (
     <div className="flex flex-col ">
@@ -17,32 +18,17 @@ const MarkdownEditor = ({
         apiKey="x966ukewe6wwp2dli2u8f41xmjei8omxtk49m356em9qoizc"
         initialValue={value}
         init={{
-          height: 500,
-          menubar: true,
-          plugins: [
-            "advlist",
-            "autolink",
-            "lists",
-            "link",
-            "image",
-            "charmap",
-            "anchor",
-            "searchreplace",
-            "visualblocks",
-            "code",
-            "fullscreen",
-            "insertdatetime",
-            "media",
-            "table",
-            "preview",
-            "help",
-            "wordcount",
-          ],
+          height: 300,
+          menubar: false,
+          plugins: ["link", "lists"],
           toolbar:
-            "undo redo | blocks | bold italic forecolor | alignleft aligncenter " +
-            "alignright alignjustify | bullist numlist outdent indent | removeformat | help",
-          content_style:
-            "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+            "bold italic | bullist numlist | alignleft aligncenter alignright | link",
+          content_style: `
+      body { font-family:Helvetica,Arial,sans-serif; font-size:14px }
+      html, body { border-radius: 12px; } /* ✅ Bo góc nội dung */
+    `,
+          branding: false,
+          statusbar: false,
         }}
         onChange={(e) => {
           const content = e.target.getContent();
@@ -51,6 +37,7 @@ const MarkdownEditor = ({
         onFocus={() => {
           setInvalidFields && setInvalidFields([]);
         }}
+        textareaClassName="rounded-xl border border-gray-300" // ✅ Thêm class Tailwind cho vỏ ngoài
       />
       {invalidFields?.some((el) => el.name === name) && (
         <small className="text-main text-sm">

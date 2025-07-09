@@ -13,12 +13,13 @@ const Select = ({
   defaultValue,
 }) => {
   return (
-    <div className={clsx("flex flex-col gap-2", style)}>
+    <div className={clsx("flex flex-col gap-2 relative", style)}>
       {label && <label htmlFor={id}>{label}</label>}
       <select
+        key={defaultValue || "empty"}
         defaultValue={defaultValue ? String(defaultValue) : ""}
         className={clsx(
-          "form-select max-h-[42px]",
+          "w-full h-[42px] px-3 py-2 rounded-xl border border-gray-300 bg-white text-sm outline-none focus:ring-1 focus:ring-blue-500",
           fullWidth && "w-full",
           style
         )}
@@ -32,7 +33,7 @@ const Select = ({
           </option>
         ))}
       </select>
-      {errors[id] && (
+      {errors?.[id] && (
         <small className="text-xs text-red-500">{errors[id]?.message}</small>
       )}
     </div>

@@ -138,9 +138,12 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
 
   return (
     <div className="w-full">
-      <h1 className="h-[75px] flex justify-between items-center text-3xl font-bold px-4 border-b">
-        <span>{editProduct ? "CẬP NHẬT SẢN PHẨM" : "THÊM SẢN PHẨM"}</span>
-      </h1>
+      {editProduct && (
+        <h1 className="h-[75px] flex justify-between items-center text-xl font-bold px-4 border-b">
+          <span>{`Cập nhật sản phẩm: ${editProduct.productName}`}</span>
+        </h1>
+      )}
+
       <div className="p-4">
         <form onSubmit={handleSubmit(handleCreateOrUpdate)}>
           <InputForm
@@ -153,7 +156,7 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
             placeholder="Nhập tên sản phẩm"
           />
 
-          <div className="w-full my-6 flex gap-4">
+          <div className="w-full my-6 flex gap-4 overflow-visible">
             <Select
               label="Danh mục"
               options={categories.map((el) => ({
@@ -191,6 +194,7 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
             invalidFields={invalidFields}
             setInvalidFields={setInvalidFields}
             value={payload.description}
+            height={300}
           />
 
           <div className="flex flex-col gap-2 mt-8">
@@ -222,8 +226,8 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
             </div>
           )}
 
-          <div className="my-6">
-            <Button type="submit">
+          <div className="my-6 rounded-xl">
+            <Button className="rounded-xl" type="submit">
               {editProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
             </Button>
           </div>

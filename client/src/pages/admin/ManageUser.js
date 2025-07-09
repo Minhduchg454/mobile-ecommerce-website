@@ -99,7 +99,7 @@ const ManageUser = () => {
             </div>
           )}
           <table className="table-auto w-full border-collapse">
-            <thead className="bg-sky-800 text-white text-sm uppercase">
+            <thead className="bg-title-table text-white text-sm uppercase">
               <tr>
                 <th className="py-3 px-2">STT</th>
                 <th className="py-3 px-2">Email</th>

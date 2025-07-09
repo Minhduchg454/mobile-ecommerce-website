@@ -1,8 +1,8 @@
-import { apiCreateNewBlog } from "apis/blog"
-import { Button, InputFile, InputForm, MdEditor } from "components"
-import React, { useState } from "react"
-import { useForm } from "react-hook-form"
-import { toast } from "react-toastify"
+import { apiCreateNewBlog } from "apis/blog";
+import { Button, InputFile, InputForm, MdEditor } from "components";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 const CreateBlog = () => {
   const {
@@ -11,26 +11,25 @@ const CreateBlog = () => {
     handleSubmit,
     watch,
     setValue,
-  } = useForm()
-  const [isLoading, setIsLoading] = useState(false)
+  } = useForm();
+  const [isLoading, setIsLoading] = useState(false);
   const handlePublish = async ({ image, ...data }) => {
-    const payload = new FormData()
-    for (let i of Object.entries(data)) payload.append(i[0], i[1])
-    payload.append("image", image[0])
-    setIsLoading(true)
-    const response = await apiCreateNewBlog(payload)
-    setIsLoading(false)
+    const payload = new FormData();
+    for (let i of Object.entries(data)) payload.append(i[0], i[1]);
+    payload.append("image", image[0]);
+    setIsLoading(true);
+    const response = await apiCreateNewBlog(payload);
+    setIsLoading(false);
     if (response.success) {
-      setValue("title", "")
-      setValue("description", "")
-      setValue("hashtags", "")
-      setValue("image", "")
-      toast.success(response.mes)
-    } else toast.error(response.mes)
-  }
+      setValue("title", "");
+      setValue("description", "");
+      setValue("hashtags", "");
+      setValue("image", "");
+      toast.success(response.mes);
+    } else toast.error(response.mes);
+  };
   return (
     <div className="w-full flex flex-col gap-4 bg-gray-50 relative">
-      <div className="h-[69px] w-full"></div>
       <div className="p-4 border-b w-full bg-gray-50 justify-between flex items-center fixed top-0">
         <h1 className="text-3xl font-bold tracking-tight">THÊM TIN TỨC</h1>
       </div>
@@ -80,7 +79,7 @@ const CreateBlog = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CreateBlog
+export default CreateBlog;

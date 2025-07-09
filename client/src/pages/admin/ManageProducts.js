@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { CustomizeVarriants, InputForm, Pagination } from "components";
+import { InputForm, Pagination } from "components";
 import { useForm } from "react-hook-form";
 import { apiGetProducts, apiDeleteProduct } from "apis/product";
 import {
@@ -15,6 +15,8 @@ import { toast } from "react-toastify";
 import { BiEdit, BiCustomize } from "react-icons/bi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import CreateVariation from "./CreateVariation";
+import clsx from "clsx";
+import { useOutletContext } from "react-router-dom";
 
 const ManageProducts = () => {
   const navigate = useNavigate();
@@ -25,17 +27,19 @@ const ManageProducts = () => {
     formState: { errors },
     watch,
   } = useForm();
+
   const [products, setProducts] = useState(null);
   const [counts, setCounts] = useState(0);
   const [editProduct, setEditProduct] = useState(null);
   const [update, setUpdate] = useState(false);
-  const [customizeVarriant, setCustomizeVarriant] = useState(null);
   const [currentProductForVariant, setCurrentProductForVariant] =
     useState(null);
 
+  const { contentRef } = useOutletContext();
+
   const render = useCallback(() => {
     setUpdate(!update);
-  });
+  }, [update]);
 
   const fetchProducts = async (params) => {
     const response = await apiGetProducts({
@@ -84,10 +88,31 @@ const ManageProducts = () => {
     });
   };
 
+  useEffect(() => {
+    if (editProduct || currentProductForVariant) {
+      contentRef?.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [editProduct, currentProductForVariant]);
+
   return (
-    <div className="w-full bg-gray-50 min-h-screen p-4 relative">
+    <div className={clsx("w-full bg-gray-50 min-h-screen p-4", editProduct)}>
+      {/* Header tìm kiếm */}
+      <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4 flex justify-between items-center">
+        <form className="w-full">
+          <InputForm
+            id="q"
+            register={register}
+            errors={errors}
+            fullWidth
+            placeholder="🔍 Tìm kiếm sản phẩm..."
+            isHideLabel
+          />
+        </form>
+      </div>
+
+      {/* Form sửa sản phẩm */}
       {editProduct && (
-        <div className="absolute inset-0 min-h-screen bg-gray-100 z-50">
+        <div className="bg-white rounded-xl shadow p-4 mb-4">
           <CreateProducts
             editProduct={editProduct}
             render={render}
@@ -96,8 +121,9 @@ const ManageProducts = () => {
         </div>
       )}
 
+      {/* Form chỉnh biến thể */}
       {currentProductForVariant && (
-        <div className="absolute inset-0 min-h-screen bg-gray-100 z-50 overflow-y-auto">
+        <div className="bg-white rounded-xl shadow p-4 mb-4">
           <CreateVariation
             productId={currentProductForVariant._id}
             productName={currentProductForVariant.productName}
@@ -109,24 +135,11 @@ const ManageProducts = () => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white shadow p-4 rounded mb-4">
-        <form className="w-full">
-          <InputForm
-            id="q"
-            register={register}
-            errors={errors}
-            fullWidth
-            placeholder="🔍 Tìm kiếm sản phẩm..."
-          />
-        </form>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded shadow overflow-x-auto">
+      {/* Bảng sản phẩm */}
+      <div className="bg-white rounded-xl shadow p-4">
         <table className="table-auto w-full border-collapse">
-          <thead>
-            <tr className="bg-sky-800 text-white text-sm uppercase">
+          <thead className="bg-title-table text-white text-sm uppercase">
+            <tr>
               <th className="py-3 px-2">STT</th>
               <th className="py-3 px-2">Ảnh</th>
               <th className="py-3 px-2">Tên sản phẩm</th>
@@ -136,16 +149,16 @@ const ManageProducts = () => {
               <th className="py-3 px-2">Đã bán</th>
               <th className="py-3 px-2">Đánh giá</th>
               <th className="py-3 px-2">Tổng đánh giá</th>
-              <th className="py-3 px-2">Tuỳ chọn</th>
+              <th className="py-3 px-2">Tùy chọn</th>
             </tr>
           </thead>
           <tbody>
             {products?.map((el, idx) => (
               <tr
                 key={el._id}
-                className="border-b hover:bg-sky-50 transition-all"
+                className="border-b hover:bg-sky-50 transition-all text-sm"
               >
-                <td className="text-center py-3 px-2 text-sm font-medium">
+                <td className="text-center py-3 px-2">
                   {(+params.get("page") > 1 ? +params.get("page") - 1 : 0) *
                     process.env.REACT_APP_LIMIT +
                     idx +
@@ -172,27 +185,30 @@ const ManageProducts = () => {
                 <td className="text-center py-3 px-2">{el.rating}</td>
                 <td className="text-center py-3 px-2">{el.totalRating}</td>
                 <td className="text-center py-3 px-2">
-                  <div className="flex justify-center gap-2 items-center">
+                  <div className="flex justify-center gap-2 items-center text-orange-600">
                     <span
-                      onClick={() => setEditProduct(el)}
-                      className="text-blue-500 hover:text-orange-500 cursor-pointer"
-                      title="Sửa sản phẩm"
+                      onClick={() => {
+                        setCurrentProductForVariant(null); // Tắt biến thể nếu đang mở
+                        setEditProduct(el);
+                      }}
+                      className="hover:underline cursor-pointer"
                     >
-                      <BiEdit size={20} />
+                      Sửa
                     </span>
                     <span
-                      onClick={() => setCurrentProductForVariant(el)}
-                      className="text-green-600 hover:text-orange-500 cursor-pointer"
-                      title="Quản lý biến thể"
+                      onClick={() => {
+                        setEditProduct(null); // Tắt sửa nếu đang mở
+                        setCurrentProductForVariant(el);
+                      }}
+                      className="hover:underline cursor-pointer"
                     >
-                      <BiCustomize size={20} />
+                      Biến thể
                     </span>
                     <span
                       onClick={() => handleDeleteProduct(el._id)}
-                      className="text-red-600 hover:text-orange-500 cursor-pointer"
-                      title="Xoá sản phẩm"
+                      className="hover:underline cursor-pointer"
                     >
-                      <RiDeleteBin6Line size={20} />
+                      Xoá
                     </span>
                   </div>
                 </td>
@@ -210,11 +226,11 @@ const ManageProducts = () => {
             )}
           </tbody>
         </table>
-      </div>
 
-      {/* Pagination */}
-      <div className="w-full flex justify-end mt-8">
-        <Pagination totalCount={counts} />
+        {/* Phân trang */}
+        <div className="w-full flex justify-end mt-8">
+          <Pagination totalCount={counts} />
+        </div>
       </div>
     </div>
   );
