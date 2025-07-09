@@ -1,14 +1,15 @@
 import React, { useState, useRef } from "react";
 import { Outlet, Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { MemberSidebar, AdminHeader } from "components"; // ✅ Thêm Header nếu có
+import { MemberSidebar, AdminHeader } from "components";
 import path from "ultils/path";
 
 const getPageTitle = (pathname) => {
-  if (pathname.includes("personal")) return "TÀI KHOẢN";
+  if (pathname.includes("personal")) return "THÔNG TIN CÁ NHÂN";
   if (pathname.includes("my-cart")) return "GIỎ HÀNG";
+  if (pathname.includes("buy-history")) return "LỊCH SỬ MUA HÀNG";
   if (pathname.includes("my-order")) return "ĐƠN HÀNG";
-  if (pathname.includes("wishlist")) return "YÊU THÍCH";
+  if (pathname.includes("wishlist")) return "DANH SÁCH SẢN PHẨM YÊU THÍCH";
   return "THÀNH VIÊN";
 };
 
@@ -16,9 +17,8 @@ const MemberLayout = () => {
   const { isLoggedIn, current } = useSelector((state) => state.user);
   const location = useLocation();
   const [showSidebar, setShowSidebar] = useState(false);
-  const contentRef = useRef(); // ✅ Tạo ref
+  const contentRef = useRef();
   const title = getPageTitle(location.pathname);
-  console.log("Thong tin nguoi dung hien tai", current);
 
   if (!isLoggedIn || !current)
     return <Navigate to={`/${path.LOGIN}`} replace={true} />;

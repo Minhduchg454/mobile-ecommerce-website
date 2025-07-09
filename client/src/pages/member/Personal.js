@@ -1,120 +1,183 @@
-import { Button, InputForm } from 'components'
-import moment from 'moment'
-import React, { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { useDispatch, useSelector } from 'react-redux'
-import avatar from 'assets/avatarDefault.png'
-import { apiUpdateCurrent } from 'apis'
-import { getCurrent } from 'store/user/asyncActions'
-import { toast } from 'react-toastify'
-import { getBase64 } from 'ultils/helpers'
-import { useSearchParams } from 'react-router-dom'
-import withBaseComponent from 'hocs/withBaseComponent'
+import { Button, InputForm } from "components";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import avatar from "assets/avatarDefault.png";
+import { apiUpdateCurrent } from "apis";
+import { getCurrent } from "store/user/asyncActions";
+import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom";
+import withBaseComponent from "hocs/withBaseComponent";
+import { FaLock, FaCheckCircle } from "react-icons/fa";
 
 const Personal = ({ navigate }) => {
-    const { register, formState: { errors, isDirty }, handleSubmit, reset, watch } = useForm()
-    const { current } = useSelector(state => state.user)
-    const dispatch = useDispatch()
-    const [searchParams] = useSearchParams()
-    useEffect(() => {
-        reset({
-            firstName: current?.firstName,
-            lastName: current?.lastName,
-            mobile: current?.mobile,
-            email: current?.email,
-            avatar: current?.avatar,
-            address: current?.address,
-        })
-    }, [current])
-    const handleUpdateInfor = async (data) => {
-        const formData = new FormData()
-        if (data.avatar.length > 0) formData.append('avatar', data.avatar[0])
-        delete data.avatar
-        for (let i of Object.entries(data)) formData.append(i[0], i[1])
+  const {
+    register,
+    formState: { errors },
+    handleSubmit,
+    reset,
+    watch,
+  } = useForm();
+  const { current } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
 
-        const response = await apiUpdateCurrent(formData)
-        if (response.success) {
-            dispatch(getCurrent())
-            toast.success(response.mes)
-            if (searchParams.get('redirect')) navigate(searchParams.get('redirect'))
-        } else toast.error(response.mes)
-    }
-    return (
-        <div className='w-full relative px-4'>
-            <header className='text-3xl font-semibold py-4 border-b border-b-blue-200'>
-                THÔNG TIN CÁ NHÂN
-            </header>
-            <form onSubmit={handleSubmit(handleUpdateInfor)} className='w-3/5 mx-auto py-8 flex flex-col gap-4'>
-                <InputForm
-                    label='Tên'
-                    register={register}
-                    errors={errors}
-                    id='firstName'
-                    validate={{
-                        required: 'Need fill this field'
-                    }}
-                />
-                <InputForm
-                    label='Họ'
-                    register={register}
-                    errors={errors}
-                    id='lastName'
-                    validate={{
-                        required: 'Need fill this field'
-                    }}
-                />
-                <InputForm
-                    label='Email'
-                    register={register}
-                    errors={errors}
-                    id='email'
-                    validate={{
-                        required: 'Need fill this field',
-                        pattern: { value: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, message: 'Email invalid.' }
-                    }}
-                />
-                <InputForm
-                    label='Số điện thoại'
-                    register={register}
-                    errors={errors}
-                    id='mobile'
-                    validate={{
-                        required: 'Need fill this field',
-                        pattern: {
-                            value: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4}$/gm,
-                            message: 'Phone invalid.'
-                        }
+  // Reset form với dữ liệu hiện tại
+  useEffect(() => {
+    reset({
+      firstName: current?.firstName,
+      lastName: current?.lastName,
+      mobile: current?.mobile,
+      email: current?.email,
+      avatar: current?.avatar,
+      address: current?.address,
+    });
+  }, [current]);
 
-                    }}
-                />
+  const handleUpdateInfor = async (data) => {
+    const formData = new FormData();
+
+    if (data.avatar?.length > 0) formData.append("avatar", data.avatar[0]);
+
+    // Đảm bảo các field được append đúng cách
+    ["firstName", "lastName", "mobile", "address"].forEach((key) => {
+      if (data[key]) formData.append(key, data[key]);
+    });
+    console.log(data, current._id);
+    const response = await apiUpdateCurrent(formData, current._id);
+    if (response.success) {
+      dispatch(getCurrent());
+      toast.success(response.mes);
+      if (searchParams.get("redirect")) navigate(searchParams.get("redirect"));
+    } else toast.error(response.mes);
+  };
+
+  const isBlocked = current?.isBlocked;
+
+  return (
+    <div className="w-full relative px-4">
+      <form
+        onSubmit={handleSubmit(handleUpdateInfor)}
+        className="w-full md:w-4/5 mx-auto py-8 flex flex-col gap-4"
+      >
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Thông tin cá nhân */}
+          <div className="flex-1 flex flex-col gap-4">
+            {/* Email (khóa) */}
+            <div className="flex items-center">
+              <label className="w-[120px] font-medium">Email:</label>
+              <input
+                readOnly
+                tabIndex={-1}
+                value={current?.email}
+                className="bg-gray-100 text-gray-500 px-3 py-2 rounded-md text-sm border border-gray-300 w-[300px] focus:outline-none focus:ring-0"
+              />
+            </div>
+
+            {/* Họ và tên */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 flex items-center">
+                <label className="w-[120px] font-medium">Họ:</label>
                 <InputForm
-                    label='Địa chỉ giao hàng'
-                    register={register}
-                    errors={errors}
-                    id='address'
-                    validate={{
-                        required: 'Need fill this field',
-                    }}
+                  register={register}
+                  errors={errors}
+                  id="lastName"
+                  validate={{ required: "Không được để trống" }}
                 />
-                <div className='flex items-center gap-2'>
-                    <span className='font-medium'>Trạng thái tài khoản:</span>
-                    <span>{current?.isBlocked ? 'Đã khóa' : 'Đang hoạt động'}</span>
-                </div>
-                <div className='flex items-center gap-2'>
-                    <span className='font-medium'>Vai trò:</span>
-                    <span>{+current?.role === 1945 ? 'Admin' : 'User'}</span>
-                </div>
-                <div className='flex flex-col gap-2'>
-                    <span className='font-medium'>Ảnh đại diện:</span>
-                    <label htmlFor="file">
-                        <img src={current?.avatar || avatar} alt="avatar" className='w-20 h-20 ml-8 object-cover rounded-full' />
-                    </label>
-                    <input type="file" id="file" {...register('avatar')} hidden />
-                </div>
-                {isDirty && <div className='w-full flex justify-end'><Button type='submit'>Cập nhật thông tin</Button></div>}
-            </form>
+              </div>
+              <div className="flex-1 flex items-center">
+                <label className="w-[120px] font-medium">Tên:</label>
+                <InputForm
+                  register={register}
+                  errors={errors}
+                  id="firstName"
+                  validate={{ required: "Không được để trống" }}
+                />
+              </div>
+            </div>
+
+            {/* Số điện thoại */}
+            <div className="flex items-center">
+              <label className="w-[120px] font-medium">SĐT:</label>
+              <InputForm
+                register={register}
+                errors={errors}
+                id="mobile"
+                validate={{
+                  required: "Không được để trống",
+                  pattern: {
+                    value:
+                      /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4}$/gm,
+                    message: "Số điện thoại không hợp lệ.",
+                  },
+                }}
+              />
+            </div>
+
+            {/* Địa chỉ */}
+            <div className="flex items-center">
+              <label className="w-[120px] font-medium">Địa chỉ:</label>
+              <InputForm
+                register={register}
+                errors={errors}
+                id="address"
+                validate={{ required: "Không được để trống" }}
+              />
+            </div>
+
+            {/* Trạng thái tài khoản */}
+            <div className="flex items-center">
+              <label className="w-[120px] font-medium">Trạng thái:</label>
+              <div className="flex items-center gap-2 text-sm">
+                {isBlocked ? (
+                  <>
+                    <FaLock className="text-red-500" />
+                    <span className="text-red-500">Đã khóa</span>
+                  </>
+                ) : (
+                  <>
+                    <FaCheckCircle className="text-green-600" />
+                    <span className="text-green-600">Đang hoạt động</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Vai trò */}
+            <div className="flex items-center">
+              <label className="w-[120px] font-medium">Vai trò:</label>
+              <span>
+                {+current?.role === 1945 ? "Quản trị viên" : "Thành viên"}
+              </span>
+            </div>
+
+            {/* Nút cập nhật */}
+            <div className="w-full flex justify-center mt-4">
+              <Button type="submit">Cập nhật thông tin</Button>
+            </div>
+          </div>
+
+          {/* Đường kẻ mờ */}
+          <div className="w-[1px] bg-gray-300 hidden md:block" />
+
+          {/* Avatar */}
+          <div className="flex flex-col items-center gap-3">
+            <label htmlFor="file" className="cursor-pointer">
+              <img
+                src={current?.avatar || avatar}
+                alt="avatar"
+                className="w-28 h-28 object-cover rounded-full border border-gray-300"
+              />
+            </label>
+            <input type="file" id="file" {...register("avatar")} hidden />
+            <span className="text-sm text-gray-600">
+              Chọn để cập nhật ảnh đại diện
+            </span>
+          </div>
         </div>
-    )
-}
+      </form>
+    </div>
+  );
+};
 
-export default withBaseComponent(Personal)
+export default withBaseComponent(Personal);
