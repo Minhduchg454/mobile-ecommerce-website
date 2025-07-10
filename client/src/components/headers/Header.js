@@ -72,7 +72,6 @@ const Header = () => {
     };
   }, [isDirty, q]);
 
-  console.log("Header", current);
   return (
     <div className="w-full bg-header-footer flex items-center justify-between md:h-[60px] py-[8px]">
       <Link
@@ -82,7 +81,7 @@ const Header = () => {
         <img src={logo} alt="logo" className="h-full w-auto object-contain" />
       </Link>
 
-      <div className="w-full md:w-[700px] px-1 shadow rounded-xl bg-gray-200">
+      <div className="w-full md:w-[900px] px-1 shadow rounded-xl bg-gray-200">
         <InputFormSearch
           id="q"
           register={register}
@@ -96,7 +95,7 @@ const Header = () => {
         />
       </div>
 
-      <div className="flex h-full text-[16px] py-[28px]">
+      <div className="flex h-full text-[16px] py-3">
         {current && (
           // Nếu current tồn tại, coi như đã đăng nhập
 
@@ -106,7 +105,7 @@ const Header = () => {
               onClick={() => dispatch(showWishlist())}
               className="relative cursor-pointer"
             >
-              <FaRegHeart size={26} className="text-pink-500" />
+              <FaRegHeart size={24} className="text-pink-500" />
               {current?.wishlist?.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
                   {current?.wishlist?.length}
@@ -118,7 +117,7 @@ const Header = () => {
               onClick={() => dispatch(showCart())}
               className="relative cursor-pointer"
             >
-              <MdOutlineShoppingCart size={30} className="text-blue-500" />
+              <MdOutlineShoppingCart size={24} className="text-blue-500" />
               {current?.cart?.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
                   {current?.cart?.length}
@@ -139,10 +138,10 @@ const Header = () => {
                   className="w-10 h-10 object-cover rounded-full border"
                 />
               ) : (
-                <FaUserCircle size={28} className="text-blue-600 w-10 h-10" /> // ❗ Màu đen
+                <FaUserCircle size={28} className="text-blue-600 w-10 h-10" />
               )}
               {/* ✅ Tên người dùng */}
-              <span className="hidden md:inline-block ml-2 text-xl font-medium text-black">
+              <span className="hidden md:inline-block ml-2 text-lg font-medium text-black">
                 {current.firstName}
               </span>
 

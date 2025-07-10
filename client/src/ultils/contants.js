@@ -5,6 +5,7 @@ import {
   MdPayment,
   MdTagFaces,
   MdLocalShipping,
+  MdLocalOffer,
 } from "react-icons/md";
 import { AiOutlineDashboard } from "react-icons/ai";
 import {
@@ -233,6 +234,14 @@ export const adminSidebar = [
   },
   {
     id: 6,
+    type: "SINGLE",
+    text: "Quản lý khuyến mãi",
+    path: `/${path.ADMIN}/${path.MANAGE_COUPONS}`,
+    icon: <MdLocalOffer size={20} />,
+  },
+
+  {
+    id: 7,
     type: "PARENT",
     text: "Quản lý sản phẩm",
     icon: <MdInventory size={20} />,

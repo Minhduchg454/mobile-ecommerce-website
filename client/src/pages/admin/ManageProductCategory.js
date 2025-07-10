@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useForm } from "react-hook-form";
 import {
   apiCreateProductCategory,
   apiGetAllProductCategories,
@@ -8,6 +7,7 @@ import {
 } from "apis";
 import { getBase64 } from "ultils/helpers";
 import { InputForm, Button, Loading } from "components";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { showModal } from "store/app/appSlice";
@@ -18,71 +18,51 @@ const ManageProductCategory = () => {
   const {
     register,
     handleSubmit,
-    setValue,
     reset,
-    watch,
     formState: { errors },
+    watch,
   } = useForm();
 
-  const [preview, setPreview] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [editElm, setEditElm] = useState(null);
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [editingData, setEditingData] = useState({});
+  const [preview, setPreview] = useState(null);
   const [update, setUpdate] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const render = useCallback(() => setUpdate((prev) => !prev), []);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       const res = await apiGetAllProductCategories();
       if (res.success) setCategories(res.prodCategories);
     };
-    fetchCategories();
+    fetchData();
   }, [update]);
 
-  // Load ảnh xem trước khi người dùng chọn ảnh
   useEffect(() => {
     const file = watch("thumb")?.[0];
     if (file) getBase64(file).then((base64) => setPreview(base64));
   }, [watch("thumb")]);
 
-  // Set giá trị vào form khi sửa
-  useEffect(() => {
-    if (editElm) {
-      reset({ productCategoryName: editElm.productCategoryName });
-      setPreview(editElm.thumb);
-    } else {
-      reset();
-      setPreview(null);
-    }
-  }, [editElm, reset]);
-
   const onSubmit = async (data) => {
     const formData = new FormData();
     formData.append("productCategoryName", data.productCategoryName);
-    if (data.thumb?.[0]) {
-      formData.append("thumb", data.thumb[0]);
-    }
+    formData.append("thumb", data.thumb[0]);
 
     dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
-
-    let response;
-    if (editElm) {
-      response = await apiUpdateProductCategory(editElm._id, formData);
-    } else {
-      response = await apiCreateProductCategory(formData);
-    }
-
+    const res = await apiCreateProductCategory(formData);
     dispatch(showModal({ isShowModal: false, modalChildren: null }));
 
-    if (response.success) {
-      toast.success(
-        editElm ? "✅ Cập nhật thành công!" : "✅ Tạo danh mục thành công!"
-      );
-      setEditElm(null);
-      reset({ productCategoryName: "", thumb: null }); // ← Thêm dòng này
+    if (res.success) {
+      toast.success("✅ Tạo danh mục thành công!");
+      reset();
       setPreview(null);
       document.getElementById("thumb").value = "";
+      setShowForm(false);
       render();
+    } else {
+      toast.error(res.mes || "❌ Có lỗi xảy ra");
     }
   };
 
@@ -104,75 +84,107 @@ const ManageProductCategory = () => {
     });
   };
 
+  const handleUpdate = async () => {
+    const formData = new FormData();
+    formData.append(
+      "productCategoryName",
+      editingData.productCategoryName || ""
+    );
+    if (editingData.thumb instanceof File) {
+      formData.append("thumb", editingData.thumb);
+    }
+
+    const res = await apiUpdateProductCategory(editingRowId, formData);
+    if (res.success) {
+      toast.success("✅ Cập nhật thành công");
+      setEditingRowId(null);
+      setEditingData({});
+      render();
+    } else {
+      toast.error(res.mes || "❌ Cập nhật thất bại");
+    }
+  };
+
   return (
     <div className="w-full p-4 bg-gray-50 min-h-screen space-y-8">
-      {/* Form thêm / sửa */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h1 className="text-xl font-bold mb-6">
-          {editElm ? "✏️ Chỉnh sửa danh mục" : "➕ Thêm danh mục sản phẩm"}
-        </h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <InputForm
-            label="Tên danh mục"
-            id="productCategoryName"
-            register={register}
-            errors={errors}
-            validate={{ required: "Không được để trống" }}
-            fullWidth
-            placeholder="Nhập tên danh mục"
-          />
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold" htmlFor="thumb">
-              Ảnh danh mục
-            </label>
-            <input
-              type="file"
-              id="thumb"
-              {...register("thumb", {
-                required: editElm ? false : "Không được để trống",
-              })}
-              accept="image/*"
+      {/* Nút hiển thị form */}
+      <div className="w-fit px-4 py-2 rounded-md text-white flex items-center justify-center bg-main font-semibold my-2">
+        <button
+          onClick={() => {
+            reset();
+            setPreview(null);
+            setShowForm((prev) => !prev);
+          }}
+        >
+          {showForm ? "Đóng biểu mẫu" : "➕ Thêm danh mục"}
+        </button>
+      </div>
+
+      {/* Form thêm danh mục */}
+      {showForm && (
+        <div className="bg-white rounded-xl shadow p-6">
+          <h1 className="text-xl font-bold mb-6">➕ Thêm danh mục sản phẩm</h1>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <InputForm
+              label="Tên danh mục"
+              id="productCategoryName"
+              register={register}
+              errors={errors}
+              validate={{ required: "Không được để trống" }}
+              fullWidth
+              placeholder="Nhập tên danh mục"
             />
-            {errors.thumb && (
-              <small className="text-xs text-red-500">
-                {errors.thumb.message}
-              </small>
-            )}
-          </div>
-
-          {preview && (
-            <div className="my-4">
-              <img
-                src={preview}
-                alt="preview"
-                className="w-[200px] object-contain rounded"
+            <div className="flex flex-col gap-2">
+              <label className="font-semibold" htmlFor="thumb">
+                Ảnh danh mục
+              </label>
+              <input
+                type="file"
+                id="thumb"
+                {...register("thumb", {
+                  required: "Không được để trống",
+                })}
+                accept="image/*"
               />
+              {errors.thumb && (
+                <small className="text-xs text-red-500">
+                  {errors.thumb.message}
+                </small>
+              )}
             </div>
-          )}
 
-          <div className="flex items-center gap-4">
-            <Button type="submit" className="rounded-xl">
-              {editElm ? "Cập nhật danh mục" : "Thêm danh mục"}
-            </Button>
-            {editElm && (
+            {preview && (
+              <div className="my-4">
+                <img
+                  src={preview}
+                  alt="preview"
+                  className="w-[200px] object-contain rounded"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center gap-4">
+              <Button type="submit" className="rounded-xl">
+                Thêm danh mục
+              </Button>
               <button
                 type="button"
                 className="rounded-xl bg-gray-500 hover:bg-gray-600 px-4 py-2 text-white"
                 onClick={() => {
-                  setEditElm(null);
-                  reset({ productCategoryName: "", thumb: null });
+                  reset();
                   setPreview(null);
+                  setShowForm(false);
                   document.getElementById("thumb").value = "";
                 }}
               >
                 Hủy
               </button>
-            )}
-          </div>
-        </form>
-      </div>
+            </div>
+          </form>
+        </div>
+      )}
 
-      {/* Danh sách */}
+      {/* Danh sách danh mục */}
       <div className="bg-white rounded-xl shadow p-6">
         <h2 className="text-lg font-bold mb-4">📋 Danh sách danh mục</h2>
         <table className="table-auto w-full border-collapse">
@@ -181,43 +193,108 @@ const ManageProductCategory = () => {
               <th className="py-3 px-2">STT</th>
               <th className="py-3 px-2 text-left">Tên danh mục</th>
               <th className="py-3 px-2">Ảnh</th>
-              <th className="py-3 px-2">Tùy chọn</th>
+              <th className="py-3 px-2 text-center">Tùy chọn</th>
             </tr>
           </thead>
           <tbody>
-            {categories?.map((el, idx) => (
-              <tr
-                key={el._id}
-                className="border-b hover:bg-sky-50 transition-all text-sm"
-              >
-                <td className="text-center py-3 px-2">{idx + 1}</td>
-                <td className="py-3 px-2">{el.productCategoryName}</td>
-                <td className="text-center py-3 px-2">
-                  <img
-                    src={el.thumb}
-                    alt="thumb"
-                    className="w-16 h-16 object-cover mx-auto rounded"
-                  />
-                </td>
-                <td className="text-center py-3 px-2">
-                  <div className="flex justify-center gap-2 text-orange-600">
-                    <span
-                      onClick={() => setEditElm(el)}
-                      className="hover:underline cursor-pointer text-blue-600"
-                    >
-                      Sửa
-                    </span>
-                    <span
-                      onClick={() => handleDelete(el._id)}
-                      className="hover:underline cursor-pointer"
-                    >
-                      Xoá
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {categories?.length === 0 && (
+            {categories?.map((el, idx) =>
+              editingRowId === el._id ? (
+                <tr key={el._id} className="border-b bg-yellow-50 text-sm">
+                  <td className="text-center py-3 px-2">{idx + 1}</td>
+                  <td className="py-3 px-2">
+                    <input
+                      value={editingData.productCategoryName}
+                      onChange={(e) =>
+                        setEditingData((prev) => ({
+                          ...prev,
+                          productCategoryName: e.target.value,
+                        }))
+                      }
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  </td>
+                  <td className="text-center py-3 px-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          getBase64(file).then((base64) =>
+                            setEditingData((prev) => ({
+                              ...prev,
+                              thumb: file,
+                              preview: base64,
+                            }))
+                          );
+                        }
+                      }}
+                    />
+                    {editingData?.preview && (
+                      <img
+                        src={editingData.preview}
+                        alt="preview"
+                        className="w-16 h-16 mx-auto rounded mt-2 object-cover"
+                      />
+                    )}
+                  </td>
+                  <td className="text-center py-3 px-2">
+                    <div className="flex justify-center gap-2 text-green-700">
+                      <span
+                        onClick={handleUpdate}
+                        className="hover:underline cursor-pointer font-medium"
+                      >
+                        Lưu
+                      </span>
+                      <span
+                        onClick={() => {
+                          setEditingRowId(null);
+                          setEditingData({});
+                        }}
+                        className="hover:underline cursor-pointer text-red-600"
+                      >
+                        Hủy
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <tr
+                  key={el._id}
+                  className="border-b hover:bg-sky-50 transition-all text-sm"
+                >
+                  <td className="text-center py-3 px-2">{idx + 1}</td>
+                  <td className="py-3 px-2">{el.productCategoryName}</td>
+                  <td className="text-center py-3 px-2">
+                    <img
+                      src={el.thumb}
+                      alt="thumb"
+                      className="w-16 h-16 object-cover mx-auto rounded"
+                    />
+                  </td>
+                  <td className="text-center py-3 px-2">
+                    <div className="flex justify-center gap-2 text-orange-600">
+                      <span
+                        onClick={() => {
+                          setEditingRowId(el._id);
+                          setEditingData(el);
+                        }}
+                        className="hover:underline cursor-pointer text-blue-600"
+                      >
+                        Sửa
+                      </span>
+                      <span
+                        onClick={() => handleDelete(el._id)}
+                        className="hover:underline cursor-pointer"
+                      >
+                        Xoá
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              )
+            )}
+            {categories.length === 0 && (
               <tr>
                 <td
                   colSpan="4"

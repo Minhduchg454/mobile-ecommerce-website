@@ -26,6 +26,7 @@ import {
   CreateVariation,
   ManageProductCategory,
   ManageBrands,
+  ManageCoupons,
 } from "pages/admin";
 import {
   MemberLayout,
@@ -97,6 +98,7 @@ function App() {
             element={<ManageProductCategory />}
           />
           <Route path={path.MANAGE_BRANDS} element={<ManageBrands />} />
+          <Route path={path.MANAGE_COUPONS} element={<ManageCoupons />} />
         </Route>
         <Route path={path.MEMBER} element={<MemberLayout />}>
           <Route path={path.PERSONAL} element={<Personal />} />

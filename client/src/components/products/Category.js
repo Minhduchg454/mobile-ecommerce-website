@@ -21,7 +21,7 @@ const CategoryList = ({ navigate }) => {
         {categories?.map((el) => (
           <div
             key={el._id}
-            className="flex flex-col items-center p-2 cursor-pointer min-h-[120px] text-center"
+            className="flex flex-col items-center p-2 cursor-pointer min-h-[120px] text-center transition transform hover:scale-105 duration-300"
             onClick={() => navigate(`/${el.slug}`)}
           >
             <img

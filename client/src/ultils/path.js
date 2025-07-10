@@ -27,6 +27,7 @@ const path = {
   CREATE_VARIATION: "/admin/create-variation/:productId",
   MANAGE_PRODUCTS_CATEGORIES: "manage-products-categories",
   MANAGE_BRANDS: "manage-brands",
+  MANAGE_COUPONS: "manage-coupons",
 
   // Member
   MEMBER: "member",
