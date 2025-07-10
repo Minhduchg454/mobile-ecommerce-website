@@ -1,21 +1,55 @@
 import React, { useEffect, useState } from "react";
-import { apiGetVariationsByProductId, apiDeleteProductVariation } from "apis";
+import {
+  apiGetVariationsByProductId,
+  apiDeleteProductVariation,
+  apiGetProduct,
+} from "apis";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import CreateVariantForm from "./CreateVariantForm"; // tách form tạo riêng để gọn
+import CreateVariantForm from "./CreateVariantForm";
+import { useParams } from "react-router-dom";
 
-const CreateVariation = ({ productId, productName, onDone }) => {
+const CreateVariation = ({
+  productId: propProductId,
+  productName: propProductName,
+  onDone,
+}) => {
+  const { productId: paramProductId } = useParams();
+  const productId = paramProductId || propProductId;
+
   const [variants, setVariants] = useState([]);
   const [editVariant, setEditVariant] = useState(null);
+  const [productName, setProductName] = useState(propProductName || "");
 
   const fetchVariants = async () => {
     const res = await apiGetVariationsByProductId(productId);
     if (res.success) setVariants(res.variations);
   };
 
+  const fetchProductName = async () => {
+    try {
+      const res = await apiGetProduct(productId);
+      if (res.success && res.productData?.productName) {
+        setProductName(res.productData.productName);
+      } else {
+        setProductName("Không rõ");
+      }
+    } catch (err) {
+      setProductName("Không rõ");
+    }
+  };
+
   useEffect(() => {
-    fetchVariants();
+    if (productId) {
+      fetchVariants();
+      if (!propProductName) fetchProductName(); // chỉ gọi nếu không truyền prop
+    }
   }, [productId]);
+
+  if (!productId) {
+    toast.error("Thiếu productId khi tạo biến thể!");
+    return <p className="text-red-500 p-4">Không tìm thấy ID sản phẩm</p>;
+  }
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -39,14 +73,17 @@ const CreateVariation = ({ productId, productName, onDone }) => {
     <div className="p-4 bg-white min-h-screen">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">
-          Biến thể sản phẩm: <span className="text-main">{productName}</span>
+          Biến thể sản phẩm:{" "}
+          <span className="text-main">{productName || "Không rõ"}</span>
         </h1>
-        <button
-          onClick={onDone}
-          className="px-4 py-2 text-white bg-gray-600 rounded"
-        >
-          ⬅ Quay lại
-        </button>
+        {onDone && (
+          <button
+            onClick={onDone}
+            className="px-4 py-2 text-white bg-gray-600 rounded"
+          >
+            ⬅ Quay lại
+          </button>
+        )}
       </div>
 
       <CreateVariantForm

@@ -86,6 +86,11 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
     formData.append("productVariationName", data.productVariationName);
     formData.append("price", data.price);
     formData.append("stockQuantity", data.stockQuantity);
+    console.log("productId đang truyền:", productId);
+    if (!productId) {
+      toast.error("Thiếu productId khi tạo biến thể!");
+      return;
+    }
     formData.append("productId", productId);
 
     for (let file of data.images || []) {
@@ -96,6 +101,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
 
     let res;
     if (editVariant) {
+      console.log(editVariant._id, formData);
       res = await apiUpdateProductVariation(editVariant._id, formData);
     } else {
       res = await apiCreateProductVariation(formData);
@@ -149,6 +155,17 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         {editVariant ? "✏️ Chỉnh sửa biến thể" : "➕ Tạo biến thể mới"}
       </h2>
       <div className="grid md:grid-cols-2 gap-4">
+        {editVariant && (
+          <div>
+            <label className="block font-medium mb-1">ID sản phẩm</label>
+            <input
+              type="text"
+              value={productId || "Không có id của sản phẩm"}
+              readOnly
+              className="border border-gray-300 p-2 rounded w-full text-sm bg-gray-100"
+            />
+          </div>
+        )}
         <InputForm
           label="Tên biến thể"
           id="productVariationName"

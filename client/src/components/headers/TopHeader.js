@@ -35,13 +35,9 @@ const TopHeaders = () => {
   }, [mes]);
 
   return (
-    <div className="min-h-7 p-1 w-full bg-header-footer flex flex-wrap items-center justify-between text-xs text-black">
+    <div className="hidden min-h-9 py-2 px-4 w-full bg-header-footer md:flex flex-wrap items-center justify-between text-xs text-black">
       {/* Bên trái - Thông tin cửa hàng */}
       <div className="hidden lg:flex flex-wrap items-center gap-2">
-        <span className="hidden md:inline-block">
-          CỬA HÀNG BÁN ĐIỆN THOẠI DI ĐỘNG TOÀN QUỐC
-        </span>
-        <span className="hidden md:inline-block">|</span>
         <span className="flex items-center gap-1">
           <AiOutlineClockCircle size={14} />
           8:00AM - 23:00PM

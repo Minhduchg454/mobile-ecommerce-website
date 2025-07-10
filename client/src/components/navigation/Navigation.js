@@ -32,7 +32,7 @@ const Navigation = () => {
     };
   }, [isDirty, q]);
   return (
-    <div className=" bg-header-footer w-full h-[40px] flex items-center px-2 md:p-2 justify-between ">
+    <div className=" bg-header-footer w-full h-[40px] flex items-center px-2 md:pb-2 justify-between ">
       <div className="w-main m-auto">
         {showMenu && (
           <div

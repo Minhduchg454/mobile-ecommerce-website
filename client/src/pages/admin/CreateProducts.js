@@ -117,7 +117,7 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
 
     if (response.success) {
       toast.success(
-        editProduct ? "✅ Cập nhật thành công!" : "✅ Tạo sản phẩm thành công!"
+        editProduct ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!"
       );
       reset();
       setPayload({ description: "" });
@@ -132,7 +132,7 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
         // Nếu sửa thì tự đóng modal (nếu bạn đang đặt nó trong modal)
       }
     } else {
-      toast.error(response.mes || "❌ Đã xảy ra lỗi");
+      toast.error(response.mes || "Đã xảy ra lỗi");
     }
   };
 

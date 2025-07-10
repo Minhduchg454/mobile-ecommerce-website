@@ -18,7 +18,7 @@ export const renderStarFromNumber = (number, size) => {
   const stars = [];
   number = Math.round(number);
   if (number > 5) number = 5;
-  
+
   for (let i = 0; i < +number; i++)
     stars.push(<AiFillStar color="orange" size={size || 16} />);
   for (let i = 5; i > +number; i--)
@@ -167,3 +167,9 @@ export const getMonthsInRange = (start, end) => {
   months += d2.getMonth();
   return months <= 0 ? 0 : months;
 };
+
+export const formatVnDate = (dateStr) =>
+  dateStr ? new Date(dateStr).toLocaleDateString("vi-VN") : "";
+
+export const formatVnCurrency = (value) =>
+  typeof value === "number" ? value.toLocaleString("vi-VN") + "₫" : value;
