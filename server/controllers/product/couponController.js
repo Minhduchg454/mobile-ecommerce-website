@@ -53,9 +53,7 @@ const createNewCoupon = asyncHandler(async (req, res) => {
 */
 
 const getCoupons = asyncHandler(async (req, res) => {
-  const response = await Coupon.find()
-    //.populate('firstName', 'lastName') // Lấy thông tin admin tạo coupon
-    .select("-createdAt -updatedAt -__v");
+  const response = await Coupon.find().select("-createdAt -updatedAt -__v");
 
   return res.json({
     success: !!response,

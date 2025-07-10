@@ -84,7 +84,7 @@ const ManageCoupons = () => {
   return (
     <div className="w-full p-4 bg-gray-50 min-h-screen space-y-8">
       {/* Nút hiển thị form */}
-      <div className="w-fit px-4 py-2 rounded-md text-white flex items-center justify-center bg-main font-semibold my-2">
+      <div className="w-fit bg-main text-white px-4 py-2 rounded hover:bg-blue-700 transition">
         <button
           onClick={() => {
             console.log("da bam");
@@ -95,144 +95,149 @@ const ManageCoupons = () => {
           {showForm ? "Đóng biểu mẫu" : "➕ Thêm mã giảm giá"}
         </button>
       </div>
-
-      {/* Form thêm mới */}
-      {showForm && (
-        <div className="bg-white rounded-xl shadow p-6">
-          <h1 className="text-xl font-bold mb-6">➕ Thêm mã giảm giá</h1>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <InputForm
-              label="Mã giảm giá"
-              id="couponCode"
-              register={register}
-              errors={errors}
-              validate={{ required: "Không được để trống" }}
-              fullWidth
-              placeholder="Nhập mã giảm giá"
-            />
-            <InputForm
-              label="Mô tả"
-              id="description"
-              register={register}
-              errors={errors}
-              validate={{ required: "Không được để trống" }}
-              fullWidth
-              placeholder="Nhập mô tả"
-            />
-            <InputForm
-              label="Giá trị giảm"
-              id="discount"
-              register={register}
-              errors={errors}
-              validate={{
-                required: "Không được để trống",
-                min: { value: 0, message: "Phải >= 0" },
-              }}
-              type="number"
-              fullWidth
-              placeholder="Nhập giá trị giảm"
-            />
-            <div className="flex flex-col gap-2">
-              <label className="font-semibold" htmlFor="discountType">
-                Loại giảm giá
-              </label>
-              <select
-                id="discountType"
-                {...register("discountType", {
+      <div
+        className={`overflow-hidden transition-all duration-500 ${
+          showForm ? "max-h-[2000px] mt-4" : "max-h-0"
+        }`}
+      >
+        {/* Form thêm mới */}
+        {showForm && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h1 className="text-xl font-bold mb-6">➕ Thêm mã giảm giá</h1>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <InputForm
+                label="Mã giảm giá"
+                id="couponCode"
+                register={register}
+                errors={errors}
+                validate={{ required: "Không được để trống" }}
+                fullWidth
+                placeholder="Nhập mã giảm giá"
+              />
+              <InputForm
+                label="Mô tả"
+                id="description"
+                register={register}
+                errors={errors}
+                validate={{ required: "Không được để trống" }}
+                fullWidth
+                placeholder="Nhập mô tả"
+              />
+              <InputForm
+                label="Giá trị giảm"
+                id="discount"
+                register={register}
+                errors={errors}
+                validate={{
                   required: "Không được để trống",
-                })}
-                className="border rounded px-3 py-2"
-              >
-                <option value="">--Chọn loại giảm giá--</option>
-                <option value="percentage">Phần trăm (%)</option>
-                <option value="fixed_amount">Số tiền cố định</option>
-              </select>
-              {errors.discountType && (
-                <small className="text-xs text-red-500">
-                  {errors.discountType.message}
-                </small>
-              )}
-            </div>
-            <InputForm
-              label="Ngày bắt đầu"
-              id="startDate"
-              register={register}
-              errors={errors}
-              validate={{ required: "Không được để trống" }}
-              type="date"
-              fullWidth
-            />
-            <InputForm
-              label="Ngày hết hạn"
-              id="expirationDate"
-              register={register}
-              errors={errors}
-              validate={{ required: "Không được để trống" }}
-              type="date"
-              fullWidth
-            />
-            <InputForm
-              label="Đơn hàng tối thiểu"
-              id="miniOrderAmount"
-              register={register}
-              errors={errors}
-              validate={{
-                required: "Không được để trống",
-                min: { value: 0, message: "Phải >= 0" },
-              }}
-              type="number"
-              fullWidth
-              placeholder="Nhập giá trị tối thiểu đơn hàng"
-            />
-            <InputForm
-              label="Giới hạn sử dụng"
-              id="usageLimit"
-              register={register}
-              errors={errors}
-              validate={{
-                required: "Không được để trống",
-                min: { value: 1, message: "Phải >= 1" },
-              }}
-              type="number"
-              fullWidth
-              placeholder="Nhập số lần sử dụng tối đa"
-            />
-            <div className="flex flex-col gap-2">
-              <label htmlFor="isActive" className="font-semibold">
-                Kích hoạt mã giảm giá
-              </label>
-              <select
-                id="isActive"
-                {...register("isActive", { required: "Không được để trống" })}
-                className="border rounded px-3 py-2"
-              >
-                <option value="true">Hoạt động</option>
-                <option value="false">Ngưng</option>
-              </select>
-              {errors.isActive && (
-                <small className="text-xs text-red-500">
-                  {errors.isActive.message}
-                </small>
-              )}
-            </div>
-            <div className="flex items-center gap-4">
-              <Button type="submit" className="rounded-xl">
-                Thêm mã giảm giá
-              </Button>
-              <button
-                type="button"
-                className="rounded-xl bg-gray-500 hover:bg-gray-600 px-4 py-2 text-white"
-                onClick={() => {
-                  setShowForm(false);
-                  reset({ isActive: true });
+                  min: { value: 0, message: "Phải >= 0" },
                 }}
-              >
-                Hủy
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+                type="number"
+                fullWidth
+                placeholder="Nhập giá trị giảm"
+              />
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold" htmlFor="discountType">
+                  Loại giảm giá
+                </label>
+                <select
+                  id="discountType"
+                  {...register("discountType", {
+                    required: "Không được để trống",
+                  })}
+                  className="border rounded px-3 py-2"
+                >
+                  <option value="">--Chọn loại giảm giá--</option>
+                  <option value="percentage">Phần trăm (%)</option>
+                  <option value="fixed_amount">Số tiền cố định</option>
+                </select>
+                {errors.discountType && (
+                  <small className="text-xs text-red-500">
+                    {errors.discountType.message}
+                  </small>
+                )}
+              </div>
+              <InputForm
+                label="Ngày bắt đầu"
+                id="startDate"
+                register={register}
+                errors={errors}
+                validate={{ required: "Không được để trống" }}
+                type="date"
+                fullWidth
+              />
+              <InputForm
+                label="Ngày hết hạn"
+                id="expirationDate"
+                register={register}
+                errors={errors}
+                validate={{ required: "Không được để trống" }}
+                type="date"
+                fullWidth
+              />
+              <InputForm
+                label="Đơn hàng tối thiểu"
+                id="miniOrderAmount"
+                register={register}
+                errors={errors}
+                validate={{
+                  required: "Không được để trống",
+                  min: { value: 0, message: "Phải >= 0" },
+                }}
+                type="number"
+                fullWidth
+                placeholder="Nhập giá trị tối thiểu đơn hàng"
+              />
+              <InputForm
+                label="Giới hạn sử dụng"
+                id="usageLimit"
+                register={register}
+                errors={errors}
+                validate={{
+                  required: "Không được để trống",
+                  min: { value: 1, message: "Phải >= 1" },
+                }}
+                type="number"
+                fullWidth
+                placeholder="Nhập số lần sử dụng tối đa"
+              />
+              <div className="flex flex-col gap-2">
+                <label htmlFor="isActive" className="font-semibold">
+                  Kích hoạt mã giảm giá
+                </label>
+                <select
+                  id="isActive"
+                  {...register("isActive", { required: "Không được để trống" })}
+                  className="border rounded px-3 py-2"
+                >
+                  <option value="true">Hoạt động</option>
+                  <option value="false">Ngưng</option>
+                </select>
+                {errors.isActive && (
+                  <small className="text-xs text-red-500">
+                    {errors.isActive.message}
+                  </small>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                <Button type="submit" className="rounded-xl">
+                  Thêm mã giảm giá
+                </Button>
+                <button
+                  type="button"
+                  className="rounded-xl bg-gray-500 hover:bg-gray-600 px-4 py-2 text-white"
+                  onClick={() => {
+                    setShowForm(false);
+                    reset({ isActive: true });
+                  }}
+                >
+                  Hủy
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
 
       {/* Danh sách mã giảm giá */}
       <div className="bg-white rounded-xl shadow p-6">
@@ -282,6 +287,7 @@ const ManageCoupons = () => {
                       className="border rounded px-2 py-1 w-full"
                     />
                   </td>
+
                   <td className="py-3 px-2 text-center">
                     <input
                       type="number"
@@ -417,7 +423,9 @@ const ManageCoupons = () => {
                   <td className="py-3 px-2">{el.couponCode}</td>
                   <td className="py-3 px-2">{el.description}</td>
                   <td className="py-3 px-2 text-center">
-                    {formatVnCurrency(el.discount)}
+                    {el.discountType === "percentage"
+                      ? `${el.discount}%`
+                      : formatVnCurrency(el.discount)}
                   </td>
                   <td className="py-3 px-2 text-center">
                     {el.discountType === "percentage" ? "%" : "VNĐ"}

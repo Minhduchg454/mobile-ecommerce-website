@@ -20,7 +20,11 @@ import {
 import { showModal } from "store/app/appSlice";
 import { useNavigate } from "react-router-dom";
 
-const CreateProducts = ({ editProduct = null, render = () => {} }) => {
+const CreateProducts = ({
+  editProduct = null,
+  render = () => {},
+  onDone = () => {},
+}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -119,6 +123,7 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
       toast.success(
         editProduct ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!"
       );
+      onDone();
       reset();
       setPayload({ description: "" });
       setPreview(null);
@@ -128,6 +133,7 @@ const CreateProducts = ({ editProduct = null, render = () => {} }) => {
       if (!editProduct) {
         setCreatedProductId(response.createdProduct._id);
         setIsConfirmingNext(true);
+        onDone();
       } else {
         // Nếu sửa thì tự đóng modal (nếu bạn đang đặt nó trong modal)
       }

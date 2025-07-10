@@ -75,7 +75,7 @@ const ManageBrands = () => {
   return (
     <div className="w-full p-4 bg-gray-50 min-h-screen space-y-8">
       {/* Nút hiển thị form */}
-      <div className="w-fit px-4 py-2 rounded-md text-white flex items-center justify-center bg-main font-semibold my-2">
+      <div className="bg-main w-fit text-white px-4 py-2 rounded hover:bg-blue-700 transition">
         <button
           onClick={() => {
             reset();
@@ -85,39 +85,45 @@ const ManageBrands = () => {
           {showForm ? "Đóng biểu mẫu" : "➕ Thêm thương hiệu"}
         </button>
       </div>
+      <div
+        className={`overflow-hidden transition-all duration-500 ${
+          showForm ? "max-h-[2000px] mt-4" : "max-h-0"
+        }`}
+      >
+        {showForm && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h1 className="text-xl font-bold mb-6">➕ Thêm thương hiệu</h1>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <InputForm
+                label="Tên thương hiệu"
+                id="brandName"
+                register={register}
+                errors={errors}
+                validate={{ required: "Không được để trống" }}
+                fullWidth
+                placeholder="Nhập tên thương hiệu"
+              />
+              <div className="flex items-center gap-4">
+                <Button type="submit" className="rounded-xl">
+                  Thêm mới
+                </Button>
+                <button
+                  type="button"
+                  className="rounded-xl bg-gray-500 hover:bg-gray-600 px-4 py-2 text-white"
+                  onClick={() => {
+                    setShowForm(false);
+                    reset();
+                  }}
+                >
+                  Hủy
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
 
       {/* Form thêm mới */}
-      {showForm && (
-        <div className="bg-white rounded-xl shadow p-6">
-          <h1 className="text-xl font-bold mb-6">➕ Thêm thương hiệu</h1>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <InputForm
-              label="Tên thương hiệu"
-              id="brandName"
-              register={register}
-              errors={errors}
-              validate={{ required: "Không được để trống" }}
-              fullWidth
-              placeholder="Nhập tên thương hiệu"
-            />
-            <div className="flex items-center gap-4">
-              <Button type="submit" className="rounded-xl">
-                Thêm mới
-              </Button>
-              <button
-                type="button"
-                className="rounded-xl bg-gray-500 hover:bg-gray-600 px-4 py-2 text-white"
-                onClick={() => {
-                  setShowForm(false);
-                  reset();
-                }}
-              >
-                Hủy
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* Danh sách thương hiệu */}
       <div className="bg-white rounded-xl shadow p-6">
