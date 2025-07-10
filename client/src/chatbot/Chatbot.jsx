@@ -8,12 +8,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { data_chatbot } from "./data_chatbot";
 import { apiSendMessageToChatbot } from "apis/chatbot";
 
-
 function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [open, setOpen] = useState(false);
   const bottomRef = useRef(null);
+  const [showIntro, setShowIntro] = useState(true);
 
   const genAI = new GoogleGenerativeAI(
     "AIzaSyDwdcPo0iYZNvGYZ5uhGnHrsIWCio_T_kQ"
@@ -48,16 +48,16 @@ function Chatbot() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    console.log("Hi 1")
+    console.log("Hi 1");
     const userMessage = { role: "user", text: input.trim() };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
     try {
-      console.log("Hi 2")
+      console.log("Hi 2");
       const res = await apiSendMessageToChatbot({ message: userMessage.text });
-      console.log(res.text)
-      console.log("Hi 3")
+      console.log(res.text);
+      console.log("Hi 3");
       const botMessage = {
         role: "bot",
         text: res?.text || "Không có phản hồi từ chatbot.",
@@ -75,13 +75,35 @@ function Chatbot() {
   };
 
   return (
-    <div className="fixed bottom-20 right-4 z-50">
-      <button
-        onClick={() => setOpen(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg focus:outline-none"
-      >
-        <ChatBubbleLeftRightIcon className="w-6 h-6" />
-      </button>
+    <div className="fixed bottom-20 right-10 z-50">
+      <div className="fixed bottom-10 right-10 z-50 flex flex-col items-end gap-2">
+        {!open && showIntro && (
+          <div className="relative bg-white/60 border backdrop-blur-md border-gray-300 shadow-md px-3 py-2 rounded-lg text-sm text-gray-800 max-w-[500px]">
+            <button
+              onClick={() => setShowIntro(false)}
+              className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+            >
+              ✖
+            </button>
+            <div>
+              <p> Xin chào anh/chị! </p>
+              <p>
+                Em là trợ lý AI của cửa hàng{" "}
+                <span className="font-semibold text-blue-600">FONE</span>{" "}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!open && (
+          <button
+            onClick={() => setOpen(true)}
+            className="bg-white border hover:bg-blue-400  border-gray-300 hover:shadow-xl text-blue-700 p-3 rounded-full shadow-xl focus:outline-none transition duration-200"
+          >
+            <ChatBubbleLeftRightIcon className="w-8 h-8" />
+          </button>
+        )}
+      </div>
 
       {open && (
         <div className="fixed bottom-24 right-4 w-96 h-[600px] bg-white shadow-lg rounded-xl flex flex-col border border-gray-300">
@@ -113,14 +135,16 @@ function Chatbot() {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
-                  className={`px-4 py-2 rounded-lg max-w-[70%] text-sm ${msg.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-900"
-                    }`}
+                  className={`px-4 py-2 rounded-lg max-w-[70%] text-sm ${
+                    msg.role === "user"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-900"
+                  }`}
                 >
                   {msg.text}
                 </div>

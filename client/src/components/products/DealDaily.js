@@ -16,7 +16,10 @@ const DealDaily = ({ dispatch }) => {
   const [minute, setMinute] = useState(0);
   const [second, setSecond] = useState(0);
   const { dealDaily } = useSelector((s) => s.products);
+  const { current } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const [discountPercent, setDiscountPercent] = useState(20);
+  const [dealTime, setDealTime] = useState(12);
 
   const fetchDealDaily = async () => {
     const response = await apiGetProducts({ sort: "-totalRating", limit: 20 });
@@ -27,9 +30,9 @@ const DealDaily = ({ dispatch }) => {
       dispatch(
         getDealDaily({
           data: {
-            product1: { ...product1, discountPercent: 20 },
+            product1: { ...product1, discountPercent: discountPercent },
           },
-          time: Date.now() + 12 * 60 * 60 * 1000, // 12 giờ
+          time: Date.now() + dealTime * 60 * 60 * 1000,
         })
       );
     }
@@ -162,17 +165,55 @@ const DealDaily = ({ dispatch }) => {
 
       {product1 && renderProduct(product1)}
 
-      {/* Bat khi can */}
-      {/* {product1 && (
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={fetchDealDaily}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+      {/* Hiển thị phần nhập và nút cho admin */}
+      {current?.roleId?.roleName === "admin" && (
+        <>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-col md:flex-row gap-4 items-center justify-center mt-4"
           >
-            🔄 Làm mới Deal
-          </button>
-        </div>
-      )} */}
+            <div className="flex flex-col items-start">
+              <label className="text-sm text-gray-700 mb-1">
+                Tỉ lệ giảm (%)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(+e.target.value)}
+                className="border px-2 py-1 rounded text-sm w-[100px]"
+              />
+            </div>
+
+            <div className="flex flex-col items-start">
+              <label className="text-sm text-gray-700 mb-1">
+                Thời gian chạy (giờ)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={48}
+                value={dealTime}
+                onChange={(e) => setDealTime(+e.target.value)}
+                className="border px-2 py-1 rounded text-sm w-[100px]"
+              />
+            </div>
+          </div>
+
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex justify-center mt-4"
+          >
+            <button
+              onClick={fetchDealDaily}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+            >
+              🔄 Làm mới Deal
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
