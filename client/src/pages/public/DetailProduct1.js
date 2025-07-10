@@ -203,15 +203,15 @@ const ProductDetail1 = ({
   return (
     <div className={clsx("w-full")}>
       {!isQuickView && (
-        <div className="h-[81px] flex justify-center items-center bg-gray-100">
+        <div className="h-[81px] flex justify-center items-center">
           <div ref={titleRef} className="w-main">
-            <h3 className="font-semibold">
-              {product?.productName || "Không có tiêu đề"}
-            </h3>
             <Breadcrumb
               title={product?.slug || "Sản phẩm"}
               category={product?.categoryId?.slug || "Danh mục"}
             />
+            <h3 className="font-semibold">
+              {product?.productName || "Không có tiêu đề"}
+            </h3>
           </div>
         </div>
       )}
@@ -227,7 +227,7 @@ const ProductDetail1 = ({
         <div
           className={clsx("flex flex-col gap-4 w-2/5", isQuickView && "w-1/2")}
         >
-          <div className="w-[458px] h-[458px] border flex items-center justify-center overflow-hidden bg-gray-50">
+          <div className="card-default w-full h-[458px] border flex items-center justify-center overflow-hidden bg-gray-50 p-2">
             {currentImage || currentProduct.images[0] ? (
               <Zoom>
                 <img
@@ -262,8 +262,8 @@ const ProductDetail1 = ({
             </div>
           </div>
           {!isQuickView && specifications.length > 0 && (
-            <div className="text-sm text-gray-700 w-full">
-              <h4 className="font-semibold mb-3">Cấu hình sản phẩm:</h4>
+            <div className="text-sm text-gray-700 w-full border rounded-xl border-gray-300 p-3 mt-3">
+              <h4 className="mb-3 font-bold text-lg">Cấu hình sản phẩm:</h4>
               <div className="w-full divide-y divide-gray-300">
                 {specifications.map((item) => (
                   <div key={item._id} className="flex justify-between py-2">

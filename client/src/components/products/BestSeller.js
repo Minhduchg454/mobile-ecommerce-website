@@ -6,8 +6,8 @@ import { useDispatch, useSelector } from "react-redux";
 import clsx from "clsx";
 
 const tabs = [
-  { id: 1, name: "BÁN CHẠY NHẤT" },
-  { id: 2, name: "THIẾT BỊ MỚI NHẤT" },
+  { id: 1, name: "Bán chạy nhất" },
+  { id: 2, name: "Thiết bị mới nhất" },
 ];
 
 const BestSeller = () => {
@@ -41,7 +41,7 @@ const BestSeller = () => {
         {tabs.map((el) => (
           <span
             key={el.id}
-            className={`font-semibold text-center md:text-start uppercase px-8 border-r cursor-pointer text-gray-400 ${
+            className={`font-semibold text-center md:text-start px-8 border-r cursor-pointer text-gray-400 ${
               activedTab === el.id ? "text-gray-900" : ""
             }`}
             onClick={() => setActivedTab(el.id)}
@@ -50,10 +50,10 @@ const BestSeller = () => {
           </span>
         ))}
       </div>
-      <div className="mt-4 hidden md:block mx-[-10px] border-t-2 border-main pt-2">
+      <div className="mt-4 hidden md:block mx-[-10px] border-t-2 border-gray-300 pt-2">
         <CustomSlider products={products} activedTab={activedTab} />
       </div>
-      <div className="my-4 md:hidden block mx-[-10px] border-t-2 border-main pt-2">
+      <div className="my-4 md:hidden block mx-[-10px] border-t-2 border-gray-300 pt-2">
         <CustomSlider
           products={products}
           slidesToShow={1}

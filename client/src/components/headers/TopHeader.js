@@ -35,36 +35,38 @@ const TopHeaders = () => {
   }, [mes]);
 
   return (
-    <div className="hidden min-h-9 py-2 px-4 w-full bg-header-footer md:flex flex-wrap items-center justify-between text-xs text-black">
+    <div className=" w-full bg-header-footer ">
       {/* Bên trái - Thông tin cửa hàng */}
-      <div className="hidden lg:flex flex-wrap items-center gap-2">
-        <span className="flex items-center gap-1">
-          <AiOutlineClockCircle size={14} />
-          8:00AM - 23:00PM
-        </span>
-        <span className="hidden md:inline-block">|</span>
-        <span className="flex items-center gap-1">
-          <AiOutlinePhone size={14} /> 0909 567 999
-        </span>
-        <span className="hidden md:inline-block">|</span>
-        <span className="flex items-center gap-1">
-          <AiOutlineMail size={14} /> hotro@student.ctu.edu.vn
-        </span>
-      </div>
-
-      {/* Bên phải - lời chào hoặc link đăng nhập */}
-      <div className="w-full md:w-fit flex justify-end mr-1 md:mt-0">
-        {isLoggedIn && current ? (
-          <span className="text-xs italic">
-            {current.roleId?.roleName === "admin"
-              ? "Chào quản trị viên, chúc bạn một ngày làm việc hiệu quả"
-              : "Chúc bạn một ngày mua sắm vui vẻ"}
+      <div className="md:w-main w-full m-auto  hidden min-h-9 py-2 px-4 md:flex flex-wrap items-center justify-between text-xs text-black">
+        <div className="hidden lg:flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-1">
+            <AiOutlineClockCircle size={14} />
+            8:00AM - 23:00PM
           </span>
-        ) : (
-          <Link className="hover:text-gray-800" to={`/${path.LOGIN}`}>
-            Đăng nhập hoặc Đăng ký
-          </Link>
-        )}
+          <span className="hidden md:inline-block">|</span>
+          <span className="flex items-center gap-1">
+            <AiOutlinePhone size={14} /> 0909 567 999
+          </span>
+          <span className="hidden md:inline-block">|</span>
+          <span className="flex items-center gap-1">
+            <AiOutlineMail size={14} /> hotro@student.ctu.edu.vn
+          </span>
+        </div>
+
+        {/* Bên phải - lời chào hoặc link đăng nhập */}
+        <div className="w-full md:w-fit flex justify-end mr-1 md:mt-0">
+          {isLoggedIn && current ? (
+            <span className="text-xs italic">
+              {current.roleId?.roleName === "admin"
+                ? "Chào quản trị viên, chúc bạn một ngày làm việc hiệu quả"
+                : "Chúc bạn một ngày mua sắm vui vẻ"}
+            </span>
+          ) : (
+            <Link className="hover:text-gray-800" to={`/${path.LOGIN}`}>
+              Đăng nhập hoặc Đăng ký
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
