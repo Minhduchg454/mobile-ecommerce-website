@@ -55,7 +55,7 @@ function App() {
       {isShowWishlist && (
         <div
           onClick={() => dispatch(showWishlist())}
-          className="absolute inset-0 bg-overlay z-50 flex justify-end"
+          className="fixed inset-0 z-50 backdrop-blur-md bg-black/30 flex justify-end shadow-md"
         >
           <Wishlist />
         </div>
@@ -63,7 +63,7 @@ function App() {
       {isShowCart && (
         <div
           onClick={() => dispatch(showCart())}
-          className="absolute inset-0 bg-overlay z-50 flex justify-end"
+          className="fixed inset-0 z-50 backdrop-blur-md bg-black/30 flex justify-end shadow-md"
         >
           <Cart />
         </div>

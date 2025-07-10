@@ -45,7 +45,7 @@ const CustomSlider = ({ products, activedTab, normal, slidesToShow = 3 }) => {
           {/* Quan trọng để chứa nút điều hướng */}
           <Slider className="custom-slider" {...settings}>
             {products.map((el) => (
-              <div key={el._id} className="px-2 py-4">
+              <div key={el._id} className="px-2 py-2">
                 <ProductCard
                   pid={el._id}
                   image={el.thumb}

@@ -32,8 +32,8 @@ const Navigation = () => {
     };
   }, [isDirty, q]);
   return (
-    <div className=" bg-header-footer w-full h-[40px] flex items-center px-2 md:pb-2 justify-between ">
-      <div className="w-main m-auto">
+    <div className=" bg-header-footer w-full h-[35px] flex items-cenr px-2 md:pb-2 justify-center ">
+      <div className="w-main m-auto flex justify-between items-center">
         {showMenu && (
           <div
             onClick={() => setShowMenu(false)}
@@ -66,15 +66,15 @@ const Navigation = () => {
         >
           <IoMenuSharp size={20} />
         </span>
-        <div className="py-2 flex-auto text-sm hidden md:flex items-center">
+        <div className="py-2 flex-auto text-sm hidden md:flex items-center justify-center">
           {navigation.map((el) => (
             <NavLink
               to={el.path}
               key={el.id}
               className={({ isActive }) =>
                 isActive
-                  ? "md:pr-12 pr-6 text-sm hover:text-main text-main"
-                  : "md:pr-12 pr-6 text-sm hover:text-main"
+                  ? "md:pr-12 pr-6 text-xs hover:text-main text-main"
+                  : "md:pr-12 pr-6 text-xs hover:text-main"
               }
             >
               {el.value}

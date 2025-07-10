@@ -116,7 +116,7 @@ const ManageProducts = () => {
       </div>
 
       {editProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm  shadow-md">
           <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full">
             {/* Nút đóng luôn cố định */}
             <button
@@ -140,7 +140,7 @@ const ManageProducts = () => {
       )}
 
       {currentProductForVariant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm  shadow-md">
           <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full">
             {/* Nút đóng luôn cố định */}
             <button
@@ -151,7 +151,7 @@ const ManageProducts = () => {
             </button>
 
             {/* Nội dung có thể cuộn */}
-            <div className="p-6 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 max-h-[90vh] overflow-y-auto ">
               <CreateVariation
                 productId={currentProductForVariant._id}
                 productName={currentProductForVariant.productName}

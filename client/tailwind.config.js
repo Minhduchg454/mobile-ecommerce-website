@@ -15,7 +15,7 @@ module.exports = {
     },
     extend: {
       width: {
-        main: "1220px",
+        main: "1350px",
       },
       gridRow: {
         "span-7": "span 7 / span 7",
