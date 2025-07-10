@@ -108,7 +108,7 @@ const ManageProductCategory = () => {
   return (
     <div className="w-full p-4 bg-gray-50 min-h-screen space-y-8">
       {/* Nút hiển thị form */}
-      <div className="w-fit px-4 py-2 rounded-md text-white flex items-center justify-center bg-main font-semibold my-2">
+      <div className="w-fit bg-main text-white px-4 py-2 rounded hover:bg-blue-700 transition">
         <button
           onClick={() => {
             reset();
@@ -120,69 +120,77 @@ const ManageProductCategory = () => {
         </button>
       </div>
 
-      {/* Form thêm danh mục */}
-      {showForm && (
-        <div className="bg-white rounded-xl shadow p-6">
-          <h1 className="text-xl font-bold mb-6">➕ Thêm danh mục sản phẩm</h1>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <InputForm
-              label="Tên danh mục"
-              id="productCategoryName"
-              register={register}
-              errors={errors}
-              validate={{ required: "Không được để trống" }}
-              fullWidth
-              placeholder="Nhập tên danh mục"
-            />
-            <div className="flex flex-col gap-2">
-              <label className="font-semibold" htmlFor="thumb">
-                Ảnh danh mục
-              </label>
-              <input
-                type="file"
-                id="thumb"
-                {...register("thumb", {
-                  required: "Không được để trống",
-                })}
-                accept="image/*"
+      <div
+        className={`overflow-hidden transition-all duration-500 ${
+          showForm ? "max-h-[2000px] mt-4" : "max-h-0"
+        }`}
+      >
+        {/* Form thêm danh mục */}
+        {showForm && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h1 className="text-xl font-bold mb-6">
+              ➕ Thêm danh mục sản phẩm
+            </h1>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <InputForm
+                label="Tên danh mục"
+                id="productCategoryName"
+                register={register}
+                errors={errors}
+                validate={{ required: "Không được để trống" }}
+                fullWidth
+                placeholder="Nhập tên danh mục"
               />
-              {errors.thumb && (
-                <small className="text-xs text-red-500">
-                  {errors.thumb.message}
-                </small>
-              )}
-            </div>
-
-            {preview && (
-              <div className="my-4">
-                <img
-                  src={preview}
-                  alt="preview"
-                  className="w-[200px] object-contain rounded"
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold" htmlFor="thumb">
+                  Ảnh danh mục
+                </label>
+                <input
+                  type="file"
+                  id="thumb"
+                  {...register("thumb", {
+                    required: "Không được để trống",
+                  })}
+                  accept="image/*"
                 />
+                {errors.thumb && (
+                  <small className="text-xs text-red-500">
+                    {errors.thumb.message}
+                  </small>
+                )}
               </div>
-            )}
 
-            <div className="flex items-center gap-4">
-              <Button type="submit" className="rounded-xl">
-                Thêm danh mục
-              </Button>
-              <button
-                type="button"
-                className="rounded-xl bg-gray-500 hover:bg-gray-600 px-4 py-2 text-white"
-                onClick={() => {
-                  reset();
-                  setPreview(null);
-                  setShowForm(false);
-                  document.getElementById("thumb").value = "";
-                }}
-              >
-                Hủy
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+              {preview && (
+                <div className="my-4">
+                  <img
+                    src={preview}
+                    alt="preview"
+                    className="w-[200px] object-contain rounded"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center gap-4">
+                <Button type="submit" className="rounded-xl">
+                  Thêm danh mục
+                </Button>
+                <button
+                  type="button"
+                  className="rounded-xl bg-gray-500 hover:bg-gray-600 px-4 py-2 text-white"
+                  onClick={() => {
+                    reset();
+                    setPreview(null);
+                    setShowForm(false);
+                    document.getElementById("thumb").value = "";
+                  }}
+                >
+                  Hủy
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
 
       {/* Danh sách danh mục */}
       <div className="bg-white rounded-xl shadow p-6">

@@ -115,28 +115,53 @@ const ManageProducts = () => {
         </form>
       </div>
 
-      {/* Form sửa sản phẩm */}
       {editProduct && (
-        <div className="bg-white rounded-xl shadow p-4 mb-4">
-          <CreateProducts
-            editProduct={editProduct}
-            render={render}
-            setEditProduct={setEditProduct}
-          />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full">
+            {/* Nút đóng luôn cố định */}
+            <button
+              onClick={() => setEditProduct(null)}
+              className="absolute top-2 right-3 z-10 text-gray-600 hover:text-black text-xl font-bold"
+            >
+              ✖
+            </button>
+
+            {/* Nội dung có thể cuộn */}
+            <div className="p-6 max-h-[90vh] overflow-y-auto">
+              <CreateProducts
+                editProduct={editProduct}
+                render={render}
+                setEditProduct={setEditProduct}
+                onDone={() => setEditProduct(null)}
+              />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Form chỉnh biến thể */}
       {currentProductForVariant && (
-        <div className="bg-white rounded-xl shadow p-4 mb-4">
-          <CreateVariation
-            productId={currentProductForVariant._id}
-            productName={currentProductForVariant.productName}
-            onDone={() => {
-              setCurrentProductForVariant(null);
-              render();
-            }}
-          />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full">
+            {/* Nút đóng luôn cố định */}
+            <button
+              onClick={() => setCurrentProductForVariant(null)}
+              className="absolute top-2 right-3 z-10 text-gray-600 hover:text-black text-xl font-bold"
+            >
+              ✖
+            </button>
+
+            {/* Nội dung có thể cuộn */}
+            <div className="p-6 max-h-[90vh] overflow-y-auto">
+              <CreateVariation
+                productId={currentProductForVariant._id}
+                productName={currentProductForVariant.productName}
+                onDone={() => {
+                  setCurrentProductForVariant(null);
+                  render();
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
 

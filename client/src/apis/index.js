@@ -9,3 +9,4 @@ export * from "./specifications";
 export * from "./coupon";
 export * from "./role";
 export * from "./statusUser";
+export * from "./couponProductVariation";
