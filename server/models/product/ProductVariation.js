@@ -12,7 +12,6 @@ const productVariationSchema = new mongoose.Schema(
       // URL thân thiện, thường được tạo từ productName
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
     },
     price: {
@@ -74,5 +73,14 @@ productVariationSchema.set("toJSON", { virtuals: true });
 productVariationSchema.set("toJSON", {
   versionKey: false,
 });
+
+// Đảm bảo tên biến thể là duy nhất trong mỗi productId
+productVariationSchema.index(
+  { productId: 1, productVariationName: 1 },
+  { unique: true }
+);
+
+// Đảm bảo slug là duy nhất trong mỗi productId
+productVariationSchema.index({ productId: 1, slug: 1 }, { unique: true });
 
 module.exports = mongoose.model("ProductVariation", productVariationSchema);
