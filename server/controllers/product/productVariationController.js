@@ -1,7 +1,11 @@
 const ProductVariation = require("../../models/product/ProductVariation");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
-const { updateMinPrice } = require("./productController");
+const {
+  updateMinPrice,
+  deleteProductVariationById,
+  updateTotalStock,
+} = require("../../ultils/databaseHelpers");
 
 // Tạo mới biến thể sản phẩm
 const createProductVariation = asyncHandler(async (req, res) => {
@@ -18,7 +22,6 @@ const createProductVariation = asyncHandler(async (req, res) => {
     if (isNaN(price)) missingFields.push("price");
     if (isNaN(stockQuantity)) missingFields.push("stockQuantity");
     if (!productId) missingFields.push("productId");
-
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
@@ -49,6 +52,7 @@ const createProductVariation = asyncHandler(async (req, res) => {
 
     if (response) {
       await updateMinPrice(productId);
+      await updateTotalStock(productId);
     }
 
     return res.json({
@@ -139,6 +143,7 @@ const updateProductVariation = asyncHandler(async (req, res) => {
 
   if (response && oldVariation?.productId) {
     await updateMinPrice(oldVariation.productId); // ← cập nhật lại giá thấp nhất
+    await updateTotalStock(oldVariation.productId);
   }
 
   return res.json({
@@ -150,11 +155,7 @@ const updateProductVariation = asyncHandler(async (req, res) => {
 // Xoá một biến thể
 const deleteProductVariation = asyncHandler(async (req, res) => {
   const { pvid } = req.params;
-  const oldVariation = await ProductVariation.findById(pvid);
-  const response = await ProductVariation.findByIdAndDelete(pvid);
-  if (response && oldVariation?.productId) {
-    await updateMinPrice(oldVariation.productId); // ← cập nhật lại sau khi xoá
-  }
+  const response = await deleteProductVariationById(pvid);
   return res.json({
     success: !!response,
     deletedVariation: response || "Cannot delete variation",
