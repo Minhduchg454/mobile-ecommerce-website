@@ -1,16 +1,16 @@
 import React from "react";
+import CustomSlider1 from "./CustomSlider1"; // Đường dẫn tùy bạn
 
 const FeatureInfoSlider = ({ data }) => {
   return (
-    <div className="flex flex-col ">
+    <div className="flex flex-col">
       <h3 className="text-xl font-semibold mb-4">Vì sao chọn cửa hàng Fone?</h3>
 
-      <div className="flex flex-wrap gap-4 justify-start">
-        {data.map((item, index) => (
-          <div
-            key={index}
-            className=" h-[200px] flex flex-col justify-center items-center card-default p-2"
-          >
+      <CustomSlider1
+        items={data}
+        itemWidth={250}
+        renderItem={(item) => (
+          <div className="h-[200px] flex flex-col justify-center items-center card-default p-2">
             <div
               className="w-[120px] h-[120px] flex items-center justify-center rounded-full text-6xl"
               style={{ color: item.color }}
@@ -22,8 +22,8 @@ const FeatureInfoSlider = ({ data }) => {
               {item.description}
             </p>
           </div>
-        ))}
-      </div>
+        )}
+      />
     </div>
   );
 };

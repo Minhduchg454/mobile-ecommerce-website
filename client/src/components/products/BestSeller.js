@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo } from "react";
 import { apiGetProducts } from "apis/product";
-import { CustomSlider } from "components";
+import { CustomSlider1, ProductCard } from "components";
 import { getNewProducts } from "store/products/asynsActions";
 import { useDispatch, useSelector } from "react-redux";
 import clsx from "clsx";
@@ -37,7 +37,7 @@ const BestSeller = () => {
   }, [activedTab]);
   return (
     <div className={clsx(isShowModal ? "hidden" : "")}>
-      <div className="flex text-[20px] ml-[-32px]">
+      <div className=" flex text-[20px] ml-[-32px]">
         {tabs.map((el) => (
           <span
             key={el.id}
@@ -50,14 +50,18 @@ const BestSeller = () => {
           </span>
         ))}
       </div>
-      <div className="mt-4 hidden md:block mx-[-10px] border-t-2 border-gray-300 pt-2">
-        <CustomSlider products={products} activedTab={activedTab} />
-      </div>
-      <div className="my-4 md:hidden block mx-[-10px] border-t-2 border-gray-300 pt-2">
-        <CustomSlider
-          products={products}
-          slidesToShow={1}
-          activedTab={activedTab}
+      <div className="mx-[-10px] border-t-2 border-gray-300 pt-3">
+        <CustomSlider1
+          items={products}
+          itemWidth={250}
+          renderItem={(el) => (
+            <ProductCard
+              pid={el._id}
+              image={el.thumb}
+              slugCategory={el.categoryId?.slug}
+              {...el}
+            />
+          )}
         />
       </div>
     </div>

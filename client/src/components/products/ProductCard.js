@@ -79,10 +79,10 @@ const ProductCard = ({
         navigate?.(`/${slugCategory}/${pid}/${productName}`) ||
         routerNavigate(`/${slugCategory}/${pid}/${productName}`)
       }
-      className="card-default cursor-pointer max-w-[300px] h-[340px] p-2 flex flex-col justify-between items-center overflow-hidden"
+      className="card-default cursor-pointer w-[230px] h-[350px] p-3 flex flex-col justify-between items-center overflow-hidden"
     >
       {/* Ảnh sản phẩm */}
-      <div className="w-full h-[220px] flex justify-center items-center">
+      <div className="w-full h-[200px] flex justify-center items-center">
         <img
           src={
             thumb ||

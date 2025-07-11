@@ -12,6 +12,8 @@ import {
   SelectQuantity,
   ProductInfomation,
   CustomSlider,
+  CustomSlider1,
+  ProductCard,
 } from "components";
 import Slider from "react-slick";
 import Zoom from "react-medium-image-zoom";
@@ -218,16 +220,12 @@ const ProductDetail1 = ({
       <div
         onClick={(e) => e.stopPropagation()}
         className={clsx(
-          "bg-white m-auto mt-4 flex",
-          isQuickView
-            ? "max-w-[900px] gap-16 p-8 max-h-[80vh] overflow-y-auto"
-            : "w-main"
+          "bg-white m-auto mt-4 w-full max-w-screen-xl px-4 flex flex-col md:flex-row gap-8"
         )}
       >
-        <div
-          className={clsx("flex flex-col gap-4 w-2/5", isQuickView && "w-1/2")}
-        >
-          <div className="card-default w-full h-[458px] border flex items-center justify-center overflow-hidden bg-gray-50 p-2">
+        {/* Cột trái - Hình ảnh & thông số */}
+        <div className="w-full md:w-1/2 flex flex-col gap-4">
+          <div className="w-full h-[300px] md:h-[458px] border flex items-center justify-center overflow-hidden bg-gray-50 p-2">
             {currentImage || currentProduct.images[0] ? (
               <Zoom>
                 <img
@@ -242,6 +240,7 @@ const ProductDetail1 = ({
               </span>
             )}
           </div>
+
           <div className="w-full flex justify-center">
             <div className="w-[300px]">
               <Slider className="image-slider" {...settings}>
@@ -261,6 +260,7 @@ const ProductDetail1 = ({
               </Slider>
             </div>
           </div>
+
           {!isQuickView && specifications.length > 0 && (
             <div className="text-sm text-gray-700 w-full border rounded-xl border-gray-300 p-3 mt-3">
               <h4 className="mb-3 font-bold text-lg">Cấu hình sản phẩm:</h4>
@@ -281,21 +281,18 @@ const ProductDetail1 = ({
             </div>
           )}
         </div>
-        <div
-          className={clsx(
-            "w-2/5 pr-[24px] flex flex-col gap-4 pl-[150px]",
-            isQuickView && "w-1/2"
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-[30px] font-semibold">
+
+        {/* Cột phải - Giá, mô tả, biến thể, giỏ hàng */}
+        <div className="w-full md:w-1/2 flex flex-col gap-4">
+          <div className="flex items-center justify-between flex-wrap">
+            <h2 className="text-[24px] md:text-[30px] font-semibold">
               {currentProduct.price
                 ? `${formatMoney(fotmatPrice(currentProduct.price))} VNĐ`
                 : "Đang cập nhật giá"}
             </h2>
-            <span className="text-sm text-main">{`Kho: ${
-              currentProduct?.stockQuantity ?? "?"
-            }`}</span>
+            <span className="text-sm text-main">
+              Kho: {currentProduct?.stockQuantity ?? "?"}
+            </span>
           </div>
 
           <div className="flex items-center gap-1">
@@ -305,7 +302,7 @@ const ProductDetail1 = ({
               )
             )}
             <span className="text-sm text-main italic">
-              {`(Đã bán: ${currentProduct?.sold ?? 0} sản phẩm)`}
+              (Đã bán: {currentProduct?.sold ?? 0} sản phẩm)
             </span>
           </div>
 
@@ -326,7 +323,8 @@ const ProductDetail1 = ({
               }}
             ></div>
           )}
-          <div className="my-1 flex flex-col items-start gap-4">
+
+          <div className="flex flex-col items-start gap-4">
             <span className="font-bold whitespace-nowrap">Loại:</span>
             <div className="flex flex-row flex-wrap gap-4 w-full">
               {variations.map((variant) => (
@@ -355,7 +353,7 @@ const ProductDetail1 = ({
             </div>
           </div>
 
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 mt-4">
             <div className="flex items-center gap-4">
               <span className="font-semibold">Số lượng: </span>
               <SelectQuantity
@@ -385,11 +383,22 @@ const ProductDetail1 = ({
 
       {!isQuickView && (
         <>
-          <div className="w-main m-auto mt-4">
+          <div className="md:w-main w-full px-4 mx-auto mt-4 overflow-x-hidden">
             <h3 className="text-[20px] font-semibold py-[15px] border-b-2 border-main">
               SẢN PHẨM KHÁC
             </h3>
-            <CustomSlider normal={true} products={relatedProducts || []} />
+            <CustomSlider1
+              items={relatedProducts || []}
+              itemWidth={250}
+              renderItem={(el) => (
+                <ProductCard
+                  pid={el._id}
+                  image={el.thumb}
+                  slugCategory={el.categoryId?.slug}
+                  {...el}
+                />
+              )}
+            />
           </div>
           <div className="h-[60px] w-full"></div>
         </>
