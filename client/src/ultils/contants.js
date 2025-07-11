@@ -15,6 +15,11 @@ import {
   MdInventory,
   MdOutlineLibraryBooks,
   MdOutlineLocalShipping,
+  MdSecurity,
+  MdSupportAgent,
+  MdStarRate,
+  MdBatteryChargingFull,
+  MdPhonelinkSetup,
 } from "react-icons/md";
 import { RiBillLine } from "react-icons/ri";
 import { FaTrademark } from "react-icons/fa"; // cho thương hiệu
@@ -363,5 +368,35 @@ export const infoCards = [
     title: "Giao hàng nhanh",
     description: "Giao trong ngày tại TP.Cần Thơ.",
     color: "#ff9500",
+  },
+  {
+    icon: <MdSecurity />,
+    title: "Bảo hành chính hãng",
+    description: "Tất cả sản phẩm được bảo hành 12–24 tháng.",
+    color: "#ff3b30",
+  },
+  {
+    icon: <MdSupportAgent />,
+    title: "Hỗ trợ 24/7",
+    description: "Đội ngũ tư vấn luôn sẵn sàng hỗ trợ bạn.",
+    color: "#5856d6",
+  },
+  {
+    icon: <MdStarRate />,
+    title: "Sản phẩm uy tín",
+    description: "Chỉ bán hàng chính hãng từ Apple, Samsung, Dell,...",
+    color: "#ffd60a",
+  },
+  {
+    icon: <MdBatteryChargingFull />,
+    title: "Phụ kiện bền bỉ",
+    description: "Cáp sạc, tai nghe chất lượng cao, bảo vệ thiết bị tối đa.",
+    color: "#00c7be",
+  },
+  {
+    icon: <MdPhonelinkSetup />,
+    title: "Cài đặt miễn phí",
+    description: "Cài ứng dụng, sao lưu dữ liệu miễn phí tại cửa hàng.",
+    color: "#5ac8fa",
   },
 ];

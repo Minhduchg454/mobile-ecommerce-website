@@ -12,6 +12,8 @@ import { useSelector } from "react-redux";
 import icons from "../../ultils/icons";
 import withBaseComponent from "hocs/withBaseComponent";
 import { createSearchParams } from "react-router-dom";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const { IoIosArrowForward } = icons;
 const Home = ({ navigate }) => {
@@ -32,9 +34,13 @@ const Home = ({ navigate }) => {
         <div className="flex flex-col gap-5 md:w-[25%] flex-auto border-none ">
           <DealDaily />
         </div>
-        <div className="flex flex-col gap-5 md:pl-5 md:w-[75%] flex-auto border-none">
-          <Banner />
-          <BestSeller />
+        <div className="flex flex-col gap-5 md:pl-5 md:w-[75%] flex-auto border-none h-full">
+          <div className="flex-1">
+            <Banner />
+          </div>
+          <div className="flex-1">
+            <BestSeller />
+          </div>
         </div>
       </div>
       <div className="flex flex-col my-8 md:w-main m-auto">
@@ -49,7 +55,7 @@ const Home = ({ navigate }) => {
           query={{ sort: "-rating", categoryId: "6855ba84634ab410b39b8bce" }}
         />
       </div>
-      <div className="flex flex-col flex-wrap my-8 md:w-main m-auto">
+      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
         <FeatureInfo />
       </div>
     </div>

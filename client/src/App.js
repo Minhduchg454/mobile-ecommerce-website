@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import Chatbot from "chatbot/Chatbot";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import {
   Login,
   Home,
