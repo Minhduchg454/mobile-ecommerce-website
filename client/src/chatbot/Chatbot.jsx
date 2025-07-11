@@ -39,7 +39,9 @@ function Chatbot() {
   });
 
   useEffect(() => {
-    setMessages([{ role: "bot", text: "Chào mừng bạn đến với Citaa!" }]);
+    setMessages([
+      { role: "bot", text: "Chào mừng bạn đến với cửa hàng FONE!" },
+    ]);
   }, []);
 
   useEffect(() => {
@@ -80,7 +82,9 @@ function Chatbot() {
         {!open && showIntro && (
           <div className="relative bg-white/60 border backdrop-blur-md border-gray-300 shadow-md px-3 py-2 rounded-lg text-sm text-gray-800 max-w-[500px]">
             <button
-              onClick={() => setShowIntro(false)}
+              onClick={() => {
+                setShowIntro(false);
+              }}
               className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
             >
               ✖
