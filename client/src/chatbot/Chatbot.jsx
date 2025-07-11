@@ -120,7 +120,7 @@ function Chatbot() {
                 className="w-8 h-8 rounded-full border-2 border-white"
               />
               <div>
-                <p className="font-semibold text-sm">Nhắn tin với admin</p>
+                <p className="font-semibold text-sm">Nhắn tin với trợ lý AI</p>
                 <p className="text-xs opacity-80">
                   Thường trả lời sau vài phút
                 </p>
