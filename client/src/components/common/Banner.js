@@ -8,27 +8,33 @@ const banners = [
   require("../../assets/banner-combo.webp"),
 ];
 
-const Banner = () => {
+const Banner = ({ images = banners, delay = 0 }) => {
   const [index, setIndex] = useState(0);
   const intervalRef = useRef(null);
 
   const nextSlide = () => {
-    setIndex((prev) => (prev + 1) % banners.length);
+    setIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevSlide = () => {
-    setIndex((prev) => (prev - 1 + banners.length) % banners.length);
+    setIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const resetInterval = () => {
     clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(nextSlide, 5000);
+    intervalRef.current = setInterval(nextSlide, 4000);
   };
 
   useEffect(() => {
-    intervalRef.current = setInterval(nextSlide, 5000);
-    return () => clearInterval(intervalRef.current);
-  }, []);
+    const timeout = setTimeout(() => {
+      intervalRef.current = setInterval(nextSlide, 4000);
+    }, delay);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(intervalRef.current);
+    };
+  }, [delay]);
 
   const handleNext = () => {
     nextSlide();
@@ -42,12 +48,11 @@ const Banner = () => {
 
   return (
     <div className="w-full aspect-[3/1] bg-gray-100 relative overflow-hidden rounded-xl">
-      {/* Slide container */}
       <div
         className="flex transition-transform duration-700 ease-in-out w-full h-full"
         style={{ transform: `translateX(-${index * 100}%)` }}
       >
-        {banners.map((img, i) => (
+        {images.map((img, i) => (
           <img
             key={i}
             src={img}

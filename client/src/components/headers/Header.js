@@ -52,11 +52,11 @@ const Header = () => {
 
     if (!currentQuery) {
       navigate({
-        pathname: `/tat-ca-san-pham`,
+        pathname: `/${path.SEARCH_HOME}`,
       });
     } else {
       navigate({
-        pathname: `/tat-ca-san-pham`,
+        pathname: `/${path.SEARCH_HOME}`,
         search: createSearchParams({ q: currentQuery }).toString(),
       });
     }
@@ -77,15 +77,6 @@ const Header = () => {
     return () => {
       window.removeEventListener("keyup", handleEnter);
     };
-  }, [q]);
-
-  // Tự động xoá q khỏi URL khi input rỗng
-  useEffect(() => {
-    if (!q?.trim()) {
-      navigate({
-        pathname: `/tat-ca-san-pham`,
-      });
-    }
   }, [q]);
 
   return (

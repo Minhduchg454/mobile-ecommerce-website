@@ -1,12 +1,12 @@
 import React, { useState, useEffect, memo } from "react";
 import { ProductCard } from "components";
-import { apiGetAllProductCategories, apiGetProductVariations } from "apis";
+import { apiGetProductVariations } from "apis";
 
 const FeatureProducts = ({
   title = "SẢN PHẨM",
   sort = "",
   query = {},
-  categorySlug = "",
+  categorySlug = "", // ✅ Dùng slug truyền vào
   limit = 4,
 }) => {
   const [products, setProducts] = useState([]);
@@ -15,26 +15,10 @@ const FeatureProducts = ({
     try {
       let finalQuery = { ...query };
 
-      // Nếu có categorySlug thì tìm categoryId tương ứng
-      if (categorySlug) {
-        const catRes = await apiGetAllProductCategories();
-        if (catRes.success) {
-          const matched = catRes.prodCategories.find(
-            (cat) => cat.slug === categorySlug
-          );
-          if (matched) {
-            finalQuery.categoryId = matched._id;
-          } else {
-            // Nếu không tìm thấy slug, vẫn lấy tất cả
-            console.warn("Không tìm thấy category với slug:", categorySlug);
-          }
-        }
-      }
       if ("q" in finalQuery) {
         delete finalQuery.q;
       }
 
-      console.log("Nhan gia tri dau vao cua feater", finalQuery, sort);
       const res = await apiGetProductVariations({
         limit: 50,
         ...finalQuery,
@@ -42,19 +26,25 @@ const FeatureProducts = ({
       });
 
       if (res.success) {
-        const filtered = res.variations.filter((item) => item.productId);
+        let variations = res.variations.filter((v) => v.productId);
 
-        // Lấy duy nhất 1 biến thể cho mỗi productId
-        const uniqueProductsMap = new Map();
-        for (let item of filtered) {
-          const pid = item.productId._id;
-          if (!uniqueProductsMap.has(pid)) {
-            uniqueProductsMap.set(pid, item);
+        // ✅ Lọc theo categorySlug nếu có
+        if (categorySlug) {
+          variations = variations.filter(
+            (v) => v.productId?.categoryId?.slug === categorySlug
+          );
+        }
+
+        // ✅ Giữ lại 1 biến thể duy nhất cho mỗi productId
+        const uniqueMap = new Map();
+        for (let v of variations) {
+          const pid = v.productId._id;
+          if (!uniqueMap.has(pid)) {
+            uniqueMap.set(pid, v);
           }
         }
 
-        const productList = [...uniqueProductsMap.values()];
-        setProducts(productList.slice(0, limit));
+        setProducts([...uniqueMap.values()].slice(0, limit));
       }
     } catch (error) {
       console.error("Lỗi khi fetch sản phẩm nổi bật:", error);

@@ -5,6 +5,7 @@ const {
   updateMinPrice,
   deleteProductVariationById,
   updateTotalStock,
+  deleteValuesByVariation,
 } = require("../../ultils/databaseHelpers");
 
 // Tạo mới biến thể sản phẩm
@@ -240,7 +241,11 @@ const updateProductVariation = asyncHandler(async (req, res) => {
 // Xoá một biến thể
 const deleteProductVariation = asyncHandler(async (req, res) => {
   const { pvid } = req.params;
+
+  await deleteValuesByVariation(pvid);
+
   const response = await deleteProductVariationById(pvid);
+
   return res.json({
     success: !!response,
     deletedVariation: response || "Cannot delete variation",
