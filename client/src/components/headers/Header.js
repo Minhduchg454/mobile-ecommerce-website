@@ -28,7 +28,7 @@ const Header = () => {
   const dispatch = useDispatch();
   const { current } = useSelector((state) => state.user);
   // Log giá trị current để debug đăng nhập
-  console.log("Header user.current:", current);
+
   const [isShowOption, setIsShowOption] = useState(false);
   const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { memo, useState } from "react";
+import React, { memo, useState, useEffect } from "react";
 import withBaseComponent from "hocs/withBaseComponent";
 import { renderStarFromNumber, formatMoney } from "ultils/helpers";
 import { toast } from "react-toastify";
@@ -15,22 +15,25 @@ import { getCurrent } from "store/user/asyncActions";
 
 const ProductCard = ({
   totalSold,
-  minPrice,
+  price,
   rating,
   productName,
   thumb,
-  pid,
-  navigate,
+  pvid, // chính là _id của biến thể (variant)
   slugCategory,
+  slug,
   onAddToCart,
   onToggleWishlist,
-  slug,
 }) => {
   const dispatch = useDispatch();
-  const routerNavigate = useNavigate(); // để điều hướng nếu navigate chưa có
+  const navigate = useNavigate();
   const { current, isLoggedIn } = useSelector((state) => state.user);
-  const isWishedInit = current?.wishlist?.some((i) => i._id === pid);
-  const [isWished, setIsWished] = useState(isWishedInit);
+
+  const [isWished, setIsWished] = useState(false);
+
+  useEffect(() => {
+    setIsWished(current?.wishlist?.some((item) => item._id === pvid));
+  }, [current, pvid]);
 
   const redirectToLogin = () => {
     Swal.fire({
@@ -42,7 +45,7 @@ const ProductCard = ({
       cancelButtonText: "Để sau",
     }).then((result) => {
       if (result.isConfirmed) {
-        routerNavigate(`/${path.LOGIN}`);
+        navigate(`/${path.LOGIN}`);
       }
     });
   };
@@ -63,23 +66,26 @@ const ProductCard = ({
     e.stopPropagation();
     if (!isLoggedIn || !current) return redirectToLogin();
 
-    setIsWished((prev) => !prev);
+    const newWished = !isWished;
+    setIsWished(newWished);
+
     if (onToggleWishlist) {
       onToggleWishlist();
     } else {
       toast.success(
-        !isWished ? "Đã thêm vào yêu thích!" : "Đã bỏ khỏi yêu thích!"
+        newWished ? "Đã thêm vào yêu thích!" : "Đã bỏ khỏi yêu thích!"
       );
     }
     dispatch(getCurrent());
   };
 
+  const handleNavigate = () => {
+    navigate(`/${slugCategory}/${slug}?code=${pvid}`);
+  };
+
   return (
     <div
-      onClick={() =>
-        navigate?.(`/${slugCategory}/${pid}/${slug}`) ||
-        routerNavigate(`/${slugCategory}/${pid}/${slug}`)
-      }
+      onClick={handleNavigate}
       className="card-default cursor-pointer w-[230px] h-[350px] p-3 flex flex-col justify-between items-center overflow-hidden"
     >
       {/* Ảnh sản phẩm */}
@@ -106,7 +112,7 @@ const ProductCard = ({
           <span className="text-gray-500 ml-2">{`Đã bán ${totalSold}`}</span>
         </span>
         <span className="text-main font-semibold mt-1">
-          {`${formatMoney(minPrice)} VNĐ`}
+          {price ? `${formatMoney(price)} VNĐ` : "Liên hệ"}
         </span>
       </div>
 
