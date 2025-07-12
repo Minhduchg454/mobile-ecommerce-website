@@ -58,7 +58,7 @@ const FeatureProducts = ({
   return (
     <div className="w-full">
       <h3 className="text-[20px] font-semibold py-[15px]">{title}</h3>
-      <div className="flex justify-start gap-4 flex-wrap">
+      <div className="flex justify-start gap-4 flex-wrap py-2">
         {products.map((el) => (
           <ProductCard
             key={el._id}
