@@ -20,8 +20,12 @@ const DealDaily = ({ dispatch }) => {
   const navigate = useNavigate();
   const [discountPercent, setDiscountPercent] = useState(20);
   const [dealTime, setDealTime] = useState(12);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshed, setRefreshed] = useState(false);
 
   const fetchDealDaily = async () => {
+    setIsRefreshing(true);
+    setRefreshed(false);
     try {
       const response = await apiGetProducts({
         sort: "-totalRating",
@@ -31,32 +35,43 @@ const DealDaily = ({ dispatch }) => {
         const shuffled = response.products.sort(() => 0.5 - Math.random());
         const product1 = shuffled[0];
 
-        // Lấy danh sách biến thể của sản phẩm
         const variantRes = await apiGetVariationsByProductId(product1._id);
         if (variantRes.success && variantRes.variations.length > 0) {
           const lowest = variantRes.variations.reduce((a, b) =>
             a.price < b.price ? a : b
           );
           const minPrice = lowest.price;
-          const variantId = lowest._id; // ID biến thể rẻ nhất
+          const variantId = lowest._id;
+
+          const newProduct = {
+            ...product1,
+            discountPercent,
+            minPrice,
+            variantId,
+          };
+
+          const isDifferent =
+            !dealDaily?.data?.product1 ||
+            dealDaily.data.product1._id !== product1._id ||
+            dealDaily.data.product1.variantId !== variantId;
 
           dispatch(
             getDealDaily({
-              data: {
-                product1: {
-                  ...product1,
-                  discountPercent,
-                  minPrice,
-                  variantId, // thêm vào để sau dùng khi điều hướng
-                },
-              },
+              data: { product1: newProduct },
               time: Date.now() + dealTime * 60 * 60 * 1000,
             })
           );
+
+          if (isDifferent) {
+            setRefreshed(true);
+            setTimeout(() => setRefreshed(false), 2000);
+          }
         }
       }
     } catch (error) {
       console.error("❌ Lỗi khi fetch Deal Daily:", error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -223,9 +238,20 @@ const DealDaily = ({ dispatch }) => {
           <div className="flex justify-center mt-4">
             <button
               onClick={fetchDealDaily}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+              disabled={isRefreshing}
+              className={`text-white px-4 py-2 rounded text-sm transition-colors duration-300
+                ${
+                  refreshed
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-red-500 hover:bg-red-600"
+                }
+                ${isRefreshing ? "opacity-70 cursor-not-allowed" : ""}`}
             >
-              🔄 Làm mới Deal
+              {isRefreshing
+                ? "🔄 Đang làm mới..."
+                : refreshed
+                ? "✅ Đã cập nhật!"
+                : "🔄 Làm mới Deal"}
             </button>
           </div>
         </>

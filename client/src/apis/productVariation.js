@@ -1,4 +1,5 @@
 import axios from "../axios";
+import qs from "qs";
 
 //Tạo biến thể sản phẩm (upload nhiều ảnh)
 export const apiCreateProductVariation = (formData) =>
@@ -12,10 +13,12 @@ export const apiCreateProductVariation = (formData) =>
   });
 
 // Lấy toàn bộ biến thể sản phẩm
-export const apiGetProductVariations = () =>
+export const apiGetProductVariations = (params) =>
   axios({
-    url: "/productVariations/",
+    url: "/productVariations",
     method: "get",
+    params,
+    paramsSerializer: (params) => qs.stringify(params, { encode: false }),
   });
 
 //Lấy tất cả biến thể theo productId

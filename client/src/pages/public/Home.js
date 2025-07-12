@@ -43,18 +43,31 @@ const Home = ({ navigate }) => {
           </div>
         </div>
       </div>
-      <div className="flex flex-col my-8 md:w-main m-auto">
+      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
         <FeatureProducts
-          title="ĐIỆN THOẠI ĐƯỢC ĐÁNH GIÁ CAO"
-          query={{ sort: "-rating", categoryId: "6855ba0fdffd1bd4e14fb9ff" }}
+          title="Top 5 điện thoại bán chạy nhất"
+          sort="-totalSold"
+          categorySlug="dien-thoai"
+          limit={5}
         />
       </div>
-      <div className="flex flex-col my-8 md:w-main m-auto">
+      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
         <FeatureProducts
-          title="PHỤ KIỆN ĐIỆN THOẠI ĐƯỢC ĐÁNH GIÁ CAO"
-          query={{ sort: "-rating", categoryId: "6855ba84634ab410b39b8bce" }}
+          title="Top 5 máy tính bán chạy nhất"
+          sort="-totalSold"
+          categorySlug="laptop"
+          limit={5}
         />
       </div>
+      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
+        <FeatureProducts
+          title="Nhưng phụ kiện điện thoại mới nhất"
+          sort="newest"
+          categorySlug="phu-kien-dien-thoai"
+          limit={6}
+        />
+      </div>
+
       <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
         <FeatureInfo />
       </div>

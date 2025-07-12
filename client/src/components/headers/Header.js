@@ -44,33 +44,49 @@ const Header = () => {
     };
   }, []);
 
-  const handleSearch = () => {
-    if (!q?.trim()) return;
-    navigate({
-      pathname: `/${path.PRODUCTS}`,
-      search: createSearchParams({ q }).toString(),
-    });
-  };
-
   const q = watch("q");
   const navigate = useNavigate();
-  const [showMenu, setShowMenu] = useState(false);
+
+  const handleSearch = () => {
+    const currentQuery = q?.trim();
+
+    if (!currentQuery) {
+      navigate({
+        pathname: `/tat-ca-san-pham`,
+      });
+    } else {
+      navigate({
+        pathname: `/tat-ca-san-pham`,
+        search: createSearchParams({ q: currentQuery }).toString(),
+      });
+    }
+  };
+
+  // Xử lý nhấn Enter
   useEffect(() => {
     const handleEnter = (e) => {
-      if (e.keyCode === 13) {
-        navigate({
-          pathname: `/${path.PRODUCTS}`,
-          search: createSearchParams({ q }).toString(),
-        });
+      if (
+        e.key === "Enter" &&
+        document.activeElement?.id === "q" // chỉ khi đang focus vào input có id là "q"
+      ) {
+        handleSearch();
       }
     };
-    if (isDirty) window.addEventListener("keyup", handleEnter);
-    else window.removeEventListener("keyup", handleEnter);
 
+    window.addEventListener("keyup", handleEnter);
     return () => {
       window.removeEventListener("keyup", handleEnter);
     };
-  }, [isDirty, q]);
+  }, [q]);
+
+  // Tự động xoá q khỏi URL khi input rỗng
+  useEffect(() => {
+    if (!q?.trim()) {
+      navigate({
+        pathname: `/tat-ca-san-pham`,
+      });
+    }
+  }, [q]);
 
   return (
     <div className="w-full bg-header-footer">
@@ -93,6 +109,9 @@ const Header = () => {
             icon={<AiOutlineSearch size={18} />}
             iconPosition="left"
             onIconClick={handleSearch}
+            onKeyUp={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
           />
         </div>
 
