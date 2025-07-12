@@ -74,6 +74,7 @@ function App() {
       <Routes>
         <Route path={path.CHECKOUT} element={<Checkout />} />
         <Route path={path.PUBLIC} element={<Public />}>
+          <Route index element={<Home />} />
           <Route path={path.HOME} element={<Home />} />
           <Route path={path.BLOGS__ID__TITLE} element={<DetailBlogs />} />
           <Route
@@ -83,8 +84,9 @@ function App() {
           <Route path={path.FAQ} element={<FAQ />} />
           <Route path={path.OUR_SERVICES} element={<Services />} />
           <Route path={path.PRODUCTS__CATEGORY} element={<Products />} />
+          <Route path={path.SEARCH_HOME} element={<Products />} />
           <Route path={path.RESET_PASSWORD} element={<ResetPassword />} />
-          <Route path={path.ALL} element={<Home />} />
+          {/* <Route path={path.ALL} element={<Home />} /> */}
         </Route>
         <Route path={path.ADMIN} element={<AdminLayout />}>
           <Route path={path.DASHBOARD} element={<Dashboard />} />

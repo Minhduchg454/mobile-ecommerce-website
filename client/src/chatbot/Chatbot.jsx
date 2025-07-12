@@ -102,7 +102,7 @@ function Chatbot() {
         {!open && (
           <button
             onClick={() => setOpen(true)}
-            className="bg-white border hover:bg-blue-400  border-gray-300 hover:shadow-xl text-blue-700 p-3 rounded-full shadow-xl focus:outline-none transition duration-200"
+            className="bg-white/60 border backdrop-blur-md hover:bg-blue-400  border-gray-300 hover:shadow-xl text-blue-700 p-3 rounded-full shadow-xl focus:outline-none transition duration-200"
           >
             <ChatBubbleLeftRightIcon className="w-8 h-8" />
           </button>

@@ -18,7 +18,7 @@ const DealDaily = ({ dispatch }) => {
   const { dealDaily } = useSelector((s) => s.products);
   const { current } = useSelector((state) => state.user);
   const navigate = useNavigate();
-  const [discountPercent, setDiscountPercent] = useState(20);
+  const [discountPercent, setDiscountPercent] = useState(5);
   const [dealTime, setDealTime] = useState(12);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshed, setRefreshed] = useState(false);

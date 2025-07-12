@@ -46,7 +46,7 @@ const Home = ({ navigate }) => {
       <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
         <FeatureProducts
           title="Top 5 điện thoại bán chạy nhất"
-          sort="-totalSold"
+          sort="totalSold"
           categorySlug="dien-thoai"
           limit={5}
         />

@@ -148,8 +148,8 @@ const Products = () => {
 
       {/* Banner */}
       <div className="md:w-main p-2 m-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ReusableBanner images={banner1} aspectRatio="3/1" />
-        <ReusableBanner images={banner2} aspectRatio="3/1" />
+        <ReusableBanner images={banner1} aspectRatio="3/1" delay={0} />
+        <ReusableBanner images={banner2} aspectRatio="3/1" delay={2500} />
       </div>
 
       {/* Bộ lọc */}
