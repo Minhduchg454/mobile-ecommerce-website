@@ -106,6 +106,7 @@ const login = asyncHandler(async (req, res) => {
 // Lấy user hiện tại từ token
 const getCurrent = asyncHandler(async (req, res) => {
   const { id } = req.user;
+  // console.log("goi current", req.user);
 
   const user = await User.findById(id).populate("roleId userName");
   if (!user)
@@ -136,13 +137,11 @@ const updateUser = asyncHandler(async (req, res) => {
     statusUserId,
   };
   if (avatar) updatePayload.avatar = avatar;
-  console.log("Nhan du lieu, payload", req.params, req.body);
 
   const updated = await User.findByIdAndUpdate(id, updatePayload, {
     new: true,
   });
 
-  console.log("thanh cong");
   return res.json({
     success: !!updated,
     user: updated || "Update failed",
