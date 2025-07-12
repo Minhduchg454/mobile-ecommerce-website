@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from "react";
-import { apiGetProducts } from "apis/product";
+import { apiGetProducts, apiGetVariationsByProductId } from "apis";
 import DOMPurify from "dompurify";
 import {
   renderStarFromNumber,
@@ -22,19 +22,41 @@ const DealDaily = ({ dispatch }) => {
   const [dealTime, setDealTime] = useState(12);
 
   const fetchDealDaily = async () => {
-    const response = await apiGetProducts({ sort: "-totalRating", limit: 20 });
-    if (response.success && response.products?.length > 0) {
-      const shuffled = response.products.sort(() => 0.5 - Math.random());
-      const product1 = shuffled[0];
+    try {
+      const response = await apiGetProducts({
+        sort: "-totalRating",
+        limit: 20,
+      });
+      if (response.success && response.products?.length > 0) {
+        const shuffled = response.products.sort(() => 0.5 - Math.random());
+        const product1 = shuffled[0];
 
-      dispatch(
-        getDealDaily({
-          data: {
-            product1: { ...product1, discountPercent: discountPercent },
-          },
-          time: Date.now() + dealTime * 60 * 60 * 1000,
-        })
-      );
+        // Lấy danh sách biến thể của sản phẩm
+        const variantRes = await apiGetVariationsByProductId(product1._id);
+        if (variantRes.success && variantRes.variations.length > 0) {
+          const lowest = variantRes.variations.reduce((a, b) =>
+            a.price < b.price ? a : b
+          );
+          const minPrice = lowest.price;
+          const variantId = lowest._id; // ID biến thể rẻ nhất
+
+          dispatch(
+            getDealDaily({
+              data: {
+                product1: {
+                  ...product1,
+                  discountPercent,
+                  minPrice,
+                  variantId, // thêm vào để sau dùng khi điều hướng
+                },
+              },
+              time: Date.now() + dealTime * 60 * 60 * 1000,
+            })
+          );
+        }
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi fetch Deal Daily:", error);
     }
   };
 
@@ -72,18 +94,19 @@ const DealDaily = ({ dispatch }) => {
   }, [hour, minute, second, dealDaily?.time]);
 
   const handleRedirect = (product) => {
-    if (product?._id && product?.slug && product?.categoryId?.slug) {
-      navigate(`/${product.categoryId.slug}/${product._id}/${product.slug}`);
+    if (product?.slug && product?.categoryId?.slug && product?.variantId) {
+      navigate(
+        `/${product.categoryId.slug}/${product.slug}?code=${product.variantId}`
+      );
     }
   };
 
   const product1 = dealDaily?.data?.product1;
 
   const renderProduct = (product) => {
-    const discountPercent = product?.discountPercent || 0;
-    const discountedPrice = product?.minPrice
-      ? product.minPrice * (1 - discountPercent / 100)
-      : 0;
+    const discount = product?.discountPercent || 0;
+    const price = product?.minPrice || 0;
+    const discountedPrice = price * (1 - discount / 100);
 
     return (
       <div
@@ -100,11 +123,11 @@ const DealDaily = ({ dispatch }) => {
         />
         <span className="line-clamp-1 text-center">{product.productName}</span>
         <span className="flex h-4 items-center gap-1">
-          {renderStarFromNumber(product.rating, 20)?.map((el, i) => (
+          {(renderStarFromNumber(product.rating, 20) || []).map((el, i) => (
             <span key={i}>{el}</span>
           ))}
           <span className="text-gray-500 ml-2">
-            {"Đã bán " + product.totalSold}
+            {"Đã bán " + (product.totalSold || 0)}
           </span>
         </span>
 
@@ -112,20 +135,20 @@ const DealDaily = ({ dispatch }) => {
           {formatMoney(discountedPrice)} VNĐ
         </span>
 
-        {discountPercent > 0 && (
+        {discount > 0 && (
           <div className="flex items-center gap-2">
             <span className="line-through text-xs text-gray-500">
-              {formatMoney(product.minPrice)} VNĐ
+              {formatMoney(price)} VNĐ
             </span>
             <span className="text-xs bg-red-500 text-white px-1 rounded">
-              -{discountPercent}%
+              -{discount}%
             </span>
           </div>
         )}
 
         {typeof product?.description === "string" && (
           <div
-            className="text-sm text-center text-gray-500 my-3 pl-0"
+            className="text-sm text-center text-gray-500 my-3"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(product.description),
             }}
@@ -165,13 +188,9 @@ const DealDaily = ({ dispatch }) => {
 
       {product1 && renderProduct(product1)}
 
-      {/* Hiển thị phần nhập và nút cho admin */}
       {current?.roleId?.roleName === "admin" && (
         <>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex flex-col md:flex-row gap-4 items-center justify-center mt-4"
-          >
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-center mt-4">
             <div className="flex flex-col items-start">
               <label className="text-sm text-gray-700 mb-1">
                 Tỉ lệ giảm (%)
@@ -201,10 +220,7 @@ const DealDaily = ({ dispatch }) => {
             </div>
           </div>
 
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex justify-center mt-4"
-          >
+          <div className="flex justify-center mt-4">
             <button
               onClick={fetchDealDaily}
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"

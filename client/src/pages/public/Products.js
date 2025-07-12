@@ -19,6 +19,7 @@ import {
   apiGetCategoryIdByName,
   apiGetAllProductCategories,
   apiGetBrands,
+  apiGetVariationsByProductId,
 } from "../../apis";
 import Masonry from "react-masonry-css";
 import { sorts, priceRanges } from "../../ultils/contants";
@@ -34,8 +35,9 @@ const breakpointColumnsObj = {
 const Products = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState(null);
+  const [productsWithVariants, setProductsWithVariants] = useState([]);
   const [activeClick, setActiveClick] = useState(null);
-  const [params, setSearchParams] = useSearchParams(); //Lay cac truy van tu url /iphone?from=1000&to=5000&sort=-price
+  const [params, setSearchParams] = useSearchParams();
   const [sort, setSort] = useState("");
   const { category } = useParams();
 
@@ -53,7 +55,6 @@ const Products = () => {
     require("assets/banner-combo.webp"),
   ];
 
-  //Truy xuat danh muc tat ca danh muc
   useEffect(() => {
     const fetchData = async () => {
       const [res1, res2] = await Promise.all([
@@ -63,7 +64,6 @@ const Products = () => {
 
       if (res1.success) {
         setCategories(res1.prodCategories);
-        // tìm danh mục theo slug
         const matchedCategory = res1.prodCategories.find(
           (item) => item.slug === category
         );
@@ -90,24 +90,41 @@ const Products = () => {
     }
 
     const response = await apiGetProducts(queries);
-    if (response.success) setProducts(response);
+    if (response.success) {
+      setProducts(response);
+
+      // 🔁 Bổ sung gọi biến thể cho từng sản phẩm
+      const enrichedProducts = await Promise.all(
+        response.products.map(async (product) => {
+          try {
+            const variationRes = await apiGetVariationsByProductId(product._id);
+            const firstVariant = variationRes.success
+              ? variationRes.variations?.[0]
+              : null;
+
+            return {
+              ...product,
+              pvid: firstVariant?._id,
+              price: firstVariant?.price || 0,
+              thumb: firstVariant?.images?.[0] || product.thumb,
+              totalSold: firstVariant?.sold || 0,
+            };
+          } catch {
+            return product;
+          }
+        })
+      );
+      setProductsWithVariants(enrichedProducts);
+    }
   };
 
-  //Goi API moi khi params thay doi
   useEffect(() => {
     const queries = Object.fromEntries([...params.entries()]);
-
-    // Clone để không thay đổi trực tiếp object từ URL
     const queryObject = { ...queries };
 
-    // Tạo lại cấu trúc minPrice.gte và minPrice.lte đúng chuẩn cho backend
     if (queries.from || queries.to) {
-      if (queries.from) {
-        queryObject["minPrice.gte"] = queries.from;
-      }
-      if (queries.to) {
-        queryObject["minPrice.lte"] = queries.to;
-      }
+      if (queries.from) queryObject["minPrice.gte"] = queries.from;
+      if (queries.to) queryObject["minPrice.lte"] = queries.to;
       delete queryObject.from;
       delete queryObject.to;
     }
@@ -116,7 +133,6 @@ const Products = () => {
     window.scrollTo(0, 0);
   }, [params.toString()]);
 
-  //Bat tat, bo loc, gia mau
   const changeActiveFitler = useCallback(
     (name) => {
       if (activeClick === name) setActiveClick(null);
@@ -132,7 +148,6 @@ const Products = () => {
     [sort]
   );
 
-  //Khi sort thay doi => cap nhat lai url => params doi => goi API lai
   useEffect(() => {
     if (sort) {
       const currentParams = Object.fromEntries([...params.entries()]);
@@ -169,7 +184,6 @@ const Products = () => {
               setSearchParams((prevParams) => {
                 const current = Object.fromEntries([...prevParams.entries()]);
 
-                // Xóa các giá trị cũ
                 delete current["minPrice.gte"];
                 delete current["minPrice.lte"];
                 delete current.from;
@@ -191,7 +205,6 @@ const Products = () => {
             valueField="value"
           />
 
-          {/* Danh mục */}
           <SelectableList
             title={"danh mục"}
             items={categories}
@@ -204,7 +217,6 @@ const Products = () => {
             }}
           />
 
-          {/* Thuong hieu */}
           <SelectableList
             title={"thương hiệu"}
             items={brands}
@@ -231,14 +243,18 @@ const Products = () => {
         </div>
       </div>
       <div className="md:w-main m-auto my-4 gap-4 flex flex-wrap">
-        {products?.products?.map((el) => (
-          <div className="mr-6">
+        {productsWithVariants?.map((el) => (
+          <div className="mr-6" key={el._id}>
             <ProductCard
-              pid={el.id}
-              key={el._id}
-              image={el.thumb}
+              pid={el._id}
+              pvid={el.pvid}
+              price={el.price}
+              thumb={el.thumb}
+              slug={el.slug}
               slugCategory={el.categoryId?.slug}
-              {...el}
+              productName={el.productName}
+              rating={el.rating}
+              totalSold={el.totalSold}
             />
           </div>
         ))}
