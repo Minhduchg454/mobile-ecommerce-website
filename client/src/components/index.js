@@ -20,6 +20,7 @@ export { default as CustomToast } from "./common/CustomToast";
 export { default as ConfirmModal } from "./common/ConfirmModal";
 export { default as ColorSlider } from "./common/ColorSlider";
 export { default as CustomSlider1 } from "./common/CustomSlider1";
+export { default as SelectableList } from ".//search/SelectableList";
 
 // export { default as TopHeader } from './headers/TopHeader'
 export { default as Footer } from "./footer/Footer";

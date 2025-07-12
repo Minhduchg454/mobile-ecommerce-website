@@ -14,7 +14,8 @@ const InputForm = ({
   defaultValue,
   style,
   readOnly,
-  onChange, // 👈 thêm dòng này
+  onChange,
+  onKeyUp, // ✅ Thêm ở đây
 }) => {
   return (
     <div className={clsx("flex flex-col gap-2", style)}>
@@ -27,7 +28,8 @@ const InputForm = ({
         type={type}
         id={id}
         {...register(id, validate)}
-        onChange={onChange} // 👈 thêm dòng này để hoạt động
+        onChange={onChange}
+        onKeyUp={onKeyUp} // ✅ Gắn vào input
         disabled={disabled}
         placeholder={placeholder}
         className={clsx(
@@ -44,5 +46,4 @@ const InputForm = ({
     </div>
   );
 };
-
 export default memo(InputForm);

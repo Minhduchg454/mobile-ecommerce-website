@@ -140,41 +140,14 @@ export const colors = [
 ];
 
 export const sorts = [
-  {
-    id: 1,
-    value: "-sold",
-    text: "Mua nhiều nhất",
-  },
-  {
-    id: 2,
-    value: "-productName",
-    text: "Sắp xếp theo tên từ Z-A",
-  },
-  {
-    id: 3,
-    value: "productName",
-    text: "Sắp xếp theo tên từ A-Z",
-  },
-  {
-    id: 4,
-    value: "-minPrice",
-    text: "Giá từ cao tới thấp",
-  },
-  {
-    id: 5,
-    value: "minPrice",
-    text: "Giá từ thấp tới cao",
-  },
-  {
-    id: 6,
-    value: "createAt",
-    text: "Cũ nhất",
-  },
-  {
-    id: 7,
-    value: "-createAt",
-    text: "Mới nhất",
-  },
+  { value: "-minPrice", text: "Giá cao → thấp" },
+  { value: "minPrice", text: "Giá thấp → cao" },
+  { value: "-totalSold", text: "Bán chạy" },
+  { value: "-rating", text: "Đánh giá cao" },
+  { value: "nameAsc", text: "Tên A → Z" },
+  { value: "nameDesc", text: "Tên Z → A" },
+  { value: "newest", text: "Mới nhất" },
+  { value: "oldest", text: "Cũ nhất" },
 ];
 
 export const voteOptions = [

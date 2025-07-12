@@ -151,13 +151,15 @@ const ProductDetail1 = () => {
           {/* Trái: Hình ảnh + cấu hình */}
           <div className="w-full md:w-1/2 flex flex-col gap-4">
             {/* Ảnh chính */}
-            <div className="w-full aspect-[4/3] md:h-[400px] flex justify-center items-center border bg-gray-50 overflow-hidden">
+            {/* Ảnh chính */}
+            <div className="relative w-full border shadow-md rounded-xl p-2 h-[400px] flex justify-center items-center bg-white overflow-hidden">
               {currentImage ? (
                 <Zoom>
                   <img
                     src={currentImage}
                     alt="product"
-                    className="object-contain max-h-full max-w-full w-full h-full"
+                    className="object-contain w-full max-h-[380px]"
+                    style={{ objectFit: "contain" }}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "/fallback.jpg";

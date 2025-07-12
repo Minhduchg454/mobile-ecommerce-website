@@ -65,27 +65,16 @@ const getProduct = asyncHandler(async (req, res) => {
 
 // Lấy danh sách sản phẩm với các tùy chọn lọc, sắp xếp và phân trang
 const getProducts = asyncHandler(async (req, res) => {
-  // Lấy tất cả các query từ request
   const queries = { ...req.query };
-
-  // 1. Loại bỏ các field không dùng để filter, chỉ giữ lại các trường có thể lọc trực tiếp
-  //q: là tư khoá tông quát, không dùng để lọc
-  //sort: là sắp xếp, không dùng để lọc
-  //page: là phân trang, không dùng để lọc
-  //fields: là giới hạn trường trả về, không dùng để lọc
-  //limit: là giới hạn số lượng sản phẩm trả về, không dùng để lọc
   const excludeFields = ["limit", "sort", "page", "fields", "q"];
   excludeFields.forEach((el) => delete queries[el]);
 
-  // 2. Format lại các toán tử như gte, lte, gt, lt...
   let queryString = JSON.stringify(queries);
   queryString = queryString.replace(
     /\b(gte|gt|lt|lte)\b/g,
     (match) => `$${match}`
   );
 
-  // 3. Tìm kiếm theo keyword toàn cục nếu có (?q=iphone)
-  // Áp dụng cho chuỗi
   let searchQuery = {};
   if (req.query.q) {
     const keyword = req.query.q;
@@ -98,18 +87,18 @@ const getProducts = asyncHandler(async (req, res) => {
   }
 
   const formatedQueries = JSON.parse(queryString);
-  // 👉 Chuyển 'minPrice.$gte' => { minPrice: { $gte: ... } }
+
   Object.keys(formatedQueries).forEach((key) => {
     if (key.includes("$")) {
       const [field, operator] = key.split(".");
       formatedQueries[field] = {
         ...(formatedQueries[field] || {}),
-        [operator]: +formatedQueries[key], // ép kiểu số luôn
+        [operator]: +formatedQueries[key],
       };
       delete formatedQueries[key];
     }
   });
-  // 3.1 Nếu có tìm kiếm theo tên sản phẩm (productName) → dùng regex
+
   if (queries?.productName) {
     formatedQueries.productName = {
       $regex: queries.productName,
@@ -117,48 +106,47 @@ const getProducts = asyncHandler(async (req, res) => {
     };
   }
 
-  // 4. Nếu người dùng gửi brandId hoặc categoryId (ở dạng ObjectId) → lọc trực tiếp (không dùng regex)
-  if (req.query.brandId) {
+  // ✅ Kiểm tra hợp lệ trước khi gán brandId
+  if (req.query.brandId && mongoose.Types.ObjectId.isValid(req.query.brandId)) {
     formatedQueries.brandId = req.query.brandId;
   }
 
-  if (req.query.categoryId) {
+  // ✅ Kiểm tra hợp lệ trước khi gán categoryId
+  if (
+    req.query.categoryId &&
+    mongoose.Types.ObjectId.isValid(req.query.categoryId)
+  ) {
     formatedQueries.categoryId = req.query.categoryId;
   }
 
-  // 5. Tổng hợp điều kiện lọc (filter + search)
   const finalQuery = {
     ...formatedQueries,
     ...searchQuery,
   };
 
-  // 6. Tạo câu truy vấn
   let queryCommand = Product.find(finalQuery)
-    .populate("brandId", "brandName") // lấy tên thương hiệu
-    .populate("categoryId", "productCategoryName slug"); // lấy tên danh mục
+    .populate("brandId", "brandName")
+    .populate("categoryId", "productCategoryName slug");
 
-  // 7. Sắp xếp nếu có (?sort=price,-createdAt)
   if (req.query.sort) {
     const sortBy = req.query.sort.split(",").join(" ");
     queryCommand = queryCommand.sort(sortBy);
   }
 
-  // 8. Giới hạn trường nếu có (?fields=productName,price)
   if (req.query.fields) {
     const fields = req.query.fields.split(",").join(" ");
     queryCommand = queryCommand.select(fields);
   }
 
-  // 9. Phân trang
-  // Giúp chia danh sách sản phẩm thành từng trang nhỏ thay vì trả về toàn bộ dữ liệu cùng lúc.
   const page = +req.query.page || 1;
-  const limit = +req.query.limit || +process.env.LIMIT_PRODUCTS || 10; // Mặc định là 10 sản phẩm mỗi trang
-  const skip = (page - 1) * limit; // Tính số lượng sản phẩm cần bỏ qua
+  const limit = +req.query.limit || +process.env.LIMIT_PRODUCTS || 10;
+  const skip = (page - 1) * limit;
   queryCommand = queryCommand.skip(skip).limit(limit);
 
-  // 10. Thực thi truy vấn
   queryCommand.exec(async (err, response) => {
-    if (err) throw new Error(err.message);
+    if (err)
+      return res.status(500).json({ success: false, message: err.message });
+
     const total = await Product.countDocuments(finalQuery);
     return res.status(200).json({
       success: true,

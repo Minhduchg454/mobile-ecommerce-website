@@ -78,23 +78,108 @@ const createProductVariation = asyncHandler(async (req, res) => {
 
 // Lấy tất cả biến thể sản phẩm
 const getProductVariations = asyncHandler(async (req, res) => {
-  const response = await ProductVariation.find().populate(
-    "productId",
-    "productName thumb"
-  ); // optional: lấy tên sản phẩm
-  return res.json({
-    success: !!response,
-    variations: response || "Cannot get variations",
+  let query = ProductVariation.find();
+
+  // Lọc theo các trường trong biến thể
+  const filter = {};
+  if (req.query.price) {
+    const priceQuery = req.query.price;
+    Object.keys(priceQuery).forEach((op) => {
+      filter.price = { ...filter.price, [`$${op}`]: Number(priceQuery[op]) };
+    });
+  }
+
+  if (req.query.productVariationName) {
+    filter.productVariationName = {
+      $regex: req.query.productVariationName,
+      $options: "i",
+    };
+  }
+
+  // Gắn filter vào query
+  query = query.find(filter);
+
+  // Populate
+  query = query.populate({
+    path: "productId",
+    select:
+      "productName thumb categoryId brandId slug minPrice totalSold totalStock rating totalRating",
+    populate: [
+      { path: "categoryId", select: "productCategoryName slug" },
+      { path: "brandId", select: "brandName" },
+    ],
+  });
+
+  const variations = await query.exec();
+  let finalResult = variations;
+
+  if (req.query.categoryId) {
+    finalResult = finalResult.filter(
+      (v) => v.productId?.categoryId?._id?.toString() === req.query.categoryId
+    );
+  }
+
+  if (req.query.brandId) {
+    finalResult = finalResult.filter(
+      (v) => v.productId?.brandId?._id?.toString() === req.query.brandId
+    );
+  }
+
+  // Xử lý sort
+  const sortOption = req.query.sort;
+  if (sortOption) {
+    const jsSortMap = {
+      "-minPrice": (a, b) => b.productId?.minPrice - a.productId?.minPrice,
+      minPrice: (a, b) => a.productId?.minPrice - b.productId?.minPrice,
+      "-totalSold": (a, b) => b.productId?.totalSold - a.productId?.totalSold,
+      totalSold: (a, b) => a.productId?.totalSold - b.productId?.totalSold,
+      "-rating": (a, b) => b.productId?.rating - a.productId?.rating,
+      rating: (a, b) => a.productId?.rating - b.productId?.rating,
+      nameAsc: (a, b) =>
+        a.productId?.productName?.localeCompare(b.productId?.productName),
+      nameDesc: (a, b) =>
+        b.productId?.productName?.localeCompare(a.productId?.productName),
+      newest: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      oldest: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    };
+
+    const jsSortFunc = jsSortMap[sortOption];
+    if (jsSortFunc) {
+      finalResult.sort(jsSortFunc);
+    }
+  }
+  // Lọc theo tên sản phẩm nếu có query.q
+  if (req.query.q) {
+    const keyword = req.query.q.toLowerCase();
+    finalResult = finalResult.filter(
+      (v) =>
+        v.productId?.productName &&
+        v.productId.productName.toLowerCase().includes(keyword)
+    );
+  }
+
+  // Lọc bỏ các biến thể không có productId
+  finalResult = finalResult.filter((v) => v.productId !== null);
+
+  res.json({
+    success: true,
+    count: finalResult.length,
+    variations: finalResult,
   });
 });
 
 // Lấy một biến thể theo ID
 const getProductVariation = asyncHandler(async (req, res) => {
   const { pvid } = req.params;
-  const response = await ProductVariation.findById(pvid).populate(
-    "productId",
-    "productName thumb"
-  );
+  const response = await ProductVariation.findById(pvid).populate({
+    path: "productId",
+    select:
+      "pproductName thumb categoryId brandId slug minPrice totalSold totalStock rating totalRating",
+    populate: [
+      { path: "categoryId", select: "productCategoryName slug" },
+      { path: "brandId", select: "brandName" },
+    ],
+  });
   return res.json({
     success: !!response,
     variation: response || "Cannot get variation",
