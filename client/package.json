@@ -48,7 +48,8 @@
     "react-use": "^17.4.0",
     "redux-persist": "^6.0.0",
     "slick-carousel": "^1.8.1",
-    "sweetalert2": "^11.6.13",
+    "sweetalert2": "^11.22.2",
+    "sweetalert2-react-content": "^5.1.0",
     "swiper": "^11.2.10",
     "use-react-router-breadcrumbs": "^4.0.1",
     "web-vitals": "^2.1.4"

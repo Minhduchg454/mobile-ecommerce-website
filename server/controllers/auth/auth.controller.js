@@ -50,7 +50,7 @@ exports.googleLogin = async (req, res) => {
 
     // Tạo JWT
     const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: "1d",
     });
 
     res.status(200).json({

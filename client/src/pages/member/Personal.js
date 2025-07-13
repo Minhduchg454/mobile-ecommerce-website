@@ -12,6 +12,7 @@ import { FaLock, FaCheckCircle } from "react-icons/fa";
 import { ConfirmModal, Loading } from "../../components";
 import { useState } from "react";
 import { showModal } from "store/app/appSlice";
+import { ShowSwal } from "../../components";
 
 const Personal = ({ navigate }) => {
   const {
@@ -47,7 +48,7 @@ const Personal = ({ navigate }) => {
       if (data[key]) formData.append(key, data[key]);
     });
 
-    dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> })); // 🔒
+    dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
 
     try {
       const response = await apiUpdateCurrent(formData, current._id);
@@ -80,6 +81,21 @@ const Personal = ({ navigate }) => {
     });
     return () => subscription.unsubscribe();
   }, [watch]);
+
+  useEffect(() => {
+    if (showSuccessModal) {
+      ShowSwal({
+        title: "Cập nhật thành công",
+        text: "",
+        showCancelButton: false,
+        showConfirmButton: false,
+        timer: 2000,
+        icon: "success",
+      });
+
+      setShowSuccessModal(false); // reset lại
+    }
+  }, [showSuccessModal]);
 
   const isBlocked = current?.isBlocked;
 
@@ -205,15 +221,6 @@ const Personal = ({ navigate }) => {
           </div>
         </div>
       </form>
-      {showSuccessModal && (
-        <ConfirmModal
-          title="Cập nhật thành công"
-          message="Thông tin cá nhân đã được cập nhật."
-          confirmText="Đóng"
-          onConfirm={() => setShowSuccessModal(false)}
-          onCancel={() => setShowSuccessModal(false)}
-        />
-      )}
     </div>
   );
 };
