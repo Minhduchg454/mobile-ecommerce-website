@@ -6,11 +6,10 @@ import {
   apiUpdateCoupon,
   apiDeleteCoupon,
 } from "apis";
-import { InputForm, Button, Loading } from "components";
+import { InputForm, Button, Loading, ShowSwal } from "components";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { showModal } from "store/app/appSlice";
-import Swal from "sweetalert2";
 import { formatVnDate, formatVnCurrency } from "../../ultils/helpers";
 import { useSelector } from "react-redux";
 
@@ -59,10 +58,12 @@ const ManageCoupons = () => {
   };
 
   const handleDelete = (id) => {
-    Swal.fire({
+    ShowSwal({
       title: "Xác nhận",
       text: "Bạn có chắc muốn xoá mã giảm giá này?",
       showCancelButton: true,
+      variant: "danger",
+      icon: "warning",
     }).then(async (result) => {
       if (result.isConfirmed) {
         const res = await apiDeleteCoupon(id);

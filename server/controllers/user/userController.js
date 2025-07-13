@@ -106,9 +106,14 @@ const login = asyncHandler(async (req, res) => {
 // Lấy user hiện tại từ token
 const getCurrent = asyncHandler(async (req, res) => {
   const { id } = req.user;
-  // console.log("goi current", req.user);
+  console.log("goi current", req.body);
 
-  const user = await User.findById(id).populate("roleId userName");
+  const user = await User.findById(id)
+    .populate("statusUserId", "statusUserName")
+    .populate("roleId userName");
+
+  console.log("goi user", user);
+
   if (!user)
     return res.status(404).json({ success: false, mes: "User not found" });
 
@@ -204,7 +209,10 @@ const getUsers = asyncHandler(async (req, res) => {
 
 // Lấy user theo id
 const getUserById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).populate("roleId");
+  const user = await User.findById(req.params.id)
+    .populate("roleId")
+    .populate("statusUserId", "statusUserName");
+
   if (!user)
     return res.status(404).json({ success: false, mes: "User not found" });
   return res.json({ success: true, user });

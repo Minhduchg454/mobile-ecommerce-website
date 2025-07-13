@@ -6,12 +6,11 @@ import {
   apiDeleteProductCategory,
 } from "apis";
 import { getBase64 } from "ultils/helpers";
-import { InputForm, Button, Loading } from "components";
+import { InputForm, Button, Loading, ShowSwal } from "components";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { showModal } from "store/app/appSlice";
-import Swal from "sweetalert2";
 
 const ManageProductCategory = () => {
   const dispatch = useDispatch();
@@ -55,30 +54,32 @@ const ManageProductCategory = () => {
     dispatch(showModal({ isShowModal: false, modalChildren: null }));
 
     if (res.success) {
-      toast.success("✅ Tạo danh mục thành công!");
+      toast.success("Tạo danh mục thành công!");
       reset();
       setPreview(null);
       document.getElementById("thumb").value = "";
       setShowForm(false);
       render();
     } else {
-      toast.error(res.mes || "❌ Có lỗi xảy ra");
+      toast.error(res.mes || "Có lỗi xảy ra");
     }
   };
 
   const handleDelete = (id) => {
-    Swal.fire({
+    ShowSwal({
       title: "Xác nhận",
       text: "Bạn có chắc muốn xoá danh mục này?",
       showCancelButton: true,
+      variant: "danger",
+      icon: "warning",
     }).then(async (result) => {
       if (result.isConfirmed) {
         const res = await apiDeleteProductCategory(id);
         if (res.success) {
-          toast.success("✅ Đã xoá danh mục");
+          toast.success("Xoá danh mục thành công");
           render();
         } else {
-          toast.error(res.mes || "❌ Xoá thất bại");
+          toast.error(res.mes || "Xoá thất bại");
         }
       }
     });

@@ -40,26 +40,19 @@ import {
 import path from "ultils/path";
 import { getCategories } from "store/app/asyncActions";
 import { useDispatch, useSelector } from "react-redux";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Cart, Modal } from "components";
 import { showCart, showWishlist } from "store/app/appSlice";
-
-// 👇 Thêm dòng này:
 import { GoogleOAuthProvider } from "@react-oauth/google";
-const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 function App() {
+  const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
   const dispatch = useDispatch();
   const { isShowModal, modalChildren, isShowCart, isShowWishlist } =
     useSelector((state) => state.app);
 
-  useEffect(() => {
-    dispatch(getCategories());
-  }, []);
-
   return (
-    // 👇 Bọc toàn bộ nội dung trong GoogleOAuthProvider
     <GoogleOAuthProvider clientId={clientId}>
       <div className="font-jp">
         {isShowWishlist && (
@@ -121,8 +114,8 @@ function App() {
           <Route path={path.LOGIN} element={<Login />} />
         </Routes>
         <ToastContainer
-          position="top-right"
-          autoClose={5000}
+          position="top-center"
+          autoClose={2000}
           hideProgressBar={true}
           newestOnTop={false}
           closeOnClick
@@ -130,8 +123,11 @@ function App() {
           pauseOnFocusLoss
           draggable
           pauseOnHover
+          transition={Bounce}
+          toastClassName={() =>
+            "flex items-center justify-between backdrop-blur-lg bg-white/70 text-black rounded-xl shadow-md p-2"
+          }
         />
-        <ToastContainer />
         <Chatbot />
       </div>
     </GoogleOAuthProvider>

@@ -7,15 +7,20 @@ import {
   apiGetAllStatusUsers,
 } from "../../apis";
 import { roles as staticRoles, blockStatus } from "ultils/contants";
-import { InputField, Pagination, InputForm, Select, Button } from "components";
+import {
+  InputField,
+  Pagination,
+  InputForm,
+  Select,
+  Button,
+  ShowSwal,
+} from "components";
 import useDebounce from "hooks/useDebounce";
 import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import Swal from "sweetalert2";
 import clsx from "clsx";
 import { useSelector } from "react-redux";
-import SelectableList from "../../components/search/SelectableList";
 
 const ManageUser = () => {
   const {
@@ -83,15 +88,17 @@ const ManageUser = () => {
   };
 
   const handleDeleteUser = (uid) => {
-    Swal.fire({
+    ShowSwal({
       title: "Xác nhận",
       text: "Bạn có chắc muốn xoá tài khoản này?",
       showCancelButton: true,
+      icon: "warning",
+      variant: "danger",
     }).then(async (result) => {
       if (result.isConfirmed) {
         const response = await apiDeleteUser(uid);
         if (response.success) {
-          toast.success(response.mes);
+          toast.success("Xóa tài khoản thành công");
           render();
         } else toast.error(response.mes);
       }
@@ -106,7 +113,6 @@ const ManageUser = () => {
     code: s._id,
     value: s.statusUserName,
   }));
-  console.log("danh sach trang thai", statusUsers);
 
   return (
     <div

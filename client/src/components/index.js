@@ -55,3 +55,4 @@ export { default as Select } from "./inputs/Select";
 export { default as MarkdownEditor } from "./inputs/MarkdownEditor";
 export { default as ConfirmLogoutModa } from "./common/ConfirmLogoutModal";
 export { default as SidebarLayout } from "./common/SidebarLayout";
+export { default as ShowSwal } from "./common/ShowSwal";

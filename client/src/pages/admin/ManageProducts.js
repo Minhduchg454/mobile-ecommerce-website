@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { InputForm, Pagination } from "components";
+import { InputForm, Pagination, ShowSwal } from "components";
 import { useForm } from "react-hook-form";
 import { apiGetProducts, apiDeleteProduct } from "apis/product";
 import {
@@ -10,7 +10,6 @@ import {
 } from "react-router-dom";
 import useDebounce from "hooks/useDebounce";
 import CreateProducts from "./CreateProducts";
-import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { BiEdit, BiCustomize } from "react-icons/bi";
 import { RiDeleteBin6Line } from "react-icons/ri";
@@ -74,11 +73,12 @@ const ManageProducts = () => {
   }, [params, update]);
 
   const handleDeleteProduct = (pid) => {
-    Swal.fire({
+    ShowSwal({
       title: "Bạn có chắc chắn?",
       text: "Thao tác này sẽ xoá sản phẩm khỏi hệ thống.",
       icon: "warning",
       showCancelButton: true,
+      variant: "danger",
     }).then(async (rs) => {
       if (rs.isConfirmed) {
         const response = await apiDeleteProduct(pid);
