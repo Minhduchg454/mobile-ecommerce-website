@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   apiGetProduct,
   apiGetProducts,
@@ -15,22 +16,12 @@ import {
   CustomSlider1,
   ProductCard,
 } from "components";
-import Slider from "react-slick";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 import clsx from "clsx";
 import { formatMoney, fotmatPrice, renderStarFromNumber } from "ultils/helpers";
 import { useSelector } from "react-redux";
-
-const settings = {
-  dots: false,
-  infinite: false,
-  speed: 500,
-  slidesToShow: 3,
-  slidesToScroll: 1,
-  centerMode: true,
-  centerPadding: "0px",
-};
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 const ProductDetail1 = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -41,11 +32,20 @@ const ProductDetail1 = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [specifications, setSpecifications] = useState([]);
   const [currentImage, setCurrentImage] = useState("");
+  const [imageIndex, setImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
   const pvid = searchParams.get("code");
+
+  const imageList = currentProduct?.images || [];
+
+  useEffect(() => {
+    if (imageList.length > 0) {
+      setCurrentImage(imageList[imageIndex] || "");
+    }
+  }, [imageIndex, imageList]);
 
   useEffect(() => {
     if (pvid) {
@@ -54,7 +54,7 @@ const ProductDetail1 = () => {
           const variant = res.variation;
           setCurrentProduct(variant);
           setSelectedVariantId(variant._id);
-          setCurrentImage(variant.images?.[0] || "");
+          setImageIndex(0);
           fetchProductAndVariations(variant.productId.id);
         }
       });
@@ -105,7 +105,7 @@ const ProductDetail1 = () => {
       const variant = variations.find((v) => v._id === selectedVariantId);
       if (variant) {
         setCurrentProduct(variant);
-        setCurrentImage(variant.images?.[0] || "");
+        setImageIndex(0);
         fetchSpecifications(selectedVariantId);
       }
     }
@@ -113,10 +113,9 @@ const ProductDetail1 = () => {
 
   const handleSelectVariant = (variantId) => {
     setSelectedVariantId(variantId);
-    // Cập nhật lại URL
     const currentParams = new URLSearchParams(searchParams.toString());
     currentParams.set("code", variantId);
-    setSearchParams(currentParams); // cập nhật code mới vào URL
+    setSearchParams(currentParams);
   };
 
   const handleChangeQuantity = (type) => {
@@ -126,13 +125,23 @@ const ProductDetail1 = () => {
 
   const handleClickImage = (e, img) => {
     e.stopPropagation();
-    setCurrentImage(img);
+    const index = imageList.indexOf(img);
+    if (index !== -1) {
+      setImageIndex(index);
+    }
+  };
+
+  const handlePrev = () => {
+    setImageIndex((prev) => (prev === 0 ? imageList.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setImageIndex((prev) => (prev === imageList.length - 1 ? 0 : prev + 1));
   };
 
   return (
-    <div className="w-full">
-      {/* Breadcrumb + title */}
-      <div className="h-[81px] flex justify-center items-center border-b border-gray-200">
+    <div className="xl:w-main w-full">
+      <div className="h-[70px] flex justify-center items-center px-4">
         <div className="w-main">
           <Breadcrumb
             title={product?.slug || "san-pham"}
@@ -144,52 +153,79 @@ const ProductDetail1 = () => {
         </div>
       </div>
 
-      {/* Nội dung chi tiết */}
-      <div className="bg-white w-main m-auto px-4 flex flex-col gap-8 mt-4">
-        {/* Khung chia 2 bên */}
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Trái: Hình ảnh + cấu hình */}
-          <div className="w-full md:w-1/2 flex flex-col gap-4">
-            {/* Ảnh chính */}
-            {/* Ảnh chính */}
-            <div className="relative w-full border shadow-md rounded-xl p-2 h-[400px] flex justify-center items-center bg-white overflow-hidden">
-              {currentImage ? (
-                <Zoom>
+      <div className="w-full m-auto px-4 flex flex-col gap-5 mt-4">
+        <div className="flex flex-col-reverse md:flex-row gap-5 items-start">
+          <div className="lg:basis-[70%] w-full flex flex-col gap-5 items-center">
+            {/* Hình ảnh chính */}
+            <div className="w-full border shadow-md rounded-xl p-2">
+              <div className="relative p-2 h-[400px] flex justify-center items-center bg-white overflow-hidden">
+                {imageList.length > 0 ? (
+                  <>
+                    <Zoom>
+                      <AnimatePresence mode="wait">
+                        <motion.img
+                          key={currentImage}
+                          src={currentImage}
+                          alt="product"
+                          className="object-contain max-h-[380px] max-w-full"
+                          initial={{ opacity: 0, x: 100 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -100 }}
+                          transition={{ duration: 0.2 }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/fallback.jpg";
+                          }}
+                        />
+                      </AnimatePresence>
+                    </Zoom>
+
+                    {/* Mũi tên */}
+                    <button
+                      onClick={handlePrev}
+                      className="w-10 h-10 absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 rounded-full shadow flex items-center justify-center z-10"
+                    >
+                      <FaChevronLeft className="text-gray-700 text-lg" />
+                    </button>
+
+                    <button
+                      onClick={handleNext}
+                      className="w-10 h-10 absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 rounded-full shadow flex items-center justify-center z-10"
+                    >
+                      <FaChevronRight className="text-gray-700 text-lg" />
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-gray-400 text-sm">Không có ảnh</span>
+                )}
+              </div>
+
+              {/* Ảnh nhỏ bên dưới */}
+              <div className="w-full flex justify-center items-center gap-2 mt-3 flex-wrap">
+                {imageList.map((img, idx) => (
                   <img
-                    src={currentImage}
-                    alt="product"
-                    className="object-contain w-full max-h-[380px]"
-                    style={{ objectFit: "contain" }}
+                    key={idx}
+                    onClick={(e) => handleClickImage(e, img)}
+                    src={img}
+                    alt={`thumb-${idx}`}
+                    className={clsx(
+                      "w-[50px] h-[50px] object-cover border p-1 rounded-md cursor-pointer",
+                      currentImage === img
+                        ? "border-red-500 shadow"
+                        : "border-gray-300 hover:border-gray-400"
+                    )}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "/fallback.jpg";
                     }}
                   />
-                </Zoom>
-              ) : (
-                <span className="text-gray-400 text-sm">Không có ảnh</span>
-              )}
-            </div>
-
-            {/* Slider ảnh nhỏ */}
-            <div className="w-full flex justify-center overflow-x-auto">
-              <Slider {...settings} className="w-[300px]">
-                {currentProduct?.images?.map((img, idx) => (
-                  <div key={idx} className="px-1">
-                    <img
-                      onClick={(e) => handleClickImage(e, img)}
-                      src={img}
-                      alt="thumb"
-                      className="w-[50px] h-[50px] object-cover border rounded-md cursor-pointer"
-                    />
-                  </div>
                 ))}
-              </Slider>
+              </div>
             </div>
 
             {/* Cấu hình sản phẩm */}
             {specifications.length > 0 && (
-              <div className="text-sm border p-3 rounded-md">
+              <div className="w-full text-sm border p-2 rounded-xl shadow-sm">
                 <h4 className="font-bold mb-3">Cấu hình sản phẩm:</h4>
                 {specifications.map((item) => (
                   <div key={item._id} className="flex justify-between py-1">
@@ -205,8 +241,8 @@ const ProductDetail1 = () => {
             )}
           </div>
 
-          {/* Phải: Thông tin sản phẩm */}
-          <div className="w-full md:w-1/2 flex flex-col gap-4">
+          {/* Thông tin sản phẩm */}
+          <div className="lg:basis-[30%] w-full flex flex-col gap-4 border rounded-xl p-4 shadow-md">
             <h2 className="text-[30px] font-semibold">
               {currentProduct?.price
                 ? `${formatMoney(fotmatPrice(currentProduct.price))} VNĐ`
@@ -224,10 +260,9 @@ const ProductDetail1 = () => {
               </span>
             </div>
 
-            {/* Chọn loại biến thể */}
             <div>
               <h4 className="font-semibold mb-1">Chọn loại:</h4>
-              <div className="flex gap-3 flex-wrap">
+              <div className="flex gap-4 flex-wrap">
                 {variations.map((v) => (
                   <div
                     key={v._id}
@@ -250,7 +285,6 @@ const ProductDetail1 = () => {
               </div>
             </div>
 
-            {/* Chọn số lượng */}
             <div className="flex items-center gap-4">
               <span>Số lượng:</span>
               <SelectQuantity
@@ -259,11 +293,11 @@ const ProductDetail1 = () => {
               />
             </div>
 
-            <Button fw>Thêm vào giỏ hàng</Button>
+            <Button className="w-full">Thêm vào giỏ hàng</Button>
           </div>
         </div>
 
-        {/* Đánh giá + mô tả */}
+        {/* Mô tả và đánh giá */}
         {product && (
           <div className="mt-6">
             <ProductInfomation
@@ -280,7 +314,7 @@ const ProductDetail1 = () => {
       </div>
 
       {/* Sản phẩm khác */}
-      <div className="w-main mx-auto mt-10">
+      <div className="w-main mx-auto mt-10 px-4">
         <h3 className="font-semibold text-xl border-b border-main pb-2 mb-4">
           Sản phẩm khác
         </h3>
@@ -303,3 +337,50 @@ const ProductDetail1 = () => {
 };
 
 export default ProductDetail1;
+
+/* 
+
+  const handleClickImage = (e, img) => {
+    e.stopPropagation();
+    setCurrentImage(img);
+  };
+
+            <div className="w-full border shadow-md rounded-xl p-2">
+              <div className="relative  p-2 h-[400px] flex justify-center items-center bg-white overflow-hidden">
+                {currentImage ? (
+                  <Zoom>
+                    <img
+                      src={currentImage}
+                      alt="product"
+                      className="object-contain w-auto max-h-[380px]"
+                      style={{ objectFit: "contain" }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/fallback.jpg";
+                      }}
+                    />
+                  </Zoom>
+                ) : (
+                  <span className="text-gray-400 text-sm">Không có ảnh</span>
+                )}
+              </div>
+
+             
+              <div className="w-full flex justify-center items-center overflow-x-auto">
+                <Slider {...settings} className="w-[300px]">
+                  {currentProduct?.images?.map((img, idx) => (
+                    <div key={idx} className="px-1">
+                      <img
+                        onClick={(e) => handleClickImage(e, img)}
+                        src={img}
+                        alt="thumb"
+                        className="w-[50px] h-[50px] object-cover border p-1 rounded-md cursor-pointer"
+                      />
+                    </div>
+                  ))}
+                </Slider>
+              </div>
+            </div>
+
+
+*/

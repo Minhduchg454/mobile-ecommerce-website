@@ -27,10 +27,10 @@ const Home = ({ navigate }) => {
         + W-MAIN la no khoa chet chieu rong do, khong duoc doi du man hinh nho hay lon
         + Chỉ từ md trở lên mới fix 1100px, còn nhỏ hơn thì auto → ✅ Co giãn
       */}
-      <div className="md:w-main m-auto">
+      <div className="xl:w-main m-auto">
         <CategoryList />
       </div>
-      <div className="md:w-main m-auto flex flex-col md:flex-row mt-6 px-2 gap-4">
+      <div className="xl:w-main m-auto flex flex-col md:flex-row mt-6 px-2 gap-4">
         <div className="flex flex-col gap-5 md:w-[25%] flex-auto border-none ">
           <DealDaily />
         </div>
@@ -43,7 +43,7 @@ const Home = ({ navigate }) => {
           </div>
         </div>
       </div>
-      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
+      <div className="flex flex-col my-8 xl:w-main w-full m-auto overflow-x-hidden">
         <FeatureProducts
           title="Top 5 điện thoại bán chạy nhất"
           sort="totalSold"
@@ -51,7 +51,7 @@ const Home = ({ navigate }) => {
           limit={5}
         />
       </div>
-      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
+      <div className="flex flex-col my-8 xl:w-main w-full m-auto overflow-x-hidden">
         <FeatureProducts
           title="Top 5 máy tính bán chạy nhất"
           sort="-totalSold"
@@ -59,7 +59,7 @@ const Home = ({ navigate }) => {
           limit={5}
         />
       </div>
-      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
+      <div className="flex flex-col my-8 xl:w-main w-fullm-auto overflow-x-hidden">
         <FeatureProducts
           title="Nhưng phụ kiện điện thoại mới nhất"
           sort="newest"
@@ -68,7 +68,7 @@ const Home = ({ navigate }) => {
         />
       </div>
 
-      <div className="flex flex-col my-8 md:w-main m-auto overflow-x-hidden">
+      <div className="flex flex-col my-8 xl:w-main w-full m-auto overflow-x-hidden">
         <FeatureInfo />
       </div>
     </div>
