@@ -76,15 +76,21 @@ const Header = () => {
 
   return (
     <div className="w-full bg-header-footer">
-      <div className="md:w-main w-full mx-auto flex items-center justify-between md:h-[60px] py-[8px] px-4">
+      <div className="xl:w-main w-full mx-auto flex items-center justify-between md:h-[60px] py-[8px] px-4">
         <Link
           to={`/${path.HOME}`}
-          className="h-16 flex items-center justify-center px-2"
+          className="h-16 flex items-center justify-start px-2"
         >
-          <img src={logo} alt="logo" className="h-full w-auto object-contain" />
+          <div className="w-auto h-[60px] flex items-center justify-center">
+            <img
+              src={logo}
+              alt="logo"
+              className="h-full w-auto object-contain"
+            />
+          </div>
         </Link>
 
-        <div className="w-full md:w-[600px] px-1 shadow rounded-xl bg-gray-200">
+        <div className="lg:w-[700px] w-full px-1 shadow rounded-xl bg-gray-200">
           <InputFormSearch
             id="q"
             register={register}
@@ -131,15 +137,17 @@ const Header = () => {
               onClick={() => setIsShowOption((prev) => !prev)}
             >
               {current?.avatar ? (
-                <img
-                  src={current.avatar}
-                  alt="avatar"
-                  className="w-10 h-10 object-cover rounded-full border"
-                />
+                <div className="w-10 aspect-square rounded-full overflow-hidden border shrink-0">
+                  <img
+                    src={current.avatar}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <FaUserCircle size={28} className="text-blue-600 w-10 h-10" />
               )}
-              <span className="hidden md:inline-block ml-2 text-lg font-medium text-black">
+              <span className="hidden lg:inline-block ml-2 text-lg font-medium text-black">
                 {current.firstName}
               </span>
 

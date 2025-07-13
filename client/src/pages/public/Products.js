@@ -139,15 +139,15 @@ const Products = () => {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="md:w-main m-auto h-[81px] flex justify-start items-center p-2 !bg-white">
-        <div className="lg:w-main w-screen px-4 lg:px-0">
+      <div className="xl:w-main m-auto h-[81px] flex justify-start items-center p-2 !bg-white">
+        <div className="xl:w-main w-screen px-4 lg:px-0">
           <Breadcrumb category={category} />
           <h3 className="font-semibold uppercase">{categoryName}</h3>
         </div>
       </div>
 
       {/* Banner */}
-      <div className="md:w-main p-2 m-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="xl:w-main p-2 m-auto grid grid-cols-1 xl:grid-cols-2 gap-4">
         <ReusableBanner images={banner1} aspectRatio="3/1" delay={0} />
         <ReusableBanner images={banner2} aspectRatio="3/1" delay={2500} />
       </div>
