@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { MdOutlineShoppingCart } from "react-icons/md";
+
 import {
   apiGetProduct,
   apiGetProducts,
@@ -15,6 +17,7 @@ import {
   ProductInfomation,
   CustomSlider1,
   ProductCard,
+  FeatureProducts,
 } from "components";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
@@ -22,6 +25,10 @@ import clsx from "clsx";
 import { formatMoney, fotmatPrice, renderStarFromNumber } from "ultils/helpers";
 import { useSelector } from "react-redux";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import icons from "ultils/icons";
+import { FaCheckCircle } from "react-icons/fa";
+
+const { AiOutlinePhone } = icons;
 
 const ProductDetail1 = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,6 +42,7 @@ const ProductDetail1 = () => {
   const [imageIndex, setImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [brandId, setBrandId] = useState("");
   const [relatedProducts, setRelatedProducts] = useState([]);
 
   const pvid = searchParams.get("code");
@@ -71,6 +79,7 @@ const ProductDetail1 = () => {
       if (resProduct.success) {
         setProduct(resProduct.productData);
         fetchRelatedProducts(resProduct.productData.categoryId?._id);
+        setBrandId(resProduct.productData.brandId._id);
       }
 
       if (resVariations.success) {
@@ -155,7 +164,7 @@ const ProductDetail1 = () => {
 
       <div className="w-full m-auto px-4 flex flex-col gap-5 mt-4">
         <div className="flex flex-col-reverse md:flex-row gap-5 items-start">
-          <div className="lg:basis-[70%] w-full flex flex-col gap-5 items-center">
+          <div className="lg:basis-[60%] w-full flex flex-col gap-5 items-center">
             {/* Hình ảnh chính */}
             <div className="w-full border shadow-md rounded-xl p-2">
               <div className="relative p-2 h-[400px] flex justify-center items-center bg-white overflow-hidden">
@@ -225,10 +234,13 @@ const ProductDetail1 = () => {
 
             {/* Cấu hình sản phẩm */}
             {specifications.length > 0 && (
-              <div className="w-full text-sm border p-2 rounded-xl shadow-sm">
-                <h4 className="font-bold mb-3">Cấu hình sản phẩm:</h4>
+              <div className="w-full text-sm border p-4 rounded-xl shadow-md">
+                <h4 className="font-bold mb-3">Thông số kỹ thuật:</h4>
                 {specifications.map((item) => (
-                  <div key={item._id} className="flex justify-between py-1">
+                  <div
+                    key={item._id}
+                    className="flex justify-between py-1 border-b-2"
+                  >
                     <span>{item.specificationTypeId?.typeSpecifications}</span>
                     <span>
                       {item.value}
@@ -242,7 +254,7 @@ const ProductDetail1 = () => {
           </div>
 
           {/* Thông tin sản phẩm */}
-          <div className="lg:basis-[30%] w-full flex flex-col gap-4 border rounded-xl p-4 shadow-md">
+          <div className="lg:basis-[40%] w-full flex flex-col gap-4 border rounded-xl p-4 shadow-md">
             <h2 className="text-[30px] font-semibold">
               {currentProduct?.price
                 ? `${formatMoney(fotmatPrice(currentProduct.price))} VNĐ`
@@ -292,8 +304,59 @@ const ProductDetail1 = () => {
                 handleChangeQuantity={handleChangeQuantity}
               />
             </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {}}
+                className=" rounded-xl p-2 flex flex-col justify-center items-center basis-[40%] w-full border border-[#00AFFF] text-[#00AFFF] font-semibold bg-white hover:bg-[#00AFFF] hover:text-white transition duration-200 ease-in-out shadow-sm"
+              >
+                <MdOutlineShoppingCart size={24} />
+                <p className="text-sm">Thêm vào giỏ hàng</p>
+              </button>
+              <button
+                onClick={() => {}}
+                className="flex justify-center items-center rounded-xl w-full basis-[60%] bg-[#00AFFF] hover:bg-blue-700 text-white font-semibold py-2 transition duration-200 ease-in-out shadow-md"
+              >
+                Mua ngay
+              </button>
+            </div>
+            <div className="flex justify-start items-center gap-1">
+              <AiOutlinePhone size={14} />
+              <p className="text-sm">
+                Gọi đặt mua qua{" "}
+                <span className="text-[#00AFFF]">0909 567 999</span>
+              </p>
+            </div>
+            {/* Cam kết mua hàng */}
+            <div className="mt-4 border border-blue-500 bg-blue-100 rounded-xl p-2">
+              <h4 className="text-md font-semibold mb-2 flex items-center gap-1 text-red-600">
+                <FaCheckCircle className="text-red-600" size={23} />
+                Cam kết khi mua hàng
+              </h4>
 
-            <Button className="w-full">Thêm vào giỏ hàng</Button>
+              <ol className="flex flex-col gap-2 text-sm text-gray-700">
+                {[
+                  "Hàng chính hãng 100%",
+                  "Giao hàng toàn quốc",
+                  "Đổi trả trong 7 ngày nếu lỗi",
+                  "Hỗ trợ kỹ thuật trọn đời",
+                ].map((text, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="min-w-[15px] h-[15px] flex items-center justify-center bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm">
+                      {index + 1}
+                    </span>
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* Giao hàng dự kiến */}
+            <div className="mt-3">
+              <p className="text-sm text-gray-600">
+                🚚 <span className="font-semibold">Giao hàng dự kiến:</span>{" "}
+                <span className="text-gray-800">1 - 2 ngày</span>
+              </p>
+            </div>
           </div>
         </div>
 
@@ -315,21 +378,11 @@ const ProductDetail1 = () => {
 
       {/* Sản phẩm khác */}
       <div className="w-main mx-auto mt-10 px-4">
-        <h3 className="font-semibold text-xl border-b border-main pb-2 mb-4">
-          Sản phẩm khác
-        </h3>
-        <CustomSlider1
-          items={relatedProducts}
-          itemWidth={250}
-          renderItem={(el) => (
-            <ProductCard
-              pid={el._id}
-              thumb={el.thumb}
-              slugCategory={el.categoryId?.slug}
-              slug={el.slug}
-              {...el}
-            />
-          )}
+        <FeatureProducts
+          title="Những thiết bị liên quan"
+          sort="newest"
+          query={{ brandId: brandId }}
+          limit={5}
         />
       </div>
     </div>
@@ -337,50 +390,3 @@ const ProductDetail1 = () => {
 };
 
 export default ProductDetail1;
-
-/* 
-
-  const handleClickImage = (e, img) => {
-    e.stopPropagation();
-    setCurrentImage(img);
-  };
-
-            <div className="w-full border shadow-md rounded-xl p-2">
-              <div className="relative  p-2 h-[400px] flex justify-center items-center bg-white overflow-hidden">
-                {currentImage ? (
-                  <Zoom>
-                    <img
-                      src={currentImage}
-                      alt="product"
-                      className="object-contain w-auto max-h-[380px]"
-                      style={{ objectFit: "contain" }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/fallback.jpg";
-                      }}
-                    />
-                  </Zoom>
-                ) : (
-                  <span className="text-gray-400 text-sm">Không có ảnh</span>
-                )}
-              </div>
-
-             
-              <div className="w-full flex justify-center items-center overflow-x-auto">
-                <Slider {...settings} className="w-[300px]">
-                  {currentProduct?.images?.map((img, idx) => (
-                    <div key={idx} className="px-1">
-                      <img
-                        onClick={(e) => handleClickImage(e, img)}
-                        src={img}
-                        alt="thumb"
-                        className="w-[50px] h-[50px] object-cover border p-1 rounded-md cursor-pointer"
-                      />
-                    </div>
-                  ))}
-                </Slider>
-              </div>
-            </div>
-
-
-*/

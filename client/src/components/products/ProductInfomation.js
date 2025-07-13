@@ -60,8 +60,8 @@ const ProductInfomation = ({
 
   return (
     <div>
-      <div className="flex flex-col py-8 w-main">
-        <div className="flex border">
+      <div className="w-full flex flex-col p-4 border rounded-xl shadow-md">
+        <div className="flex border rounded-xl">
           <div className="flex-4 flex-col flex items-center justify-center ">
             <span className="font-semibold text-3xl">{`${ratings}/5`}</span>
             <span className="flex items-center gap-1">

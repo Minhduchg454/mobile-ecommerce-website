@@ -149,6 +149,15 @@ const getProductVariations = asyncHandler(async (req, res) => {
       finalResult.sort(jsSortFunc);
     }
   }
+  //Loc theo thuong hieu
+  if (req.query.brandName) {
+    finalResult = finalResult.filter((v) =>
+      v.productId?.brandId?.brandName
+        ?.toLowerCase()
+        .includes(req.query.brandName.toLowerCase())
+    );
+  }
+
   // Lọc theo tên sản phẩm nếu có query.q
   if (req.query.q) {
     const keyword = req.query.q.toLowerCase();
