@@ -12,12 +12,16 @@ export { default as CategoryList } from "./products/Category";
 export { default as CustomizeVarriants } from "./products/CustomizeVarriants";
 export { default as ProductCard } from "./products/ProductCard";
 export { default as QuickView } from "./products/QuickView";
-export { default as CustomSlider } from "./common/CustomSlider";
+
 export { default as FeatureInfo } from "./products/FeatureInfo";
 export { default as FeatureInfoSlider } from "./common/FeatureInfoSlider";
 export { default as ReusableBanner } from "./common/ReusableBanner";
 export { default as CustomToast } from "./common/CustomToast";
 export { default as ConfirmModal } from "./common/ConfirmModal";
+export { default as ColorSlider } from "./common/ColorSlider";
+export { default as CustomSlider1 } from "./common/CustomSlider1";
+export { default as SelectableList } from ".//search/SelectableList";
+
 // export { default as TopHeader } from './headers/TopHeader'
 export { default as Footer } from "./footer/Footer";
 export { default as InputField } from "./inputs/InputField";
@@ -51,3 +55,4 @@ export { default as Select } from "./inputs/Select";
 export { default as MarkdownEditor } from "./inputs/MarkdownEditor";
 export { default as ConfirmLogoutModa } from "./common/ConfirmLogoutModal";
 export { default as SidebarLayout } from "./common/SidebarLayout";
+export { default as ShowSwal } from "./common/ShowSwal";

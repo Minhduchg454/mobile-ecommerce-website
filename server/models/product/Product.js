@@ -31,7 +31,13 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now, // Tự động điền ngày hiện tại khi tạo
   },
-  totalSold: { //Tong so luong bien the ban ra
+  totalSold: {
+    //Tong so luong bien the ban ra
+    type: Number,
+    default: 0,
+  },
+  totalStock: {
+    //Tong so luong san pham tu tat ca bien the
     type: Number,
     default: 0,
   },
@@ -62,13 +68,13 @@ const productSchema = new mongoose.Schema({
   },
 });
 
-productSchema.virtual('variations', {
-  ref: 'ProductVariation',
-  localField: '_id',
-  foreignField: 'productId'
+productSchema.virtual("variations", {
+  ref: "ProductVariation",
+  localField: "_id",
+  foreignField: "productId",
 });
 
-productSchema.set('toObject', { virtuals: true });
-productSchema.set('toJSON', { virtuals: true });
+productSchema.set("toObject", { virtuals: true });
+productSchema.set("toJSON", { virtuals: true });
 
 module.exports = mongoose.model("Product", productSchema);

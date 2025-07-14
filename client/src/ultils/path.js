@@ -8,12 +8,13 @@ const path = {
   BLOGS: "blogs",
   OUR_SERVICES: "services",
   FAQ: "faqs",
-  DETAIL_PRODUCT__CATEGORY__PID__TITLE: ":categoryName/:pid/:slug",
+  DETAIL_PRODUCT__CATEGORY__PID__TITLE: ":categoryName/:slug",
   FINAL_REGISTER: "finalregister/:status",
   RESET_PASSWORD: "reset-password/:token",
   DETAIL_CART: "my-cart",
   CHECKOUT: "checkout",
   PRODUCTS: "products",
+  SEARCH_HOME: "tat-ca-san-pham",
 
   // Admin
   ADMIN: "admin",
@@ -25,6 +26,9 @@ const path = {
   CREATE_BLOG: "create-blog",
   MANAGE_BLOGS: "manage-blogs",
   CREATE_VARIATION: "/admin/create-variation/:productId",
+  MANAGE_PRODUCTS_CATEGORIES: "manage-products-categories",
+  MANAGE_BRANDS: "manage-brands",
+  MANAGE_COUPONS: "manage-coupons",
 
   // Member
   MEMBER: "member",

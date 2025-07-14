@@ -1,21 +1,60 @@
 import React, { useEffect, useState } from "react";
-import { apiGetVariationsByProductId, apiDeleteProductVariation } from "apis";
+import {
+  apiGetVariationsByProductId,
+  apiDeleteProductVariation,
+  apiGetProduct,
+} from "apis";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import CreateVariantForm from "./CreateVariantForm"; // tách form tạo riêng để gọn
+import CreateVariantForm from "./CreateVariantForm";
+import { useParams } from "react-router-dom";
 
-const CreateVariation = ({ productId, productName, onDone }) => {
+const CreateVariation = ({
+  productId: propProductId,
+  productName: propProductName,
+  onDone,
+}) => {
+  const { productId: paramProductId } = useParams();
+  const productId = paramProductId || propProductId;
+
   const [variants, setVariants] = useState([]);
   const [editVariant, setEditVariant] = useState(null);
+  const [productName, setProductName] = useState(propProductName || "");
+  const [showForm, setShowForm] = useState(false);
 
   const fetchVariants = async () => {
     const res = await apiGetVariationsByProductId(productId);
     if (res.success) setVariants(res.variations);
   };
 
+  const fetchProductName = async () => {
+    try {
+      const res = await apiGetProduct(productId);
+      if (res.success && res.productData?.productName) {
+        setProductName(res.productData.productName);
+      } else {
+        setProductName("Không rõ");
+      }
+    } catch {
+      setProductName("Không rõ");
+    }
+  };
+
   useEffect(() => {
-    fetchVariants();
+    if (!showForm) setEditVariant(null);
+  }, [showForm]);
+
+  useEffect(() => {
+    if (productId) {
+      fetchVariants();
+      if (!propProductName) fetchProductName();
+    }
   }, [productId]);
+
+  if (!productId) {
+    toast.error("Thiếu productId khi tạo biến thể!");
+    return <p className="text-red-500 p-4">Không tìm thấy ID sản phẩm</p>;
+  }
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -36,27 +75,44 @@ const CreateVariation = ({ productId, productName, onDone }) => {
   };
 
   return (
-    <div className="p-4 bg-white min-h-screen">
+    <div className="p-4 bg-white min-h-screen mb-3">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">
-          Biến thể sản phẩm: <span className="text-main">{productName}</span>
+          Biến thể sản phẩm:{" "}
+          <span className="text-main">{productName || "Không rõ"}</span>
         </h1>
-        <button
-          onClick={onDone}
-          className="px-4 py-2 text-white bg-gray-600 rounded"
-        >
-          ⬅ Quay lại
-        </button>
       </div>
 
-      <CreateVariantForm
-        productId={productId}
-        editVariant={editVariant}
-        onDone={() => {
-          setEditVariant(null);
-          fetchVariants();
-        }}
-      />
+      {/* Nút toggle form */}
+      <div className="mb-4">
+        <button
+          onClick={() => setShowForm((prev) => !prev)}
+          className="bg-main text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          {showForm ? "Đóng biểu mẫu" : "➕ Thêm biến thể"}
+        </button>
+
+        {/* Form có hiệu ứng trượt */}
+        <div
+          className={`overflow-hidden transition-all duration-500 ${
+            showForm ? "max-h-[2000px] mt-4" : "max-h-0"
+          }`}
+        >
+          {showForm && (
+            <div className="bg-white border p-4 rounded shadow">
+              <CreateVariantForm
+                productId={productId}
+                editVariant={editVariant}
+                onDone={() => {
+                  setEditVariant(null);
+                  fetchVariants();
+                  setShowForm(false);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       <h2 className="text-xl font-semibold mt-8 mb-4">Danh sách biến thể</h2>
       <table className="w-full table-auto border">
@@ -76,7 +132,10 @@ const CreateVariation = ({ productId, productName, onDone }) => {
               <td className="p-2">{v.stockQuantity}</td>
               <td className="p-2">
                 <button
-                  onClick={() => setEditVariant(v)}
+                  onClick={() => {
+                    setEditVariant(v);
+                    setShowForm(true);
+                  }}
                   className="text-blue-600 mr-4"
                 >
                   Sửa

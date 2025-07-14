@@ -106,8 +106,14 @@ const login = asyncHandler(async (req, res) => {
 // Lấy user hiện tại từ token
 const getCurrent = asyncHandler(async (req, res) => {
   const { id } = req.user;
+  console.log("goi current", req.body);
 
-  const user = await User.findById(id).populate("roleId userName");
+  const user = await User.findById(id)
+    .populate("statusUserId", "statusUserName")
+    .populate("roleId userName");
+
+  console.log("goi user", user);
+
   if (!user)
     return res.status(404).json({ success: false, mes: "User not found" });
 
@@ -123,17 +129,29 @@ const getCurrent = asyncHandler(async (req, res) => {
 // Cập nhật thông tin user
 const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { firstName, lastName, mobile, address } = req.body;
+  const { firstName, lastName, mobile, address, roleId, statusUserId } =
+    req.body;
   const avatar = req.file?.path;
 
-  const updatePayload = { firstName, lastName, mobile, address };
+  const updatePayload = {
+    firstName,
+    lastName,
+    mobile,
+    address,
+    roleId,
+    statusUserId,
+  };
   if (avatar) updatePayload.avatar = avatar;
 
   const updated = await User.findByIdAndUpdate(id, updatePayload, {
     new: true,
   });
 
-  return res.json({ success: !!updated, user: updated || "Update failed" });
+  return res.json({
+    success: !!updated,
+    user: updated || "Update failed",
+    mes: updated ? "Cập nhật người dùng thành công!" : "Cập nhật thất bại!",
+  });
 });
 
 // Xoá user và toàn bộ dữ liệu liên quan
@@ -182,14 +200,19 @@ const getUsers = asyncHandler(async (req, res) => {
     ];
   }
 
-  const users = await User.find(queryObject).populate("roleId");
+  const users = await User.find(queryObject)
+    .populate("roleId", "roleName")
+    .populate("statusUserId", "statusUserName");
 
   return res.json({ success: true, users });
 });
 
 // Lấy user theo id
 const getUserById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).populate("roleId");
+  const user = await User.findById(req.params.id)
+    .populate("roleId")
+    .populate("statusUserId", "statusUserName");
+
   if (!user)
     return res.status(404).json({ success: false, mes: "User not found" });
   return res.json({ success: true, user });

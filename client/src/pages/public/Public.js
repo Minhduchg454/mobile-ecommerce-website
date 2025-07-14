@@ -1,11 +1,13 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import { Header, Navigation } from "components";
+import { Header, Navigation, ColorSlider } from "components";
 import Footer from "components/footer/Footer";
 import TopHeaders from "components/headers/TopHeader";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 const Public = () => {
   return (
-    <div className="max-h-screen overflow-y-auto flex flex-col items-center">
+    <div className="flex flex-col items-center">
       <TopHeaders />
       <Header />
       <Navigation />

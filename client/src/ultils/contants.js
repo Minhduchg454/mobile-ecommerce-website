@@ -5,7 +5,22 @@ import {
   MdPayment,
   MdTagFaces,
   MdLocalShipping,
+  MdLocalOffer,
 } from "react-icons/md";
+import { AiOutlineDashboard } from "react-icons/ai";
+import {
+  MdGroups,
+  MdCategory,
+  MdInventory,
+  MdOutlineLocalShipping,
+  MdSecurity,
+  MdSupportAgent,
+  MdStarRate,
+  MdBatteryChargingFull,
+  MdPhonelinkSetup,
+} from "react-icons/md";
+import { RiBillLine } from "react-icons/ri";
+import { FaTrademark } from "react-icons/fa"; // cho thương hiệu
 
 export const navigation = [
   {
@@ -29,6 +44,7 @@ export const navigation = [
     path: `/${path.FAQ}`,
   },
 ];
+
 const { RiTruckFill, BsShieldShaded, BsReplyFill, FaTty, AiFillGift } = icons;
 export const productExtraInfomation = [
   {
@@ -109,55 +125,15 @@ export const productInfoTabs = [
   },
 ];
 
-export const colors = [
-  "Đen",
-  "Nâu",
-  "Xám",
-  "Trắng",
-  "Hồng",
-  "Vàng",
-  "Cam",
-  "Tím",
-  "Xanh lá",
-  "Xanh dương",
-];
-
 export const sorts = [
-  {
-    id: 1,
-    value: "-sold",
-    text: "Mua nhiều nhất",
-  },
-  {
-    id: 2,
-    value: "-productName",
-    text: "Sắp xếp theo tên từ Z-A",
-  },
-  {
-    id: 3,
-    value: "productName",
-    text: "Sắp xếp theo tên từ A-Z",
-  },
-  {
-    id: 4,
-    value: "-minPrice",
-    text: "Giá từ cao tới thấp",
-  },
-  {
-    id: 5,
-    value: "minPrice",
-    text: "Giá từ thấp tới cao",
-  },
-  {
-    id: 6,
-    value: "createAt",
-    text: "Cũ nhất",
-  },
-  {
-    id: 7,
-    value: "-createAt",
-    text: "Mới nhất",
-  },
+  { value: "-minPrice", text: "Giá cao → thấp" },
+  { value: "minPrice", text: "Giá thấp → cao" },
+  { value: "-totalSold", text: "Bán chạy" },
+  { value: "-rating", text: "Đánh giá cao" },
+  { value: "nameAsc", text: "Tên A → Z" },
+  { value: "nameDesc", text: "Tên Z → A" },
+  { value: "newest", text: "Mới nhất" },
+  { value: "oldest", text: "Cũ nhất" },
 ];
 
 export const voteOptions = [
@@ -184,7 +160,6 @@ export const voteOptions = [
     text: "Rất tốt",
   },
 ];
-const { AiOutlineDashboard, MdGroups, TbBrandProducthunt, RiBillLine } = icons;
 export const adminSidebar = [
   {
     id: 1,
@@ -196,15 +171,44 @@ export const adminSidebar = [
   {
     id: 2,
     type: "SINGLE",
+    text: "Quản lý đơn hàng",
+    path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
+    icon: <MdOutlineLocalShipping size={20} />,
+  },
+  {
+    id: 3,
+    type: "SINGLE",
     text: "Quản lý tài khoản",
     path: `/${path.ADMIN}/${path.MANAGE_USER}`,
     icon: <MdGroups size={20} />,
   },
   {
-    id: 3,
+    id: 4,
+    type: "SINGLE",
+    text: "Quản lý thương hiệu",
+    icon: <FaTrademark size={20} />,
+    path: `/${path.ADMIN}/${path.MANAGE_BRANDS}`,
+  },
+  {
+    id: 5,
+    type: "SINGLE",
+    text: "Quản lý danh mục",
+    path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS_CATEGORIES}`,
+    icon: <MdCategory size={20} />,
+  },
+  {
+    id: 6,
+    type: "SINGLE",
+    text: "Quản lý khuyến mãi",
+    path: `/${path.ADMIN}/${path.MANAGE_COUPONS}`,
+    icon: <MdLocalOffer size={20} />,
+  },
+
+  {
+    id: 7,
     type: "PARENT",
     text: "Quản lý sản phẩm",
-    icon: <TbBrandProducthunt size={20} />,
+    icon: <MdInventory size={20} />,
     submenu: [
       {
         text: "Thêm sản phẩm",
@@ -213,29 +217,6 @@ export const adminSidebar = [
       {
         text: "Quản lý kho hàng",
         path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS}`,
-      },
-    ],
-  },
-  {
-    id: 4,
-    type: "SINGLE",
-    text: "Quản lý đơn hàng",
-    path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
-    icon: <RiBillLine size={20} />,
-  },
-  {
-    id: 31,
-    type: "PARENT",
-    text: " Quản lý tin tức",
-    icon: <TbBrandProducthunt size={20} />,
-    submenu: [
-      {
-        text: "Thêm tin tức",
-        path: `/${path.ADMIN}/${path.CREATE_BLOG}`,
-      },
-      {
-        text: "Quản lý kho tin",
-        path: `/${path.ADMIN}/${path.MANAGE_BLOGS}`,
       },
     ],
   },
@@ -252,22 +233,8 @@ export const memberSidebar = [
   {
     id: 2,
     type: "SINGLE",
-    text: "Giỏ hàng",
-    path: `/${path.MEMBER}/${path.MY_CART}`,
-    icon: <MdGroups size={20} />,
-  },
-  {
-    id: 4,
-    type: "SINGLE",
     text: "Lịch sử mua hàng",
     path: `/${path.MEMBER}/${path.HISTORY}`,
-    icon: <RiBillLine size={20} />,
-  },
-  {
-    id: 40,
-    type: "SINGLE",
-    text: "Danh sách yêu thích",
-    path: `/${path.MEMBER}/${path.WISHLIST}`,
     icon: <RiBillLine size={20} />,
   },
 ];
@@ -360,5 +327,35 @@ export const infoCards = [
     title: "Giao hàng nhanh",
     description: "Giao trong ngày tại TP.Cần Thơ.",
     color: "#ff9500",
+  },
+  {
+    icon: <MdSecurity />,
+    title: "Bảo hành chính hãng",
+    description: "Tất cả sản phẩm được bảo hành 12–24 tháng.",
+    color: "#ff3b30",
+  },
+  {
+    icon: <MdSupportAgent />,
+    title: "Hỗ trợ 24/7",
+    description: "Đội ngũ tư vấn luôn sẵn sàng hỗ trợ bạn.",
+    color: "#5856d6",
+  },
+  {
+    icon: <MdStarRate />,
+    title: "Sản phẩm uy tín",
+    description: "Chỉ bán hàng chính hãng từ Apple, Samsung, Dell,...",
+    color: "#ffd60a",
+  },
+  {
+    icon: <MdBatteryChargingFull />,
+    title: "Phụ kiện bền bỉ",
+    description: "Cáp sạc, tai nghe chất lượng cao, bảo vệ thiết bị tối đa.",
+    color: "#00c7be",
+  },
+  {
+    icon: <MdPhonelinkSetup />,
+    title: "Cài đặt miễn phí",
+    description: "Cài ứng dụng, sao lưu dữ liệu miễn phí tại cửa hàng.",
+    color: "#5ac8fa",
   },
 ];

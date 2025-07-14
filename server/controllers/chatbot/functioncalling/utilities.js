@@ -62,6 +62,8 @@ async function searchProductForChatBot(query) {
     };
   }
 
+  console.log("Kết quả trước khi chuyển test: ", result);
+
   // Chuyển thành đoạn text ngắn gọn
   const textResult = result
     .map((product, index) => {
@@ -71,7 +73,7 @@ async function searchProductForChatBot(query) {
       } - ${item.price.toLocaleString()}₫ (${item.categoryName})`;
     })
     .join("\n");
-
+  console.log("Kết quả tìm kiếm: ", textResult);
   return { suggestions: textResult }; // bọc text trong object để tương thích với Gemini
 }
 

@@ -7,3 +7,6 @@ export { default as CreateProducts } from "./CreateProducts";
 export { default as CreateBlog } from "./CreateBlog";
 export { default as ManageBlog } from "./ManageBlog";
 export { default as CreateVariation } from "./CreateVariation";
+export { default as ManageProductCategory } from "./ManageProductCategory";
+export { default as ManageBrands } from "./ManageBrands";
+export { default as ManageCoupons } from "./ManageCoupons";

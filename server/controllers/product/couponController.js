@@ -1,39 +1,40 @@
-const Coupon = require('../../models/product/Coupon')
-const asyncHandler = require('express-async-handler')
+const Coupon = require("../../models/product/Coupon");
+const asyncHandler = require("express-async-handler");
 
 const createNewCoupon = asyncHandler(async (req, res) => {
-    const {
-        description,
-        discount,
-        discountType,
-        expirationDate,
-        couponCode,
-        usageLimit,
-        miniOrderAmount,
-        userId
-    } = req.body;
+  const {
+    description,
+    discount,
+    discountType,
+    expirationDate,
+    couponCode,
+    usageLimit,
+    miniOrderAmount,
+    userId,
+  } = req.body;
 
-    const missingFields = [];
-        if (!discount) missingFields.push('discount');
-        if (!discountType) missingFields.push('discountType');
-        if (!expirationDate) missingFields.push('expirationDate');
-        if (!userId) missingFields.push('userId');
+  const missingFields = [];
+  if (!discount) missingFields.push("discount");
+  if (!discountType) missingFields.push("discountType");
+  if (!expirationDate) missingFields.push("expirationDate");
+  if (!userId) missingFields.push("userId");
 
-    if (missingFields.length > 0)
-        return res.status(400).json({
-            success: false,
-            mes: `Missing required fields: ${missingFields.join(', ')}`
-        });
-
-    const response = await Coupon.create({
-        ...req.body,
-        couponCode: couponCode?.toUpperCase() || undefined, // Đảm bảo in hoa
+  if (missingFields.length > 0) {
+    return res.status(400).json({
+      success: false,
+      mes: `Missing required fields: ${missingFields.join(", ")}`,
     });
+  }
 
-    return res.json({
-        success: !!response,
-        createdCoupon: response || 'Cannot create new coupon'
-    });
+  const response = await Coupon.create({
+    ...req.body,
+    couponCode: couponCode?.toUpperCase() || undefined,
+  });
+
+  return res.json({
+    success: !!response,
+    createdCoupon: response || "Cannot create new coupon",
+  });
 });
 
 /*
@@ -51,20 +52,14 @@ const createNewCoupon = asyncHandler(async (req, res) => {
     }
 */
 
-
-
-
 const getCoupons = asyncHandler(async (req, res) => {
-    const response = await Coupon.find()
-        //.populate('firstName', 'lastName') // Lấy thông tin admin tạo coupon
-        .select('-createdAt -updatedAt -__v');
+  const response = await Coupon.find().select("-createdAt -updatedAt -__v");
 
-    return res.json({
-        success: !!response,
-        coupons: response || 'Cannot get coupons'
-    });
+  return res.json({
+    success: !!response,
+    coupons: response || "Cannot get coupons",
+  });
 });
-
 
 const getSingleCoupon = asyncHandler(async (req, res) => {
   const { id, code } = req.query;
@@ -72,7 +67,7 @@ const getSingleCoupon = asyncHandler(async (req, res) => {
   if (!id && !code) {
     return res.status(400).json({
       success: false,
-      mes: 'Missing coupon ID or coupon code',
+      mes: "Missing coupon ID or coupon code",
     });
   }
 
@@ -80,7 +75,7 @@ const getSingleCoupon = asyncHandler(async (req, res) => {
   let query = {};
   if (id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, mes: 'Invalid coupon ID' });
+      return res.status(400).json({ success: false, mes: "Invalid coupon ID" });
     }
     query._id = id;
   }
@@ -92,11 +87,11 @@ const getSingleCoupon = asyncHandler(async (req, res) => {
 
   const response = await Coupon.findOne(query)
     //.populate('userId', 'firstName lastName')
-    .select('-createdAt -updatedAt -__v');
+    .select("-createdAt -updatedAt -__v");
 
   return res.status(200).json({
     success: !!response,
-    coupon: response || 'Coupon not found',
+    coupon: response || "Coupon not found",
   });
 });
 
@@ -105,45 +100,40 @@ const getSingleCoupon = asyncHandler(async (req, res) => {
     GET /api/coupons/single?id=<theo _id>
 */
 
-
-
 const updateCoupon = asyncHandler(async (req, res) => {
-    const { cid } = req.params;
-    if (Object.keys(req.body).length === 0)
-        return res.status(400).json({ success: false, mes: 'Missing inputs' });
+  const { cid } = req.params;
+  if (Object.keys(req.body).length === 0)
+    return res.status(400).json({ success: false, mes: "Missing inputs" });
 
-    // Nếu người dùng gửi lại couponCode, chuyển sang in hoa
-    if (req.body.couponCode)
-        req.body.couponCode = req.body.couponCode.toUpperCase();
+  // Nếu người dùng gửi lại couponCode, chuyển sang in hoa
+  if (req.body.couponCode)
+    req.body.couponCode = req.body.couponCode.toUpperCase();
 
-    const response = await Coupon.findByIdAndUpdate(cid, req.body, { new: true });
+  const response = await Coupon.findByIdAndUpdate(cid, req.body, { new: true });
 
-    return res.json({
-        success: !!response,
-        updatedCoupon: response || 'Cannot update coupon'
-    });
+  return res.json({
+    success: !!response,
+    updatedCoupon: response || "Cannot update coupon",
+  });
 });
-
-
 
 const deleteCoupon = asyncHandler(async (req, res) => {
-    const { cid } = req.params;
-    const response = await Coupon.findByIdAndDelete(cid);
+  const { cid } = req.params;
+  const response = await Coupon.findByIdAndDelete(cid);
 
-    return res.json({
-        success: !!response,
-        deletedCoupon: response || 'Cannot delete coupon'
-    });
+  return res.json({
+    success: !!response,
+    deletedCoupon: response || "Cannot delete coupon",
+  });
 });
 
-
 module.exports = {
-    createNewCoupon,
-    getCoupons,
-    updateCoupon,
-    deleteCoupon,
-    getSingleCoupon
-}
+  createNewCoupon,
+  getCoupons,
+  updateCoupon,
+  deleteCoupon,
+  getSingleCoupon,
+};
 
 /*
     const createNewCoupon = asyncHandler(async (req, res) => {

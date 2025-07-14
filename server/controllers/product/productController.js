@@ -2,13 +2,11 @@
 const Product = require("../../models/product/Product");
 const asyncHandler = require("express-async-handler");
 const ProductVariation = require("../../models/product/ProductVariation");
+const { deleteProductVariationById } = require("../../ultils/databaseHelpers");
 
-// Thư viện slugify để tạo slug từ tiêu đề sản phẩm
-//vd: "Áo thun nam" => "ao-thun-nam", thuong dung de tao duuong dan url
 const slugify = require("slugify");
 
-// Tạo ra một chuỗi ID ngắn duy nhất, ví dụ dùng cho mã sản phẩm (SKU).
-const makeSKU = require("uniqid");
+// Tạo ra một chuỗi ID ngắn duy nhất, ví dụ dùng cho mã sản phẩm (SKU).const makeSKU = require("uniqid");
 
 // Tạo sản phẩm mới
 const createProduct = asyncHandler(async (req, res) => {
@@ -67,27 +65,16 @@ const getProduct = asyncHandler(async (req, res) => {
 
 // Lấy danh sách sản phẩm với các tùy chọn lọc, sắp xếp và phân trang
 const getProducts = asyncHandler(async (req, res) => {
-  // Lấy tất cả các query từ request
   const queries = { ...req.query };
-
-  // 1. Loại bỏ các field không dùng để filter, chỉ giữ lại các trường có thể lọc trực tiếp
-  //q: là tư khoá tông quát, không dùng để lọc
-  //sort: là sắp xếp, không dùng để lọc
-  //page: là phân trang, không dùng để lọc
-  //fields: là giới hạn trường trả về, không dùng để lọc
-  //limit: là giới hạn số lượng sản phẩm trả về, không dùng để lọc
   const excludeFields = ["limit", "sort", "page", "fields", "q"];
   excludeFields.forEach((el) => delete queries[el]);
 
-  // 2. Format lại các toán tử như gte, lte, gt, lt...
   let queryString = JSON.stringify(queries);
   queryString = queryString.replace(
     /\b(gte|gt|lt|lte)\b/g,
     (match) => `$${match}`
   );
 
-  // 3. Tìm kiếm theo keyword toàn cục nếu có (?q=iphone)
-  // Áp dụng cho chuỗi
   let searchQuery = {};
   if (req.query.q) {
     const keyword = req.query.q;
@@ -100,18 +87,18 @@ const getProducts = asyncHandler(async (req, res) => {
   }
 
   const formatedQueries = JSON.parse(queryString);
-  // 👉 Chuyển 'minPrice.$gte' => { minPrice: { $gte: ... } }
+
   Object.keys(formatedQueries).forEach((key) => {
     if (key.includes("$")) {
       const [field, operator] = key.split(".");
       formatedQueries[field] = {
         ...(formatedQueries[field] || {}),
-        [operator]: +formatedQueries[key], // ép kiểu số luôn
+        [operator]: +formatedQueries[key],
       };
       delete formatedQueries[key];
     }
   });
-  // 3.1 Nếu có tìm kiếm theo tên sản phẩm (productName) → dùng regex
+
   if (queries?.productName) {
     formatedQueries.productName = {
       $regex: queries.productName,
@@ -119,48 +106,47 @@ const getProducts = asyncHandler(async (req, res) => {
     };
   }
 
-  // 4. Nếu người dùng gửi brandId hoặc categoryId (ở dạng ObjectId) → lọc trực tiếp (không dùng regex)
-  if (req.query.brandId) {
+  // ✅ Kiểm tra hợp lệ trước khi gán brandId
+  if (req.query.brandId && mongoose.Types.ObjectId.isValid(req.query.brandId)) {
     formatedQueries.brandId = req.query.brandId;
   }
 
-  if (req.query.categoryId) {
+  // ✅ Kiểm tra hợp lệ trước khi gán categoryId
+  if (
+    req.query.categoryId &&
+    mongoose.Types.ObjectId.isValid(req.query.categoryId)
+  ) {
     formatedQueries.categoryId = req.query.categoryId;
   }
 
-  // 5. Tổng hợp điều kiện lọc (filter + search)
   const finalQuery = {
     ...formatedQueries,
     ...searchQuery,
   };
 
-  // 6. Tạo câu truy vấn
   let queryCommand = Product.find(finalQuery)
-    .populate("brandId", "brandName") // lấy tên thương hiệu
-    .populate("categoryId", "productCategoryName slug"); // lấy tên danh mục
+    .populate("brandId", "brandName")
+    .populate("categoryId", "productCategoryName slug");
 
-  // 7. Sắp xếp nếu có (?sort=price,-createdAt)
   if (req.query.sort) {
     const sortBy = req.query.sort.split(",").join(" ");
     queryCommand = queryCommand.sort(sortBy);
   }
 
-  // 8. Giới hạn trường nếu có (?fields=productName,price)
   if (req.query.fields) {
     const fields = req.query.fields.split(",").join(" ");
     queryCommand = queryCommand.select(fields);
   }
 
-  // 9. Phân trang
-  // Giúp chia danh sách sản phẩm thành từng trang nhỏ thay vì trả về toàn bộ dữ liệu cùng lúc.
   const page = +req.query.page || 1;
-  const limit = +req.query.limit || +process.env.LIMIT_PRODUCTS || 10; // Mặc định là 10 sản phẩm mỗi trang
-  const skip = (page - 1) * limit; // Tính số lượng sản phẩm cần bỏ qua
+  const limit = +req.query.limit || +process.env.LIMIT_PRODUCTS || 10;
+  const skip = (page - 1) * limit;
   queryCommand = queryCommand.skip(skip).limit(limit);
 
-  // 10. Thực thi truy vấn
   queryCommand.exec(async (err, response) => {
-    if (err) throw new Error(err.message);
+    if (err)
+      return res.status(500).json({ success: false, message: err.message });
+
     const total = await Product.countDocuments(finalQuery);
     return res.status(200).json({
       success: true,
@@ -258,7 +244,17 @@ const updateProduct = asyncHandler(async (req, res) => {
 // Xóa sản phẩm
 const deleteProduct = asyncHandler(async (req, res) => {
   const { pid } = req.params;
+
+  // 1. Lấy danh sách tất cả biến thể của sản phẩm đó va xoa bien the
+  const variations = await ProductVariation.find({ productId: pid });
+
+  if (variations.length > 0) {
+    await Promise.all(variations.map((v) => deleteProductVariationById(v._id)));
+  }
+
+  //2. Xoa san pham
   const deletedProduct = await Product.findByIdAndDelete(pid);
+
   return res.status(200).json({
     success: deletedProduct ? true : false,
     mes: deletedProduct ? "Deleted." : "Cannot delete product",
@@ -285,17 +281,6 @@ const updateProductRating = async (productId) => {
   });
 };
 
-const updateMinPrice = async (productId) => {
-  const variations = await ProductVariation.find({ productId });
-  if (!variations || variations.length === 0) {
-    await Product.findByIdAndUpdate(productId, { minPrice: 0 });
-    return;
-  }
-
-  const minPrice = Math.min(...variations.map((v) => v.price));
-  await Product.findByIdAndUpdate(productId, { minPrice });
-};
-
 //Cap nhat tong so luong mua cua san pham
 const updateTotalSolde = async (productId) => {};
 
@@ -306,277 +291,4 @@ module.exports = {
   updateProduct,
   deleteProduct,
   updateProductRating,
-  updateMinPrice,
 };
-
-/*
-  cũ
-  //// Lấy thông tin sản phẩm theo ID và bao gồm thông tin đánh giá của sản phẩm
-const getProduct = asyncHandler(async (req, res) => {
-  // Lấy thông tin sản phẩm theo ID
-  const { pid } = req.params
-
-  const product = await Product.findById(pid).populate({
-    path: "ratings",
-    populate: {
-      path: "postedBy",
-      select: "firstname lastname avatar",
-    },
-  })
-  return res.status(200).json({
-    success: product ? true : false,
-    productData: product ? product : "Cannot get product",
-  })
-})
-*/
-
-/*
-
-  // Tách các trường đặc biệt ra khỏi query
-  const excludeFields = ["limit", "sort", "page", "fields"]
-  excludeFields.forEach((el) => delete queries[el])
-  /*
-    loại bỏ các trường không cần thiết, các trường không dùng để lọc, sắp xếp, phân trang
-    chỉ giữ lại các trường cần thiết để lọc
-    queries = {
-      brandId: '664f0f...',
-      price: { gte: '1000' }
-    }
-  
-
-  // Format lại các operators cho đúng cú pháp mongoose
-  // Ví dụ: { gte: 100 } => { $gte: 100 }
-  let queryString = JSON.stringify(queries)
-  queryString = queryString.replace(
-    /\b(gte|gt|lt|lte)\b/g,
-    (macthedEl) => `$${macthedEl}`
-  )
-
-
-  /*
-    tìm kiếm mờ (regex) không phân biet chữ hoa chữ thường
-  
-  const formatedQueries = JSON.parse(queryString)
-  let colorQueryObject = {}
-  if (queries?.title)
-    formatedQueries.title = { $regex: queries.title, $options: "i" }
-  if (queries?.category)
-    formatedQueries.category = { $regex: queries.category, $options: "i" }
-  if (queries?.brand)
-    formatedQueries.brand = { $regex: queries.brand, $options: "i" }
-
-  /*
-  📌 Nếu lọc nhiều màu (color=red,blue):
-    → dùng $or để tìm sản phẩm có ít nhất một màu.
-    🧪 Trả về sản phẩm có color khớp với red hoặc blue.
-  
-  if (queries?.color) {
-    delete formatedQueries.color
-    const colorArr = queries.color?.split(",")
-    const colorQuery = colorArr.map((el) => ({
-      color: { $regex: el, $options: "i" },
-    }))
-    colorQueryObject = { $or: colorQuery }
-  }
-
-
-  // Tìm theo từ khóa chung `q` (tên, mô tả, danh mục, thương hiệu)
-  /*
-  📌 Cho phép tìm theo từ khóa tổng quát (vd: ?q=apple)
-  → tìm trên nhiều trường: color, title, category, brand.
-  
-  let queryObject = {}
-  if (queries?.q) {
-    delete formatedQueries.q
-    queryObject = {
-      $or: [
-        { color: { $regex: queries.q, $options: "i" } },
-        { title: { $regex: queries.q, $options: "i" } },
-        { category: { $regex: queries.q, $options: "i" } },
-        { brand: { $regex: queries.q, $options: "i" } },
-        // { description: { $regex: queries.q, $options: 'i' } },
-      ],
-    }
-  }
-
-  /*
-  📌 Gộp:
-	•	Điều kiện chính (formatedQueries)
-	•	Màu (colorQueryObject)
-	•	Global search (queryObject)
-
-  → tạo ra truy vấn đầy đủ gửi tới MongoDB.
-  
-  const qr = { ...colorQueryObject, ...formatedQueries, ...queryObject }
-  let queryCommand = Product.find(qr)
-
-  // Sorting
-  /*
-  🧪 ?sort=price,-createdAt
-  → sắp theo price tăng, rồi ngày tạo giảm
-  
-  if (req.query.sort) {
-    const sortBy = req.query.sort.split(",").join(" ")
-    queryCommand = queryCommand.sort(sortBy)
-  }
-
-  // Fields limiting
-  /*
-  📌 Cho phép chọn trường trả về (vd: ?fields=title,price
-  
-  if (req.query.fields) {
-    const fields = req.query.fields.split(",").join(" ")
-    queryCommand = queryCommand.select(fields)
-  }
-
-  // Pagination
-  /*
-  📌 Phân trang với page và limit
-    √📌 Tính vị trí bắt đầu (skip) và số lượng mỗi trang (limit)
-
-  🧪 ?page=2&limit=10 → bỏ qua 10 sản phẩm đầu, lấy từ 11–20
-
-  📌 queryCommand.exec() → chạy truy vấn đã cấu hình ở trên.
-	•	response: danh sách sản phẩm trả về (phân trang)
-	•	counts: tổng số sản phẩm khớp với điều kiện (chưa phân trang)
-
-
-  const page = +req.query.page || 1
-  const limit = +req.query.limit || process.env.LIMIT_PRODUCTS
-  const skip = (page - 1) * limit
-  queryCommand.skip(skip).limit(limit)
-  // Execute query
-  // Số lượng sp thỏa mãn điều kiện !== số lượng sp trả về 1 lần gọi API
-  queryCommand.exec(async (err, response) => {
-    if (err) throw new Error(err.message)
-    const counts = await Product.find(qr).countDocuments()
-    return res.status(200).json({
-      success: response ? true : false,
-      counts,
-      products: response ? response : "Cannot get products",
-    })
-  })
-})
-*/
-
-/*
- Cũ
-const updateProduct = asyncHandler(async (req, res) => {
-  const { pid } = req.params
-  const files = req?.files
-  if (files?.thumb) req.body.thumb = files?.thumb[0]?.path
-  if (files?.images) req.body.images = files?.images?.map((el) => el.path)
-  if (req.body && req.body.title) req.body.slug = slugify(req.body.title)
-  const updatedProduct = await Product.findByIdAndUpdate(pid, req.body, {
-    new: true,
-  })
-  return res.status(200).json({
-    success: updatedProduct ? true : false,
-    mes: updatedProduct ? "Updated." : "Cannot update product",
-  })
-})
-*/
-
-// Đánh giá sản phẩm
-/*
-const ratings = asyncHandler(async (req, res) => {
-  const { _id } = req.user
-  const { star, comment, pid, updatedAt } = req.body
-  if (!star || !pid) throw new Error("Missing inputs")
-  const ratingProduct = await Product.findById(pid)
-  const alreadyRating = ratingProduct?.ratings?.find(
-    (el) => el.postedBy.toString() === _id
-  )
-  // console.log(alreadyRating);
-  if (alreadyRating) {
-    // update star & comment
-    await Product.updateOne(
-      {
-        ratings: { $elemMatch: alreadyRating },
-      },
-      {
-        $set: {
-          "ratings.$.star": star,
-          "ratings.$.comment": comment,
-          "ratings.$.updatedAt": updatedAt,
-        },
-      },
-      { new: true }
-    )
-  } else {
-    // add star & comment
-    await Product.findByIdAndUpdate(
-      pid,
-      {
-        $push: { ratings: { star, comment, postedBy: _id, updatedAt } },
-      },
-      { new: true }
-    )
-  }
-
-  // Sum ratings
-  const updatedProduct = await Product.findById(pid)
-  const ratingCount = updatedProduct.ratings.length
-  const sumRatings = updatedProduct.ratings.reduce(
-    (sum, el) => sum + +el.star,
-    0
-  )
-  updatedProduct.totalRatings = Math.round((sumRatings * 10) / ratingCount) / 10
-
-  await updatedProduct.save()
-
-  return res.status(200).json({
-    success: true,
-    updatedProduct,
-  })
-})
-
-*/
-
-// Upload images for product
-/*
-const uploadImagesProduct = asyncHandler(async (req, res) => {
-  const { pid } = req.params
-  if (!req.files) throw new Error("Missing inputs")
-  const response = await Product.findByIdAndUpdate(
-    pid,
-    { $push: { images: { $each: req.files.map((el) => el.path) } } },
-    { new: true }
-  )
-  return res.status(200).json({
-    success: response ? true : false,
-    updatedProduct: response ? response : "Cannot upload images product",
-  })
-})
-*/
-
-/*
-// Thêm mảng biến thể (variant) cho sản phẩm
-const addVarriant = asyncHandler(async (req, res) => {
-  const { pid } = req.params
-  const { title, price, color } = req.body
-  const thumb = req?.files?.thumb[0]?.path
-  const images = req.files?.images?.map((el) => el.path)
-  if (!(title && price && color)) throw new Error("Missing inputs")
-  const response = await Product.findByIdAndUpdate(
-    pid,
-    {
-      $push: {
-        varriants: {
-          color,
-          price,
-          title,
-          thumb,
-          images,
-          sku: makeSKU().toUpperCase(),
-        },
-      },
-    },
-    { new: true }
-  )
-  return res.status(200).json({
-    success: response ? true : false,
-    mes: response ? "Added varriant." : "Cannot upload images product",
-  })
-})
-*/

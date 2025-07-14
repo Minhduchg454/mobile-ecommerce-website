@@ -25,9 +25,10 @@ const userBaseSchema = new mongoose.Schema(
       type: String, // Đường dẫn ảnh đại diện
     },
     mobile: {
-      type: String, // Số điện thoại duy nhất
+      type: String,
       unique: true,
-      required: true,
+      required: false, // cho phép không có
+      sparse: true, // chỉ yêu cầu unique nếu có giá trị
       trim: true,
     },
     userName: {

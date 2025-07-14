@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from "react";
-import { apiGetProducts } from "apis/product";
+import { apiGetProducts, apiGetVariationsByProductId } from "apis";
 import DOMPurify from "dompurify";
 import {
   renderStarFromNumber,
@@ -16,23 +16,62 @@ const DealDaily = ({ dispatch }) => {
   const [minute, setMinute] = useState(0);
   const [second, setSecond] = useState(0);
   const { dealDaily } = useSelector((s) => s.products);
+  const { current } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const [discountPercent, setDiscountPercent] = useState(5);
+  const [dealTime, setDealTime] = useState(12);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshed, setRefreshed] = useState(false);
 
   const fetchDealDaily = async () => {
-    const response = await apiGetProducts({ sort: "-totalRating", limit: 20 });
-    if (response.success && response.products?.length > 1) {
-      const shuffled = response.products.sort(() => 0.5 - Math.random());
-      const [product1, product2] = shuffled;
+    setIsRefreshing(true);
+    setRefreshed(false);
+    try {
+      const response = await apiGetProducts({
+        sort: "-totalRating",
+        limit: 20,
+      });
+      if (response.success && response.products?.length > 0) {
+        const shuffled = response.products.sort(() => 0.5 - Math.random());
+        const product1 = shuffled[0];
 
-      dispatch(
-        getDealDaily({
-          data: {
-            product1: { ...product1, discountPercent: 20 },
-            product2: { ...product2, discountPercent: 10 },
-          },
-          time: Date.now() + 12 * 60 * 60 * 1000, // 12 giờ
-        })
-      );
+        const variantRes = await apiGetVariationsByProductId(product1._id);
+        if (variantRes.success && variantRes.variations.length > 0) {
+          const lowest = variantRes.variations.reduce((a, b) =>
+            a.price < b.price ? a : b
+          );
+          const minPrice = lowest.price;
+          const variantId = lowest._id;
+
+          const newProduct = {
+            ...product1,
+            discountPercent,
+            minPrice,
+            variantId,
+          };
+
+          const isDifferent =
+            !dealDaily?.data?.product1 ||
+            dealDaily.data.product1._id !== product1._id ||
+            dealDaily.data.product1.variantId !== variantId;
+
+          dispatch(
+            getDealDaily({
+              data: { product1: newProduct },
+              time: Date.now() + dealTime * 60 * 60 * 1000,
+            })
+          );
+
+          if (isDifferent) {
+            setRefreshed(true);
+            setTimeout(() => setRefreshed(false), 2000);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi fetch Deal Daily:", error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -70,19 +109,19 @@ const DealDaily = ({ dispatch }) => {
   }, [hour, minute, second, dealDaily?.time]);
 
   const handleRedirect = (product) => {
-    if (product?._id && product?.slug && product?.categoryId?.slug) {
-      navigate(`/${product.categoryId.slug}/${product._id}/${product.slug}`);
+    if (product?.slug && product?.categoryId?.slug && product?.variantId) {
+      navigate(
+        `/${product.categoryId.slug}/${product.slug}?code=${product.variantId}`
+      );
     }
   };
 
   const product1 = dealDaily?.data?.product1;
-  const product2 = dealDaily?.data?.product2;
 
   const renderProduct = (product) => {
-    const discountPercent = product?.discountPercent || 0;
-    const discountedPrice = product?.minPrice
-      ? product.minPrice * (1 - discountPercent / 100)
-      : 0;
+    const discount = product?.discountPercent || 0;
+    const price = product?.minPrice || 0;
+    const discountedPrice = price * (1 - discount / 100);
 
     return (
       <div
@@ -99,33 +138,32 @@ const DealDaily = ({ dispatch }) => {
         />
         <span className="line-clamp-1 text-center">{product.productName}</span>
         <span className="flex h-4 items-center gap-1">
-          {renderStarFromNumber(product.rating, 20)?.map((el, i) => (
+          {(renderStarFromNumber(product.rating, 20) || []).map((el, i) => (
             <span key={i}>{el}</span>
           ))}
           <span className="text-gray-500 ml-2">
-            {"Đã bán " + product.totalSold}
+            {"Đã bán " + (product.totalSold || 0)}
           </span>
         </span>
 
-        {/* Dòng 1: Giá giảm */}
         <span className="text-red-600 font-semibold text-[16px]">
           {formatMoney(discountedPrice)} VNĐ
         </span>
 
-        {/* Dòng 2: Giá gốc + % giảm nếu có */}
-        {discountPercent > 0 && (
+        {discount > 0 && (
           <div className="flex items-center gap-2">
             <span className="line-through text-xs text-gray-500">
-              {formatMoney(product.minPrice)} VNĐ
+              {formatMoney(price)} VNĐ
             </span>
             <span className="text-xs bg-red-500 text-white px-1 rounded">
-              -{discountPercent}%
+              -{discount}%
             </span>
           </div>
         )}
+
         {typeof product?.description === "string" && (
           <div
-            className="text-sm text-center text-gray-500 my-3 pl-0"
+            className="text-sm text-center text-gray-500 my-3"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(product.description),
             }}
@@ -138,11 +176,8 @@ const DealDaily = ({ dispatch }) => {
   return (
     <div className="card-default card border lg:block w-full flex-auto">
       <div className="flex flex-col items-center justify-center p-4 w-full">
-        <span className="font-semibold text-[20px] flex justify-center text-gray-700">
-          SALE RỰC RỠ
-        </span>
-        <span className="font-semibold text-[20px] flex justify-center text-gray-700">
-          GIÁ GIẢM BẤT NGỜ
+        <span className="font-semibold text-[20px] text-gray-700 text-center">
+          SALE RỰC RỠ - GIÁ GIẢM BẤT NGỜ
         </span>
       </div>
 
@@ -167,17 +202,60 @@ const DealDaily = ({ dispatch }) => {
       </div>
 
       {product1 && renderProduct(product1)}
-      {/* {product2 && renderProduct(product2)} */}
 
-      {/*  <div className="flex justify-center mt-2">
-        <button
-          onClick={fetchDealDaily}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-        >
-          Lấy Deal Mới
-        </button>
-      </div> */}
-      {/* div className="mb-4"> </div> */}
+      {current?.roleId?.roleName === "admin" && (
+        <>
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-center mt-4">
+            <div className="flex flex-col items-start">
+              <label className="text-sm text-gray-700 mb-1">
+                Tỉ lệ giảm (%)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(+e.target.value)}
+                className="border px-2 py-1 rounded text-sm w-[100px]"
+              />
+            </div>
+
+            <div className="flex flex-col items-start">
+              <label className="text-sm text-gray-700 mb-1">
+                Thời gian chạy (giờ)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={48}
+                value={dealTime}
+                onChange={(e) => setDealTime(+e.target.value)}
+                className="border px-2 py-1 rounded text-sm w-[100px]"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={fetchDealDaily}
+              disabled={isRefreshing}
+              className={`text-white px-4 py-2 rounded text-sm transition-colors duration-300
+                ${
+                  refreshed
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-red-500 hover:bg-red-600"
+                }
+                ${isRefreshing ? "opacity-70 cursor-not-allowed" : ""}`}
+            >
+              {isRefreshing
+                ? "🔄 Đang làm mới..."
+                : refreshed
+                ? "✅ Đã cập nhật!"
+                : "🔄 Làm mới Deal"}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

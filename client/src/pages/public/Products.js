@@ -1,61 +1,44 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   useParams,
   useSearchParams,
   createSearchParams,
-  useNavigate,
 } from "react-router-dom";
 import {
   Breadcrumb,
-  Product,
-  SearchItem,
-  InputSelect,
-  Pagination,
   ProductCard,
   ReusableBanner,
+  Pagination,
+  SelectableList,
 } from "../../components";
 import {
-  apiGetProducts,
-  apiGetCategoryIdByName,
+  apiGetProductVariations,
   apiGetAllProductCategories,
   apiGetBrands,
 } from "../../apis";
-import Masonry from "react-masonry-css";
 import { sorts, priceRanges } from "../../ultils/contants";
-import SelectableList from "../../components/search/SelectableList";
-
-const breakpointColumnsObj = {
-  default: 4,
-  1100: 3,
-  700: 2,
-  500: 1,
-};
 
 const Products = () => {
-  const navigate = useNavigate();
-  const [products, setProducts] = useState(null);
-  const [activeClick, setActiveClick] = useState(null);
-  const [params, setSearchParams] = useSearchParams(); //Lay cac truy van tu url /iphone?from=1000&to=5000&sort=-price
-  const [sort, setSort] = useState("");
-  const { category } = useParams();
-
+  const [params, setSearchParams] = useSearchParams();
+  const { category } = useParams(); // slug danh mục từ URL
+  const [categoryId, setCategoryId] = useState(null);
   const [categoryName, setCategoryName] = useState("");
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [products, setProducts] = useState([]);
 
   const banner1 = [
     require("assets/banner-iphone.webp"),
     require("assets/banner-apple.webp"),
   ];
-
   const banner2 = [
     require("assets/banner-samsung.webp"),
     require("assets/banner-combo.webp"),
   ];
 
-  //Truy xuat danh muc tat ca danh muc
+  // Lấy danh sách danh mục và brand
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitial = async () => {
       const [res1, res2] = await Promise.all([
         apiGetAllProductCategories(),
         apiGetBrands(),
@@ -63,115 +46,127 @@ const Products = () => {
 
       if (res1.success) {
         setCategories(res1.prodCategories);
-        // tìm danh mục theo slug
+
         const matchedCategory = res1.prodCategories.find(
           (item) => item.slug === category
         );
+
         if (matchedCategory) {
+          setCategoryId(matchedCategory._id);
           setCategoryName(matchedCategory.productCategoryName);
+        } else {
+          setCategoryId(null); // không có danh mục thì lấy toàn bộ
+          setCategoryName("Tất cả sản phẩm");
         }
       }
-      if (res2.success) setBrands(res2.brands);
+
+      if (res2.success) {
+        setBrands(res2.brands);
+      }
     };
-    fetchData();
-  }, []);
 
-  const fetchProductsByCategory = async (queries) => {
-    if (category && category !== "products" && !queries.categoryId) {
-      try {
-        const response = await apiGetCategoryIdByName(category);
-        if (response.success) {
-          const categoryId = response.categoryId;
-          queries.categoryId = categoryId;
-        }
-      } catch (err) {
-        console.error("Lỗi khi lấy categoryId từ tên:", err);
-      }
-    }
+    fetchInitial();
+  }, [category]);
 
-    const response = await apiGetProducts(queries);
-    if (response.success) setProducts(response);
-  };
-
-  //Goi API moi khi params thay doi
-  useEffect(() => {
+  const fetchProducts = async () => {
     const queries = Object.fromEntries([...params.entries()]);
-
-    // Clone để không thay đổi trực tiếp object từ URL
     const queryObject = { ...queries };
 
-    // Tạo lại cấu trúc minPrice.gte và minPrice.lte đúng chuẩn cho backend
-    if (queries.from || queries.to) {
-      if (queries.from) {
-        queryObject["minPrice.gte"] = queries.from;
-      }
-      if (queries.to) {
-        queryObject["minPrice.lte"] = queries.to;
-      }
+    if (categoryId) {
+      queryObject.categoryId = categoryId;
+    }
+
+    // Chuyển đổi từ `from/to` thành price[gte]/price[lte]
+    if (queryObject.from) {
+      queryObject["price[gte]"] = queryObject.from;
       delete queryObject.from;
+    }
+    if (queryObject.to) {
+      queryObject["price[lte]"] = queryObject.to;
       delete queryObject.to;
     }
 
-    fetchProductsByCategory(queryObject);
-    window.scrollTo(0, 0);
-  }, [params.toString()]);
-
-  //Bat tat, bo loc, gia mau
-  const changeActiveFitler = useCallback(
-    (name) => {
-      if (activeClick === name) setActiveClick(null);
-      else setActiveClick(name);
-    },
-    [activeClick]
-  );
-
-  const changeValue = useCallback(
-    (value) => {
-      setSort(value);
-    },
-    [sort]
-  );
-
-  //Khi sort thay doi => cap nhat lai url => params doi => goi API lai
-  useEffect(() => {
-    if (sort) {
-      const currentParams = Object.fromEntries([...params.entries()]);
-      navigate({
-        pathname: `/${category}`,
-        search: createSearchParams({ ...currentParams, sort }).toString(),
-      });
+    if (queries.q) {
+      queryObject.q = queries.q;
     }
-  }, [sort]);
+
+    // Xóa các trường rỗng hoặc không hợp lệ
+    Object.keys(queryObject).forEach((key) => {
+      if (
+        !queryObject[key] ||
+        queryObject[key] === "undefined" ||
+        queryObject[key] === "null"
+      ) {
+        delete queryObject[key];
+      }
+    });
+
+    const res = await apiGetProductVariations(queryObject);
+
+    if (res.success) {
+      const filtered = res.variations.filter((item) => item.productId);
+
+      const uniqueProductsMap = new Map();
+      for (let item of filtered) {
+        const pid = item.productId._id;
+        if (!uniqueProductsMap.has(pid)) {
+          uniqueProductsMap.set(pid, item);
+        }
+      }
+
+      setProducts([...uniqueProductsMap.values()]);
+    }
+  };
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetchProducts();
+      window.scrollTo(0, 0);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [params, categoryId]);
+
+  useEffect(() => {
+    const q = params.get("q");
+    if (q === "") {
+      const current = Object.fromEntries([...params.entries()]);
+      delete current.q;
+      setSearchParams(createSearchParams(current));
+    }
+  }, [params]);
 
   return (
     <div className="w-full">
-      <div className="md:w-main m-auto h-[81px] flex justify-start items-center p-2 bg-gray-100">
-        <div className="lg:w-main w-screen px-4 lg:px-0">
-          <h3 className="font-semibold uppercase  mb-2">{categoryName}</h3>
+      {/* Header */}
+      <div className="xl:w-main m-auto h-[81px] flex justify-start items-center p-2 !bg-white">
+        <div className="xl:w-main w-screen px-4 lg:px-0">
           <Breadcrumb category={category} />
+          <h3 className="font-semibold uppercase">{categoryName}</h3>
         </div>
       </div>
-      <div className="md:w-main p-2  my-8 m-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ReusableBanner images={banner1} aspectRatio="3/1" />
-        <ReusableBanner images={banner2} aspectRatio="3/1" />
+
+      {/* Banner */}
+      <div className="xl:w-main p-2 m-auto grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <ReusableBanner images={banner1} aspectRatio="3/1" delay={0} />
+        <ReusableBanner images={banner2} aspectRatio="3/1" delay={2500} />
       </div>
+
+      {/* Bộ lọc */}
       <div className="lg:w-main border p-4 flex lg:pr-4 pr-8 flex-col md:flex-row gap-4 md:justify-between mt-8 m-auto">
         <div className="w-4/5 flex-auto flex flex-wrap gap-4">
+          {/* Lọc giá */}
           <SelectableList
-            title={"Giá"}
+            title="Giá"
             items={priceRanges}
             selectedId={
-              params.get("minPrice.gte") && params.get("minPrice.lte")
-                ? `${params.get("minPrice.gte")}-${params.get("minPrice.lte")}`
+              params.get("from") && params.get("to")
+                ? `${params.get("from")}-${params.get("to")}`
                 : ""
             }
             onSelect={(value) => {
               setSearchParams((prevParams) => {
                 const current = Object.fromEntries([...prevParams.entries()]);
-
-                // Xóa các giá trị cũ
-                delete current["minPrice.gte"];
-                delete current["minPrice.lte"];
                 delete current.from;
                 delete current.to;
 
@@ -179,8 +174,8 @@ const Products = () => {
                   const [from, to] = value.split("-");
                   return createSearchParams({
                     ...current,
-                    "minPrice.gte": from,
-                    "minPrice.lte": to,
+                    from,
+                    to,
                   });
                 } else {
                   return createSearchParams(current);
@@ -191,9 +186,9 @@ const Products = () => {
             valueField="value"
           />
 
-          {/* Danh mục */}
+          {/* Lọc danh mục */}
           <SelectableList
-            title={"danh mục"}
+            title="Danh mục"
             items={categories}
             selectedId={params.get("categoryId") || ""}
             onSelect={(id) => {
@@ -204,9 +199,9 @@ const Products = () => {
             }}
           />
 
-          {/* Thuong hieu */}
+          {/* Lọc brand */}
           <SelectableList
-            title={"thương hiệu"}
+            title="Thương hiệu"
             items={brands}
             selectedId={params.get("brandId") || ""}
             onSelect={(id) => {
@@ -219,35 +214,50 @@ const Products = () => {
             valueField="_id"
           />
         </div>
-        <div className="w-1/5 flex flex-col gap-3">
-          <SelectableList
-            title={"sắp xếp"}
-            items={sorts}
-            selectedId={sort}
-            onSelect={(value) => setSort(value)}
-            labelField="text"
-            valueField="value"
-          />
-        </div>
+
+        {/* Sắp xếp */}
+        <SelectableList
+          title="Sắp xếp"
+          items={sorts}
+          selectedId={params.get("sort") || ""}
+          onSelect={(value) => {
+            setSearchParams((prevParams) => {
+              const current = Object.fromEntries([...prevParams.entries()]);
+              if (!value) delete current.sort;
+              else current.sort = value;
+              return createSearchParams(current);
+            });
+          }}
+          labelField="text"
+          valueField="value"
+        />
       </div>
+
+      {/* Danh sách sản phẩm */}
       <div className="md:w-main m-auto my-4 gap-4 flex flex-wrap">
-        {products?.products?.map((el) => (
-          <div className="mr-6">
+        {products.map((el) => (
+          <div className="mr-6" key={el._id}>
             <ProductCard
-              pid={el.id}
-              key={el._id}
-              image={el.thumb}
-              slugCategory={el.categoryId?.slug}
-              {...el}
+              pid={el.productId._id}
+              pvid={el._id}
+              price={el.price}
+              thumb={el.productId.thumb || el.images?.[0]}
+              slug={el.productId.slug}
+              slugCategory={el.productId.categoryId?.slug}
+              productName={el.productId.productName}
+              rating={el.productId.rating || 0}
+              totalSold={el.productId.totalSold || 0}
             />
           </div>
         ))}
       </div>
 
+      {/* Phân trang */}
       <div className="w-main m-auto my-4 flex justify-end">
-        <Pagination totalCount={products?.total || 0} />
+        <Pagination totalCount={products?.length || 0} />
       </div>
-      <div className="w-full h-[100px]"></div>
+
+      <div className="w-full h-[100px]" />
     </div>
   );
 };

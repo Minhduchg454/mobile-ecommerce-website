@@ -18,7 +18,7 @@ export const renderStarFromNumber = (number, size) => {
   const stars = [];
   number = Math.round(number);
   if (number > 5) number = 5;
-  
+
   for (let i = 0; i < +number; i++)
     stars.push(<AiFillStar color="orange" size={size || 16} />);
   for (let i = 5; i > +number; i--)
@@ -45,25 +45,6 @@ export const validate = (payload, setInvalidFields) => {
       ]);
     }
   }
-  // for (let arr of formatPayload) {
-  //     switch (arr[0]) {
-  //         case 'email':
-  //             const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-  //             if (!arr[1].match(regex)) {
-  //                 invalids++
-  //                 setInvalidFields(prev => [...prev, { name: arr[0], mes: 'Email invalid.' }])
-  //             }
-  //             break;
-  //         case 'password':
-  //             if (arr[1].length < 6) {
-  //                 invalids++
-  //                 setInvalidFields(prev => [...prev, { name: arr[0], mes: 'Password minimum 6 characters.' }])
-  //             }
-  //             break;
-  //         default:
-  //             break;
-  //     }
-  // }
 
   return invalids;
 };
@@ -167,3 +148,9 @@ export const getMonthsInRange = (start, end) => {
   months += d2.getMonth();
   return months <= 0 ? 0 : months;
 };
+
+export const formatVnDate = (dateStr) =>
+  dateStr ? new Date(dateStr).toLocaleDateString("vi-VN") : "";
+
+export const formatVnCurrency = (value) =>
+  typeof value === "number" ? value.toLocaleString("vi-VN") + "₫" : value;
