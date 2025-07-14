@@ -106,13 +106,10 @@ const login = asyncHandler(async (req, res) => {
 // Lấy user hiện tại từ token
 const getCurrent = asyncHandler(async (req, res) => {
   const { id } = req.user;
-  console.log("goi current", req.body);
 
   const user = await User.findById(id)
     .populate("statusUserId", "statusUserName")
     .populate("roleId userName");
-
-  console.log("goi user", user);
 
   if (!user)
     return res.status(404).json({ success: false, mes: "User not found" });
