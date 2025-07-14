@@ -15,26 +15,6 @@ const tools = [
   {
     function_declarations: [
       {
-        name: "get_current_temperature",
-        description: "Gets the current temperature for a given location.",
-        parameters: {
-          type: "object",
-          properties: {
-            location: {
-              type: "string",
-              description: "The city name, e.g. San Francisco",
-            },
-            // Nếu hàm getCurrentWeather của bạn có tham số 'unit', hãy thêm vào đây
-            // unit: {
-            //     type: 'string',
-            //     enum: ["celsius", "fahrenheit"],
-            //     description: "Đơn vị nhiệt độ (mặc định là celsius).",
-            // },
-          },
-          required: ["location"],
-        },
-      },
-      {
         name: "search_product",
         description:
           "Tìm kiếm sản phẩm theo từ khóa mô tả do người dùng cung cấp.",
@@ -71,9 +51,7 @@ exports.getResponse = async (req, res) => {
         text: `
                     Bạn là một trợ lý AI thông minh, luôn nói tiếng Việt.
                     Bạn có quyền truy cập vào các công cụ sau:
-                        1. 'get_current_temperature' – dùng để lấy thông tin thời tiết hiện tại tại một vị trí cụ thể.
-                        2. 'search_product' – dùng để tìm kiếm sản phẩm dựa trên mô tả hoặc từ khóa người dùng đưa ra.
-                    🔹 Nếu người dùng hỏi về thời tiết ở đâu đó, bạn ** PHẢI dùng ** công cụ 'get_current_temperature'.
+                        1. 'search_product' – dùng để tìm kiếm sản phẩm dựa trên mô tả hoặc từ khóa người dùng đưa ra.
                     🔹 Nếu người dùng hỏi về sản phẩm, mô tả sản phẩm, hoặc muốn gợi ý sản phẩm, bạn ** PHẢI dùng ** công cụ 'search_product'.
                      💬 Ví dụ:
                      - Người dùng: Thời tiết Hà Nội hôm nay như thế nào ?
