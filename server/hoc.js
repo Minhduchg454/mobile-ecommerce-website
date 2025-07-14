@@ -1,17 +1,17 @@
 // Higher-Order Component (HOC) - Function
 // const t = 'hello'
 const function_1 = (param) => {
-    console.log('1' + param)
-}
+  console.log("1" + param);
+};
 
 const function_2 = (param2) => {
-    console.log('2' + param2)
-}
+  console.log("2" + param2);
+};
 
 const function_hoc = (callback) => (x) => {
-    const t = 'abc'
-    callback(x + t)
-}
+  const t = "abc";
+  callback(x + t);
+};
 
 // function_1('abc')
 // function_2('xyz')
@@ -22,13 +22,13 @@ const function_hoc = (callback) => (x) => {
 // function_1('function 1' + 'abc')
 
 const Component = (props) => {
-    return console.log('JSX' + props)
-}
+  return console.log("JSX" + props);
+};
 
 const hoc = (Component) => (props) => {
-    const t = 'abc'
-    return <Component {...props} t={t} />
-}
+  const t = "abc";
+  return <Component {...props} t={t} />;
+};
 
 // Function(param)
 // <Component props='123' />
