@@ -148,6 +148,11 @@ const ProductDetail1 = () => {
     setImageIndex((prev) => (prev === imageList.length - 1 ? 0 : prev + 1));
   };
 
+  useEffect(() => {
+    console.log("Thong tin san pham", product);
+    console.log("Thong tin biến thể", currentProduct);
+  }, [product, currentProduct]);
+
   return (
     <div className="xl:w-main w-full">
       <div className="h-[70px] flex justify-center items-center px-4">
@@ -367,7 +372,7 @@ const ProductDetail1 = () => {
               totalRatings={product.totalRating}
               ratings={product.rating}
               nameProduct={product.productName}
-              pid={product._id}
+              pid={currentProduct._id}
               rerender={() => {
                 if (selectedVariantId) fetchSpecifications(selectedVariantId);
               }}
