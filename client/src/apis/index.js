@@ -10,3 +10,4 @@ export * from "./coupon";
 export * from "./role";
 export * from "./statusUser";
 export * from "./couponProductVariation";
+export * from "./review";

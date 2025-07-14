@@ -140,7 +140,8 @@ const Cart = ({ dispatch, navigate }) => {
         <Button
           handleOnClick={() => {
             dispatch(showCart());
-            navigate(`/${path.MEMBER}/${path.DETAIL_CART}`);
+            navigate(`/${path.CHECKOUT}`);
+            // navigate(`/${path.MEMBER}/${path.DETAIL_CART}`);
           }}
           style="w-full bg-main py-3 rounded-md"
         >

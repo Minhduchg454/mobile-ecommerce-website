@@ -9,6 +9,7 @@ import {
   apiGetVariationsByProductId,
   apiGetValuesByVariationId,
   apiGetProductVariation,
+  apiFilterPreviews,
 } from "apis";
 import {
   Breadcrumb,
@@ -27,6 +28,7 @@ import { useSelector } from "react-redux";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import icons from "ultils/icons";
 import { FaCheckCircle } from "react-icons/fa";
+import { Reviews } from "@mui/icons-material";
 
 const { AiOutlinePhone } = icons;
 
@@ -44,7 +46,7 @@ const ProductDetail1 = () => {
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [brandId, setBrandId] = useState("");
   const [relatedProducts, setRelatedProducts] = useState([]);
-
+  const [previews, setPreviews] = useState([]);
   const pvid = searchParams.get("code");
 
   const imageList = currentProduct?.images || [];
@@ -54,6 +56,21 @@ const ProductDetail1 = () => {
       setCurrentImage(imageList[imageIndex] || "");
     }
   }, [imageIndex, imageList]);
+
+  const fetchPreviews = useCallback(async (variationId) => {
+    if (!variationId) return;
+    try {
+      const res = await apiFilterPreviews({ productVariationId: variationId });
+      if (res.success) {
+        setPreviews(res.previews || []);
+      } else {
+        setPreviews([]);
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi lấy đánh giá:", error);
+      setPreviews([]);
+    }
+  }, []);
 
   useEffect(() => {
     if (pvid) {
@@ -116,9 +133,10 @@ const ProductDetail1 = () => {
         setCurrentProduct(variant);
         setImageIndex(0);
         fetchSpecifications(selectedVariantId);
+        fetchPreviews(selectedVariantId);
       }
     }
-  }, [selectedVariantId, variations, fetchSpecifications]);
+  }, [selectedVariantId, variations, fetchSpecifications, fetchPreviews]);
 
   const handleSelectVariant = (variantId) => {
     setSelectedVariantId(variantId);
@@ -151,7 +169,8 @@ const ProductDetail1 = () => {
   useEffect(() => {
     console.log("Thong tin san pham", product);
     console.log("Thong tin biến thể", currentProduct);
-  }, [product, currentProduct]);
+    console.log("Danh sách nhận xét theo biến thể", previews);
+  }, [product, currentProduct, previews]);
 
   return (
     <div className="xl:w-main w-full">
@@ -369,12 +388,15 @@ const ProductDetail1 = () => {
         {product && (
           <div className="mt-6">
             <ProductInfomation
-              totalRatings={product.totalRating}
-              ratings={product.rating}
+              totalRatings={currentProduct?.totalRating}
+              ratings={previews} // ← là danh sách review từ API lọc
               nameProduct={product.productName}
               pid={currentProduct._id}
               rerender={() => {
-                if (selectedVariantId) fetchSpecifications(selectedVariantId);
+                if (selectedVariantId) {
+                  fetchSpecifications(selectedVariantId);
+                  fetchPreviews(selectedVariantId); // ← Gọi lại khi đánh giá thay đổi
+                }
               }}
             />
           </div>
