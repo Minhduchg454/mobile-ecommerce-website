@@ -1,61 +1,113 @@
-import React, { memo, useState, useCallback } from "react";
+import React, { memo, useState, useMemo } from "react";
 import { Votebar, Button, VoteOption, Comment } from "..";
 import { renderStarFromNumber } from "../../ultils/helpers";
-import { apiRatings } from "../../apis";
+import { apiRatings, apiCreatePreview } from "../../apis";
 import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/app/appSlice";
 import Swal from "sweetalert2";
 import path from "../../ultils/path";
 import { useNavigate } from "react-router-dom";
 
-const ProductInfomation = ({
-  totalRatings,
-  ratings,
-  nameProduct,
-  pid,
-  rerender,
-}) => {
+const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
   const [activedTab, setActivedTab] = useState(1);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoggedIn } = useSelector((state) => state.user);
+  const { isLoggedIn, current } = useSelector((state) => state.user);
 
-  //Gui danh gia
+  // Tính toán tổng số đánh giá & trung bình sao
+  const { totalRatings, averageRating } = useMemo(() => {
+    const total = ratings?.length || 0;
+    const totalStars = ratings?.reduce((sum, r) => sum + r.previewRating, 0);
+    const average = total > 0 ? (totalStars / total).toFixed(1) : 0;
+    return {
+      totalRatings: total,
+      averageRating: average,
+    };
+  }, [ratings]);
+
+  //Gửi đánh giá
   const handleSubmitVoteOption = async ({ comment, score }) => {
     if (!comment || !pid || !score) {
-      alert("Please vote when click submit");
+      alert("Vui lòng chọn sao và nhập nhận xét!");
       return;
     }
-    await apiRatings({ star: score, comment, pid, updatedAt: Date.now() });
+    await apiCreatePreview({
+      userId: current._id,
+      productVariationId: pid,
+      previewComment: comment,
+      previewRating: score,
+    });
     dispatch(showModal({ isShowModal: false, modalChildren: null }));
     rerender();
   };
 
-  //Neu da dang nhap thi hien form danh gia va nguoc lai yeu cau dang nahp
+  const canVoteOrUpdate = useMemo(() => {
+    //Nếu chưa đăng nhập
+    if (!current) return false;
+
+    //Danh sách không có ai, hoặc danh sách rỗng
+    if (!ratings || ratings.length === 0) return true;
+
+    //Neu khong tim thay nguoi dung trong danh sach => cho phep danh gia true
+    const myRating = ratings.find((r) => r.userId?._id === current._id);
+    if (!myRating) return true;
+
+    const votedAt = new Date(myRating.createdAt).getTime();
+    const now = Date.now();
+    const diffInDays = (now - votedAt) / (1000 * 60 * 60 * 24);
+
+    return diffInDays < 7;
+  }, [ratings, current]);
+
+  const daysLeftToEdit = useMemo(() => {
+    if (!current || !ratings || ratings.length === 0) return null;
+
+    const myRating = ratings.find((r) => r.userId?._id === current._id);
+    if (!myRating) return null;
+
+    const votedAt = new Date(myRating.createdAt).getTime();
+    const now = Date.now();
+    const diffInDays = (now - votedAt) / (1000 * 60 * 60 * 24);
+
+    if (diffInDays < 7) return Math.ceil(7 - diffInDays);
+    return null;
+  }, [ratings, current]);
+
+  //Mở form đánh giá nếu đã đăng nhập
   const handleVoteNow = () => {
     if (!isLoggedIn) {
       Swal.fire({
-        text: "Login to vote",
-        cancelButtonText: "Cancel",
-        confirmButtonText: "Go login",
+        text: "Vui lòng đăng nhập để đánh giá",
+        cancelButtonText: "Hủy",
+        confirmButtonText: "Đăng nhập",
         title: "Oops!",
         showCancelButton: true,
       }).then((rs) => {
         if (rs.isConfirmed) navigate(`/${path.LOGIN}`);
       });
-    } else {
-      dispatch(
-        showModal({
-          isShowModal: true,
-          modalChildren: (
-            <VoteOption
-              nameProduct={nameProduct}
-              handleSubmitVoteOption={handleSubmitVoteOption}
-            />
-          ),
-        })
-      );
+      return;
     }
+
+    if (!canVoteOrUpdate) {
+      Swal.fire({
+        icon: "info",
+        title: "Hết hạn chỉnh sửa",
+        text: "Bạn đã đánh giá sản phẩm này hơn 7 ngày trước và không thể thay đổi.",
+      });
+      return;
+    }
+
+    dispatch(
+      showModal({
+        isShowModal: true,
+        modalChildren: (
+          <VoteOption
+            nameProduct={nameProduct}
+            handleSubmitVoteOption={handleSubmitVoteOption}
+          />
+        ),
+      })
+    );
   };
 
   return (
@@ -63,46 +115,58 @@ const ProductInfomation = ({
       <div className="w-full flex flex-col p-4 border rounded-xl shadow-md">
         <div className="flex border rounded-xl">
           <div className="flex-4 flex-col flex items-center justify-center ">
-            <span className="font-semibold text-3xl">{`${ratings}/5`}</span>
+            <span className="font-semibold text-3xl">{averageRating}/5</span>
             <span className="flex items-center gap-1">
-              {(renderStarFromNumber(ratings) || []).map((el, index) => (
+              {(renderStarFromNumber(averageRating) || []).map((el, index) => (
                 <span key={index}>{el}</span>
               ))}
             </span>
-            <span className="text-sm">{`${
-              totalRatings ? totalRatings : 0
-            } reviewers and commentors`}</span>
+            <span className="text-sm">
+              {totalRatings} lượt đánh giá và nhận xét
+            </span>
           </div>
+
           <div className="flex-6 flex gap-2 flex-col p-4">
-            {Array.from(Array(5).keys())
-              .reverse()
-              .map((el) => (
+            {[5, 4, 3, 2, 1].map((star) => {
+              const count = ratings?.filter(
+                (r) => r.previewRating === star
+              ).length;
+              return (
                 <Votebar
-                  key={el}
-                  number={el + 1}
-                  ratingTotal={Array.isArray(ratings) ? ratings.length : 0}
-                  ratingCount={
-                    Array.isArray(ratings)
-                      ? ratings.filter((i) => i.star === el + 1).length
-                      : 0
-                  }
+                  key={star}
+                  number={star}
+                  ratingTotal={totalRatings}
+                  ratingCount={count}
                 />
-              ))}
+              );
+            })}
           </div>
         </div>
+
         <div className="p-4 flex items-center justify-center text-sm flex-col gap-2">
           <span>Ý kiến về sản phẩm</span>
           <Button handleOnClick={handleVoteNow}>ĐÁNH GIÁ NGAY!</Button>
+
+          {daysLeftToEdit !== null && (
+            <span className="text-xs italic text-gray-500">
+              Bạn còn <strong>{daysLeftToEdit} ngày</strong> để chỉnh sửa đánh
+              giá của mình
+            </span>
+          )}
         </div>
+
         <div className="flex flex-col gap-4">
           {Array.isArray(ratings) &&
             ratings.map((el) => (
               <Comment
                 key={el._id}
-                star={el.star}
+                star={el.previewRating}
                 updatedAt={el.updatedAt}
-                comment={el.comment}
-                name={`${el.postedBy?.lastname} ${el.postedBy?.firstname}`}
+                comment={el.previewComment}
+                image={el.userId.avatar}
+                name={`${el.userId?.lastName || ""} ${
+                  el.userId?.firstName || ""
+                }`}
               />
             ))}
         </div>
