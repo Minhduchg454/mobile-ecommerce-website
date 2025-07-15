@@ -100,14 +100,14 @@ const Personal = ({ navigate }) => {
   const isBlocked = current?.isBlocked;
 
   return (
-    <div className="w-full relative px-4">
+    <div className="w-full relative px-2">
       <form
         onSubmit={handleSubmit(handleUpdateInfor)}
-        className="w-full md:w-4/5 mx-auto py-8 flex flex-col gap-4"
+        className="w-full mx-auto py-2 flex flex-col gap-4"
       >
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Thông tin cá nhân */}
-          <div className="flex-1 flex flex-col gap-4">
+        <div className="flex flex-col lg:flex-row justify-around gap-3">
+          {/*Khối 1: Thông tin cá nhân */}
+          <div className="flex flex-col gap-3">
             {/* Email (khóa) */}
             <div className="flex items-center">
               <label className="w-[120px] font-medium">Email:</label>
@@ -115,12 +115,12 @@ const Personal = ({ navigate }) => {
                 readOnly
                 tabIndex={-1}
                 value={current?.email}
-                className="bg-gray-100 text-gray-500 px-3 py-2 rounded-md text-sm border border-gray-300 w-[300px] focus:outline-none focus:ring-0"
+                className="bg-gray-100 text-gray-500 px-3 py-2 rounded-xl text-sm border border-gray-400 w-[300px] focus:outline-none focus:ring-0"
               />
             </div>
 
             {/* Họ và tên */}
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1 flex items-center">
                 <label className="w-[120px] font-medium">Họ:</label>
                 <InputForm
@@ -131,7 +131,9 @@ const Personal = ({ navigate }) => {
                 />
               </div>
               <div className="flex-1 flex items-center">
-                <label className="w-[120px] font-medium">Tên:</label>
+                <label className="lg:w-[50px] w-[120px] font-medium">
+                  Tên:
+                </label>
                 <InputForm
                   register={register}
                   errors={errors}
@@ -161,7 +163,9 @@ const Personal = ({ navigate }) => {
 
             {/* Địa chỉ */}
             <div className="flex items-center">
-              <label className="w-[120px] font-medium">Địa chỉ:</label>
+              <label className="w-[120px] font-medium">
+                Địa chỉ giao hàng:
+              </label>
               <InputForm
                 register={register}
                 errors={errors}
@@ -202,16 +206,16 @@ const Personal = ({ navigate }) => {
             </div>
           </div>
 
-          {/* Đường kẻ mờ */}
+          {/*Khối 2: Đường kẻ mờ */}
           <div className="w-[1px] bg-gray-300 hidden md:block" />
 
-          {/* Avatar */}
+          {/*Khối 3 Avatar */}
           <div className="flex flex-col items-center gap-3">
             <label htmlFor="file" className="cursor-pointer">
               <img
                 src={avatarPreview || current?.avatar || avatar}
                 alt="avatar"
-                className="w-28 h-28 object-cover rounded-full border border-gray-300"
+                className="aspect-square w-32 object-cover rounded-full border border-gray-300"
               />
             </label>
             <input type="file" id="file" {...register("avatar")} hidden />

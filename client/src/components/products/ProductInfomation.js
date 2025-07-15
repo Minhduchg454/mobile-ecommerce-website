@@ -158,20 +158,22 @@ const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
 
         <div className="flex flex-col gap-4">
           {Array.isArray(ratings) &&
-            ratings
-              .filter((el) => el.userId)
-              .map((el) => (
-                <Comment
-                  key={el._id}
-                  star={el.previewRating}
-                  updatedAt={el.updatedAt}
-                  comment={el.previewComment}
-                  image={el.userId?.avatar || defaultAvatar}
-                  name={`${el.userId?.lastName || ""} ${
-                    el.userId?.firstName || ""
-                  }`}
-                />
-              ))}
+            ratings.map((el) => (
+              <Comment
+                key={el._id}
+                star={el.previewRating}
+                updatedAt={el.updatedAt}
+                comment={el.previewComment}
+                image={el.userId?.avatar || defaultAvatar}
+                name={
+                  el.userId
+                    ? `${el.userId?.lastName || ""} ${
+                        el.userId?.firstName || ""
+                      }`
+                    : "Tài khoản đã xoá"
+                }
+              />
+            ))}
         </div>
       </div>
     </div>

@@ -26,11 +26,13 @@ const initOrderRoutes = require("./routes/order/index.js");
 const initChatBotRoutes = require("./routes/chatbot/index.js");
 const userRouter = require("./routes/user");
 const initOAuthRoutes = require("./routes/auth/index.js");
+const initStatsRoutes = require("./routes/stats/index.js");
 
 initOAuthRoutes(app);
 initProductRoutes(app);
 initOrderRoutes(app);
 initChatBotRoutes(app);
+initStatsRoutes(app);
 app.use("/api", userRouter);
 
 app.use(notFound);

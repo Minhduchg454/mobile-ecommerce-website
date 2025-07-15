@@ -31,6 +31,8 @@ const Header = () => {
   const q = watch("q");
   const navigate = useNavigate();
 
+  const roleName = current?.roleId?.roleName?.toLowerCase(); // dùng để phân quyền
+
   useEffect(() => {
     const handleClickoutOptions = (e) => {
       const profile = document.getElementById("profile");
@@ -77,6 +79,7 @@ const Header = () => {
   return (
     <div className="w-full bg-header-footer">
       <div className="xl:w-main w-full mx-auto flex items-center justify-between md:h-[60px] py-[8px] px-4">
+        {/* Logo */}
         <Link
           to={`/${path.HOME}`}
           className="h-16 flex items-center justify-start px-2"
@@ -90,6 +93,7 @@ const Header = () => {
           </div>
         </Link>
 
+        {/* Ô tìm kiếm */}
         <div className="lg:w-[700px] w-full px-1 shadow rounded-xl bg-gray-200">
           <InputFormSearch
             id="q"
@@ -105,9 +109,10 @@ const Header = () => {
           />
         </div>
 
+        {/* Phần thông tin người dùng + icon */}
         <div className="flex h-full items-center gap-4 px-4 relative">
-          {/* Wishlist: chỉ hiện nếu đăng nhập */}
-          {current && (
+          {/* Wishlist: chỉ hiện nếu là customer */}
+          {roleName === "customer" && (
             <div
               onClick={() => dispatch(showWishlist())}
               className="relative cursor-pointer"
@@ -121,20 +126,22 @@ const Header = () => {
             </div>
           )}
 
-          {/* Giỏ hàng: luôn hiển thị */}
-          <div
-            onClick={() => dispatch(showCart())}
-            className="relative cursor-pointer"
-          >
-            <MdOutlineShoppingCart size={24} className="text-blue-500" />
-            {current?.cart?.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
-                {current.cart.length}
-              </span>
-            )}
-          </div>
+          {/* Giỏ hàng: chỉ hiện nếu là customer */}
+          {roleName !== "admin" && (
+            <div
+              onClick={() => dispatch(showCart())}
+              className="relative cursor-pointer"
+            >
+              <MdOutlineShoppingCart size={24} className="text-blue-500" />
+              {current?.cart?.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                  {current.cart.length}
+                </span>
+              )}
+            </div>
+          )}
 
-          {/* Hồ sơ người dùng: chỉ khi đăng nhập */}
+          {/* Hồ sơ người dùng */}
           {current && (
             <div
               id="profile"

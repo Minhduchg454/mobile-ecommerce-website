@@ -155,8 +155,6 @@ exports.filterPreviews = asyncHandler(async (req, res) => {
     .populate("userId", "_id avatar firstName lastName")
     .populate("productVariationId");
 
-  console.log("Ket qua tim kiem", previews);
-
   return res.json({
     success: true,
     filters: queryObj,

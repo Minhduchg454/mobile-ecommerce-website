@@ -37,7 +37,7 @@ const TopHeaders = () => {
   return (
     <div className="w-full bg-header-footer ">
       {/* Bên trái - Thông tin cửa hàng */}
-      <div className="xl:w-main w-full m-auto hidden min-h-9 py-2 px-4 md:flex flex-wrap items-center justify-between text-xs text-black">
+      <div className="xl:w-main w-full m-auto  min-h-9 py-2 px-4 flex flex-wrap items-center justify-between text-xs text-black">
         <div className="hidden lg:flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1">
             <AiOutlineClockCircle size={14} />
