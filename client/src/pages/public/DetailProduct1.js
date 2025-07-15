@@ -2,10 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { MdOutlineShoppingCart } from "react-icons/md";
+import { useDispatch } from "react-redux";
+import { updateCart } from "../../store/user/userSlice";
+import { toast } from "react-toastify";
+import { updateCartItem } from "../../store/user/asyncActions";
 
 import {
   apiGetProduct,
-  apiGetProducts,
   apiGetVariationsByProductId,
   apiGetValuesByVariationId,
   apiGetProductVariation,
@@ -13,11 +16,8 @@ import {
 } from "apis";
 import {
   Breadcrumb,
-  Button,
   SelectQuantity,
   ProductInfomation,
-  CustomSlider1,
-  ProductCard,
   FeatureProducts,
 } from "components";
 import Zoom from "react-medium-image-zoom";
@@ -28,14 +28,11 @@ import { useSelector } from "react-redux";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import icons from "ultils/icons";
 import { FaCheckCircle } from "react-icons/fa";
-import { Reviews } from "@mui/icons-material";
 
 const { AiOutlinePhone } = icons;
 
 const ProductDetail1 = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { current } = useSelector((state) => state.user);
-
   const [product, setProduct] = useState(null);
   const [variations, setVariations] = useState([]);
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -45,17 +42,39 @@ const ProductDetail1 = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [brandId, setBrandId] = useState("");
-  const [relatedProducts, setRelatedProducts] = useState([]);
   const [previews, setPreviews] = useState([]);
   const pvid = searchParams.get("code");
-
   const imageList = currentProduct?.images || [];
+
+  const dispatch = useDispatch();
+  const { current, isLoggedIn, currentCart } = useSelector(
+    (state) => state.user
+  );
 
   useEffect(() => {
     if (imageList.length > 0) {
       setCurrentImage(imageList[imageIndex] || "");
     }
   }, [imageIndex, imageList]);
+
+  /* Them san pham vao gio hang */
+  const handleAddToCart = () => {
+    if (!currentProduct || !selectedVariantId) return;
+
+    const payload = {
+      product: selectedVariantId, // đúng key cho updateCartItem
+      quantity,
+      priceAtTime: currentProduct.price,
+    };
+
+    dispatch(updateCartItem(payload))
+      .unwrap()
+      .then(() => toast.success("Đã thêm vào giỏ hàng!"))
+      .catch((err) => {
+        console.error("❌ Lỗi khi thêm vào giỏ:", err);
+        toast.error("Không thể thêm vào giỏ hàng.");
+      });
+  };
 
   const fetchPreviews = useCallback(async (variationId) => {
     if (!variationId) return;
@@ -95,7 +114,6 @@ const ProductDetail1 = () => {
 
       if (resProduct.success) {
         setProduct(resProduct.productData);
-        fetchRelatedProducts(resProduct.productData.categoryId?._id);
         setBrandId(resProduct.productData.brandId._id);
       }
 
@@ -104,15 +122,6 @@ const ProductDetail1 = () => {
       }
     } catch (err) {
       console.error("❌ Lỗi khi lấy sản phẩm và biến thể:", err);
-    }
-  };
-
-  const fetchRelatedProducts = async (catId) => {
-    try {
-      const res = await apiGetProducts({ categoryId: catId });
-      if (res.success) setRelatedProducts(res.products);
-    } catch (error) {
-      console.error("❌ Lỗi lấy sản phẩm liên quan:", error);
     }
   };
 
@@ -172,6 +181,7 @@ const ProductDetail1 = () => {
     console.log("Danh sách nhận xét theo biến thể", previews);
   }, [product, currentProduct, previews]);
 
+  // Kiem tra hien thi
   return (
     <div className="xl:w-main w-full">
       <div className="h-[70px] flex justify-center items-center px-4">
@@ -330,7 +340,7 @@ const ProductDetail1 = () => {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => {}}
+                onClick={handleAddToCart}
                 className=" rounded-xl p-2 flex flex-col justify-center items-center basis-[40%] w-full border border-[#00AFFF] text-[#00AFFF] font-semibold bg-white hover:bg-[#00AFFF] hover:text-white transition duration-200 ease-in-out shadow-sm"
               >
                 <MdOutlineShoppingCart size={24} />

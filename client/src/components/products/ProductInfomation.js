@@ -7,6 +7,7 @@ import { showModal } from "../../store/app/appSlice";
 import Swal from "sweetalert2";
 import path from "../../ultils/path";
 import { useNavigate } from "react-router-dom";
+import defaultAvatar from "../../assets/avatarDefault.png";
 
 const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
   const [activedTab, setActivedTab] = useState(1);
@@ -157,18 +158,20 @@ const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
 
         <div className="flex flex-col gap-4">
           {Array.isArray(ratings) &&
-            ratings.map((el) => (
-              <Comment
-                key={el._id}
-                star={el.previewRating}
-                updatedAt={el.updatedAt}
-                comment={el.previewComment}
-                image={el.userId.avatar}
-                name={`${el.userId?.lastName || ""} ${
-                  el.userId?.firstName || ""
-                }`}
-              />
-            ))}
+            ratings
+              .filter((el) => el.userId)
+              .map((el) => (
+                <Comment
+                  key={el._id}
+                  star={el.previewRating}
+                  updatedAt={el.updatedAt}
+                  comment={el.previewComment}
+                  image={el.userId?.avatar || defaultAvatar}
+                  name={`${el.userId?.lastName || ""} ${
+                    el.userId?.firstName || ""
+                  }`}
+                />
+              ))}
         </div>
       </div>
     </div>

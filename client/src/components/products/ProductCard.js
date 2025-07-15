@@ -11,7 +11,7 @@ import {
 import Swal from "sweetalert2";
 import path from "ultils/path";
 import { useNavigate } from "react-router-dom";
-import { getCurrent } from "store/user/asyncActions";
+import { getCurrent, updateCartItem } from "store/user/asyncActions";
 
 const ProductCard = ({
   totalSold,
@@ -50,16 +50,24 @@ const ProductCard = ({
     });
   };
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.stopPropagation();
-    if (!isLoggedIn || !current) return redirectToLogin();
 
-    if (onAddToCart) {
-      onAddToCart();
-    } else {
-      toast.success("Đã thêm vào giỏ hàng!");
-    }
-    dispatch(getCurrent());
+    // Gọi Redux để thêm vào giỏ hàng
+    dispatch(
+      updateCartItem({
+        product: pvid,
+        quantity: 1,
+        priceAtTime: price, // 👈 đảm bảo giá có giá trị tại thời điểm
+      })
+    )
+      .unwrap()
+      .then(() => {
+        toast.success("Đã thêm vào giỏ hàng!");
+      })
+      .catch((err) => {
+        toast.error(err || "Có lỗi khi thêm vào giỏ hàng");
+      });
   };
 
   const handleToggleWishlist = (e) => {

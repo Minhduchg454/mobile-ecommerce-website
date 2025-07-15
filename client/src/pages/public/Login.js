@@ -37,7 +37,6 @@ const Login = () => {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
 
-  // ✅ Xử lý đăng nhập Google
   const handleGoogleLogin = async (credentialResponse) => {
     const token = credentialResponse?.credential;
     if (!token) return;

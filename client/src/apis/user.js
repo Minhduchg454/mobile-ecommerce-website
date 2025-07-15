@@ -60,17 +60,18 @@ export const apiUpdateCurrent = (data, uid) =>
     data,
   });
 
-export const apiUpdateCart = (data) =>
-  axios({
-    url: "/cartitem",
-    method: "post",
-    data,
-  });
-export const apiRemoveCart = (pid, color) =>
-  axios({
-    url: `/users/remove-cart/${pid}/${color}`,
-    method: "delete",
-  });
+// export const apiUpdateCart = (data) =>
+//   axios({
+//     url: "/cartitem",
+//     method: "post",
+//     data,
+//   });
+
+// export const apiRemoveCart = (pid, color) =>
+//   axios({
+//     url: `/users/remove-cart/${pid}/${color}`,
+//     method: "delete",
+//   });
 export const apiUpdateWishlist = (pid) =>
   axios({
     url: `/users/wishlist/` + pid,
@@ -78,7 +79,7 @@ export const apiUpdateWishlist = (pid) =>
   });
 
 // ========== CUSTOMER API ENDPOINTS ==========
-export const apiCreateCustomer = (data) =>
+/* export const apiCreateCustomer = (data) =>
   axios({
     url: "/user/customer",
     method: "post",
@@ -107,7 +108,7 @@ export const apiGetCustomerPreviews = (id) =>
   axios({
     url: `/user/customer/${id}/previews`,
     method: "get",
-  });
+  }); */
 
 // ========== ADMIN API ENDPOINTS ==========
 export const apiCreateAdmin = (data) =>
@@ -136,7 +137,7 @@ export const apiDeleteAdmin = (id) =>
     method: "delete",
   });
 
-export const apiCheckEmailExists = (email) =>
+/* export const apiCheckEmailExists = (email) =>
   axios({
     url: `/customers/check-email`,
     method: "get",
@@ -148,4 +149,4 @@ export const apiCheckMobileExists = (mobile) =>
     url: `/customers/check-mobile`,
     method: "get",
     params: { mobile },
-  });
+  }); */

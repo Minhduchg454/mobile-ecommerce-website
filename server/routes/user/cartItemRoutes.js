@@ -1,19 +1,12 @@
-const router = require('express').Router();
-const ctrls = require('../../controllers/user/cartItemController');
+const router = require("express").Router();
+const ctrls = require("../../controllers/user/cartItemController");
 
-// Tạo mới CartItem
-router.post('/', ctrls.createCartItem); // POST /api/cartitem
+router.post("/", ctrls.createCartItem); // Thêm sản phẩm vào giỏ
+router.get("/", ctrls.getCartItems); // Lấy danh sách theo shoppingCart
+router.get("/count", ctrls.getCartItemCount); // Đếm tổng quantity
+router.get("/clear", ctrls.clearCartItems); // Xoá toàn bộ giỏ hàng
+router.get("/:id", ctrls.getCartItem); // Lấy 1 CartItem
+router.put("/:id", ctrls.updateCartItem); // Cập nhật CartItem
+router.delete("/:id", ctrls.deleteCartItem); // Xoá CartItem
 
-// Lấy danh sách CartItem theo shoppingCart
-router.get('/', ctrls.getCartItems); // GET /api/cartitem?shoppingCart=...
-
-// Cập nhật CartItem
-router.put('/:id', ctrls.updateCartItem); // PUT /api/cartitem/:id
-
-// Xóa CartItem
-router.delete('/:id', ctrls.deleteCartItem); // DELETE /api/cartitem/:id
-
-// Lấy CartItem theo id
-router.get('/:id', ctrls.getCartItem); // GET /api/cartitem/:id
-
-module.exports = router; 
+module.exports = router;
