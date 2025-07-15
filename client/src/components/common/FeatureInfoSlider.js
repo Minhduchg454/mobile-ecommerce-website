@@ -4,7 +4,9 @@ import CustomSlider1 from "./CustomSlider1"; // Đường dẫn tùy bạn
 const FeatureInfoSlider = ({ data }) => {
   return (
     <div className="flex flex-col">
-      <h3 className="text-xl font-semibold mb-4">Vì sao chọn cửa hàng Fone?</h3>
+      <h3 className="text-xl font-semibold mb-4">
+        Cửa hàng FONE tạo nên mọi sự khác biệt
+      </h3>
 
       <CustomSlider1
         items={data}

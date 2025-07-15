@@ -8,8 +8,7 @@ const Public = () => {
     <div className="flex flex-col items-center">
       <TopHeaders />
       <Header />
-      <Navigation />
-      <div className="w-full flex items-center flex-col">
+      <div className="w-full flex items-center flex-col bg-[#F5F5F7]">
         <Outlet />
       </div>
       <Footer />

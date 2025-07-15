@@ -139,7 +139,7 @@ const Products = () => {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="xl:w-main m-auto h-[81px] flex justify-start items-center p-2 !bg-white">
+      <div className="xl:w-main m-auto h-[81px] flex justify-start items-center p-2 !bg-[#F5F5F7]">
         <div className="xl:w-main w-screen px-4 lg:px-0">
           <Breadcrumb category={category} />
           <h3 className="font-semibold uppercase">{categoryName}</h3>
