@@ -19,7 +19,7 @@ import { FaCheck } from "react-icons/fa";
 import { ShowSwal } from "../../components";
 
 const Cart = ({ dispatch, navigate }) => {
-  const { currentCart } = useSelector((state) => state.user);
+  const { current, currentCart } = useSelector((state) => state.user);
   const [variationData, setVariationData] = useState({});
   const [selectedItems, setSelectedItems] = useState([]);
 
@@ -217,6 +217,24 @@ const Cart = ({ dispatch, navigate }) => {
         </span>
         <button
           onClick={() => {
+            if (!current?._id) {
+              ShowSwal({
+                title: "Cần đăng nhập",
+                text: "Vui lòng đăng nhập để tiếp tục thanh toán.",
+                icon: "warning",
+                confirmText: "Đăng nhập",
+                showCancelButton: true,
+                cancelText: "Hủy",
+                variant: "danger",
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  dispatch(showCart()); // đóng giỏ hàng
+                  navigate(`/${path.LOGIN}`);
+                }
+              });
+              return;
+            }
+
             if (selectedItems.length === 0) {
               ShowSwal({
                 title: "Chưa chọn sản phẩm",
