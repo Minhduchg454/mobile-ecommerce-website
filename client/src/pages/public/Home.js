@@ -61,7 +61,7 @@ const Home = ({ navigate }) => {
       </div>
       <div className="flex flex-col my-8 xl:w-main m-auto w-fullm-auto overflow-x-hidden">
         <FeatureProducts
-          title="Nhưng phụ kiện điện thoại mới nhất"
+          title="Những phụ kiện mới nhất"
           sort="newest"
           categorySlug="phu-kien-dien-thoai"
           limit={6}

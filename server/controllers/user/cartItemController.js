@@ -63,11 +63,9 @@ exports.getCartItems = asyncHandler(async (req, res) => {
 
 // ✅ Cập nhật CartItem
 exports.updateCartItem = asyncHandler(async (req, res) => {
-  console.log("1. Dang goi", req.params, req.body);
   const { id } = req.params;
   const updated = await CartItem.findByIdAndUpdate(id, req.body, { new: true });
 
-  console.log("2. Thanh cong update");
   if (updated) {
     await updateCartTotalPrice(updated.shoppingCart);
   }

@@ -63,6 +63,18 @@ const Checkout = ({ dispatch, navigate }) => {
     0
   );
 
+  useEffect(() => {
+    if (!selectedItems || selectedItems.length === 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Không có sản phẩm để thanh toán",
+        text: "Vui lòng chọn sản phẩm trước khi thanh toán!",
+      }).then(() => {
+        navigate("/");
+      });
+    }
+  }, [selectedItems]);
+
   const handleSaveOrder = async () => {
     const payload = {
       products: selectedItems.map((el) => ({
@@ -89,6 +101,16 @@ const Checkout = ({ dispatch, navigate }) => {
       Swal.fire("Lỗi", "Vui lòng chọn phương thức thanh toán!", "warning");
       return;
     }
+
+    if (hasOutOfStock) {
+      Swal.fire({
+        icon: "error",
+        title: "Không thể thanh toán",
+        text: "Một hoặc nhiều sản phẩm trong giỏ hàng đã hết hàng hoặc không đủ số lượng.",
+      });
+      return;
+    }
+
     if (paymentMethod === "OFFLINE") {
       Swal.fire({
         icon: "info",
@@ -105,6 +127,11 @@ const Checkout = ({ dispatch, navigate }) => {
       });
     }
   };
+
+  const hasOutOfStock = selectedItems.some((item) => {
+    const variation = variationData[item.productVariationId];
+    return !variation || variation.stockQuantity < item.quantity;
+  });
 
   return (
     <div className="w-full h-full max-h-screen overflow-y-auto flex flex-col gap-6">
@@ -197,6 +224,15 @@ const Checkout = ({ dispatch, navigate }) => {
                       </td>
                       <td className="text-right">
                         {formatMoney(currentPrice * el.quantity)} VND
+                      </td>
+                      <td className="text-center">
+                        {variation?.stockQuantity < el.quantity ? (
+                          <span className="text-red-500 font-medium">
+                            ⚠ Không đủ hàng ({variation?.stockQuantity} có sẵn)
+                          </span>
+                        ) : (
+                          el.quantity
+                        )}
                       </td>
                     </tr>
                   );

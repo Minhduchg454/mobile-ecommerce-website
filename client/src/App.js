@@ -14,7 +14,6 @@ import {
   Products,
   FinalRegister,
   ResetPassword,
-  DetailCart,
 } from "pages/public";
 import {
   AdminLayout,
@@ -106,7 +105,6 @@ function App() {
           </Route>
           <Route path={path.MEMBER} element={<MemberLayout />}>
             <Route path={path.PERSONAL} element={<Personal />} />
-            <Route path={path.MY_CART} element={<DetailCart />} />
             <Route path={path.WISHLIST} element={<Wishlist />} />
             <Route path={path.HISTORY} element={<History />} />
           </Route>
