@@ -13,3 +13,4 @@ export * from "./couponProductVariation";
 export * from "./review";
 export * from "./cartItem";
 export * from "./customer";
+export * from "./stats";

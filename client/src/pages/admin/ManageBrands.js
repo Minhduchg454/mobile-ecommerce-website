@@ -71,7 +71,7 @@ const ManageBrands = () => {
         toast.success("Đã xoá thương hiệu");
         render();
       } else {
-        toast.error(res.mes || "Xoá thất bại");
+        toast.error(res.message || "Xoá thất bại");
       }
     }
   };

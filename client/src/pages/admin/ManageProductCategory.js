@@ -79,7 +79,7 @@ const ManageProductCategory = () => {
           toast.success("Xoá danh mục thành công");
           render();
         } else {
-          toast.error(res.mes || "Xoá thất bại");
+          toast.error(res.message || "Xoá thất bại");
         }
       }
     });

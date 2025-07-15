@@ -2,6 +2,7 @@
 const ProductCategory = require("../../models/product/ProductCategory");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
+const Product = require("../../models/product/Product");
 
 // CREATE
 const createCategory = asyncHandler(async (req, res) => {
@@ -62,6 +63,15 @@ const updateCategory = asyncHandler(async (req, res) => {
 // DELETE
 const deleteCategory = asyncHandler(async (req, res) => {
   const { pcid } = req.params;
+  const isUsed = await Product.findOne({ categoryId: pcid });
+
+  if (isUsed) {
+    return res.status(400).json({
+      success: false,
+      message: "Không thể xoá danh mục vì đang được sử dụng bởi sản phẩm.",
+    });
+  }
+
   const deleted = await ProductCategory.findByIdAndDelete(pcid);
   return res.json({
     success: deleted ? true : false,
