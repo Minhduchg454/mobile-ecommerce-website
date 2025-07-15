@@ -10,10 +10,8 @@ const { notFound, errHandler } = require("./middlewares/errHandler");
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// ✅ Kết nối database
 dbConnect();
 
-// ✅ Middleware CORS và cookieParser
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -23,21 +21,18 @@ app.use(
 );
 app.use(cookieParser());
 
-// ✅ ROUTES
-const authRoutes = require("./routes/auth.route.js");
-app.use("/api/auth", authRoutes);
-
 const initProductRoutes = require("./routes/product/index.js");
 const initOrderRoutes = require("./routes/order/index.js");
 const initChatBotRoutes = require("./routes/chatbot/index.js");
-
 const userRouter = require("./routes/user");
+const initOAuthRoutes = require("./routes/auth/index.js");
+
+initOAuthRoutes(app);
 initProductRoutes(app);
 initOrderRoutes(app);
 initChatBotRoutes(app);
 app.use("/api", userRouter);
 
-// ✅ Error middleware
 app.use(notFound);
 app.use(errHandler);
 

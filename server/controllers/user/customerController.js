@@ -4,6 +4,7 @@ const User = require("../../models/user/User");
 const StatusUser = require("../../models/user/StatusUser");
 const Role = require("../../models/user/Role");
 const Account = require("../../models/user/Account");
+const ShoppingCart = require("../../models/user/ShoppingCart");
 
 exports.createCustomer = async (req, res) => {
   try {
@@ -64,7 +65,16 @@ exports.createCustomer = async (req, res) => {
 
       const customer = await Customer.create({ _id: user._id });
 
-      return res.status(201).json({ success: true, customer });
+      const existingCart = await ShoppingCart.findOne({ userId: user._id });
+      if (!existingCart) {
+        await ShoppingCart.create({ userId: user._id, totalPrice: 0 });
+      }
+
+      return res.status(201).json({
+        success: true,
+        customer,
+        message: "Customer created successfully",
+      });
     } catch (err) {
       await Account.deleteOne({ userName: req.body.email });
       return res
@@ -78,9 +88,17 @@ exports.createCustomer = async (req, res) => {
 
 exports.getCustomerById = async (req, res) => {
   try {
-    const customer = await Customer.findById(req.params.id).populate("_id");
+    const customer = await Customer.findById(req.params.id).populate({
+      path: "_id",
+      populate: [
+        { path: "roleId", select: "roleName -_id" },
+        { path: "statusUserId", select: "statusUserName -_id" },
+      ],
+    });
+
     if (!customer)
       return res.status(404).json({ message: "Customer not found" });
+
     res.json(customer);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -103,10 +121,23 @@ exports.updateCustomer = async (req, res) => {
   }
 };
 
+exports.getCartByCustomerId = async (req, res) => {
+  try {
+    const cart = await ShoppingCart.findOne({ userId: req.params.id });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    res.json({ success: true, cart });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ✅ XÓA TOÀN BỘ: Customer → Admin → User → Account
 exports.deleteCustomer = async (req, res) => {
   try {
     const userId = req.params.id;
+    //Xoa gio hang
+    await ShoppingCart.deleteOne({ userId });
 
     // Xoá Customer nếu có
     await Customer.deleteOne({ _id: userId });
@@ -130,8 +161,19 @@ exports.deleteCustomer = async (req, res) => {
 
 exports.getAllCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find().populate("_id");
-    res.json(customers);
+    const customers = await Customer.find().populate({
+      path: "_id",
+      select: "firstName lastName email avatar mobile roleId statusUserId",
+      populate: [
+        { path: "roleId", select: "roleName -_id" },
+        { path: "statusUserId", select: "statusUserName -_id" },
+      ],
+    });
+
+    res.json({
+      total: customers.length,
+      customers,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

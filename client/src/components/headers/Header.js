@@ -105,8 +105,9 @@ const Header = () => {
           />
         </div>
 
-        {current && (
-          <div className="flex h-full items-center gap-4 px-4 relative">
+        <div className="flex h-full items-center gap-4 px-4 relative">
+          {/* Wishlist: chỉ hiện nếu đăng nhập */}
+          {current && (
             <div
               onClick={() => dispatch(showWishlist())}
               className="relative cursor-pointer"
@@ -118,19 +119,23 @@ const Header = () => {
                 </span>
               )}
             </div>
+          )}
 
-            <div
-              onClick={() => dispatch(showCart())}
-              className="relative cursor-pointer"
-            >
-              <MdOutlineShoppingCart size={24} className="text-blue-500" />
-              {current?.cart?.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
-                  {current.cart.length}
-                </span>
-              )}
-            </div>
+          {/* Giỏ hàng: luôn hiển thị */}
+          <div
+            onClick={() => dispatch(showCart())}
+            className="relative cursor-pointer"
+          >
+            <MdOutlineShoppingCart size={24} className="text-blue-500" />
+            {current?.cart?.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                {current.cart.length}
+              </span>
+            )}
+          </div>
 
+          {/* Hồ sơ người dùng: chỉ khi đăng nhập */}
+          {current && (
             <div
               id="profile"
               className="relative cursor-pointer flex items-center gap-2"
@@ -179,8 +184,8 @@ const Header = () => {
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

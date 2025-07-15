@@ -25,17 +25,46 @@ export const userSlice = createSlice({
       state.isLoading = false;
       state.mes = "";
     },
+    setCart: (state, action) => {
+      try {
+        // Nếu dữ liệu truyền vào là chuỗi → parse lại
+        const cartData =
+          typeof action.payload === "string"
+            ? JSON.parse(action.payload)
+            : action.payload;
+
+        state.currentCart = Array.isArray(cartData) ? cartData : [];
+      } catch (error) {
+        console.error("Lỗi khi parse currentCart:", error);
+        state.currentCart = [];
+      }
+    },
     clearMessage: (state) => {
       state.mes = "";
     },
     updateCart: (state, action) => {
-      const { pid, color, quantity } = action.payload;
-      const updatingCart = JSON.parse(JSON.stringify(state.currentCart));
-      state.currentCart = updatingCart.map((el) => {
-        if (el.color === color && el.product?._id === pid) {
-          return { ...el, quantity };
-        } else return el;
-      });
+      const { productVariationId, quantity, priceAtTime } = action.payload;
+
+      // Copy để xử lý
+      const updatedCart = [...state.currentCart];
+      const index = updatedCart.findIndex(
+        (item) => item.productVariationId === productVariationId
+      );
+
+      if (index !== -1) {
+        // Nếu đã có → cập nhật số lượng
+        updatedCart[index].quantity = quantity;
+      } else {
+        // Nếu chưa có → thêm mới
+        updatedCart.push({
+          productVariationId,
+          quantity,
+          priceAtTime, // lưu giá tại thời điểm thêm
+        });
+      }
+
+      // Cập nhật lại giỏ hàng
+      state.currentCart = updatedCart;
     },
   },
   //Dung de xu ly asyncThunk
@@ -63,7 +92,9 @@ export const userSlice = createSlice({
       }
       state.current = userObj;
       state.isLoggedIn = true;
-      state.currentCart = userObj && userObj.cart ? userObj.cart : [];
+      console.log("Current card", state.currentCart);
+
+      // state.currentCart = userObj && userObj.cart ? userObj.cart : [];
     });
     //Neu trang thai that bai thi xoa token
     builder.addCase(actions.getCurrent.rejected, (state, action) => {
@@ -76,6 +107,7 @@ export const userSlice = createSlice({
   },
 });
 //Xuat cac actions de goi trong coponent
-export const { login, logout, clearMessage, updateCart } = userSlice.actions;
+export const { login, logout, clearMessage, updateCart, setCart } =
+  userSlice.actions;
 //Xuat reducer gan ao configureStore
 export default userSlice.reducer;

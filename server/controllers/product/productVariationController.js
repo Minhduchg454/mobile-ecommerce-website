@@ -184,7 +184,7 @@ const getProductVariation = asyncHandler(async (req, res) => {
   const response = await ProductVariation.findById(pvid).populate({
     path: "productId",
     select:
-      "pproductName thumb categoryId brandId slug minPrice totalSold totalStock rating totalRating",
+      "productName thumb categoryId brandId slug minPrice totalSold totalStock rating totalRating",
     populate: [
       { path: "categoryId", select: "productCategoryName slug" },
       { path: "brandId", select: "brandName" },
