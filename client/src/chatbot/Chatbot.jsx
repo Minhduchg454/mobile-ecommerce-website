@@ -4,9 +4,25 @@ import {
   PaperAirplaneIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { data_chatbot } from "./data_chatbot";
+
 import { apiSendMessageToChatbot } from "apis/chatbot";
+const BASE_URL = "http://localhost:3000/";
+
+function addDomainToRelativeLinks(text) {
+  return text.replace(
+    /(?<!https?:\/\/)(\b(?:dien-thoai|phu-kien-dien-thoai)[^\s)]+)/g,
+    (match) => `${BASE_URL}${match}`
+  );
+}
+
+function formatTextWithLinks(text) {
+  const withFullLinks = addDomainToRelativeLinks(text);
+  return withFullLinks.replace(
+    /(https?:\/\/[^\s]+)/g,
+    (url) =>
+      `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">Xem chi tiết</a>`
+  );
+}
 
 function Chatbot() {
   const [messages, setMessages] = useState([]);
@@ -14,30 +30,6 @@ function Chatbot() {
   const [open, setOpen] = useState(false);
   const bottomRef = useRef(null);
   const [showIntro, setShowIntro] = useState(true);
-
-  const genAI = new GoogleGenerativeAI(
-    "AIzaSyDwdcPo0iYZNvGYZ5uhGnHrsIWCio_T_kQ"
-  );
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-  const chat = model.startChat({
-    history: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `
-              You are a helpful assistant. Here is some background information:
-              1. Aways speak VietNamese
-              2. Đường link của điện thoại của trang web: "http://localhost:3000/dtdd/6857ddf00ecc9145773c437a/samsung-galaxy-a55"
-              ${data_chatbot}
-            `,
-          },
-        ],
-      },
-    ],
-  });
-
   useEffect(() => {
     setMessages([
       { role: "bot", text: "Chào mừng bạn đến với cửa hàng FONE!" },
@@ -57,12 +49,15 @@ function Chatbot() {
 
     try {
       console.log("Hi 2");
-      const res = await apiSendMessageToChatbot({ message: userMessage.text });
+      const res = await apiSendMessageToChatbot({
+        message: userMessage.text,
+        history: messages,
+      });
       console.log(res.text);
       console.log("Hi 3");
       const botMessage = {
         role: "bot",
-        text: res?.text || "Không có phản hồi từ chatbot.",
+        text: formatTextWithLinks(res?.text || "Không có phản hồi từ chatbot."),
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -110,7 +105,16 @@ function Chatbot() {
       </div>
 
       {open && (
-        <div className="fixed bottom-24 right-4 w-96 h-[600px] bg-white shadow-lg rounded-xl flex flex-col border border-gray-300">
+        <div
+          className="
+            fixed bottom-0 right-0 left-0 top-0
+            md:bottom-4 md:right-4 md:left-auto md:top-auto
+            w-full h-full
+            md:w-[500px] md:h-[700px]
+            bg-white shadow-lg rounded-none md:rounded-xl
+            flex flex-col border border-gray-300
+          "
+        >
           {/* Header */}
           <div className="bg-blue-600 text-white p-4 rounded-t-xl flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -144,13 +148,13 @@ function Chatbot() {
                 }`}
               >
                 <div
-                  className={`px-4 py-2 rounded-lg max-w-[70%] text-sm ${
+                  className={`px-4 py-2 rounded-lg max-w-[99%] text-sm ${
                     msg.role === "user"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-200 text-gray-900"
                   }`}
                 >
-                  {msg.text}
+                  <div dangerouslySetInnerHTML={{ __html: msg.text }} />
                 </div>
               </div>
             ))}
