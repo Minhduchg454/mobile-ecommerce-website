@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { InputForm, Button, Loading } from "components";
+import { InputForm, Button, Loading, SpecificationSelector } from "components";
 import { toast } from "react-toastify";
 import { getBase64 } from "ultils/helpers";
 import {
@@ -33,6 +33,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
   const [oldImages, setOldImages] = useState([]);
   const [specifications, setSpecifications] = useState([]);
   const [specValues, setSpecValues] = useState({});
+  const [selectedSpecIds, setSelectedSpecIds] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [selectedCouponId, setSelectedCouponId] = useState("");
 
@@ -69,6 +70,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
               mapped[specId] = item.value;
             });
             setSpecValues(mapped);
+            setSelectedSpecIds(Object.keys(mapped)); // Tick những spec đã có
           }
         } catch (err) {
           toast.error("Không thể load thông số kỹ thuật");
@@ -78,6 +80,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         setOldImages([]);
         setPreviews([]);
         setSpecValues({});
+        setSelectedSpecIds([]);
         setSelectedCouponId("");
       }
     };
@@ -102,6 +105,30 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
     });
     return () => subscription.unsubscribe();
   }, [watch]);
+
+  const handleToggleSpec = (specId) => {
+    setSelectedSpecIds((prev) =>
+      prev.includes(specId)
+        ? prev.filter((id) => id !== specId)
+        : [...prev, specId]
+    );
+  };
+
+  const handleChangeSpecValue = (specId, value) => {
+    setSpecValues((prev) => ({
+      ...prev,
+      [specId]: value,
+    }));
+  };
+
+  const handleRemoveSpec = (specId) => {
+    setSelectedSpecIds((prev) => prev.filter((id) => id !== specId));
+    setSpecValues((prev) => {
+      const updated = { ...prev };
+      delete updated[specId];
+      return updated;
+    });
+  };
 
   const onSubmit = async (data) => {
     const formData = new FormData();
@@ -233,28 +260,15 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
 
       {/* Thông số kỹ thuật */}
       <div className="mt-6">
-        <h3 className="font-semibold mb-2">Thông số kỹ thuật</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          {specifications.map((spec) => (
-            <div key={spec._id}>
-              <label className="text-sm font-medium mb-1 block">
-                {spec.typeSpecifications} ({spec.unitOfMeasure || ""})
-              </label>
-              <input
-                type="text"
-                value={specValues[spec._id] || ""}
-                onChange={(e) =>
-                  setSpecValues((prev) => ({
-                    ...prev,
-                    [spec._id]: e.target.value,
-                  }))
-                }
-                className="border border-gray-300 p-2 rounded w-full text-sm"
-                placeholder={`Nhập ${spec.typeSpecifications}`}
-              />
-            </div>
-          ))}
-        </div>
+        <SpecificationSelector
+          specifications={specifications}
+          selectedSpecIds={selectedSpecIds}
+          specValues={specValues}
+          onToggleSpec={handleToggleSpec}
+          onChangeValue={handleChangeSpecValue}
+          onRemoveSpec={handleRemoveSpec}
+          title="Thông số kỹ thuật"
+        />
       </div>
 
       {/* Khuyến mãi */}
@@ -325,6 +339,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
               setPreviews([]);
               setOldImages([]);
               setSpecValues({});
+              setSelectedSpecIds([]);
               onDone();
             }}
             className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"

@@ -1,41 +1,42 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { MdOutlineShoppingCart } from "react-icons/md";
-import { useDispatch } from "react-redux";
-import { updateCart } from "../../store/user/userSlice";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { updateCartItem } from "../../store/user/asyncActions";
-import { useNavigate } from "react-router-dom";
-import useRole from "hooks/useRole";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
+import clsx from "clsx";
+import { FaChevronLeft, FaChevronRight, FaCheckCircle } from "react-icons/fa";
+import { MdOutlineShoppingCart } from "react-icons/md";
+import { AiOutlinePhone } from "react-icons/ai";
 
 import {
   apiGetProduct,
   apiGetVariationsByProductId,
   apiGetValuesByVariationId,
+  apiGetValuesByProductId,
   apiGetProductVariation,
   apiFilterPreviews,
 } from "apis";
+import { updateCartItem } from "../../store/user/asyncActions";
 import {
   Breadcrumb,
   SelectQuantity,
   ProductInfomation,
   FeatureProducts,
 } from "components";
-import Zoom from "react-medium-image-zoom";
-import "react-medium-image-zoom/dist/styles.css";
-import clsx from "clsx";
 import { formatMoney, fotmatPrice, renderStarFromNumber } from "ultils/helpers";
-import { useSelector } from "react-redux";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import icons from "ultils/icons";
-import { FaCheckCircle } from "react-icons/fa";
-
-const { AiOutlinePhone } = icons;
+import useRole from "hooks/useRole";
 
 const ProductDetail1 = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { current, isLoggedIn, currentCart } = useSelector(
+    (state) => state.user
+  );
+  const { isAdmin } = useRole();
+
   const [product, setProduct] = useState(null);
   const [variations, setVariations] = useState([]);
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -46,70 +47,15 @@ const ProductDetail1 = () => {
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [brandId, setBrandId] = useState("");
   const [previews, setPreviews] = useState([]);
+
   const pvid = searchParams.get("code");
   const imageList = currentProduct?.images || [];
 
-  const dispatch = useDispatch();
-  const { current, isLoggedIn, currentCart } = useSelector(
-    (state) => state.user
-  );
-
-  const { isAdmin } = useRole();
   useEffect(() => {
     if (imageList.length > 0) {
       setCurrentImage(imageList[imageIndex] || "");
     }
   }, [imageIndex, imageList]);
-
-  /* Them san pham vao gio hang */
-  const handleAddToCart = () => {
-    if (!currentProduct || !selectedVariantId) return;
-
-    const payload = {
-      product: selectedVariantId, // đúng key cho updateCartItem
-      quantity,
-      priceAtTime: currentProduct.price,
-    };
-
-    dispatch(updateCartItem(payload))
-      .unwrap()
-      .then(() => toast.success("Đã thêm vào giỏ hàng!"))
-      .catch((err) => {
-        console.error("❌ Lỗi khi thêm vào giỏ:", err);
-        toast.error("Không thể thêm vào giỏ hàng.");
-      });
-  };
-
-  const handleBuyNow = () => {
-    if (!currentProduct || !selectedVariantId) return;
-
-    const payload = {
-      selectedItems: [
-        {
-          productVariationId: selectedVariantId,
-          quantity,
-          priceAtTime: currentProduct.price, // giá lúc chọn
-        },
-      ],
-    };
-
-    navigate("/checkout", { state: payload });
-  };
-
-  const fetchPreviews = useCallback(async (variationId) => {
-    if (!variationId) return;
-    try {
-      const res = await apiFilterPreviews({ productVariationId: variationId });
-      if (res.success) {
-        setPreviews(res.previews || []);
-      } else {
-        setPreviews([]);
-      }
-    } catch (error) {
-      console.error("❌ Lỗi khi lấy đánh giá:", error);
-      setPreviews([]);
-    }
-  }, []);
 
   useEffect(() => {
     if (pvid) {
@@ -131,12 +77,10 @@ const ProductDetail1 = () => {
         apiGetProduct(productId),
         apiGetVariationsByProductId(productId),
       ]);
-
       if (resProduct.success) {
         setProduct(resProduct.productData);
         setBrandId(resProduct.productData.brandId._id);
       }
-
       if (resVariations.success) {
         setVariations(resVariations.variations);
       }
@@ -145,27 +89,83 @@ const ProductDetail1 = () => {
     }
   };
 
-  const fetchSpecifications = useCallback(async (variantId) => {
+  const fetchPreviews = useCallback(async (variationId) => {
     try {
-      const res = await apiGetValuesByVariationId(variantId);
-      setSpecifications(res.success ? res.values : []);
+      const res = await apiFilterPreviews({ productVariationId: variationId });
+      setPreviews(res.success ? res.previews : []);
     } catch (error) {
-      console.error("❌ Lỗi khi lấy thông số:", error);
-      setSpecifications([]);
+      console.error("❌ Lỗi khi lấy đánh giá:", error);
+      setPreviews([]);
     }
   }, []);
 
   useEffect(() => {
-    if (selectedVariantId) {
-      const variant = variations.find((v) => v._id === selectedVariantId);
-      if (variant) {
-        setCurrentProduct(variant);
-        setImageIndex(0);
-        fetchSpecifications(selectedVariantId);
-        fetchPreviews(selectedVariantId);
+    fetchAllSpecifications();
+  }, [selectedVariantId, product?._id]);
+
+  // Gọi lại cùng logic lấy specifications đã định nghĩa trong useEffect
+  const fetchAllSpecifications = async () => {
+    if (!selectedVariantId || !product?._id) return;
+    try {
+      const [resVariation, resProduct] = await Promise.all([
+        apiGetValuesByVariationId(selectedVariantId),
+        apiGetValuesByProductId(product._id),
+      ]);
+      let allSpecs = [];
+      if (resProduct.success) allSpecs = [...resProduct.values];
+
+      if (resVariation.success) {
+        const map = {};
+        allSpecs.forEach((s) => {
+          const id = s.specificationTypeId?._id;
+          if (id) map[id] = s;
+        });
+        resVariation.values.forEach((s) => {
+          const id = s.specificationTypeId?._id;
+          if (id) map[id] = s;
+        });
+        allSpecs = Object.values(map).sort((a, b) => {
+          const nameA = a.specificationTypeId?.typeSpecifications || "";
+          const nameB = b.specificationTypeId?.typeSpecifications || "";
+          return nameA.localeCompare(nameB);
+        });
       }
+      setSpecifications(allSpecs);
+    } catch (err) {
+      console.error("❌ Lỗi lấy thông số tổng hợp:", err);
+      setSpecifications([]);
     }
-  }, [selectedVariantId, variations, fetchSpecifications, fetchPreviews]);
+  };
+
+  const handleAddToCart = () => {
+    if (!currentProduct || !selectedVariantId) return;
+    const payload = {
+      product: selectedVariantId,
+      quantity,
+      priceAtTime: currentProduct.price,
+    };
+    dispatch(updateCartItem(payload))
+      .unwrap()
+      .then(() => toast.success("Đã thêm vào giỏ hàng!"))
+      .catch((err) => {
+        console.error("❌ Lỗi khi thêm vào giỏ:", err);
+        toast.error("Không thể thêm vào giỏ hàng.");
+      });
+  };
+
+  const handleBuyNow = () => {
+    if (!currentProduct || !selectedVariantId) return;
+    const payload = {
+      selectedItems: [
+        {
+          productVariationId: selectedVariantId,
+          quantity,
+          priceAtTime: currentProduct.price,
+        },
+      ],
+    };
+    navigate("/checkout", { state: payload });
+  };
 
   const handleSelectVariant = (variantId) => {
     setSelectedVariantId(variantId);
@@ -173,6 +173,21 @@ const ProductDetail1 = () => {
     currentParams.set("code", variantId);
     setSearchParams(currentParams);
   };
+
+  useEffect(() => {
+    if (pvid) {
+      apiGetProductVariation(pvid).then((res) => {
+        if (res.success) {
+          const variant = res.variation;
+          setCurrentProduct(variant);
+          setSelectedVariantId(variant._id);
+          setImageIndex(0);
+          fetchProductAndVariations(variant.productId.id);
+          fetchPreviews(variant._id); // 👈 thêm dòng này
+        }
+      });
+    }
+  }, [pvid]);
 
   const handleChangeQuantity = (type) => {
     if (type === "plus") setQuantity((prev) => prev + 1);
@@ -447,7 +462,7 @@ const ProductDetail1 = () => {
               pid={currentProduct._id}
               rerender={() => {
                 if (selectedVariantId) {
-                  fetchSpecifications(selectedVariantId);
+                  fetchAllSpecifications();
                   fetchPreviews(selectedVariantId); // ← Gọi lại khi đánh giá thay đổi
                 }
               }}

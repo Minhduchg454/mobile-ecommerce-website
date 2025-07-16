@@ -58,3 +58,4 @@ export { default as SidebarLayout } from "./common/SidebarLayout";
 export { default as ShowSwal } from "./common/ShowSwal";
 export { default as SpecificProductManager } from "./products/SpecificProductManager";
 export { default as CreateVariantForm } from "./products/CreateVariantForm";
+export { default as SpecificationSelector } from "./products/SpecificationSelector.jsx";
