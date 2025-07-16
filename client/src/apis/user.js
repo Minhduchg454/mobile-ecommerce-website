@@ -2,11 +2,12 @@ import axios from "../axios";
 
 export const apiRegister = (data) =>
   axios({
-    url: "/customers",
+    url: "/customer",
     method: "post",
     data,
     headers: { "Content-Type": "application/json" },
   });
+
 export const apiFinalRegister = (token) =>
   axios({
     url: "/users/finalregister/" + token,
@@ -60,55 +61,11 @@ export const apiUpdateCurrent = (data, uid) =>
     data,
   });
 
-// export const apiUpdateCart = (data) =>
-//   axios({
-//     url: "/cartitem",
-//     method: "post",
-//     data,
-//   });
-
-// export const apiRemoveCart = (pid, color) =>
-//   axios({
-//     url: `/users/remove-cart/${pid}/${color}`,
-//     method: "delete",
-//   });
 export const apiUpdateWishlist = (pid) =>
   axios({
     url: `/users/wishlist/` + pid,
     method: "put",
   });
-
-// ========== CUSTOMER API ENDPOINTS ==========
-/* export const apiCreateCustomer = (data) =>
-  axios({
-    url: "/user/customer",
-    method: "post",
-    data,
-  });
-
-export const apiGetCustomerInfo = (id) =>
-  axios({
-    url: `/user/customer/${id}`,
-    method: "get",
-  });
-
-export const apiGetCustomerCart = (id) =>
-  axios({
-    url: `/user/customer/${id}/cart`,
-    method: "get",
-  });
-
-export const apiGetCustomerOrders = (id) =>
-  axios({
-    url: `/user/customer/${id}/orders`,
-    method: "get",
-  });
-
-export const apiGetCustomerPreviews = (id) =>
-  axios({
-    url: `/user/customer/${id}/previews`,
-    method: "get",
-  }); */
 
 // ========== ADMIN API ENDPOINTS ==========
 export const apiCreateAdmin = (data) =>
@@ -136,17 +93,3 @@ export const apiDeleteAdmin = (id) =>
     url: `/user/admin/${id}`,
     method: "delete",
   });
-
-/* export const apiCheckEmailExists = (email) =>
-  axios({
-    url: `/customers/check-email`,
-    method: "get",
-    params: { email },
-  });
-
-export const apiCheckMobileExists = (mobile) =>
-  axios({
-    url: `/customers/check-mobile`,
-    method: "get",
-    params: { mobile },
-  }); */

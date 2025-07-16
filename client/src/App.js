@@ -12,7 +12,6 @@ import {
   DetailProduct1,
   DetailBlogs,
   Products,
-  FinalRegister,
   ResetPassword,
 } from "pages/public";
 import {
@@ -37,7 +36,6 @@ import {
   Checkout,
 } from "pages/member";
 import path from "ultils/path";
-import { getCategories } from "store/app/asyncActions";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -108,7 +106,6 @@ function App() {
             <Route path={path.WISHLIST} element={<Wishlist />} />
             <Route path={path.HISTORY} element={<History />} />
           </Route>
-          <Route path={path.FINAL_REGISTER} element={<FinalRegister />} />
           <Route path={path.LOGIN} element={<Login />} />
         </Routes>
         <ToastContainer

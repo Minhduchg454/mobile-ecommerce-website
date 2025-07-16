@@ -10,8 +10,9 @@ import { HiOutlineChartSquareBar } from "react-icons/hi";
 import { FaBoxOpen } from "react-icons/fa";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import { MdVerifiedUser } from "react-icons/md";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 const getDefaultTimeRange = (type) => {
   const now = new Date();
@@ -29,6 +30,50 @@ const getDefaultTimeRange = (type) => {
   }
 
   return { from, to };
+};
+
+//Mac dinh bieu do tron
+const defaultPieData = [
+  { status: "Cancelled", sum: 10 },
+  { status: "Succeed", sum: 90 },
+];
+
+//Mac dinh doanh thu
+const defaultChartData = [
+  { label: "2025-06-30", total: 1000000 },
+  { label: "2025-07-05", total: 1500000 },
+  { label: "2025-07-10", total: 1200000 },
+  { label: "2025-07-15", total: 1700000 },
+  { label: "2025-07-20", total: 1400000 },
+  { label: "2025-07-25", total: 1600000 },
+  { label: "2025-07-30", total: 2000000 },
+  { label: "2025-08-05", total: 1800000 },
+  { label: "2025-08-10", total: 2100000 },
+  { label: "2025-08-15", total: 1950000 },
+  { label: "2025-08-20", total: 1700000 },
+  { label: "2025-08-25", total: 2200000 },
+  { label: "2025-08-31", total: 2500000 },
+];
+
+const pieOptions = {
+  plugins: {
+    legend: {
+      position: "bottom",
+    },
+    datalabels: {
+      color: "#000",
+      formatter: (value, context) => {
+        const dataArr = context.chart.data.datasets[0].data;
+        const total = dataArr.reduce((acc, val) => acc + val, 0);
+        const percent = ((value / total) * 100).toFixed(1);
+        return `${percent}%`;
+      },
+      font: {
+        size: 13,
+        weight: "bold",
+      },
+    },
+  },
 };
 
 const Dashboard = () => {
@@ -170,8 +215,12 @@ const Dashboard = () => {
       {
         label: "Tổng đơn",
         data: [
-          data?.pieData?.find((el) => el.status === "Cancelled")?.sum || 0,
-          data?.pieData?.find((el) => el.status === "Succeed")?.sum || 0,
+          (data?.pieData || defaultPieData)?.find(
+            (el) => el.status === "Cancelled"
+          )?.sum || 0,
+          (data?.pieData || defaultPieData)?.find(
+            (el) => el.status === "Succeed"
+          )?.sum || 0,
         ],
         backgroundColor: ["rgba(255, 99, 132, 0.4)", "rgba(54, 162, 235, 0.4)"],
         borderColor: ["rgba(255, 99, 132, 1)", "rgba(54, 162, 235, 1)"],
@@ -181,7 +230,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="w-full flex flex-col gap-4 bg-gray-50 px-4 pb-6">
+    <div className="w-full flex flex-col gap-4 px-4 my-3">
       {/* Thống kê tổng quan */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <BoxInfo
@@ -389,20 +438,24 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {data?.chartData && (
-              <CustomChart
-                customTime={customTime}
-                isMonth={isMonth}
-                data={data?.chartData}
-              />
-            )}
+            <CustomChart
+              customTime={customTime}
+              isMonth={isMonth}
+              data={(data?.chartData?.length
+                ? data.chartData
+                : defaultChartData
+              ).map((item) => ({
+                date: item.label,
+                sum: item.total,
+              }))}
+            />
           </div>
         </div>
 
         {/* Biểu đồ tròn */}
         <div className="col-span-1 lg:col-span-3 bg-white rounded-xl shadow-md p-4">
           <h2 className="font-semibold mb-4">Tỉ lệ đơn hàng</h2>
-          <Pie data={pieData} />
+          <Pie data={pieData} options={pieOptions} />
         </div>
       </div>
     </div>

@@ -58,6 +58,15 @@ const Login = () => {
             userData: data.user,
           })
         );
+        ShowSwal({
+          title: "Thành công",
+          text: `Chào mừng ${data.user?.lastname || data.user?.email} quay lại`,
+          icon: "success",
+          timer: 2000,
+          variant: "success",
+          showCancelButton: false,
+          showConfirmButton: false,
+        });
         dispatch(getCurrent());
         navigate(searchParams.get("redirect") || `/${path.HOME}`);
       } else {
@@ -197,24 +206,24 @@ const Login = () => {
               <div className="relative flex-1">
                 <FaUser className="absolute left-3 top-3 text-gray-400" />
                 <input
-                  name="firstname"
-                  value={payload.firstname}
+                  name="lastname"
+                  value={payload.lastname}
                   onChange={handleInput}
                   placeholder="Nhập họ"
                   className="pl-10 py-2 border rounded-xl w-full"
                 />
-                {renderError("firstname")}
+                {renderError("lastname")}
               </div>
               <div className="relative flex-1">
                 <FaUser className="absolute left-3 top-3 text-gray-400" />
                 <input
-                  name="lastname"
-                  value={payload.lastname}
+                  name="firstname"
+                  value={payload.firstname}
                   onChange={handleInput}
                   placeholder="Nhập tên"
                   className="pl-10 py-2 border rounded-xl w-full"
                 />
-                {renderError("lastname")}
+                {renderError("firstname")}
               </div>
             </div>
           )}

@@ -1,6 +1,5 @@
 import axios from "../axios";
 
-// ✅ Thống kê người dùng mới theo thời gian (ngày/tháng/năm)
 // Ví dụ: /api/stats/user/new?from=2025-07-01&to=2025-07-15&type=day
 export const apiGetNewUserStats = (params) =>
   axios({
@@ -9,7 +8,6 @@ export const apiGetNewUserStats = (params) =>
     params,
   });
 
-// ✅ Thống kê tổng số sản phẩm đã bán
 // Ví dụ: /api/stats/product/sold
 export const apiGetTotalSoldProducts = () =>
   axios({

@@ -5,7 +5,7 @@ import userSlice from "./user/userSlice"; //du lieu nguoi dung: token, thong tin
 import storage from "redux-persist/lib/storage"; //Luu vao localStorage
 import { persistReducer, persistStore } from "redux-persist"; //ket hop reducer voi co che luu tru, khoi tao co che luu va phuc hoi du lieu tu localStorage
 
-//Redux: Quan ly du lieu dung chjung giua cac component trong React
+//Redux: Quan ly du lieu dung chung giua cac component trong React
 
 const commonConfig = {
   storage,
