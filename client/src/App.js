@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import Chatbot from "chatbot/Chatbot";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import AuthLoader from "./AuthLoader";
 import {
   Login,
   Home,
@@ -51,6 +52,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
+      <AuthLoader />
       <div className="font-jp">
         {isShowWishlist && (
           <div

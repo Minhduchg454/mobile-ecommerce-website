@@ -96,10 +96,8 @@ const getSpecificProductsByVariationId = asyncHandler(async (req, res) => {
   const response = await SpecificProduct.find({ productVariationId: pvid });
 
   return res.status(200).json({
-    success: !!response,
-    specificProducts: response.length
-      ? response
-      : "No specific products found for this variation",
+    success: true,
+    specificProducts: response, // luôn là mảng, có thể là []
   });
 });
 

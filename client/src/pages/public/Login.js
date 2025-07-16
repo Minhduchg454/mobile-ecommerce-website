@@ -51,13 +51,16 @@ const Login = () => {
       const data = await res.json();
 
       if (data.success && data.token && data.user) {
-        dispatch(
-          login({
-            isLoggedIn: true,
-            token: String(data.token),
-            userData: data.user,
-          })
-        );
+        setTimeout(() => {
+          dispatch(
+            login({
+              isLoggedIn: true,
+              token: String(data.token),
+              userData: data.user,
+            })
+          );
+        }, 300); // Delay khoảng 300ms là đủ an toàn
+        localStorage.setItem("accessToken", data.token);
         ShowSwal({
           title: "Thành công",
           text: `Chào mừng ${data.user?.lastname || data.user?.email} quay lại`,
@@ -67,7 +70,7 @@ const Login = () => {
           showCancelButton: false,
           showConfirmButton: false,
         });
-        dispatch(getCurrent());
+        //dispatch(getCurrent());
         navigate(searchParams.get("redirect") || `/${path.HOME}`);
       } else {
         ShowSwal({

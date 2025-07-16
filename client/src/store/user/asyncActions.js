@@ -14,7 +14,7 @@ export const getCurrent = createAsyncThunk(
     const user = response.user;
 
     // 3. Lấy giỏ hàng từ server theo userId neu la customer
-    if (user.roleId.roleName === "customer") {
+    if (user?.roleId?.roleName === "customer") {
       const shoppingRes = await apis.apiGetCustomerCart(user._id);
       const shoppingCartId = shoppingRes.cart?._id;
 

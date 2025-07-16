@@ -281,9 +281,6 @@ const updateProductRating = async (productId) => {
   });
 };
 
-//Cap nhat tong so luong mua cua san pham
-const updateTotalSolde = async (productId) => {};
-
 module.exports = {
   createProduct,
   getProduct,

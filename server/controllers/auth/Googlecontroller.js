@@ -81,7 +81,7 @@ exports.googleLogin = async (req, res) => {
 
     // Tạo JWT
     const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+      expiresIn: "7d",
     });
 
     return res.status(200).json({
@@ -91,6 +91,10 @@ exports.googleLogin = async (req, res) => {
     });
   } catch (error) {
     console.error("Google login error:", error);
+    if (error.errors) {
+      console.error("Details:", error.errors);
+    }
+
     return res.status(401).json({
       success: false,
       message: error.message || "Google login failed",

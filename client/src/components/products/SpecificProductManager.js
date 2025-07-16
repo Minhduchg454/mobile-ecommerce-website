@@ -4,12 +4,23 @@ import {
   apiCreateSpecificProduct,
   apiDeleteSpecificProduct,
   apiUpdateProductVariation, // thêm dòng này
+  apiGetProductVariation,
 } from "apis";
 import { toast } from "react-toastify";
 
 const SpecificProductManager = ({ variationId, onClose }) => {
   const [serieNumbers, setSerieNumbers] = useState([]);
   const [newSerial, setNewSerial] = useState("");
+  const [initialStock, setInitialStock] = useState(0);
+
+  const fetchInitialStock = async () => {
+    try {
+      const res = await apiGetProductVariation(variationId);
+      if (res.success && res.variation.stockQuantity !== undefined) {
+        setInitialStock(res.variation.stockQuantity);
+      }
+    } catch {}
+  };
 
   const fetchSerials = async (updateStock = false) => {
     try {
@@ -21,7 +32,7 @@ const SpecificProductManager = ({ variationId, onClose }) => {
         }));
         setSerieNumbers(list);
 
-        if (updateStock) {
+        if (updateStock && list.length > 0) {
           await apiUpdateProductVariation(variationId, {
             stockQuantity: list.length,
           });
@@ -63,8 +74,24 @@ const SpecificProductManager = ({ variationId, onClose }) => {
     }
   };
 
+  useEffect(() => {
+    if (variationId) {
+      fetchSerials();
+      fetchInitialStock();
+    }
+  }, [variationId]);
+
   return (
-    <div className="p-3 bg-white rounded-xl shadow w-[300px] max-w-xl mx-auto">
+    <div className="relative p-3 bg-white rounded-xl shadow w-[300px] max-w-xl mx-auto">
+      {/* Nút đóng ở góc phải trên */}
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition"
+        title="Đóng"
+      >
+        ×
+      </button>
+
       <h3 className="text-lg font-semibold mb-4">Quản lý số serial</h3>
 
       <div className="flex gap-2 mb-4">
@@ -73,6 +100,9 @@ const SpecificProductManager = ({ variationId, onClose }) => {
           className="border p-2 rounded w-full"
           value={newSerial}
           onChange={(e) => setNewSerial(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleAdd();
+          }}
           placeholder="Nhập số serial mới"
         />
         <button
@@ -98,15 +128,13 @@ const SpecificProductManager = ({ variationId, onClose }) => {
           </div>
         ))}
       </div>
-
-      <div className="mt-6 text-right">
-        <button
-          onClick={onClose}
-          className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-        >
-          Đóng
-        </button>
-      </div>
+      {serieNumbers.length > 0 && serieNumbers.length < initialStock && (
+        <div className="text-orange-500 text-sm mt-2">
+          <p>⚠️ Bạn đã nhập {serieNumbers.length} serial.</p>
+          <p> Số lượng kho ban đầu là {initialStock}.</p>
+          <p>Hệ thống sẽ cập nhật số lượng mới theo số serial đã nhập.</p>
+        </div>
+      )}
     </div>
   );
 };

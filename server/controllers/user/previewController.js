@@ -143,7 +143,6 @@ exports.deletePreview = asyncHandler(async (req, res) => {
 // Lấy danh sách Preview theo điều kiện lọc
 exports.filterPreviews = asyncHandler(async (req, res) => {
   const { productVariationId, userId, previewRating } = req.query;
-  console.log("Được gọi");
 
   // Tạo object điều kiện lọc động
   const queryObj = {};
