@@ -14,3 +14,4 @@ export * from "./review";
 export * from "./cartItem";
 export * from "./customer";
 export * from "./stats";
+export * from "./specificProduct";

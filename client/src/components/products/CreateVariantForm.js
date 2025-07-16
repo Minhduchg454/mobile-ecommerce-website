@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useState, useCallback } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { InputForm, Button, Loading } from "components";
 import { toast } from "react-toastify";
 import { getBase64 } from "ultils/helpers";
@@ -22,9 +22,12 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
     handleSubmit,
     reset,
     setValue,
+    control,
     watch,
     formState: { errors },
   } = useForm();
+
+  const stockQuantity = useWatch({ control, name: "stockQuantity" });
 
   const [previews, setPreviews] = useState([]);
   const [oldImages, setOldImages] = useState([]);
@@ -33,25 +36,16 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
   const [coupons, setCoupons] = useState([]);
   const [selectedCouponId, setSelectedCouponId] = useState("");
 
-  // Lấy danh sách khuyến mãi
   useEffect(() => {
-    const fetchCoupons = async () => {
-      const res = await apiGetAllCoupons();
+    apiGetAllCoupons().then((res) => {
       if (res.success) setCoupons(res.coupons);
-    };
-    fetchCoupons();
-  }, []);
+    });
 
-  // Lấy thông số kỹ thuật
-  useEffect(() => {
-    const fetchSpecifications = async () => {
-      const res = await apiGetSpecifications();
+    apiGetSpecifications().then((res) => {
       if (res.success) setSpecifications(res.specifications);
-    };
-    fetchSpecifications();
+    });
   }, []);
 
-  // Load dữ liệu khi sửa
   useEffect(() => {
     const initEditData = async () => {
       if (editVariant) {
@@ -59,16 +53,13 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         setValue("price", editVariant.price);
         setValue("stockQuantity", editVariant.stockQuantity);
 
-        // Load ảnh cũ
         if (editVariant.images && Array.isArray(editVariant.images)) {
-          const urls = editVariant.images.map(
-            (img) =>
-              img?.url || `${process.env.REACT_APP_SERVER_URL}/images/${img}`
-          );
+          const urls = editVariant.images
+            .filter((img) => typeof img === "string" && img.startsWith("http"))
+            .map((img) => img.trim());
           setOldImages(urls);
         }
 
-        // Load thông số kỹ thuật
         try {
           const res = await apiGetValuesByVariationId(editVariant._id);
           if (res.success) {
@@ -81,7 +72,6 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
           }
         } catch (err) {
           toast.error("Không thể load thông số kỹ thuật");
-          console.error(err);
         }
       } else {
         reset();
@@ -91,11 +81,9 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         setSelectedCouponId("");
       }
     };
-
     initEditData();
-  }, [editVariant, setValue, reset]);
+  }, [editVariant, reset, setValue]);
 
-  // Load ảnh mới nếu có chọn
   useEffect(() => {
     const subscription = watch((value, { name }) => {
       if (name === "images") {
@@ -112,7 +100,6 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         }
       }
     });
-
     return () => subscription.unsubscribe();
   }, [watch]);
 
@@ -127,7 +114,6 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
     }
     formData.append("productId", productId);
 
-    // Nếu có ảnh mới thì gửi lên
     if (data.images && data.images.length > 0) {
       for (let file of data.images) {
         formData.append("images", file);
@@ -157,7 +143,6 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         ? editVariant._id
         : res.createdVariation._id;
 
-      // Gửi thông số kỹ thuật
       const specPayload = Object.entries(specValues)
         .filter(([, value]) => value?.trim() !== "")
         .map(([specId, value]) => ({
@@ -171,10 +156,8 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         toast.success("Gắn thông số kỹ thuật thành công");
       } catch (err) {
         toast.error("Gắn thông số kỹ thuật thất bại");
-        console.error(err);
       }
 
-      // Gắn khuyến mãi
       if (selectedCouponId) {
         try {
           await apiCreateCouponProductVariation({
@@ -184,7 +167,6 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
           toast.success("Gắn khuyến mãi thành công");
         } catch (err) {
           toast.error("Không thể gắn khuyến mãi");
-          console.error(err);
         }
       }
 
@@ -221,50 +203,35 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
           validate={{ required: "Không được để trống" }}
           placeholder="VD: 15000000"
         />
-        <InputForm
-          label="Số lượng kho"
-          id="stockQuantity"
-          type="number"
-          register={register}
-          errors={errors}
-          validate={{ required: "Không được để trống" }}
-          placeholder="VD: 10"
-        />
-        <div>
-          <label className="block font-medium mb-1">Ảnh</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            {...register("images", editVariant ? {} : { required: "Chọn ảnh" })}
+        {editVariant ? (
+          <div>
+            <label className="text-sm font-medium mb-1 block">
+              Số lượng kho
+            </label>
+            <input
+              type="number"
+              value={stockQuantity || 0}
+              readOnly
+              className="border border-gray-300 bg-gray-100 p-2 rounded-xl w-full text-sm cursor-not-allowed"
+            />
+            <p className="text-xs text-blue-500 mt-1">
+              * Vào phần Serial để thay đổi số lượng
+            </p>
+          </div>
+        ) : (
+          <InputForm
+            label="Số lượng kho"
+            id="stockQuantity"
+            type="number"
+            register={register}
+            errors={errors}
+            validate={{ required: "Không được để trống" }}
+            placeholder="VD: 3"
           />
-          {errors.images && (
-            <p className="text-sm text-red-500">{errors.images.message}</p>
-          )}
-
-          {(oldImages.length > 0 || previews.length > 0) && (
-            <div className="flex flex-wrap gap-3 mt-3">
-              {oldImages.map((src, idx) => (
-                <img
-                  key={`old-${idx}`}
-                  src={src}
-                  alt={`old-preview-${idx}`}
-                  className="w-[100px] h-[100px] object-cover rounded shadow"
-                />
-              ))}
-              {previews.map((src, idx) => (
-                <img
-                  key={`new-${idx}`}
-                  src={src}
-                  alt={`new-preview-${idx}`}
-                  className="w-[100px] h-[100px] object-cover rounded shadow"
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
+      {/* Thông số kỹ thuật */}
       <div className="mt-6">
         <h3 className="font-semibold mb-2">Thông số kỹ thuật</h3>
         <div className="grid md:grid-cols-2 gap-4">
@@ -290,6 +257,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
         </div>
       </div>
 
+      {/* Khuyến mãi */}
       <div className="mt-6">
         <label className="text-sm font-medium mb-1 block">
           Chọn mã khuyến mãi
@@ -307,6 +275,42 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Ảnh sản phẩm */}
+      <div className="mt-6">
+        <h3 className="font-semibold mb-2">Ảnh sản phẩm</h3>
+        <div>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            {...register("images", editVariant ? {} : { required: "Chọn ảnh" })}
+          />
+          {errors.images && (
+            <p className="text-sm text-red-500">{errors.images.message}</p>
+          )}
+        </div>
+        {(oldImages.length > 0 || previews.length > 0) && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {oldImages.map((src, idx) => (
+              <img
+                key={`old-${idx}`}
+                src={src}
+                alt={`old-preview-${idx}`}
+                className="w-[100px] h-[100px] object-cover rounded shadow"
+              />
+            ))}
+            {previews.map((src, idx) => (
+              <img
+                key={`new-${idx}`}
+                src={src}
+                alt={`new-preview-${idx}`}
+                className="w-[100px] h-[100px] object-cover rounded shadow"
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-6 flex items-center gap-4">

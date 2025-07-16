@@ -6,6 +6,7 @@ const {
   deleteProductVariationById,
   updateTotalStock,
   deleteValuesByVariation,
+  deleteSpecificProductsByVariation,
 } = require("../../ultils/databaseHelpers");
 
 // Tạo mới biến thể sản phẩm
@@ -252,6 +253,7 @@ const deleteProductVariation = asyncHandler(async (req, res) => {
   const { pvid } = req.params;
 
   await deleteValuesByVariation(pvid);
+  await deleteSpecificProductsByVariation(pvid);
 
   const response = await deleteProductVariationById(pvid);
 
