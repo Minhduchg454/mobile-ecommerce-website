@@ -17,6 +17,7 @@ import { MdOutlineShoppingCart } from "react-icons/md";
 import { FaRegHeart } from "react-icons/fa";
 import { IoMenuSharp } from "react-icons/io5";
 import { navigation } from "ultils/contants";
+import { persistor } from "store/redux";
 
 const { AiOutlineSearch, FaUserCircle } = icons;
 
@@ -93,7 +94,10 @@ const HeaderFull = () => {
       showCancelButton: true,
       variant: "danger",
     });
-    if (result.isConfirmed) dispatch(logout());
+    if (result.isConfirmed) {
+      dispatch(logout());
+      persistor.purge();
+    }
   };
 
   return (

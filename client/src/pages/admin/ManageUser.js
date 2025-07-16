@@ -66,8 +66,6 @@ const ManageUser = () => {
     fetchUsers(search);
   }, [queriesDebounce, params, update]);
 
-  console.log("Payload gửi đi:", users);
-
   const handleUpdate = async (data) => {
     const payload = {
       firstName: data.firstName ?? editElm.firstName,
