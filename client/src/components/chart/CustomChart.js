@@ -7,8 +7,26 @@ import {
   getMonthsInRange,
 } from "ultils/helpers";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { Chart as ChartJS } from "chart.js";
-ChartJS.register(ChartDataLabels);
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Đăng ký đầy đủ các thành phần cần thiết
+ChartJS.register(
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+);
 
 // Hàm định dạng ngắn gọn
 const formatMoneyShort = (value) => {

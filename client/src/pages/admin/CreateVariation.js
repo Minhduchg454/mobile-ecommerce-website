@@ -6,8 +6,8 @@ import {
 } from "apis";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import CreateVariantForm from "./CreateVariantForm";
 import { useParams } from "react-router-dom";
+import { SpecificProductManager, CreateVariantForm } from "../../components";
 
 const CreateVariation = ({
   productId: propProductId,
@@ -21,6 +21,8 @@ const CreateVariation = ({
   const [editVariant, setEditVariant] = useState(null);
   const [productName, setProductName] = useState(propProductName || "");
   const [showForm, setShowForm] = useState(false);
+  const [showSerialManager, setShowSerialManager] = useState(false);
+  const [selectedVariationId, setSelectedVariationId] = useState(null);
 
   const fetchVariants = async () => {
     const res = await apiGetVariationsByProductId(productId);
@@ -142,9 +144,18 @@ const CreateVariation = ({
                 </button>
                 <button
                   onClick={() => handleDelete(v._id)}
-                  className="text-red-600"
+                  className="text-red-600 mr-4"
                 >
                   Xoá
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedVariationId(v._id);
+                    setShowSerialManager(true);
+                  }}
+                  className="text-green-600 mr-4"
+                >
+                  Serial
                 </button>
               </td>
             </tr>
@@ -158,6 +169,20 @@ const CreateVariation = ({
           )}
         </tbody>
       </table>
+      {showSerialManager && selectedVariationId && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl shadow max-h-[90vh] overflow-y-auto p-2 w-fit max-w-2xl">
+            <SpecificProductManager
+              variationId={selectedVariationId}
+              onClose={() => {
+                setShowSerialManager(false);
+                setSelectedVariationId(null);
+                fetchVariants(); // cập nhật lại kho nếu có thay đổi
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

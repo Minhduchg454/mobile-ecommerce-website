@@ -1,5 +1,5 @@
 import { apiDeleteOrderByAdmin, apiGetOrders, apiUpdateStatus } from "apis";
-import { Button, InputForm, Pagination } from "components";
+import { Button, Pagination } from "components";
 import useDebounce from "hooks/useDebounce";
 import moment from "moment";
 import React, { useCallback, useEffect, useState } from "react";
@@ -19,12 +19,7 @@ const ManageOrder = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const {
-    register,
-    formState: { errors },
-    watch,
-    setValue,
-  } = useForm();
+  const { register, watch, setValue } = useForm();
   const [orders, setOrders] = useState();
   const [counts, setCounts] = useState(0);
   const [update, setUpdate] = useState(false);
