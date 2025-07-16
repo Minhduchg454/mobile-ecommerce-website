@@ -16,4 +16,12 @@ router.put("/:id", ctrls.updateValueOfSpec);
 // Delete value
 router.delete("/:id", ctrls.deleteValueOfSpec);
 
+router.post("/product", ctrls.createValueOfSpecForProduct);
+
+router.get("/product/:productId", ctrls.getValuesByProduct);
+
+router.put("/product/:id", ctrls.updateValueOfSpecForProduct);
+
+router.delete("/product/:id", ctrls.deleteValueOfSpecForProduct);
+
 module.exports = router;

@@ -36,3 +36,35 @@ export const apiDeleteValueOfSpec = (id) =>
     url: `/valueOfSpecifications/${id}`,
     method: "delete",
   });
+
+//-----------GAN VOI PRODUCT------------
+
+// Tạo mới value gắn với Product (thông số chung)
+export const apiCreateValueOfSpecForProduct = (data) =>
+  axios({
+    url: "/valueOfSpecifications/product",
+    method: "post",
+    data,
+  });
+
+// Lấy tất cả value theo Product ID
+export const apiGetValuesByProductId = (productId) =>
+  axios({
+    url: `/valueOfSpecifications/product/${productId}`,
+    method: "get",
+  });
+
+// Cập nhật value của Product
+export const apiUpdateValueOfSpecForProduct = (id, data) =>
+  axios({
+    url: `/valueOfSpecifications/product/${id}`,
+    method: "put",
+    data,
+  });
+
+// Xoá value của Product
+export const apiDeleteValueOfSpecForProduct = (id) =>
+  axios({
+    url: `/valueOfSpecifications/product/${id}`,
+    method: "delete",
+  });
