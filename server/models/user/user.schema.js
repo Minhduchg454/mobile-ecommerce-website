@@ -30,6 +30,7 @@ const userBaseSchema = new mongoose.Schema(
       required: false, // cho phép không có
       sparse: true, // chỉ yêu cầu unique nếu có giá trị
       trim: true,
+      default: undefined,
     },
     userName: {
       type: String, // Tên đăng nhập duy nhất

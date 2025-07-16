@@ -1,5 +1,5 @@
 import { apiDeleteOrderByAdmin, apiGetOrders, apiUpdateStatus } from "apis";
-import { Button, InputForm, Pagination } from "components";
+import { Button, Pagination } from "components";
 import useDebounce from "hooks/useDebounce";
 import moment from "moment";
 import React, { useCallback, useEffect, useState } from "react";
@@ -19,12 +19,7 @@ const ManageOrder = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const {
-    register,
-    formState: { errors },
-    watch,
-    setValue,
-  } = useForm();
+  const { register, watch, setValue } = useForm();
   const [orders, setOrders] = useState();
   const [counts, setCounts] = useState(0);
   const [update, setUpdate] = useState(false);
@@ -97,10 +92,7 @@ const ManageOrder = () => {
       )}
     >
       {/* Thanh header cố định */}
-      <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight text-sky-800">
-          QUẢN LÝ ĐƠN HÀNG
-        </h1>
+      <div className="sticky top-0 z-10 shadow p-4 rounded-xl mb-4 flex justify-between items-center">
         {editOrder && (
           <div className="flex gap-3 items-center">
             <Button type="button" handleOnClick={handleUpdate}>

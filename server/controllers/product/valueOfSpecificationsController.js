@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const asyncHandler = require("express-async-handler");
 const ValueOfSpecifications = require("../../models/product/ValueOfSpecifications");
-const { deleteProductVariationById } = require("../../ultils/databaseHelpers");
+
 
 // Create new value
 const createValueOfSpec = asyncHandler(async (req, res) => {

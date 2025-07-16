@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import Chatbot from "chatbot/Chatbot";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import AuthLoader from "./AuthLoader";
 import {
   Login,
   Home,
@@ -12,9 +13,7 @@ import {
   DetailProduct1,
   DetailBlogs,
   Products,
-  FinalRegister,
   ResetPassword,
-  DetailCart,
 } from "pages/public";
 import {
   AdminLayout,
@@ -38,7 +37,6 @@ import {
   Checkout,
 } from "pages/member";
 import path from "ultils/path";
-import { getCategories } from "store/app/asyncActions";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -54,6 +52,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
+      <AuthLoader />
       <div className="font-jp">
         {isShowWishlist && (
           <div
@@ -106,11 +105,9 @@ function App() {
           </Route>
           <Route path={path.MEMBER} element={<MemberLayout />}>
             <Route path={path.PERSONAL} element={<Personal />} />
-            <Route path={path.MY_CART} element={<DetailCart />} />
             <Route path={path.WISHLIST} element={<Wishlist />} />
             <Route path={path.HISTORY} element={<History />} />
           </Route>
-          <Route path={path.FINAL_REGISTER} element={<FinalRegister />} />
           <Route path={path.LOGIN} element={<Login />} />
         </Routes>
         <ToastContainer

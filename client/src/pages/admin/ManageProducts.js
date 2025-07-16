@@ -121,9 +121,9 @@ const ManageProducts = () => {
             {/* Nút đóng luôn cố định */}
             <button
               onClick={() => setEditProduct(null)}
-              className="absolute top-2 right-3 z-10 text-gray-600 hover:text-black text-xl font-bold"
+              className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition"
             >
-              ✖
+              ×
             </button>
 
             {/* Nội dung có thể cuộn */}
@@ -145,9 +145,9 @@ const ManageProducts = () => {
             {/* Nút đóng luôn cố định */}
             <button
               onClick={() => setCurrentProductForVariant(null)}
-              className="absolute top-2 right-3 z-10 text-gray-600 hover:text-black text-xl font-bold"
+              className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition"
             >
-              ✖
+              ×
             </button>
 
             {/* Nội dung có thể cuộn */}

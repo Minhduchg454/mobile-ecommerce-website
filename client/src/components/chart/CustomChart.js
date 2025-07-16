@@ -1,89 +1,143 @@
-import React, { memo, useEffect, useState } from "react"
-import { Line, Bar } from "react-chartjs-2"
-import { Chart } from "chart.js/auto"
+import React, { memo, useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
 import {
   getDaysInMonth,
   getDaysInRange,
   getMonthInYear,
   getMonthsInRange,
-} from "ultils/helpers"
+} from "ultils/helpers";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Đăng ký đầy đủ các thành phần cần thiết
+ChartJS.register(
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+);
+
+// Hàm định dạng ngắn gọn
+const formatMoneyShort = (value) => {
+  if (value >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1) + " tỷ";
+  if (value >= 1_000_000) return (value / 1_000_000).toFixed(1) + " triệu";
+  if (value >= 1_000) return (value / 1_000).toFixed(1) + " nghìn";
+  return value;
+};
 
 const CustomChart = ({ data, isMonth, customTime }) => {
-  const [chartData, setChartData] = useState([])
+  const [chartData, setChartData] = useState([]);
+
   useEffect(() => {
     const number = isMonth
       ? getMonthsInRange(customTime?.from, customTime?.to)
-      : getDaysInRange(customTime?.from, customTime?.to)
-    const daysInMonth = getDaysInMonth(customTime?.to, number)
-    const monthsInYear = getMonthInYear(customTime?.to, number)
-    const rawData = isMonth ? monthsInYear : daysInMonth
+      : getDaysInRange(customTime?.from, customTime?.to);
+    const rawData = isMonth
+      ? getMonthInYear(customTime?.to, number)
+      : getDaysInMonth(customTime?.to, number);
+
     const editedData = rawData.map((el) => {
       return {
         sum: data?.some((i) => i.date === el)
           ? data.find((i) => i.date === el)?.sum
           : 0,
         date: el,
-      }
-    })
-    setChartData(editedData)
-  }, [data])
+      };
+    });
+
+    setChartData(editedData);
+  }, [data, isMonth, customTime]);
+
   const options = {
     responsive: true,
-    pointRadius: 0,
     maintainAspectRatio: false,
+    pointRadius: 3,
+    pointHoverRadius: 5,
+    tension: 0.3,
     scales: {
       y: {
-        ticks: { display: true },
-        grid: { color: "rgba(0,0,0,0.1)", drawTicks: false },
-        min:
-          Math.min(...chartData?.map((el) => Math.round(+el.sum * 23500))) - 5 <
-          0
-            ? 0
-            : Math.min(...chartData?.map((el) => Math.round(+el.sum * 23500))) -
-              5,
-        max:
-          Math.max(...chartData?.map((el) => Math.round(+el.sum * 23500))) + 5,
-        border: { dash: [20, 0] },
+        ticks: {
+          callback: function (value) {
+            return formatMoneyShort(value);
+          },
+          font: { size: 12 },
+        },
+        grid: {
+          color: "rgba(0,0,0,0.05)",
+          drawTicks: false,
+        },
+        beginAtZero: true,
       },
       x: {
-        ticks: { color: "black" },
+        ticks: {
+          color: "black",
+          maxRotation: 45,
+          minRotation: 30,
+          autoSkip: true,
+          maxTicksLimit: 12,
+        },
         grid: { color: "transparent" },
       },
     },
     plugins: {
       legend: false,
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return "Doanh thu: " + formatMoneyShort(context.raw);
+          },
+        },
+      },
+      datalabels: {
+        color: "#333",
+        anchor: "end",
+        align: "top",
+        offset: 1,
+        font: {
+          size: 12,
+          weight: "bold",
+        },
+        formatter: (value) => formatMoneyShort(value),
+      },
     },
-    hover: {
-      mode: "dataset",
-      intersect: false,
-    },
-  }
+  };
+
+  const chartRenderData = {
+    labels: chartData.map((el) => el.date),
+    datasets: [
+      {
+        data: chartData.map((el) => Math.round(+el.sum)),
+        borderColor: "#e35050",
+        backgroundColor: "#e35050",
+        borderWidth: 2,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "#e35050",
+        pointHoverBorderWidth: 4,
+        fill: false,
+      },
+    ],
+  };
+
   return (
-    <div className="py-4 w-full h-full">
-      {chartData ? (
-        <Line
-          options={options}
-          data={{
-            labels: chartData?.map((el) => el.date),
-            datasets: [
-              {
-                data: chartData?.map((el) => Math.round(+el.sum * 23500)),
-                borderColor: "#e35050",
-                tension: 0.2,
-                borderWidth: 2,
-                pointBackgroundColor: "white",
-                pointHoverRadius: 4,
-                pointBorderColor: "#e35050",
-                pointHoverBorderWidth: 4,
-              },
-            ],
-          }}
-        />
+    <div className="py-4 my-2 w-full h-full">
+      {chartData?.length ? (
+        <Line options={options} data={chartRenderData} />
       ) : (
-        <span>Không có data.</span>
+        <span>Không có dữ liệu.</span>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default memo(CustomChart)
+export default memo(CustomChart);

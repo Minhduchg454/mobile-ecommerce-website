@@ -41,7 +41,7 @@ const CustomSlider1 = ({ items, renderItem, itemWidth = 250 }) => {
       <div
         ref={containerRef}
         onWheel={handleWheel}
-        className="flex gap-4 overflow-x-auto scroll-smooth pr-4 py-2 hide-scrollbar"
+        className="flex gap-2 overflow-x-auto scroll-smooth py-2 hide-scrollbar"
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",

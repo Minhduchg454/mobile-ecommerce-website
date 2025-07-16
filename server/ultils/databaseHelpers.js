@@ -2,6 +2,7 @@ const Product = require("../models/product/Product");
 const asyncHandler = require("express-async-handler");
 const ProductVariation = require("../models/product/ProductVariation");
 const ValueOfSpecifications = require("../models/product/ValueOfSpecifications");
+const SpecificProduct = require("../models/product/SpecificProduct");
 
 const updateMinPrice = async (productId) => {
   const variations = await ProductVariation.find({ productId });
@@ -75,10 +76,15 @@ const deleteProductVariationById = async (pvid) => {
   return response;
 };
 
+const deleteSpecificProductsByVariation = async (variationId) => {
+  await SpecificProduct.deleteMany({ productVariationId: variationId });
+};
+
 module.exports = {
   updateMinPrice,
   deleteProductVariationById,
   updateTotalStock,
   deleteValuesByVariation, // dùng nội bộ
   deleteValuesByVariationHandler, // dùng cho router
+  deleteSpecificProductsByVariation,
 };

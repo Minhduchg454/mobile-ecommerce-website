@@ -1,22 +1,25 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { MdOutlineShoppingCart } from "react-icons/md";
+import { useDispatch } from "react-redux";
+import { updateCart } from "../../store/user/userSlice";
+import { toast } from "react-toastify";
+import { updateCartItem } from "../../store/user/asyncActions";
+import { useNavigate } from "react-router-dom";
+import useRole from "hooks/useRole";
 
 import {
   apiGetProduct,
-  apiGetProducts,
   apiGetVariationsByProductId,
   apiGetValuesByVariationId,
   apiGetProductVariation,
+  apiFilterPreviews,
 } from "apis";
 import {
   Breadcrumb,
-  Button,
   SelectQuantity,
   ProductInfomation,
-  CustomSlider1,
-  ProductCard,
   FeatureProducts,
 } from "components";
 import Zoom from "react-medium-image-zoom";
@@ -31,9 +34,8 @@ import { FaCheckCircle } from "react-icons/fa";
 const { AiOutlinePhone } = icons;
 
 const ProductDetail1 = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { current } = useSelector((state) => state.user);
-
   const [product, setProduct] = useState(null);
   const [variations, setVariations] = useState([]);
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -43,17 +45,71 @@ const ProductDetail1 = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [brandId, setBrandId] = useState("");
-  const [relatedProducts, setRelatedProducts] = useState([]);
-
+  const [previews, setPreviews] = useState([]);
   const pvid = searchParams.get("code");
-
   const imageList = currentProduct?.images || [];
 
+  const dispatch = useDispatch();
+  const { current, isLoggedIn, currentCart } = useSelector(
+    (state) => state.user
+  );
+
+  const { isAdmin } = useRole();
   useEffect(() => {
     if (imageList.length > 0) {
       setCurrentImage(imageList[imageIndex] || "");
     }
   }, [imageIndex, imageList]);
+
+  /* Them san pham vao gio hang */
+  const handleAddToCart = () => {
+    if (!currentProduct || !selectedVariantId) return;
+
+    const payload = {
+      product: selectedVariantId, // đúng key cho updateCartItem
+      quantity,
+      priceAtTime: currentProduct.price,
+    };
+
+    dispatch(updateCartItem(payload))
+      .unwrap()
+      .then(() => toast.success("Đã thêm vào giỏ hàng!"))
+      .catch((err) => {
+        console.error("❌ Lỗi khi thêm vào giỏ:", err);
+        toast.error("Không thể thêm vào giỏ hàng.");
+      });
+  };
+
+  const handleBuyNow = () => {
+    if (!currentProduct || !selectedVariantId) return;
+
+    const payload = {
+      selectedItems: [
+        {
+          productVariationId: selectedVariantId,
+          quantity,
+          priceAtTime: currentProduct.price, // giá lúc chọn
+        },
+      ],
+    };
+
+    navigate("/checkout", { state: payload });
+  };
+
+  const fetchPreviews = useCallback(async (variationId) => {
+    if (!variationId) return;
+    try {
+      const res = await apiFilterPreviews({ productVariationId: variationId });
+      if (res.success) {
+        setPreviews(res.previews || []);
+      } else {
+        setPreviews([]);
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi lấy đánh giá:", error);
+      setPreviews([]);
+    }
+  }, []);
 
   useEffect(() => {
     if (pvid) {
@@ -78,7 +134,6 @@ const ProductDetail1 = () => {
 
       if (resProduct.success) {
         setProduct(resProduct.productData);
-        fetchRelatedProducts(resProduct.productData.categoryId?._id);
         setBrandId(resProduct.productData.brandId._id);
       }
 
@@ -87,15 +142,6 @@ const ProductDetail1 = () => {
       }
     } catch (err) {
       console.error("❌ Lỗi khi lấy sản phẩm và biến thể:", err);
-    }
-  };
-
-  const fetchRelatedProducts = async (catId) => {
-    try {
-      const res = await apiGetProducts({ categoryId: catId });
-      if (res.success) setRelatedProducts(res.products);
-    } catch (error) {
-      console.error("❌ Lỗi lấy sản phẩm liên quan:", error);
     }
   };
 
@@ -116,9 +162,10 @@ const ProductDetail1 = () => {
         setCurrentProduct(variant);
         setImageIndex(0);
         fetchSpecifications(selectedVariantId);
+        fetchPreviews(selectedVariantId);
       }
     }
-  }, [selectedVariantId, variations, fetchSpecifications]);
+  }, [selectedVariantId, variations, fetchSpecifications, fetchPreviews]);
 
   const handleSelectVariant = (variantId) => {
     setSelectedVariantId(variantId);
@@ -148,20 +195,19 @@ const ProductDetail1 = () => {
     setImageIndex((prev) => (prev === imageList.length - 1 ? 0 : prev + 1));
   };
 
-  useEffect(() => {
-    console.log("Thong tin san pham", product);
-    console.log("Thong tin biến thể", currentProduct);
-  }, [product, currentProduct]);
+  const isInStock = currentProduct?.stockQuantity >= 1;
+  const disableBuyAction = isAdmin || !isInStock;
 
+  // Kiem tra hien thi
   return (
     <div className="xl:w-main w-full">
       <div className="h-[70px] flex justify-center items-center px-4">
-        <div className="w-main">
+        <div className="w-main pt-4">
           <Breadcrumb
             title={product?.slug || "san-pham"}
             category={product?.categoryId?.slug || "danh-muc"}
           />
-          <h2 className="text-[24px] font-bold mt-2">
+          <h2 className="text-[24px] font-bold">
             {product?.productName || "Không có tiêu đề"}
           </h2>
         </div>
@@ -169,10 +215,10 @@ const ProductDetail1 = () => {
 
       <div className="w-full m-auto px-4 flex flex-col gap-5 mt-4">
         <div className="flex flex-col-reverse md:flex-row gap-5 items-start">
-          <div className="lg:basis-[60%] w-full flex flex-col gap-5 items-center">
+          <div className="lg:basis-[60%] w-full flex flex-col gap-5 items-center rounded-xl">
             {/* Hình ảnh chính */}
-            <div className="w-full border shadow-md rounded-xl p-2">
-              <div className="relative p-2 h-[400px] flex justify-center items-center bg-white overflow-hidden">
+            <div className="w-full border shadow-md rounded-xl p-2 bg-[#FFF]">
+              <div className="relative p-2 h-[400px] flex justify-center items-center overflow-hidden">
                 {imageList.length > 0 ? (
                   <>
                     <Zoom>
@@ -197,14 +243,14 @@ const ProductDetail1 = () => {
                     {/* Mũi tên */}
                     <button
                       onClick={handlePrev}
-                      className="w-10 h-10 absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 rounded-full shadow flex items-center justify-center z-10"
+                      className="border w-10 h-10 absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 rounded-full shadow-md flex items-center justify-center z-10"
                     >
                       <FaChevronLeft className="text-gray-700 text-lg" />
                     </button>
 
                     <button
                       onClick={handleNext}
-                      className="w-10 h-10 absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 rounded-full shadow flex items-center justify-center z-10"
+                      className="border w-10 h-10 absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 rounded-full shadow-md flex items-center justify-center z-10"
                     >
                       <FaChevronRight className="text-gray-700 text-lg" />
                     </button>
@@ -225,7 +271,7 @@ const ProductDetail1 = () => {
                     className={clsx(
                       "w-[50px] h-[50px] object-cover border p-1 rounded-md cursor-pointer",
                       currentImage === img
-                        ? "border-red-500 shadow"
+                        ? "border-red-400 shadow"
                         : "border-gray-300 hover:border-gray-400"
                     )}
                     onError={(e) => {
@@ -239,7 +285,7 @@ const ProductDetail1 = () => {
 
             {/* Cấu hình sản phẩm */}
             {specifications.length > 0 && (
-              <div className="w-full text-sm border p-4 rounded-xl shadow-md">
+              <div className="w-full text-sm border p-4 rounded-xl shadow-md bg-[#FFF]">
                 <h4 className="font-bold mb-3">Thông số kỹ thuật:</h4>
                 {specifications.map((item) => (
                   <div
@@ -259,7 +305,7 @@ const ProductDetail1 = () => {
           </div>
 
           {/* Thông tin sản phẩm */}
-          <div className="lg:basis-[40%] w-full flex flex-col gap-4 border rounded-xl p-4 shadow-md">
+          <div className="lg:basis-[40%] bg-[#FFF] w-full flex flex-col gap-4 border rounded-xl p-4 shadow-md">
             <h2 className="text-[30px] font-semibold">
               {currentProduct?.price
                 ? `${formatMoney(fotmatPrice(currentProduct.price))} VNĐ`
@@ -309,28 +355,47 @@ const ProductDetail1 = () => {
                 handleChangeQuantity={handleChangeQuantity}
               />
             </div>
+
+            {!isInStock && (
+              <p className="text-sm text-red-600 font-medium">
+                Sản phẩm đang chọn tạm hết hàng
+              </p>
+            )}
             <div className="flex gap-2">
               <button
-                onClick={() => {}}
-                className=" rounded-xl p-2 flex flex-col justify-center items-center basis-[40%] w-full border border-[#00AFFF] text-[#00AFFF] font-semibold bg-white hover:bg-[#00AFFF] hover:text-white transition duration-200 ease-in-out shadow-sm"
+                disabled={disableBuyAction}
+                onClick={handleAddToCart}
+                className={clsx(
+                  "rounded-xl p-2 flex flex-col justify-center items-center basis-[40%] w-full border font-semibold transition duration-200 ease-in-out shadow-sm",
+                  disableBuyAction
+                    ? "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "border-[#00AFFF] text-[#00AFFF] bg-white hover:bg-[#00AFFF] hover:text-white"
+                )}
               >
                 <MdOutlineShoppingCart size={24} />
                 <p className="text-sm">Thêm vào giỏ hàng</p>
               </button>
+
               <button
-                onClick={() => {}}
-                className="flex justify-center items-center rounded-xl w-full basis-[60%] bg-[#00AFFF] hover:bg-blue-700 text-white font-semibold py-2 transition duration-200 ease-in-out shadow-md"
+                disabled={disableBuyAction}
+                onClick={handleBuyNow}
+                className={clsx(
+                  "flex justify-center items-center rounded-xl w-full basis-[60%] font-semibold py-2 transition duration-200 ease-in-out shadow-md",
+                  disableBuyAction
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#00AFFF] hover:bg-blue-700 text-white"
+                )}
               >
                 Mua ngay
               </button>
             </div>
-            <div className="flex justify-start items-center gap-1">
-              <AiOutlinePhone size={14} />
-              <p className="text-sm">
-                Gọi đặt mua qua{" "}
-                <span className="text-[#00AFFF]">0909 567 999</span>
+            {isAdmin && (
+              <p className="text-sm text-red-600 italic mt-1">
+                Chức năng mua hàng chỉ khả dụng khi đăng nhập bằng tài khoản
+                khách hàng.
               </p>
-            </div>
+            )}
+
             {/* Cam kết mua hàng */}
             <div className="mt-4 border border-blue-500 bg-blue-100 rounded-xl p-2">
               <h4 className="text-md font-semibold mb-2 flex items-center gap-1 text-red-600">
@@ -356,7 +421,14 @@ const ProductDetail1 = () => {
             </div>
 
             {/* Giao hàng dự kiến */}
-            <div className="mt-3">
+            <div className="">
+              <div className="flex justify-start items-center gap-1">
+                <AiOutlinePhone size={14} />
+                <p className="text-sm">
+                  Gọi đặt mua qua{" "}
+                  <span className="text-[#00AFFF]">0909 567 999</span>
+                </p>
+              </div>
               <p className="text-sm text-gray-600">
                 🚚 <span className="font-semibold">Giao hàng dự kiến:</span>{" "}
                 <span className="text-gray-800">1 - 2 ngày</span>
@@ -367,14 +439,17 @@ const ProductDetail1 = () => {
 
         {/* Mô tả và đánh giá */}
         {product && (
-          <div className="mt-6">
+          <div className="mt-4 bg-[#FFF] rounded-xl">
             <ProductInfomation
-              totalRatings={product.totalRating}
-              ratings={product.rating}
+              totalRatings={currentProduct?.totalRating}
+              ratings={previews} // ← là danh sách review từ API lọc
               nameProduct={product.productName}
               pid={currentProduct._id}
               rerender={() => {
-                if (selectedVariantId) fetchSpecifications(selectedVariantId);
+                if (selectedVariantId) {
+                  fetchSpecifications(selectedVariantId);
+                  fetchPreviews(selectedVariantId); // ← Gọi lại khi đánh giá thay đổi
+                }
               }}
             />
           </div>
@@ -382,7 +457,7 @@ const ProductDetail1 = () => {
       </div>
 
       {/* Sản phẩm khác */}
-      <div className="w-main mx-auto mt-10 px-4">
+      <div className="w-main mx-auto py-4 ">
         <FeatureProducts
           title="Những thiết bị liên quan"
           sort="newest"
