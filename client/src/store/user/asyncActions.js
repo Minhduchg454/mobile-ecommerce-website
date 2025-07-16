@@ -1,4 +1,4 @@
-import { createAsyncThunk } from "@reduxjs/toolkit"; //giup tao cac hanh dong bat dong bo, thuong goi la api
+import { createAsyncThunk, current } from "@reduxjs/toolkit"; //giup tao cac hanh dong bat dong bo, thuong goi la api
 import * as apis from "../../apis";
 import { updateCart, setCart } from "./userSlice";
 
@@ -7,76 +7,76 @@ export const getCurrent = createAsyncThunk(
   async (_, { dispatch, getState, rejectWithValue }) => {
     // 1. Backup localCart ngay lúc vừa gọi login
     const localCartBackup = getState().user.currentCart;
-    console.log("Back up thanh cong", localCartBackup);
 
     // 2. Gọi API lấy user
     const response = await apis.apiGetCurrent();
     if (!response.success) return rejectWithValue(response);
     const user = response.user;
 
-    // 3. Lấy giỏ hàng từ server theo userId
-    const shoppingRes = await apis.apiGetCustomerCart(user._id);
-    const shoppingCartId = shoppingRes.cart?._id;
+    // 3. Lấy giỏ hàng từ server theo userId neu la customer
+    if (user.roleId.roleName === "customer") {
+      const shoppingRes = await apis.apiGetCustomerCart(user._id);
+      const shoppingCartId = shoppingRes.cart?._id;
 
-    let serverCartItems = [];
-    if (shoppingCartId) {
-      const cartRes = await apis.apiGetCartItems(shoppingCartId);
-      if (cartRes.success) serverCartItems = cartRes.cartItems;
-    }
-    console.log("Giỏ hàng server", serverCartItems);
+      let serverCartItems = [];
+      if (shoppingCartId) {
+        const cartRes = await apis.apiGetCartItems(shoppingCartId);
+        if (cartRes.success) serverCartItems = cartRes.cartItems;
+      }
 
-    // 4. Merge: giữ sản phẩm cũ, thêm mới và cập nhật nếu khác số lượng
-    const mergedCart = [...serverCartItems];
+      // 4. Merge: giữ sản phẩm cũ, thêm mới và cập nhật nếu khác số lượng
+      const mergedCart = [...serverCartItems];
 
-    for (const localItem of localCartBackup) {
-      const matchedItem = serverCartItems.find(
-        (item) =>
-          item.productVariationId === localItem.productVariationId ||
-          item.productVariationId?._id === localItem.productVariationId
-      );
+      for (const localItem of localCartBackup) {
+        const matchedItem = serverCartItems.find(
+          (item) =>
+            item.productVariationId === localItem.productVariationId ||
+            item.productVariationId?._id === localItem.productVariationId
+        );
 
-      if (matchedItem) {
-        const matchedId =
-          typeof matchedItem.productVariationId === "string"
-            ? matchedItem.productVariationId
-            : matchedItem.productVariationId._id;
+        if (matchedItem) {
+          const matchedId =
+            typeof matchedItem.productVariationId === "string"
+              ? matchedItem.productVariationId
+              : matchedItem.productVariationId._id;
 
-        // ✅ Nếu khác số lượng → cập nhật lại server
-        if (matchedItem.quantity !== localItem.quantity) {
-          await apis.apiUpdateCartItem({
-            product: matchedId,
+          // Nếu khác số lượng → cập nhật lại server
+          if (matchedItem.quantity !== localItem.quantity) {
+            await apis.apiUpdateCartItem({
+              product: matchedId,
+              quantity: localItem.quantity,
+            });
+
+            // Cập nhật lại vào mergedCart để hiển thị đúng
+            matchedItem.quantity = localItem.quantity;
+          }
+        } else {
+          // Nếu chưa có → thêm mới
+          const res = await apis.apiCreateCartItem({
+            productVariationId: localItem.productVariationId,
             quantity: localItem.quantity,
+            price: localItem.priceAtTime,
+            shoppingCart: shoppingCartId,
           });
 
-          // ✅ Cập nhật lại vào mergedCart để hiển thị đúng
-          matchedItem.quantity = localItem.quantity;
-        }
-      } else {
-        // ✅ Nếu chưa có → thêm mới
-        const res = await apis.apiCreateCartItem({
-          productVariationId: localItem.productVariationId,
-          quantity: localItem.quantity,
-          price: localItem.priceAtTime,
-          shoppingCart: shoppingCartId,
-        });
-
-        if (res.success) {
-          mergedCart.push(res.cartItem);
+          if (res.success) {
+            mergedCart.push(res.cartItem);
+          }
         }
       }
+
+      // 5. Normalize và set lại Redux
+      const normalized = mergedCart.map((item) => ({
+        productVariationId:
+          typeof item.productVariationId === "string"
+            ? item.productVariationId
+            : item.productVariationId._id,
+        quantity: item.quantity,
+        priceAtTime: item.price,
+      }));
+      dispatch(setCart(normalized));
     }
 
-    // 5. Normalize và set lại Redux
-    const normalized = mergedCart.map((item) => ({
-      productVariationId:
-        typeof item.productVariationId === "string"
-          ? item.productVariationId
-          : item.productVariationId._id,
-      quantity: item.quantity,
-      priceAtTime: item.price,
-    }));
-
-    dispatch(setCart(normalized));
     return user;
   }
 );
@@ -87,16 +87,16 @@ export const updateCartItem = createAsyncThunk(
     const state = getState();
     const { isLoggedIn, currentCart, current } = state.user;
 
-    // ✅ 1. Cập nhật Redux ngay lập tức để UI phản hồi nhanh
+    // 1. Cập nhật Redux ngay lập tức để UI phản hồi nhanh
     dispatch(
       updateCart({ productVariationId: product, quantity, priceAtTime })
     );
 
-    // ✅ 2. Nếu chưa đăng nhập thì chỉ cập nhật local
+    // 2. Nếu chưa đăng nhập thì chỉ cập nhật local
     if (!isLoggedIn) return;
 
     try {
-      // ✅ 3. Nếu đã đăng nhập → sync với server
+      // 3. Nếu đã đăng nhập → sync với server
       const cartRes = await apis.apiGetCustomerCart(current._id);
       const shoppingCartId = cartRes?.cart?._id;
 
@@ -105,7 +105,7 @@ export const updateCartItem = createAsyncThunk(
       const cartItemsRes = await apis.apiGetCartItems(shoppingCartId);
       const cartItems = cartItemsRes?.cartItems || [];
 
-      // ✅ Tìm cartItem tương ứng trong DB
+      // Tìm cartItem tương ứng trong DB
       const matched = cartItems.find(
         (item) =>
           item.productVariationId === product ||
@@ -113,10 +113,10 @@ export const updateCartItem = createAsyncThunk(
       );
 
       if (matched?._id) {
-        // ✅ Đã có trong DB → update lại
+        // Đã có trong DB → update lại
         await apis.apiUpdateCartItem(matched._id, { quantity });
       } else {
-        // ✅ Chưa có trong DB → thêm mới
+        // Chưa có trong DB → thêm mới
         await apis.apiCreateCartItem({
           productVariationId: product,
           quantity,

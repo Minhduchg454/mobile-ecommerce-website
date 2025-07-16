@@ -12,6 +12,8 @@ import Swal from "sweetalert2";
 import path from "ultils/path";
 import { useNavigate } from "react-router-dom";
 import { getCurrent, updateCartItem } from "store/user/asyncActions";
+import useRole from "hooks/useRole";
+import clsx from "clsx";
 
 const ProductCard = ({
   totalSold,
@@ -28,7 +30,8 @@ const ProductCard = ({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current, isLoggedIn } = useSelector((state) => state.user);
-
+  // console.log("Thong tin nguoi dung", current.roleId.roleName);
+  const { isAdmin } = useRole();
   const [isWished, setIsWished] = useState(false);
 
   useEffect(() => {
@@ -123,22 +126,38 @@ const ProductCard = ({
           {price ? `${formatMoney(price)} VNĐ` : "Liên hệ"}
         </span>
       </div>
-
       {/* Nút hành động */}
       <div className="flex w-full mt-2 gap-2">
         {/* Thêm giỏ hàng */}
         <button
+          disabled={isAdmin}
           onClick={handleAddToCart}
-          className="w-2/3 flex items-center justify-center bg-blue-100 text-blue-700 rounded-md py-1 hover:bg-blue-200 transition-all"
+          className={clsx(
+            "w-2/3 flex items-center justify-center rounded-md py-1 font-semibold transition-all duration-200 ease-in-out",
+            isAdmin
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+          )}
         >
-          <BsFillCartPlusFill className="mr-1 text-blue-700" />
+          <BsFillCartPlusFill
+            className={clsx(
+              "mr-1",
+              isAdmin ? "text-gray-500" : "text-blue-700"
+            )}
+          />
           Giỏ hàng
         </button>
 
         {/* Yêu thích */}
         <button
+          disabled={isAdmin}
           onClick={handleToggleWishlist}
-          className="w-1/3 flex items-center justify-center border border-red-500 rounded-md py-1 hover:bg-pink-600 transition-all"
+          className={clsx(
+            "w-1/3 flex items-center justify-center border rounded-md py-1  transition-all",
+            isAdmin
+              ? "border-gray-500 cursor-not-allowed"
+              : "border-red-500 hover:bg-pink-600"
+          )}
         >
           {isWished ? (
             <BsFillSuitHeartFill className="text-red-500" />

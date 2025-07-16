@@ -7,6 +7,7 @@ import { updateCart } from "../../store/user/userSlice";
 import { toast } from "react-toastify";
 import { updateCartItem } from "../../store/user/asyncActions";
 import { useNavigate } from "react-router-dom";
+import useRole from "hooks/useRole";
 
 import {
   apiGetProduct,
@@ -53,6 +54,7 @@ const ProductDetail1 = () => {
     (state) => state.user
   );
 
+  const { isAdmin } = useRole();
   useEffect(() => {
     if (imageList.length > 0) {
       setCurrentImage(imageList[imageIndex] || "");
@@ -193,13 +195,8 @@ const ProductDetail1 = () => {
     setImageIndex((prev) => (prev === imageList.length - 1 ? 0 : prev + 1));
   };
 
-  useEffect(() => {
-    console.log("Thong tin san pham", product);
-    console.log("Thong tin biến thể", currentProduct);
-    console.log("Danh sách nhận xét theo biến thể", previews);
-  }, [product, currentProduct, previews]);
-
   const isInStock = currentProduct?.stockQuantity >= 1;
+  const disableBuyAction = isAdmin || !isInStock;
 
   // Kiem tra hien thi
   return (
@@ -366,31 +363,38 @@ const ProductDetail1 = () => {
             )}
             <div className="flex gap-2">
               <button
-                disabled={!isInStock}
+                disabled={disableBuyAction}
                 onClick={handleAddToCart}
                 className={clsx(
                   "rounded-xl p-2 flex flex-col justify-center items-center basis-[40%] w-full border font-semibold transition duration-200 ease-in-out shadow-sm",
-                  isInStock
-                    ? "border-[#00AFFF] text-[#00AFFF] bg-white hover:bg-[#00AFFF] hover:text-white"
-                    : "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
+                  disableBuyAction
+                    ? "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "border-[#00AFFF] text-[#00AFFF] bg-white hover:bg-[#00AFFF] hover:text-white"
                 )}
               >
                 <MdOutlineShoppingCart size={24} />
                 <p className="text-sm">Thêm vào giỏ hàng</p>
               </button>
+
               <button
-                disabled={!isInStock}
+                disabled={disableBuyAction}
                 onClick={handleBuyNow}
                 className={clsx(
                   "flex justify-center items-center rounded-xl w-full basis-[60%] font-semibold py-2 transition duration-200 ease-in-out shadow-md",
-                  isInStock
-                    ? "bg-[#00AFFF] hover:bg-blue-700 text-white"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  disableBuyAction
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#00AFFF] hover:bg-blue-700 text-white"
                 )}
               >
                 Mua ngay
               </button>
             </div>
+            {isAdmin && (
+              <p className="text-sm text-red-600 italic mt-1">
+                Chức năng mua hàng chỉ khả dụng khi đăng nhập bằng tài khoản
+                khách hàng.
+              </p>
+            )}
 
             {/* Cam kết mua hàng */}
             <div className="mt-4 border border-blue-500 bg-blue-100 rounded-xl p-2">

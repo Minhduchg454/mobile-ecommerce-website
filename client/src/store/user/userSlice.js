@@ -92,9 +92,6 @@ export const userSlice = createSlice({
       }
       state.current = userObj;
       state.isLoggedIn = true;
-      console.log("Current card", state.currentCart);
-
-      // state.currentCart = userObj && userObj.cart ? userObj.cart : [];
     });
     //Neu trang thai that bai thi xoa token
     builder.addCase(actions.getCurrent.rejected, (state, action) => {

@@ -230,13 +230,6 @@ export const memberSidebar = [
     path: `/${path.MEMBER}/${path.PERSONAL}`,
     icon: <AiOutlineDashboard size={20} />,
   },
-  {
-    id: 2,
-    type: "SINGLE",
-    text: "Lịch sử mua hàng",
-    path: `/${path.MEMBER}/${path.HISTORY}`,
-    icon: <RiBillLine size={20} />,
-  },
 ];
 
 export const roles = [
