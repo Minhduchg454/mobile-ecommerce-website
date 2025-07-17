@@ -3,7 +3,12 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import avatar from "assets/avatarDefault.png";
-import { apiUpdateCurrent } from "apis";
+import {
+  apiUpdateCurrent,
+  apiDeleteAddress,
+  apiUpdateAddress,
+  apiGetAddressesByUser,
+} from "apis";
 import { getCurrent } from "store/user/asyncActions";
 import { toast } from "react-toastify";
 import { useSearchParams } from "react-router-dom";
@@ -39,6 +44,8 @@ const Personal = ({ navigate }) => {
       address: current?.address,
     });
   }, [current]);
+
+  //  console.log("Avatar hien tai", current.avatar);
 
   const handleUpdateInfor = async (data) => {
     const formData = new FormData();
@@ -127,6 +134,7 @@ const Personal = ({ navigate }) => {
                   register={register}
                   errors={errors}
                   id="lastName"
+                  placeholder={"Nhập họ"}
                   validate={{ required: "Không được để trống" }}
                 />
               </div>
@@ -138,6 +146,7 @@ const Personal = ({ navigate }) => {
                   register={register}
                   errors={errors}
                   id="firstName"
+                  placeholder={"Nhập tên"}
                   validate={{ required: "Không được để trống" }}
                 />
               </div>
@@ -149,6 +158,7 @@ const Personal = ({ navigate }) => {
               <InputForm
                 register={register}
                 errors={errors}
+                placeholder={"Nhập số điện thoại"}
                 id="mobile"
                 validate={{
                   required: "Không được để trống",
@@ -158,19 +168,6 @@ const Personal = ({ navigate }) => {
                     message: "Số điện thoại không hợp lệ.",
                   },
                 }}
-              />
-            </div>
-
-            {/* Địa chỉ */}
-            <div className="flex items-center">
-              <label className="w-[120px] font-medium">
-                Địa chỉ giao hàng:
-              </label>
-              <InputForm
-                register={register}
-                errors={errors}
-                id="address"
-                validate={{ required: "Không được để trống" }}
               />
             </div>
 

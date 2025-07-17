@@ -171,6 +171,24 @@ export const removeCartItem = createAsyncThunk(
   }
 );
 
+export const fetchAddresses = createAsyncThunk(
+  "user/fetchAddresses",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const userId = getState().user.current?._id;
+      const res = await apis.apiGetAddressesByUser({ userId });
+
+      if (res.success) {
+        return res.data;
+      } else {
+        return rejectWithValue("Không thể lấy địa chỉ.");
+      }
+    } catch (err) {
+      return rejectWithValue("Lỗi khi lấy địa chỉ.");
+    }
+  }
+);
+
 /*
 1. Tên action: 'user/current'
 	•	Đây là tên action type sẽ được tạo:

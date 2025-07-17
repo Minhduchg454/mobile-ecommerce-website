@@ -6,8 +6,14 @@ import {
   MdTagFaces,
   MdLocalShipping,
   MdLocalOffer,
+  MdLocationOn,
 } from "react-icons/md";
-import { AiOutlineDashboard } from "react-icons/ai";
+import {
+  AiFillAccountBook,
+  AiOutlineUser,
+  AiOutlineDashboard,
+  AiOutlineHistory,
+} from "react-icons/ai";
 import {
   MdGroups,
   MdCategory,
@@ -226,9 +232,23 @@ export const memberSidebar = [
   {
     id: 1,
     type: "SINGLE",
-    text: "Thông tin cá nhân",
+    text: "Hồ sơ",
     path: `/${path.MEMBER}/${path.PERSONAL}`,
-    icon: <AiOutlineDashboard size={20} />,
+    icon: <AiOutlineUser size={20} />,
+  },
+  {
+    id: 2,
+    type: "SINGLE",
+    text: "Địa chỉ",
+    path: `/${path.MEMBER}/${path.ADDRESS}`,
+    icon: <MdLocationOn size={20} />,
+  },
+  {
+    id: 3,
+    type: "SINGLE",
+    text: "Lịch sử đơn hàng",
+    path: `/${path.MEMBER}/${path.HISTORY}`,
+    icon: <AiOutlineHistory size={20} />,
   },
 ];
 

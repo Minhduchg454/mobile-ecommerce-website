@@ -9,6 +9,7 @@ export const userSlice = createSlice({
     token: null,
     isLoading: false,
     mes: "",
+    address: [],
     currentCart: [],
   },
   reducers: {
@@ -70,6 +71,9 @@ export const userSlice = createSlice({
   },
   //Dung de xu ly asyncThunk
   extraReducers: (builder) => {
+    builder.addCase(actions.fetchAddresses.fulfilled, (state, action) => {
+      state.address = action.payload;
+    });
     //Khi getCurrent dang chay, bat loading
     builder.addCase(actions.getCurrent.pending, (state) => {
       state.isLoading = true;
