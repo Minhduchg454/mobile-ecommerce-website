@@ -31,12 +31,12 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
           .map((cp) => {
             let color = "bg-gray-100";
             if (cp.discountType === "percentage") {
-              if (cp.discount <= 10) color = "bg-green-100";
-              else if (cp.discount <= 20) color = "bg-purple-100";
+              if (cp.discount <= 5) color = "bg-green-100";
+              else if (cp.discount <= 10) color = "bg-purple-100";
               else color = "bg-blue-100";
             } else {
-              if (cp.discount <= 50000) color = "bg-orange-100";
-              else if (cp.discount <= 100000) color = "bg-orange-200";
+              if (cp.discount <= 20000) color = "bg-orange-100";
+              else if (cp.discount <= 50000) color = "bg-orange-200";
               else color = "bg-orange-300";
             }
             return { ...cp, color };
@@ -82,7 +82,7 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
           coupons.map((cp) => (
             <div
               key={cp._id}
-              className={`p-3 rounded-xl cursor-pointer hover:opacity-90 flex justify-between items-start ${cp.color}`}
+              className={`p-3 rounded-xl cursor-pointer hover:scale-103 flex justify-between items-start ${cp.color}`}
               onClick={() => handleSelect(cp)}
             >
               <div className="space-y-1">
