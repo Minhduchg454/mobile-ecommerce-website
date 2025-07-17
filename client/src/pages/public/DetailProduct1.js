@@ -34,11 +34,10 @@ const ProductDetail1 = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { current, isLoggedIn, currentCart } = useSelector(
+  const { current, isLoggedIn, currentCart, address } = useSelector(
     (state) => state.user
   );
   const { isAdmin } = useRole();
-
   const [product, setProduct] = useState(null);
   const [variations, setVariations] = useState([]);
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -52,6 +51,15 @@ const ProductDetail1 = () => {
 
   const pvid = searchParams.get("code");
   const imageList = currentProduct?.images || [];
+
+  const defaultAddress =
+    (address && address.find((a) => a.isDefault)) ||
+    (address && address.length > 0 && address[0]) ||
+    null;
+
+  const displayAddress = defaultAddress
+    ? `${defaultAddress.street}, ${defaultAddress.country}`
+    : "Chưa có địa chỉ";
 
   useEffect(() => {
     if (imageList.length > 0) {
@@ -446,11 +454,9 @@ const ProductDetail1 = () => {
               <div className="mb-1 text-sm">
                 <span className="text-black">Giao đến:</span>
                 {"  "}
-                <span className="text-gray-900">
-                  {current?.address || "Chưa cập nhật địa chỉ"}
-                </span>{" "}
+                <span className="text-gray-900">{displayAddress}</span>{" "}
                 <button
-                  onClick={() => navigate(`/${path.MEMBER}/${path.PERSONAL}`)}
+                  onClick={() => navigate(`/${path.MEMBER}/${path.ADDRESS}`)}
                   className="text-blue-500 underline ml-2 hover:text-blue-700 text-xs"
                 >
                   Thay đổi

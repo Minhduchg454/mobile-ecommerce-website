@@ -6,7 +6,11 @@ import { MdLocationOn } from "react-icons/md";
 import { FaMoneyCheckAlt } from "react-icons/fa";
 import { showModal } from "store/app/appSlice";
 import { formatMoney } from "ultils/helpers";
-import { apiCreateOrder, apiGetProductVariation } from "apis";
+import {
+  apiCreateOrder,
+  apiGetProductVariation,
+  apiGetAddressesByUser,
+} from "apis";
 import withBaseComponent from "hocs/withBaseComponent";
 import { getCurrent } from "store/user/asyncActions";
 import { Congrat, Paypal, VoucherSelectorModal } from "components";
@@ -26,7 +30,27 @@ const Checkout = ({ dispatch, navigate }) => {
   const [loading, setLoading] = useState(true);
   const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [addressUser, setAddressUser] = useState([]);
+  const [selectAddress, setSelectAddress] = useState(null);
 
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        console.log("Duoc goi");
+        const response = await apiGetAddressesByUser({ userId: current?._id });
+        if (response.success) {
+          console.log("danh sach dia chi cua nguoi dung", response.data);
+          setAddressUser(response.data);
+          const defaultAddr = response.data.find((item) => item.isDefault);
+          setSelectAddress(defaultAddr || response.data[0]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch addresses", error);
+      }
+    };
+
+    if (current?._id) fetchAddresses();
+  }, [current]);
   const paymentMethods = [
     { _id: "OFFLINE", productCategoryName: "Thanh toán khi nhận hàng" },
     {
@@ -98,7 +122,7 @@ const Checkout = ({ dispatch, navigate }) => {
         price: variationData[el.productVariationId]?.price || 0,
       })),
       total: totalUSD,
-      address: current?.address,
+      address: `${selectAddress.street}, ${selectAddress.ward}, ${selectAddress.district}, ${selectAddress.country}`,
       appliedCoupon: selectedVoucher?._id || null,
     };
 
@@ -119,7 +143,7 @@ const Checkout = ({ dispatch, navigate }) => {
       return;
     }
 
-    if (!current?.address || !current?.mobile) {
+    if (!selectAddress || !current?.address || !current?.mobile) {
       Swal.fire({
         icon: "error",
         title: "Thông tin không đầy đủ",
@@ -128,7 +152,7 @@ const Checkout = ({ dispatch, navigate }) => {
         confirmButtonText: "Cập nhật ngay",
         cancelButtonText: "Đóng",
       }).then((result) => {
-        if (result.isConfirmed) navigate(`/${path.MEMBER}/${path.PERSONAL}`);
+        if (result.isConfirmed) navigate(`/${path.MEMBER}/${path.ADDRESS}`);
       });
       return;
     }
@@ -256,7 +280,25 @@ const Checkout = ({ dispatch, navigate }) => {
               </p>
               <p>{`Sđt: ${current?.mobile}`}</p>
             </div>
-            <div className="text-md">{current?.address}</div>
+            <div className="text-md">
+              <select
+                className="border border-gray-300 rounded px-2 py-1"
+                value={selectAddress?._id || ""}
+                onChange={(e) => {
+                  const selected = addressUser.find(
+                    (addr) => addr._id === e.target.value
+                  );
+                  setSelectAddress(selected);
+                }}
+              >
+                {addressUser.map((addr) => (
+                  <option key={addr._id} value={addr._id}>
+                    {`${addr.street}, ${addr.ward}, ${addr.district}, ${addr.country}`}
+                    {addr.isDefault ? " (mặc định)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
         {/* Danh sach san pham */}

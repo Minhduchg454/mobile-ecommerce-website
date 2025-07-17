@@ -60,3 +60,4 @@ export { default as SpecificProductManager } from "./products/SpecificProductMan
 export { default as CreateVariantForm } from "./products/CreateVariantForm";
 export { default as SpecificationSelector } from "./products/SpecificationSelector.jsx";
 export { default as VoucherSelectorModal } from "./products/VoucherSelectorModal";
+export { default as NewAddressModal } from "./inputs/NewAddressModal";

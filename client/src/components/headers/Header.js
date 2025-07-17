@@ -37,7 +37,6 @@ const HeaderFull = () => {
 
   const roleName = current?.roleId?.roleName?.toLowerCase();
   const countCurrentCart = currentCart.length;
-  console.log("So luong san pham trong gio", countCurrentCart);
 
   const handleSearch = () => {
     const currentQuery = q?.trim();
@@ -193,12 +192,17 @@ const HeaderFull = () => {
               onClick={() => setIsShowOption((prev) => !prev)}
             >
               {current?.avatar ? (
-                <div className="w-10 aspect-square rounded-full overflow-hidden border shrink-0">
-                  <img
-                    src={current.avatar}
-                    alt="avatar"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="relative">
+                  <div className="w-10 aspect-square rounded-full overflow-hidden border shrink-0">
+                    <img
+                      src={current.avatar}
+                      alt="avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute right-0 bottom-[2px] p-1 w-4 h-4 flex items-center justify-center border-white rounded-full bg-gray-200 text-gray-800 shadow transition text-xs">
+                    ▾
+                  </div>
                 </div>
               ) : (
                 <FaUserCircle size={28} className="text-blue-600 w-10 h-10" />
@@ -268,7 +272,7 @@ const HeaderFull = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-2/5 bg-white/80 backdrop-blur-md p-3 h-full flex flex-col"
+            className="w-2/5 bg-white backdrop-blur-md p-3 h-full flex flex-col"
           >
             {navigation.map((el) => (
               <NavLink

@@ -34,6 +34,7 @@ import {
   History,
   Wishlist,
   Checkout,
+  PersonalAddress,
 } from "pages/member";
 import path from "ultils/path";
 import { useDispatch, useSelector } from "react-redux";
@@ -105,6 +106,7 @@ function App() {
             <Route path={path.PERSONAL} element={<Personal />} />
             <Route path={path.WISHLIST} element={<Wishlist />} />
             <Route path={path.HISTORY} element={<History />} />
+            <Route path={path.ADDRESS} element={<PersonalAddress />} />
           </Route>
           <Route path={path.CHECKOUT} element={<Checkout />} />
           <Route path={path.LOGIN} element={<Login />} />

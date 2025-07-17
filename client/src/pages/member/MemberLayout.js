@@ -5,11 +5,13 @@ import { MemberSidebar, AdminHeader } from "components";
 import path from "ultils/path";
 
 const getPageTitle = (pathname) => {
+  if (pathname.includes("personal-address")) return "ĐỊA CHỈ CỦA TÔI";
   if (pathname.includes("personal")) return "THÔNG TIN CÁ NHÂN";
   if (pathname.includes("my-cart")) return "GIỎ HÀNG";
   if (pathname.includes("buy-history")) return "LỊCH SỬ MUA HÀNG";
   if (pathname.includes("my-order")) return "ĐƠN HÀNG";
   if (pathname.includes("wishlist")) return "DANH SÁCH SẢN PHẨM YÊU THÍCH";
+
   return "THÀNH VIÊN";
 };
 
