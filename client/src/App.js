@@ -3,7 +3,6 @@ import { Route, Routes } from "react-router-dom";
 import Chatbot from "chatbot/Chatbot";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import AuthLoader from "./AuthLoader";
 import {
   Login,
   Home,
@@ -52,8 +51,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
-      <AuthLoader />
-      <div className="font-jp">
+      <div className="font-jp bg-[#F5F5F7]">
         {isShowWishlist && (
           <div
             onClick={() => dispatch(showWishlist())}
@@ -72,11 +70,11 @@ function App() {
         )}
         {isShowModal && <Modal>{modalChildren}</Modal>}
         <Routes>
-          <Route path={path.CHECKOUT} element={<Checkout />} />
           <Route path={path.PUBLIC} element={<Public />}>
             <Route index element={<Home />} />
             <Route path={path.HOME} element={<Home />} />
             <Route path={path.BLOGS__ID__TITLE} element={<DetailBlogs />} />
+
             <Route
               path={path.DETAIL_PRODUCT__CATEGORY__PID__TITLE}
               element={<DetailProduct1 />}
@@ -108,6 +106,7 @@ function App() {
             <Route path={path.WISHLIST} element={<Wishlist />} />
             <Route path={path.HISTORY} element={<History />} />
           </Route>
+          <Route path={path.CHECKOUT} element={<Checkout />} />
           <Route path={path.LOGIN} element={<Login />} />
         </Routes>
         <ToastContainer

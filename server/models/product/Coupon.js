@@ -60,6 +60,10 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    maxDiscountAmount: {
+      type: Number,
+      default: null,
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Admin
       ref: "Admin", // Tên model User

@@ -42,6 +42,7 @@ const ManageCoupons = () => {
   const onSubmit = async (data) => {
     // Chuyển chuỗi thành boolean
     data.isActive = data.isActive === "true";
+    if (!current?._id) return toast.error("Không xác định được người dùng");
     data.userId = current._id;
 
     dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
@@ -77,7 +78,18 @@ const ManageCoupons = () => {
   };
   useEffect(() => {
     if (showForm) {
-      reset({ isActive: true });
+      reset({
+        couponCode: "",
+        description: "",
+        discount: "",
+        discountType: "",
+        maxDiscountAmount: "",
+        startDate: "",
+        expirationDate: "",
+        miniOrderAmount: "",
+        usageLimit: "",
+        isActive: "true",
+      });
     }
   }, [showForm, reset]);
 
@@ -156,6 +168,20 @@ const ManageCoupons = () => {
                   </small>
                 )}
               </div>
+
+              <InputForm
+                label="Giảm tối đa (nếu có)"
+                id="maxDiscountAmount"
+                register={register}
+                errors={errors}
+                validate={{
+                  min: { value: 0, message: "Phải >= 0" },
+                }}
+                type="number"
+                fullWidth
+                placeholder="Nhập số tiền giảm tối đa"
+              />
+
               <InputForm
                 label="Ngày bắt đầu"
                 id="startDate"
@@ -249,6 +275,7 @@ const ManageCoupons = () => {
               <th className="py-3 px-2">Mô tả</th>
               <th className="py-3 px-2">Giảm</th>
               <th className="py-3 px-2">Loại</th>
+              <th className="py-3 px-2">Giảm tối đa</th>
               <th className="py-3 px-2">Bắt đầu</th>
               <th className="py-3 px-2">Hết hạn</th>
               <th className="py-3 px-2">Tối thiểu</th>
@@ -314,6 +341,20 @@ const ManageCoupons = () => {
                       <option value="percentage">%</option>
                       <option value="fixed_amount">VNĐ</option>
                     </select>
+                  </td>
+
+                  <td className="py-3 px-2 text-center">
+                    <input
+                      type="number"
+                      value={editingData.maxDiscountAmount || ""}
+                      onChange={(e) =>
+                        setEditingData((prev) => ({
+                          ...prev,
+                          maxDiscountAmount: e.target.value,
+                        }))
+                      }
+                      className="border rounded px-2 py-1 w-24 text-center"
+                    />
                   </td>
                   <td className="py-3 px-2 text-center">
                     <input
@@ -428,6 +469,11 @@ const ManageCoupons = () => {
                   </td>
                   <td className="py-3 px-2 text-center">
                     {el.discountType === "percentage" ? "%" : "VNĐ"}
+                  </td>
+                  <td className="py-3 px-2 text-center">
+                    {el.maxDiscountAmount
+                      ? formatVnCurrency(el.maxDiscountAmount)
+                      : "-"}
                   </td>
                   <td className="py-3 px-2 text-center">
                     {formatVnDate(el.startDate)}

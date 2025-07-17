@@ -9,6 +9,8 @@ import clsx from "clsx";
 import { FaChevronLeft, FaChevronRight, FaCheckCircle } from "react-icons/fa";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { AiOutlinePhone } from "react-icons/ai";
+import path from "ultils/path";
+import { FaTruck } from "react-icons/fa";
 
 import {
   apiGetProduct,
@@ -308,11 +310,7 @@ const ProductDetail1 = () => {
                     className="flex justify-between py-1 border-b-2"
                   >
                     <span>{item.specificationTypeId?.typeSpecifications}</span>
-                    <span>
-                      {item.value}
-                      {item.specificationTypeId?.unitOfMeasure &&
-                        ` ${item.specificationTypeId.unitOfMeasure}`}
-                    </span>
+                    <span>{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -333,8 +331,11 @@ const ProductDetail1 = () => {
                   <span key={idx}>{star}</span>
                 )
               )}
-              <span className="text-sm italic text-main">
+              <span className="text-sm italic  text-blue-400">
                 Đã bán {currentProduct?.sold || 0}
+              </span>
+              <span className="text-sm italic text-blue-400">
+                Kho: {currentProduct?.stockQuantity || 0}
               </span>
             </div>
 
@@ -435,6 +436,36 @@ const ProductDetail1 = () => {
               </ol>
             </div>
 
+            {/* Thong tin van chuyen */}
+            <div className="border border-green-500 bg-green-50 rounded-xl p-2">
+              <h4 className="text-md text-green-600 font font-semibold flex items-center gap-2">
+                <FaTruck className="text-green-600" size={23} />
+                Thông tin vận chuyển
+              </h4>
+
+              <div className="mb-1 text-sm">
+                <span className="text-black">Giao đến:</span>
+                {"  "}
+                <span className="text-gray-900">
+                  {current?.address || "Chưa cập nhật địa chỉ"}
+                </span>{" "}
+                <button
+                  onClick={() => navigate(`/${path.MEMBER}/${path.PERSONAL}`)}
+                  className="text-blue-500 underline ml-2 hover:text-blue-700 text-xs"
+                >
+                  Thay đổi
+                </button>
+              </div>
+
+              <div className="text-black text-sm">
+                <span>Giao từ </span>
+                <strong>
+                  18h - 20h, hôm nay ({new Date().toLocaleDateString("vi-VN")})
+                </strong>
+                : <span className="text-green-600 font-semibold">Miễn phí</span>
+              </div>
+            </div>
+
             {/* Giao hàng dự kiến */}
             <div className="">
               <div className="flex justify-start items-center gap-1">
@@ -444,10 +475,6 @@ const ProductDetail1 = () => {
                   <span className="text-[#00AFFF]">0909 567 999</span>
                 </p>
               </div>
-              <p className="text-sm text-gray-600">
-                🚚 <span className="font-semibold">Giao hàng dự kiến:</span>{" "}
-                <span className="text-gray-800">1 - 2 ngày</span>
-              </p>
             </div>
           </div>
         </div>
@@ -472,7 +499,7 @@ const ProductDetail1 = () => {
       </div>
 
       {/* Sản phẩm khác */}
-      <div className="w-main mx-auto py-4 ">
+      <div className="w-main mx-auto p-4 ">
         <FeatureProducts
           title="Những thiết bị liên quan"
           sort="newest"

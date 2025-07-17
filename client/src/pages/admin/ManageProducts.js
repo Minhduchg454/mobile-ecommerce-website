@@ -96,7 +96,7 @@ const ManageProducts = () => {
   }, [editProduct, currentProductForVariant]);
 
   return (
-    <div className={clsx("w-full bg-gray-50 min-h-screen p-4", editProduct)}>
+    <div className={clsx("w-full min-h-screen p-4", editProduct)}>
       {/* Header tìm kiếm */}
       <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4 flex justify-between items-center">
         <form className="w-full" onSubmit={(e) => e.preventDefault()}>

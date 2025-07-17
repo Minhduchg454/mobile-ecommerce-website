@@ -70,7 +70,7 @@ const Login = () => {
           showCancelButton: false,
           showConfirmButton: false,
         });
-        //dispatch(getCurrent());
+        dispatch(getCurrent());
         navigate(searchParams.get("redirect") || `/${path.HOME}`);
       } else {
         ShowSwal({
