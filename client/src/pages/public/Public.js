@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import { Header, Navigation } from "components";
+import { Header } from "components";
 import Footer from "components/footer/Footer";
 import TopHeaders from "components/headers/TopHeader";
 const Public = () => {

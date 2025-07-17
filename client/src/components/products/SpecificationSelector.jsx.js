@@ -25,10 +25,7 @@ const SpecificationSelector = ({
                 checked={selectedSpecIds.includes(spec._id)}
                 onChange={() => onToggleSpec(spec._id)}
               />
-              <span>
-                {spec.typeSpecifications}
-                {spec.unitOfMeasure ? ` (${spec.unitOfMeasure})` : ""}
-              </span>
+              <span>{spec.typeSpecifications}</span>
             </label>
           ))}
         </div>
@@ -45,7 +42,7 @@ const SpecificationSelector = ({
                 <div key={specId} className="relative">
                   <label className="text-sm font-medium block mb-1">
                     {spec?.typeSpecifications}
-                    {spec?.unitOfMeasure && ` (${spec.unitOfMeasure})`}
+                    {spec?.unitOfMeasure}
                   </label>
                   <div className="relative">
                     <input

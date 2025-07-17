@@ -31,11 +31,13 @@ const HeaderFull = () => {
   const q = watch("q");
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { current } = useSelector((state) => state.user);
+  const { current, currentCart } = useSelector((state) => state.user);
   const [isShowOption, setIsShowOption] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
   const roleName = current?.roleId?.roleName?.toLowerCase();
+  const countCurrentCart = currentCart.length;
+  console.log("So luong san pham trong gio", countCurrentCart);
 
   const handleSearch = () => {
     const currentQuery = q?.trim();
@@ -167,9 +169,9 @@ const HeaderFull = () => {
               className="relative cursor-pointer"
             >
               <MdOutlineShoppingCart size={27} className="text-black" />
-              {current?.cart?.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
-                  {current.cart.length}
+              {countCurrentCart > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {countCurrentCart}
                 </span>
               )}
             </div>
@@ -208,7 +210,7 @@ const HeaderFull = () => {
               {isShowOption && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-full right-0 md:left-0 bg-gray-100 border rounded shadow-md z-50 min-w-[150px] py-2"
+                  className="absolute top-full right-0 lg:left-0 bg-gray-100 border rounded shadow-md z-50 min-w-[150px] py-2"
                 >
                   <Link
                     className="block p-2 hover:bg-sky-100"

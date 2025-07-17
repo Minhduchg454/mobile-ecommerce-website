@@ -153,7 +153,7 @@ const Cart = ({ dispatch, navigate }) => {
                 <div className="flex-1">
                   <div className="font-medium text-base text-main">
                     {variation?.productId?.brandId?.brandName
-                      ? `${variation.productId.brandId.brandName} - `
+                      ? `${variation.productId.productName} - `
                       : ""}
                     {variation?.productVariationName || "Đang tải..."}
                   </div>
