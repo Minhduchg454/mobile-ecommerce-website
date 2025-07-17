@@ -77,9 +77,9 @@ const ManageBrands = () => {
   };
 
   return (
-    <div className="w-full p-4 bg-gray-50 min-h-screen space-y-8">
+    <div className="w-full p-4  min-h-screen space-y-8">
       {/* Nút hiển thị form */}
-      <div className="bg-main w-fit text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+      <div className="sticky top-0 z-10 bg-main w-fit text-white px-4 py-2 rounded hover:bg-blue-700 transition">
         <button
           onClick={() => {
             reset();
@@ -126,25 +126,22 @@ const ManageBrands = () => {
           </div>
         )}
       </div>
-
-      {/* Form thêm mới */}
-
       {/* Danh sách thương hiệu */}
-      <div className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white rounded-xl shadow p-6 ">
         <h2 className="text-lg font-bold mb-4">📋 Danh sách thương hiệu</h2>
         <table className="table-auto w-full border-collapse">
           <thead className="bg-title-table text-white text-sm uppercase">
             <tr>
-              <th className="py-3 px-2">STT</th>
+              <th className="py-3 px-2 text-left">STT</th>
               <th className="py-3 px-2 text-left">Tên thương hiệu</th>
-              <th className="py-3 px-2 text-center">Tùy chọn</th>
+              <th className="py-3 px-2 text-right">Tùy chọn</th>
             </tr>
           </thead>
           <tbody>
             {brands?.map((el, idx) =>
               editingRowId === el._id ? (
                 <tr key={el._id} className="border-b bg-yellow-50 text-sm">
-                  <td className="text-center py-3 px-2">{idx + 1}</td>
+                  <td className="text-left py-3 px-2">{idx + 1}</td>
                   <td className="py-3 px-2">
                     <input
                       value={editingData.brandName}
@@ -157,8 +154,8 @@ const ManageBrands = () => {
                       className="border rounded px-2 py-1 w-full"
                     />
                   </td>
-                  <td className="text-center py-3 px-2">
-                    <div className="flex justify-center gap-2 text-green-700">
+                  <td className="text-right py-3 px-2">
+                    <div className="flex justify-end gap-2 text-green-700">
                       <span
                         onClick={async () => {
                           const res = await apiUpdateBrand(el._id, editingData);
@@ -192,10 +189,10 @@ const ManageBrands = () => {
                   key={el._id}
                   className="border-b hover:bg-sky-50 transition-all text-sm"
                 >
-                  <td className="text-center py-3 px-2">{idx + 1}</td>
+                  <td className="text-left py-3 px-2">{idx + 1}</td>
                   <td className="py-3 px-2">{el.brandName}</td>
-                  <td className="text-center py-3 px-2">
-                    <div className="flex justify-center gap-2 text-orange-600">
+                  <td className="text-right py-3 px-2">
+                    <div className="flex justify-end gap-2 text-orange-600">
                       <span
                         onClick={() => {
                           setEditingRowId(el._id);

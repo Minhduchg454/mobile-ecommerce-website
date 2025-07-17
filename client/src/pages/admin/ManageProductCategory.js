@@ -107,9 +107,9 @@ const ManageProductCategory = () => {
   };
 
   return (
-    <div className="w-full p-4 bg-gray-50 min-h-screen space-y-8">
+    <div className="w-full p-4 min-h-screen space-y-8">
       {/* Nút hiển thị form */}
-      <div className="w-fit bg-main text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+      <div className="sticky top-0 z-10 w-fit bg-main text-white px-4 py-2 rounded hover:bg-blue-700 transition">
         <button
           onClick={() => {
             reset();
@@ -199,17 +199,17 @@ const ManageProductCategory = () => {
         <table className="table-auto w-full border-collapse">
           <thead className="bg-title-table text-white text-sm uppercase">
             <tr>
-              <th className="py-3 px-2">STT</th>
+              <th className="py-3 px-2 text-left">STT</th>
               <th className="py-3 px-2 text-left">Tên danh mục</th>
               <th className="py-3 px-2">Ảnh</th>
-              <th className="py-3 px-2 text-center">Tùy chọn</th>
+              <th className="py-3 px-2 text-right">Tùy chọn</th>
             </tr>
           </thead>
           <tbody>
             {categories?.map((el, idx) =>
               editingRowId === el._id ? (
                 <tr key={el._id} className="border-b bg-yellow-50 text-sm">
-                  <td className="text-center py-3 px-2">{idx + 1}</td>
+                  <td className="text-left py-3 px-2">{idx + 1}</td>
                   <td className="py-3 px-2">
                     <input
                       value={editingData.productCategoryName}
@@ -248,7 +248,7 @@ const ManageProductCategory = () => {
                     )}
                   </td>
                   <td className="text-center py-3 px-2">
-                    <div className="flex justify-center gap-2 text-green-700">
+                    <div className="flex justify-end gap-2 text-green-700">
                       <span
                         onClick={handleUpdate}
                         className="hover:underline cursor-pointer font-medium"
@@ -272,7 +272,7 @@ const ManageProductCategory = () => {
                   key={el._id}
                   className="border-b hover:bg-sky-50 transition-all text-sm"
                 >
-                  <td className="text-center py-3 px-2">{idx + 1}</td>
+                  <td className="text-left py-3 px-2">{idx + 1}</td>
                   <td className="py-3 px-2">{el.productCategoryName}</td>
                   <td className="text-center py-3 px-2">
                     <img
@@ -282,7 +282,7 @@ const ManageProductCategory = () => {
                     />
                   </td>
                   <td className="text-center py-3 px-2">
-                    <div className="flex justify-center gap-2 text-orange-600">
+                    <div className="flex justify-end gap-2 text-orange-600">
                       <span
                         onClick={() => {
                           setEditingRowId(el._id);

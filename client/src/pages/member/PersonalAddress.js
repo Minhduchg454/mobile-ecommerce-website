@@ -57,7 +57,7 @@ const PersonalAddress = () => {
 
   return (
     <div className="p-4">
-      <div className="flex justify-end items-center mb-4">
+      <div className="sticky top-0 z-10 flex justify-start items-center mb-4">
         <button
           onClick={() => {
             setEditingAddress(null);
@@ -65,7 +65,7 @@ const PersonalAddress = () => {
           }}
           className="btn bg-main text-white rounded-xl p-2"
         >
-          + Thêm địa chỉ mới
+          Thêm địa chỉ mới
         </button>
       </div>
 
@@ -93,14 +93,12 @@ const PersonalAddress = () => {
                   className="text-blue-600 hover:underline"
                   onClick={() => handleEdit(addr)}
                 >
-                  <FaEdit className="inline mr-1" />
-                  Cập nhật
+                  Sửa
                 </button>
                 <button
                   className="text-red-600 hover:underline"
                   onClick={() => handleDelete(addr._id)}
                 >
-                  <FaTrash className="inline mr-1" />
                   Xóa
                 </button>
               </div>

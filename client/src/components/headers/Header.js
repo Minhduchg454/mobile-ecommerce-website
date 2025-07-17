@@ -147,13 +147,26 @@ const HeaderFull = () => {
         </div>
 
         {/* User & icon */}
-        <div className="flex h-full items-center gap-4 ml-4 relative">
+        <div className="flex h-full items-center gap-4 ml-4 relative ">
           {roleName === "customer" && (
             <div
               onClick={() => dispatch(showWishlist())}
-              className="relative cursor-pointer"
+              className="relative cursor-pointer border rounded-full p-2 bg-[#E3E5E9]"
             >
-              <FaRegHeart size={24} className="text-black" />
+              <div className="relative group cursor-pointer">
+                <FaRegHeart size={24} className="text-black" />
+                <span
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
+                            text-[10px] text-white bg-black rounded 
+                            opacity-0 group-hover:opacity-100 
+                            transition-all duration-300 delay-500 
+                            transform translate-y-1 group-hover:translate-y-0 
+                            whitespace-nowrap z-50"
+                >
+                  Yêu thích
+                </span>
+              </div>
+
               {current?.wishlist?.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
                   {current.wishlist.length}
@@ -165,9 +178,21 @@ const HeaderFull = () => {
           {roleName !== "admin" && (
             <div
               onClick={() => dispatch(showCart())}
-              className="relative cursor-pointer"
+              className="relative cursor-pointer rounded-full p-2 bg-[#E3E5E9]"
             >
-              <MdOutlineShoppingCart size={27} className="text-black" />
+              <div className="relative group cursor-pointer">
+                <MdOutlineShoppingCart size={24} className="text-black" />
+                <span
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
+                            text-[10px] text-white bg-black rounded 
+                            opacity-0 group-hover:opacity-100 
+                            transition-all duration-300 delay-500 
+                            transform translate-y-1 group-hover:translate-y-0 
+                            whitespace-nowrap z-50"
+                >
+                  Giỏ hàng
+                </span>
+              </div>
               {countCurrentCart > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
                   {countCurrentCart}
@@ -192,7 +217,7 @@ const HeaderFull = () => {
               onClick={() => setIsShowOption((prev) => !prev)}
             >
               {current?.avatar ? (
-                <div className="relative">
+                <div className="relative group cursor-pointer">
                   <div className="w-10 aspect-square rounded-full overflow-hidden border shrink-0">
                     <img
                       src={current.avatar}
@@ -200,21 +225,38 @@ const HeaderFull = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="absolute right-0 bottom-[2px] p-1 w-4 h-4 flex items-center justify-center border-white rounded-full bg-gray-200 text-gray-800 shadow transition text-xs">
+
+                  {/* Tooltip tuỳ biến */}
+                  <span
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
+                            text-[10px] text-white bg-black rounded 
+                            opacity-0 group-hover:opacity-100 
+                            transition-all duration-300 delay-500 
+                            transform translate-y-1 group-hover:translate-y-0 
+                            whitespace-nowrap z-50"
+                  >
+                    Tài khoản
+                  </span>
+
+                  <div className="absolute -right-1 -bottom-[4px] p-1 w-5 h-5 flex items-center justify-center border border-gray-300 rounded-full bg-gray-200 text-gray-800 shadow-sm transition text-xs">
                     ▾
                   </div>
                 </div>
               ) : (
-                <FaUserCircle size={28} className="text-blue-600 w-10 h-10" />
+                <div className="relative group cursor-pointer">
+                  <div className="relative group cursor-pointer">
+                    <FaUserCircle size={24} className="text-black" />
+                    <span className="absolute top-full right-0 mt-1 px-2 py-1 text-[10px] text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-transform duration-200 ease-in-out transform translate-x-2 group-hover:translate-x-0 whitespace-nowrap z-50">
+                      Tài khoản
+                    </span>
+                  </div>
+                </div>
               )}
-              <span className="hidden lg:inline-block ml-2 text-lg font-medium text-black">
-                {current.firstName}
-              </span>
 
               {isShowOption && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-full right-0 lg:left-0 bg-gray-100 border rounded shadow-md z-50 min-w-[150px] py-2"
+                  className="absolute top-full right-0  bg-gray-100 border rounded shadow-md z-50 min-w-[150px] py-2"
                 >
                   <Link
                     className="block p-2 hover:bg-sky-100"

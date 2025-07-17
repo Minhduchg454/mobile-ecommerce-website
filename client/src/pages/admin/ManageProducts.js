@@ -116,18 +116,18 @@ const ManageProducts = () => {
       </div>
 
       {editProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm  shadow-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center  bg-black/30 p-4 backdrop-blur-sm ">
           <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full">
             {/* Nút đóng luôn cố định */}
             <button
               onClick={() => setEditProduct(null)}
-              className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition"
+              className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow border transition"
             >
               ×
             </button>
 
             {/* Nội dung có thể cuộn */}
-            <div className="p-6 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 max-h-[90vh] overflow-y-auto border shadow-md rounded-xl">
               <CreateProducts
                 editProduct={editProduct}
                 render={render}

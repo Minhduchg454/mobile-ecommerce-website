@@ -187,7 +187,7 @@ const CreateProducts = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full m-auto border bg-white shadow-md rounded-xl">
       {editProduct && (
         <h1 className="h-[75px] flex justify-between items-center text-xl font-bold px-4 border-b">
           <span>{`Cập nhật sản phẩm: ${editProduct.productName}`}</span>

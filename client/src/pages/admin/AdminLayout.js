@@ -14,6 +14,7 @@ const getPageTitle = (pathname) => {
   if (pathname.includes("manage-order")) return "QUẢN LÝ ĐƠN HÀNG";
   if (pathname.includes("create-blog")) return "THÊM TIN TỨC";
   if (pathname.includes("manage-blogs")) return "QUẢN LÝ KHO TIN TỨC";
+  if (pathname.includes("manage-brands")) return "QUẢN LÝ THƯƠNG HIỆU";
   return "QUẢN TRỊ";
 };
 

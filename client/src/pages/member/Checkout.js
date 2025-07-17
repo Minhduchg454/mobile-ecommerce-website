@@ -36,10 +36,8 @@ const Checkout = ({ dispatch, navigate }) => {
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        console.log("Duoc goi");
         const response = await apiGetAddressesByUser({ userId: current?._id });
         if (response.success) {
-          console.log("danh sach dia chi cua nguoi dung", response.data);
           setAddressUser(response.data);
           const defaultAddr = response.data.find((item) => item.isDefault);
           setSelectAddress(defaultAddr || response.data[0]);
@@ -274,10 +272,8 @@ const Checkout = ({ dispatch, navigate }) => {
             <span>Địa chỉ nhận hàng:</span>
           </div>
           <div className="flex justify-between items-center">
-            <div className="font-bold">
-              <p>
-                {current?.lastName} {current?.firstName}
-              </p>
+            <div className="">
+              <p>{`Người nhận: ${current?.lastName} ${current?.firstName}`}</p>
               <p>{`Sđt: ${current?.mobile}`}</p>
             </div>
             <div className="text-md">
