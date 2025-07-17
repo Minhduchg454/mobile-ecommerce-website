@@ -1,6 +1,6 @@
 // utilities.js
-// const { Query } = require("mongoose");
 const searchProduct = require("../../../ultils/searchProduct");
+const ResultTypeEnum = require("../ResultTypeEnum");
 
 async function searchProductForChatBot(query) {
   console.log(query);
@@ -12,9 +12,12 @@ async function searchProductForChatBot(query) {
     };
   }
 
-  console.log("Kết quả trước khi chuyển test: ", result);
+  // console.log("Kết quả trước khi chuyển test: ", result);
 
-  return { suggestions: result }; // bọc text trong object để tương thích với Gemini
+  return {
+    type: ResultTypeEnum.SEARCH,
+    suggestions: result,
+  };
 }
 
 module.exports = { searchProductForChatBot };
