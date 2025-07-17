@@ -1,9 +1,10 @@
+const { searchProductForChatBot } = require("./functioncalling/searchProduct");
+
 const {
-  getCurrentWeather,
-  searchProductForChatBot,
-} = require("./functioncalling/utilities");
+  displayAllProductWithKeyWord,
+} = require("./functioncalling/displayAllProductWithKeyWord");
 
 module.exports = {
   search_product: searchProductForChatBot,
-  // get_current_temperature: getCurrentWeather,
+  display_all_product_with_key_word: displayAllProductWithKeyWord,
 };

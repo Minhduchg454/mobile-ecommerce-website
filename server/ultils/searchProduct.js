@@ -27,6 +27,7 @@ const searchProduct = async (query) => {
 
           allProductVariations.push({
             // ...variation,
+            varationId: variation._id,
             variationName: variation.productVariationName,
             link: `${category.slug}/${
               product.slug
@@ -77,8 +78,10 @@ const searchProduct = async (query) => {
 
     return results.map((result) => {
       const item = result.item;
+      console.log("🔍 item._id typeof:", typeof item._id, item._id);
 
       return {
+        id: item.varationId ? item.varationId.toString() : null,
         link: item.link,
         name: `${item.productName} - ${item.variationName}`,
         price: `${item.price.toLocaleString("vi-VN")}₫`,

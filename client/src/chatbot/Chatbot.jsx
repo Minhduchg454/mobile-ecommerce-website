@@ -5,13 +5,20 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 
+import ProductCard from "./component/ProductCard";
+
+import { ResultTypeEnum } from "./ResultTypeEnum";
 import { apiSendMessageToChatbot } from "apis/chatbot";
 const BASE_URL = "http://localhost:3000/";
 
 function addDomainToRelativeLinks(text) {
   return text.replace(
     /(?<!https?:\/\/)(\b(?:dien-thoai|phu-kien-dien-thoai)[^\s)]+)/g,
-    (match) => `${BASE_URL}${match}`
+    (match) => {
+      // Nếu link đã chứa BASE_URL thì giữ nguyên
+      if (match.startsWith(BASE_URL)) return match;
+      return `${BASE_URL}${match}`;
+    }
   );
 }
 
@@ -48,19 +55,29 @@ function Chatbot() {
     setInput("");
 
     try {
-      console.log("Hi 2");
       const res = await apiSendMessageToChatbot({
         message: userMessage.text,
         history: messages,
       });
-      console.log(res.text);
-      console.log("Hi 3");
-      const botMessage = {
-        role: "bot",
-        text: formatTextWithLinks(res?.text || "Không có phản hồi từ chatbot."),
-      };
+      console.log(res.responseContent);
+      const newBotMessages = res.responseContent.map((item) => {
+        if (item.type === ResultTypeEnum.DISPLAY) {
+          return {
+            role: "bot",
+            type: ResultTypeEnum.DISPLAY,
+            information: item.information,
+            data: item.data, // dữ liệu sản phẩm
+          };
+        } else {
+          return {
+            role: "bot",
+            type: ResultTypeEnum.TEXT,
+            text: formatTextWithLinks(item.text),
+          };
+        }
+      });
 
-      setMessages((prev) => [...prev, botMessage]);
+      setMessages((prev) => [...prev, ...newBotMessages]);
     } catch (error) {
       console.error("Lỗi gửi:", error);
       const errorMessage = {
@@ -147,15 +164,23 @@ function Chatbot() {
                   msg.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                <div
-                  className={`px-4 py-2 rounded-lg max-w-[99%] text-sm ${
-                    msg.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-900"
-                  }`}
-                >
-                  <div dangerouslySetInnerHTML={{ __html: msg.text }} />
-                </div>
+                {msg.type === "Result.Display" ? (
+                  <div className="grid grid-cols-2 gap-3 w-full">
+                    {msg.data.map((product, i) => (
+                      <ProductCard key={i} product={product} />
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    className={`px-4 py-2 rounded-lg max-w-[99%] text-sm ${
+                      msg.role === "user"
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-900"
+                    }`}
+                  >
+                    <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+                  </div>
+                )}
               </div>
             ))}
             <div ref={bottomRef}></div>
