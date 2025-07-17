@@ -12,6 +12,8 @@ import { getCurrent } from "store/user/asyncActions";
 import { Congrat, Paypal, VoucherSelectorModal } from "components";
 import path from "ultils/path";
 import logo from "assets/logo-removebg-preview-Photoroom.png";
+import { FaTicketAlt } from "react-icons/fa";
+import { QRCodeCanvas } from "qrcode.react";
 
 const Checkout = ({ dispatch, navigate }) => {
   const { state } = useLocation();
@@ -27,8 +29,19 @@ const Checkout = ({ dispatch, navigate }) => {
 
   const paymentMethods = [
     { _id: "OFFLINE", productCategoryName: "Thanh toán khi nhận hàng" },
+    {
+      _id: "BANK_TRANSFER",
+      productCategoryName: "Chuyển khoản ngân hàng (QR)",
+    },
     { _id: "ONLINE", productCategoryName: "Thanh toán Paypal" },
   ];
+
+  const bankInfo = {
+    bankName: "Vietinbank",
+    accountName: "NGUYEN HUU DUC",
+    accountNumber: "103874068274",
+    notePrefix: "Thanh toan don hang",
+  };
 
   useEffect(() => {
     const fetchVariations = async () => {
@@ -129,6 +142,30 @@ const Checkout = ({ dispatch, navigate }) => {
       return;
     }
 
+    if (paymentMethod === "BANK_TRANSFER") {
+      Swal.fire({
+        icon: "info",
+        title: "Xác nhận đã chuyển khoản",
+        text: "Bạn đã chuyển khoản thành công đến cửa hàng?",
+        showConfirmButton: true,
+        confirmButtonText: "Xác nhận",
+      }).then((result) => {
+        if (result.isConfirmed) handleSaveOrder();
+      });
+    }
+
+    if (paymentMethod === "ONLINE") {
+      Swal.fire({
+        icon: "info",
+        title: "Xác nhận thanh toán quay paypal",
+        text: "Bạn đã chuyển khoản thành công đến cửa hàng?",
+        showConfirmButton: true,
+        confirmButtonText: "Xác nhận",
+      }).then((result) => {
+        if (result.isConfirmed) handleSaveOrder();
+      });
+    }
+
     if (paymentMethod === "OFFLINE") {
       Swal.fire({
         icon: "info",
@@ -138,8 +175,6 @@ const Checkout = ({ dispatch, navigate }) => {
         )} VNĐ khi nhận hàng.`,
         showConfirmButton: true,
         confirmButtonText: "Xác nhận",
-        showCancelButton: true,
-        cancelButtonText: "Hủy",
       }).then((result) => {
         if (result.isConfirmed) handleSaveOrder();
       });
@@ -174,6 +209,13 @@ const Checkout = ({ dispatch, navigate }) => {
 
     return Math.max(totalVND - discountAmount, 0);
   })();
+
+  const notePrefix = "FONE";
+  const userName = `${current?.firstName}`;
+  const amount = formatMoney(totalAfterDiscount);
+  const dateStr = new Date().toLocaleDateString("vi-VN");
+
+  const transferContent = `${userName} ${amount} ${dateStr} DEN CUA HANG ${notePrefix}`;
 
   return (
     <div className="w-full h-screen flex flex-col bg-[#F5F5F7]">
@@ -297,7 +339,10 @@ const Checkout = ({ dispatch, navigate }) => {
         {/* Khối voucher */}
         <div className="p-4 flex border rounded-xl gap-4 shadow-sm bg-[#FFF] items-center justify-between">
           <div>
-            <p className="font-medium">Voucher áp dụng:</p>
+            <p className="font-medium flex items-center gap-2 text-lg">
+              <FaTicketAlt className="text-orange-500 text-2xl" />
+              Voucher áp dụng:
+            </p>
             {selectedVoucher ? (
               <div className="text-sm text-gray-600">
                 <span className="font-bold text-main">
@@ -353,7 +398,7 @@ const Checkout = ({ dispatch, navigate }) => {
                   <button
                     key={method._id}
                     onClick={() => setPaymentMethod(method._id)}
-                    className={`border rounded-md px-4 py-2 min-w-[200px] text-center
+                    className={`border rounded-xl p-2 min-w-[200px] text-center text-md
                     ${
                       paymentMethod === method._id
                         ? "border-red-500 text-red-600 font-bold"
@@ -392,6 +437,43 @@ const Checkout = ({ dispatch, navigate }) => {
                   setIsSuccess={setIsSuccess}
                   amount={totalUSD}
                 />
+              </div>
+            )}
+
+            {paymentMethod === "BANK_TRANSFER" && (
+              <div className="flex flex-col items-center gap-4 mt-4 p-4 border rounded-xl bg-gray-50">
+                <p className="text-gray-700 text-md font-medium">
+                  Quét mã để chuyển khoản ngân hàng:
+                </p>
+
+                <img
+                  src={`https://img.vietqr.io/image/ICB-${
+                    bankInfo.accountNumber
+                  }-compact2.jpg?amount=${totalAfterDiscount}&addInfo=${encodeURIComponent(
+                    transferContent
+                  )}`}
+                  alt="QR VietQR"
+                  className="w-72 h-72 object-contain"
+                />
+
+                <div className="text-sm text-center text-gray-600">
+                  <p>
+                    <strong>Ngân hàng:</strong> {bankInfo.bankName}
+                  </p>
+                  <p>
+                    <strong>Chủ tài khoản:</strong> {bankInfo.accountName}
+                  </p>
+                  <p>
+                    <strong>Số tài khoản:</strong> {bankInfo.accountNumber}
+                  </p>
+                  <p>
+                    <strong>Nội dung chuyển khoản:</strong> {transferContent}
+                  </p>
+                  <p className="text-orange-600 italic text-sm">
+                    Sau khi chuyển khoản, nhấn "Tôi đã chuyển khoản" để hoàn tất
+                    đơn hàng.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -440,7 +522,9 @@ const Checkout = ({ dispatch, navigate }) => {
                   onClick={handleConfirmPayment}
                   className="mt-2 px-6 py-2 bg-main text-white rounded-md hover:bg-blue-700"
                 >
-                  Xác nhận thanh toán
+                  {paymentMethod === "BANK_TRANSFER"
+                    ? "Tôi đã chuyển khoản"
+                    : "Xác nhận thanh toán"}
                 </button>
               </div>
             </div>
