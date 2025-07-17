@@ -36,7 +36,7 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
               else color = "bg-blue-100";
             } else {
               if (cp.discount <= 20000) color = "bg-orange-100";
-              else if (cp.discount <= 50000) color = "bg-orange-200";
+              else if (cp.discount <= 50000) color = "bg-red-100";
               else color = "bg-orange-300";
             }
             return { ...cp, color };
@@ -62,7 +62,7 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
 
   return (
     <div
-      className="bg-white rounded-xl w-[600px] max-h-[80vh] overflow-hidden flex flex-col relative"
+      className="bg-white rounded-xl w-[500px] max-h-[60vh] overflow-hidden flex flex-col relative shadow-md border"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Đóng */}
@@ -73,7 +73,7 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
         ×
       </button>
 
-      <div className="p-4 border-b">
+      <div className="p-4 border-b shadow-md">
         <h2 className="text-md font-bold">Chọn mã giảm giá</h2>
       </div>
 

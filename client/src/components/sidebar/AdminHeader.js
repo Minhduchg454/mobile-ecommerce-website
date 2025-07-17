@@ -8,7 +8,7 @@ const AdminHeader = ({ title = "Trang quản trị", onToggleSidebar }) => {
         <HiOutlineMenuAlt3 />
       </button>
       <h1 className="text-lg font-semibold">{title}</h1>
-      <div /> {/* Chừa bên phải nếu cần thêm chức năng */}
+      <div />
     </div>
   );
 };

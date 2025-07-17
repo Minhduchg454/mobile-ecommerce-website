@@ -193,7 +193,7 @@ const Personal = ({ navigate }) => {
             <div className="flex items-center">
               <label className="w-[120px] font-medium">Vai trò:</label>
               <span>
-                {+current?.role === 1945 ? "Quản trị viên" : "Thành viên"}
+                {+current?.role === 1945 ? "Quản trị viên" : "Khách hàng"}
               </span>
             </div>
 

@@ -113,9 +113,7 @@ const ManageUser = () => {
   }));
 
   return (
-    <div
-      className={clsx("w-full bg-gray-50 min-h-screen p-4", editElm && "pl-16")}
-    >
+    <div className={clsx("w-full min-h-screen p-4", editElm && "pl-16")}>
       {/* Tìm kiếm */}
       <div className="sticky top-0 z-10 bg-white shadow p-4 rounded-xl mb-4">
         <form className="w-full">

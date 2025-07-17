@@ -58,8 +58,8 @@ const TopHeaders = () => {
           <span className="text-xs italic">
             {isLoggedIn && current
               ? current.roleId?.roleName === "admin"
-                ? "Chào quản trị viên, chúc bạn một ngày làm việc hiệu quả"
-                : "Chúc bạn một ngày mua sắm vui vẻ"
+                ? `Chào  ${current.firstName} quản trị viên, chúc bạn một ngày làm việc hiệu quả!`
+                : `Chào ${current.firstName}, chúc bạn một ngày mua sắm vui vẻ !`
               : "Chào mừng bạn đến với cửa hàng!"}
           </span>
         </div>

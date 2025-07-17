@@ -1,5 +1,5 @@
 import { apiDeleteOrderByAdmin, apiGetOrders, apiUpdateStatus } from "apis";
-import { Button, Pagination } from "components";
+import { Button, Pagination, InputForm } from "components";
 import useDebounce from "hooks/useDebounce";
 import moment from "moment";
 import React, { useCallback, useEffect, useState } from "react";
@@ -24,6 +24,7 @@ const ManageOrder = () => {
   const [counts, setCounts] = useState(0);
   const [update, setUpdate] = useState(false);
   const [editOrder, setEditOrder] = useState();
+  const [queries, setQueries] = useState({ q: "" });
   const fetchOrders = async (params) => {
     const response = await apiGetOrders({
       ...params,
@@ -85,14 +86,26 @@ const ManageOrder = () => {
   };
 
   return (
-    <div
-      className={clsx(
-        "w-full bg-gray-50 min-h-screen p-4",
-        editOrder && "pl-16"
-      )}
-    >
+    <div className={clsx("w-full min-h-screen p-4", editOrder && "pl-16")}>
       {/* Thanh header cố định */}
-      <div className="sticky top-0 z-10 shadow p-4 rounded-xl mb-4 flex justify-between items-center">
+      <div className="sticky top-0 z-10 shadow p-4 rounded-xl mb-4 flex justify-between items-center bg-[#FFF]">
+        <form className="w-full">
+          <InputForm
+            id="q"
+            label=""
+            placeholder="🔍 Tìm kiếm đơn hàng theo mã đơn hàng ..."
+            fullWidth
+            defaultValue={queries.q}
+            register={(name, options) => ({
+              name,
+              onChange: (e) => setQueries({ ...queries, q: e.target.value }),
+              ...options,
+            })}
+            errors={{}}
+            validate={{}}
+          />
+        </form>
+
         {editOrder && (
           <div className="flex gap-3 items-center">
             <Button type="button" handleOnClick={handleUpdate}>

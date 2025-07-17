@@ -94,9 +94,9 @@ const ManageCoupons = () => {
   }, [showForm, reset]);
 
   return (
-    <div className="w-full p-4 bg-gray-50 min-h-screen space-y-8">
+    <div className="w-full p-4  min-h-screen space-y-8">
       {/* Nút hiển thị form */}
-      <div className="w-fit bg-main text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+      <div className="sticky top-0 z-10 w-fit bg-main text-white px-4 py-2 rounded hover:bg-blue-700 transition">
         <button
           onClick={() => {
             reset({ isActive: true });

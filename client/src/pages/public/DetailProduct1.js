@@ -230,7 +230,7 @@ const ProductDetail1 = () => {
         <div className="w-main pt-4">
           <Breadcrumb
             title={product?.slug || "san-pham"}
-            category={product?.categoryId?.slug || "danh-muc"}
+            category={product?.categoryId?.productCategoryName || "danh-muc"}
           />
           <h2 className="text-[24px] font-bold">
             {product?.productName || "Không có tiêu đề"}

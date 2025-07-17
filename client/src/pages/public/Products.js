@@ -137,23 +137,23 @@ const Products = () => {
   }, [params]);
 
   return (
-    <div className="w-full">
+    <div className="w-full p-4">
       {/* Header */}
-      <div className="xl:w-main m-auto h-[81px] flex justify-start items-center p-2 !bg-[#F5F5F7]">
+      <div className="xl:w-main m-auto h-[81px] flex justify-start items-center !bg-[#F5F5F7]">
         <div className="xl:w-main w-screen px-4 lg:px-0">
-          <Breadcrumb category={category} />
+          <Breadcrumb category={categoryName} />
           <h3 className="font-semibold uppercase">{categoryName}</h3>
         </div>
       </div>
 
       {/* Banner */}
-      <div className="xl:w-main p-2 m-auto grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="xl:w-main m-auto grid grid-cols-1 xl:grid-cols-2 gap-4">
         <ReusableBanner images={banner1} aspectRatio="3/1" delay={0} />
         <ReusableBanner images={banner2} aspectRatio="3/1" delay={2500} />
       </div>
 
       {/* Bộ lọc */}
-      <div className="lg:w-main border p-4 flex lg:pr-4 pr-8 flex-col md:flex-row gap-4 md:justify-between mt-8 m-auto">
+      <div className="xl:w-main p-4 xl:mx-2border flex flex-col xl:flex-row gap-4 xl:justify-between mt-4 rounded-xl bg-white  m-auto ">
         <div className="w-4/5 flex-auto flex flex-wrap gap-4">
           {/* Lọc giá */}
           <SelectableList
