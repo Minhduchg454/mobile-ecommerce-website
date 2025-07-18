@@ -11,7 +11,7 @@ app.get("/api/test", (req, res) => {
 });
 
 app.listen(port, async () => {
-  console.log(`✅ Server running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 
   try {
     await initAdmin();

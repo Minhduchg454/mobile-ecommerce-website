@@ -4,6 +4,7 @@ import moment from "moment";
 import { apiGetAllCoupons } from "apis";
 import { showModal } from "store/app/appSlice";
 import { formatMoney } from "ultils/helpers";
+import { CloseButton } from "../../components";
 
 moment.locale("vi");
 
@@ -66,12 +67,8 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
       onClick={(e) => e.stopPropagation()}
     >
       {/* Đóng */}
-      <button
-        onClick={handleClose}
-        className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition"
-      >
-        ×
-      </button>
+
+      <CloseButton onClick={handleClose} className="top-2 right-2" />
 
       <div className="p-4 border-b shadow-md">
         <h2 className="text-md font-bold">Chọn mã giảm giá</h2>

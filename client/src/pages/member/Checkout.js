@@ -141,7 +141,7 @@ const Checkout = ({ dispatch, navigate }) => {
       return;
     }
 
-    if (!selectAddress || !current?.address || !current?.mobile) {
+    if (!selectAddress || !current?.mobile) {
       Swal.fire({
         icon: "error",
         title: "Thông tin không đầy đủ",
