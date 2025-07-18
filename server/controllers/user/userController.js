@@ -126,18 +126,28 @@ const getCurrent = asyncHandler(async (req, res) => {
 // Cập nhật thông tin user
 const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { firstName, lastName, mobile, address, roleId, statusUserId } =
-    req.body;
   const avatar = req.file?.path;
 
-  const updatePayload = {
-    firstName,
-    lastName,
-    mobile,
-    address,
-    roleId,
-    statusUserId,
-  };
+  // Chỉ cho phép cập nhật những trường này (trừ email)
+  const allowedFields = [
+    "firstName",
+    "lastName",
+    "mobile",
+    "address",
+    "roleId",
+    "statusUserId",
+    "gender",
+    "dateOfBirth",
+  ];
+
+  const updatePayload = {};
+
+  for (const key of allowedFields) {
+    if (req.body[key] !== undefined) {
+      updatePayload[key] = req.body[key];
+    }
+  }
+
   if (avatar) updatePayload.avatar = avatar;
 
   const updated = await User.findByIdAndUpdate(id, updatePayload, {
