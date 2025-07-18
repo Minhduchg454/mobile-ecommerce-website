@@ -151,7 +151,14 @@ exports.filterPreviews = asyncHandler(async (req, res) => {
   if (previewRating) queryObj.previewRating = Number(previewRating); // đảm bảo là số
 
   const previews = await Preview.find(queryObj)
-    .populate("userId", "_id avatar firstName lastName")
+    .populate({
+      path: "userId",
+      populate: {
+        path: "_id", // chính là User
+        model: "User",
+        select: "avatar firstName lastName",
+      },
+    })
     .populate("productVariationId");
 
   return res.json({

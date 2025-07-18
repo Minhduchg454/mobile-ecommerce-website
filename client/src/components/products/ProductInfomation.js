@@ -164,11 +164,11 @@ const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
                 star={el.previewRating}
                 updatedAt={el.updatedAt}
                 comment={el.previewComment}
-                image={el.userId?.avatar || defaultAvatar}
+                image={el.userId?._id.avatar || defaultAvatar}
                 name={
                   el.userId
-                    ? `${el.userId?.lastName || ""} ${
-                        el.userId?.firstName || ""
+                    ? `${el.userId?._id.lastName || ""} ${
+                        el.userId?._id.firstName || ""
                       }`
                     : "Tài khoản đã xoá"
                 }

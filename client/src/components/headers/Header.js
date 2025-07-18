@@ -245,10 +245,13 @@ const HeaderFull = () => {
               ) : (
                 <div className="relative group cursor-pointer">
                   <div className="relative group cursor-pointer">
-                    <FaUserCircle size={24} className="text-black" />
+                    <FaUserCircle size={33} className="text-black" />
                     <span className="absolute top-full right-0 mt-1 px-2 py-1 text-[10px] text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-transform duration-200 ease-in-out transform translate-x-2 group-hover:translate-x-0 whitespace-nowrap z-50">
                       Tài khoản
                     </span>
+                    <div className="absolute -right-1 -bottom-[4px] p-1 w-5 h-5 flex items-center justify-center border border-gray-300 rounded-full bg-gray-200 text-gray-800 shadow-sm transition text-xs">
+                      ▾
+                    </div>
                   </div>
                 </div>
               )}
