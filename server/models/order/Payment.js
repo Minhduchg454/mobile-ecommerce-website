@@ -22,11 +22,6 @@ const paymentSchema = new mongoose.Schema({
     type: Number, // NumberDouble
     required: true,
   },
-  orderId: {
-    type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Order
-    ref: "Order", // Tên model mà chúng ta đang tham chiếu
-    required: true,
-  },
 });
 
 // ✅ Hook kiểm tra orderId có tồn tại không
