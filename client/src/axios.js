@@ -1,63 +1,69 @@
 import axios from "axios";
 import { store } from "./store/redux";
 
+// Tạo instance Axios với URL gốc
 const instance = axios.create({
   baseURL: process.env.REACT_APP_API_URI,
 });
 
-// Add a request interceptor
-instance.interceptors.request.use(
-  function (config) {
+// Hàm lấy accessToken từ localStorage hoặc Redux store
+const getAccessToken = () => {
+  try {
     let localStorageData = window.localStorage.getItem("persist:shop/user");
-    let accessToken = null;
+    if (localStorageData) {
+      const parsedData = JSON.parse(localStorageData);
+      let token = parsedData?.token;
 
-    if (localStorageData && typeof localStorageData === "string") {
-      localStorageData = JSON.parse(localStorageData);
-      accessToken = localStorageData?.token;
+      // Trường hợp token bị bọc trong dấu nháy kép
+      if (
+        typeof token === "string" &&
+        token.startsWith('"') &&
+        token.endsWith('"')
+      ) {
+        token = JSON.parse(token);
+      }
 
-      // Nếu token là chuỗi JSON.stringify, parse ra, nếu không thì giữ nguyên
-      try {
-        if (
-          accessToken &&
-          accessToken.startsWith('"') &&
-          accessToken.endsWith('"')
-        ) {
-          accessToken = JSON.parse(accessToken);
-        }
-      } catch (e) {
-        console.warn("[AXIOS DEBUG] Token parse error:", e.message);
+      if (typeof token === "string" && token.length > 10) {
+        return token;
       }
     }
+  } catch (error) {
+    console.warn("[AXIOS DEBUG] Lỗi parse localStorage:", error.message);
+  }
 
-    // Nếu không có token ở localStorage, lấy từ Redux store
-    if ((!accessToken || accessToken.length < 10) && store) {
-      accessToken = store.getState().user.token;
-    }
+  // Lấy từ Redux store nếu localStorage không có hoặc lỗi
+  const reduxToken = store.getState()?.user?.token;
+  if (typeof reduxToken === "string" && reduxToken.length > 10) {
+    return reduxToken;
+  }
 
-    if (typeof accessToken === "string" && accessToken.length > 10) {
+  return null;
+};
+
+// Interceptor cho request: gắn Authorization header nếu có token
+instance.interceptors.request.use(
+  (config) => {
+    const token = getAccessToken();
+
+    if (token) {
       config.headers = {
         ...config.headers,
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
       };
     }
 
     return config;
   },
-  function (error) {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add a response interceptor
+// Interceptor cho response: chỉ trả về phần dữ liệu cần thiết
 instance.interceptors.response.use(
-  function (response) {
-    return response.data ? response.data : response;
-  },
-  function (error) {
-    return error.response
+  (response) => (response.data ? response.data : response),
+  (error) =>
+    error.response
       ? error.response.data
-      : { success: false, mes: "Unknown error" };
-  }
+      : { success: false, mes: "Unknown error" }
 );
 
 export default instance;

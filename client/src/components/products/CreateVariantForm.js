@@ -70,7 +70,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
               mapped[specId] = item.value;
             });
             setSpecValues(mapped);
-            setSelectedSpecIds(Object.keys(mapped)); // Tick những spec đã có
+            setSelectedSpecIds(Object.keys(mapped)); 
           }
         } catch (err) {
           toast.error("Không thể load thông số kỹ thuật");

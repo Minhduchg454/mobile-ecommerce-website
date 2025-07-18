@@ -7,6 +7,7 @@ import { apiRegister, apiLogin } from "apis/user";
 import { ShowSwal } from "components";
 import path from "ultils/path";
 import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 
 import {
   FaUser,
@@ -37,57 +38,6 @@ const Login = () => {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
 
-  const handleGoogleLogin = async (credentialResponse) => {
-    const token = credentialResponse?.credential;
-    if (!token) return;
-
-    try {
-      const res = await fetch(`${process.env.REACT_APP_API_URI}/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      const data = await res.json();
-
-      if (data.success && data.token && data.user) {
-        setTimeout(() => {
-          dispatch(
-            login({
-              isLoggedIn: true,
-              token: String(data.token),
-              userData: data.user,
-            })
-          );
-        }, 300); // Delay khoảng 300ms là đủ an toàn
-        localStorage.setItem("accessToken", data.token);
-        ShowSwal({
-          title: "Thành công",
-          text: `Chào mừng ${data.user?.lastname || data.user?.email} quay lại`,
-          icon: "success",
-          timer: 2000,
-          variant: "success",
-          showCancelButton: false,
-          showConfirmButton: false,
-        });
-        dispatch(getCurrent());
-        navigate(searchParams.get("redirect") || `/${path.HOME}`);
-      } else {
-        ShowSwal({
-          title: "Lỗi",
-          text: data.message || "Đăng nhập Google thất bại",
-          icon: "error",
-        });
-      }
-    } catch (err) {
-      ShowSwal({
-        title: "Lỗi",
-        text: "Đăng nhập Google thất bại",
-        icon: "error",
-      });
-    }
-  };
-
   const validateInput = () => {
     const err = {};
     if (isRegister) {
@@ -110,6 +60,57 @@ const Login = () => {
   const handleInput = (e) => {
     setPayload({ ...payload, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
+  };
+  const handleGoogleLogin = async (credentialResponse) => {
+    const token = credentialResponse?.credential;
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URI}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.token && data.user) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+        localStorage.setItem("accessToken", data.token);
+        dispatch(
+          login({
+            isLoggedIn: true,
+            token: String(data.token),
+            userData: data.user,
+          })
+        );
+
+        ShowSwal({
+          title: "Thành công",
+          text: `Chào mừng ${data.user?.lastname || data.user?.email} quay lại`,
+          icon: "success",
+          timer: 2000,
+          variant: "success",
+          showCancelButton: false,
+          showConfirmButton: false,
+        });
+
+        dispatch(getCurrent());
+        navigate(searchParams.get("redirect") || `/${path.HOME}`);
+      } else {
+        ShowSwal({
+          title: "Lỗi",
+          text: data.message || "Đăng nhập Google thất bại",
+          icon: "error",
+        });
+      }
+    } catch (err) {
+      ShowSwal({
+        title: "Lỗi",
+        text: "Đăng nhập Google thất bại",
+        icon: "error",
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -155,6 +156,8 @@ const Login = () => {
       const res = await apiLogin(loginData);
 
       if (res.success && res.token && res.user) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${res.token}`;
+        localStorage.setItem("accessToken", res.token);
         dispatch(
           login({
             isLoggedIn: true,

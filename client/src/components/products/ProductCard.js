@@ -30,7 +30,6 @@ const ProductCard = ({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current, isLoggedIn } = useSelector((state) => state.user);
-  // console.log("Thong tin nguoi dung", current.roleId.roleName);
   const { isAdmin } = useRole();
   const [isWished, setIsWished] = useState(false);
 

@@ -7,6 +7,7 @@ import {
   apiGetProductVariation,
 } from "apis";
 import { toast } from "react-toastify";
+import { CloseButton } from "../../components";
 
 const SpecificProductManager = ({ variationId, onClose }) => {
   const [serieNumbers, setSerieNumbers] = useState([]);
@@ -84,14 +85,7 @@ const SpecificProductManager = ({ variationId, onClose }) => {
   return (
     <div className="relative p-3 bg-white rounded-xl shadow w-[300px] max-w-xl mx-auto">
       {/* Nút đóng ở góc phải trên */}
-      <button
-        onClick={onClose}
-        className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition"
-        title="Đóng"
-      >
-        ×
-      </button>
-
+      <CloseButton onClick={onClose} className="top-2 right-2" />
       <h3 className="text-lg font-semibold mb-4">Quản lý số serial</h3>
 
       <div className="flex gap-2 mb-4">

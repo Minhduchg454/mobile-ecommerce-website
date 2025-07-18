@@ -104,6 +104,8 @@ export const userSlice = createSlice({
       state.current = null;
       state.isLoggedIn = false;
       state.token = null;
+      console.error("Lỗi khi gọi getCurrent:", action);
+
       state.mes = "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!";
     });
   },
