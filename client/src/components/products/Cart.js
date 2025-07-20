@@ -6,17 +6,14 @@ import clsx from "clsx";
 import Button from "components/buttons/Button";
 import withBaseComponent from "hocs/withBaseComponent";
 import { showCart } from "store/app/appSlice";
-import { apiRemoveCart, apiUpdateCart, apiGetProductVariation } from "apis";
-import {
-  getCurrent,
-  updateCartItem,
-  removeCartItem,
-} from "store/user/asyncActions";
+import { apiGetProductVariation } from "apis";
+import { updateCartItem, removeCartItem } from "store/user/asyncActions";
 import { formatMoney } from "ultils/helpers";
 import { toast } from "react-toastify";
 import path from "ultils/path";
 import { FaCheck } from "react-icons/fa";
 import { ShowSwal } from "../../components";
+import imageNotFound from "../../assets/image-not-found.jpg";
 
 const Cart = ({ dispatch, navigate }) => {
   const { current, currentCart } = useSelector((state) => state.user);
@@ -31,8 +28,10 @@ const Cart = ({ dispatch, navigate }) => {
         currentCart?.map(async (item) => {
           if (!variationData[item.productVariationId]) {
             const res = await apiGetProductVariation(item.productVariationId);
-            if (res.success) {
+            if (res.success && res.variation) {
               newData[item.productVariationId] = res.variation;
+            } else {
+              newData[item.productVariationId] = null;
             }
           }
         })
@@ -68,7 +67,10 @@ const Cart = ({ dispatch, navigate }) => {
   };
 
   const updateQuantity = (pid, quantity) => {
-    if (quantity < 1) return;
+    if (quantity < 1) {
+      removeCart(pid);
+      return;
+    }
     dispatch(updateCartItem({ product: pid, quantity }))
       .unwrap()
       .catch((err) => toast.error(err));
@@ -120,6 +122,7 @@ const Cart = ({ dispatch, navigate }) => {
         {currentCart?.length > 0 ? (
           currentCart.map((el) => {
             const variation = variationData[el.productVariationId];
+            const isDeleted = variation === null;
             const isChecked = selectedItems.includes(el.productVariationId);
 
             return (
@@ -141,9 +144,9 @@ const Cart = ({ dispatch, navigate }) => {
                 {/* Hình ảnh */}
                 <img
                   src={
-                    variation?.images?.[0] ||
-                    variation?.productId?.thumb ||
-                    "/fallback.jpg"
+                    isDeleted
+                      ? imageNotFound
+                      : variation?.images?.[0] || variation?.productId?.thumb
                   }
                   alt="thumb"
                   className="w-20 h-20 object-cover rounded-md border"
@@ -152,10 +155,9 @@ const Cart = ({ dispatch, navigate }) => {
                 {/* Thông tin */}
                 <div className="flex-1">
                   <div className="font-medium text-base text-main">
-                    {variation?.productId?.brandId?.brandName
-                      ? `${variation.productId.productName} - `
-                      : ""}
-                    {variation?.productVariationName || "Đang tải..."}
+                    {isDeleted
+                      ? "Sản phẩm đã bị xoá"
+                      : `${variation?.productId?.productName} - ${variation?.productVariationName}`}
                   </div>
                   <div className="text-sm text-gray-500">
                     Biến thể ID: {el.productVariationId}
@@ -165,18 +167,22 @@ const Cart = ({ dispatch, navigate }) => {
                   <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() =>
+                        !isDeleted &&
                         updateQuantity(el.productVariationId, el.quantity - 1)
                       }
-                      className="w-6 h-6 border rounded hover:bg-gray-200"
+                      disabled={isDeleted}
+                      className="w-6 h-6 border rounded hover:bg-gray-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       -
                     </button>
                     <span className="w-6 text-center">{el.quantity}</span>
                     <button
                       onClick={() =>
+                        !isDeleted &&
                         updateQuantity(el.productVariationId, el.quantity + 1)
                       }
-                      className="w-6 h-6 border rounded hover:bg-gray-200"
+                      disabled={isDeleted || variation?.stockQuantity < 1}
+                      className="w-6 h-6 border rounded hover:bg-gray-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       +
                     </button>
@@ -185,9 +191,20 @@ const Cart = ({ dispatch, navigate }) => {
 
                 {/* Giá & Xoá */}
                 <div className="text-right">
-                  <div className="text-red-500 font-semibold mb-2">
-                    {formatMoney(el.priceAtTime * el.quantity)} VND
-                  </div>
+                  {isDeleted ? (
+                    <div className="text-red-500 font-semibold text-sm mb-2">
+                      (Sản phẩm không tồn tại)
+                    </div>
+                  ) : variation?.stockQuantity >= 1 ? (
+                    <div className="text-red-500 font-semibold mb-2">
+                      {formatMoney(el.priceAtTime * el.quantity)} VND
+                    </div>
+                  ) : (
+                    <div className="text-red-500 font-semibold mt-1">
+                      <p> (sản phẩm hiện hết hàng)</p>
+                    </div>
+                  )}
+
                   <div
                     onClick={() => removeCart(el.productVariationId)}
                     className="text-sm text-gray-500 hover:text-red-600 cursor-pointer flex items-center justify-end gap-1"

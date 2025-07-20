@@ -43,7 +43,7 @@ const AdminLayout = () => {
 
       {/* Header */}
       <div
-        className={`fixed top-0 left-0 md:left-[250px] right-0 h-[60px] z-40 bg-white shadow-md`}
+        className={`fixed top-0 left-0 md:left-[250px] right-0 h-[60px] z-40 bg-white`}
       >
         <AdminHeader
           title={title}

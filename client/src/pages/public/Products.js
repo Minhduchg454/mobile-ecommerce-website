@@ -34,6 +34,8 @@ const Products = () => {
   const banner2 = [
     require("assets/banner-samsung.webp"),
     require("assets/banner-combo.webp"),
+    require("assets/banner-laptop.webp"),
+    require("assets/banner-dongho.webp"),
   ];
 
   // Lấy danh sách danh mục và brand
@@ -148,8 +150,8 @@ const Products = () => {
 
       {/* Banner */}
       <div className="xl:w-main m-auto grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <ReusableBanner images={banner1} aspectRatio="3/1" delay={0} />
-        <ReusableBanner images={banner2} aspectRatio="3/1" delay={2500} />
+        <ReusableBanner images={banner1} aspectRatio="3/1" delay={2500} />
+        <ReusableBanner images={banner2} aspectRatio="3/1" delay={4000} />
       </div>
 
       {/* Bộ lọc */}

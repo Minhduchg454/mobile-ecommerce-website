@@ -16,3 +16,4 @@ export * from "./customer";
 export * from "./stats";
 export * from "./specificProduct";
 export * from "./address";
+export * from "./wishList";
