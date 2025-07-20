@@ -9,7 +9,7 @@ const MarkdownEditor = ({
   invalidFields,
   setInvalidFields,
   setIsFocusDescription,
-  height = 500, // 👈 chiều cao mặc định
+  height = 500,
 }) => {
   return (
     <div className="flex flex-col ">
@@ -18,17 +18,28 @@ const MarkdownEditor = ({
         apiKey="x966ukewe6wwp2dli2u8f41xmjei8omxtk49m356em9qoizc"
         initialValue={value}
         init={{
-          height: 300,
           menubar: false,
-          plugins: ["link", "lists"],
+          plugins: ["link", "lists", "autoresize", "paste"],
           toolbar:
-            "bold italic | bullist numlist | alignleft aligncenter alignright | link",
-          content_style: `
-      body { font-family:Helvetica,Arial,sans-serif; font-size:14px }
-      html, body { border-radius: 12px; } /* ✅ Bo góc nội dung */
-    `,
+            "undo redo | bold italic underline | bullist numlist | alignleft aligncenter alignright | link",
           branding: false,
           statusbar: false,
+          min_height: height,
+          max_height: 1000,
+          autoresize_bottom_margin: 20,
+          content_style: `
+      body {
+        font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+        padding: 12px;
+      }
+      p { margin: 0 0 10px; }
+      ul, ol { padding-left: 20px; margin-bottom: 10px; }
+      strong { font-weight: bold; }
+      em { font-style: italic; }
+      html, body { border-radius: 12px; }
+    `,
         }}
         onChange={(e) => {
           const content = e.target.getContent();
@@ -37,7 +48,6 @@ const MarkdownEditor = ({
         onFocus={() => {
           setInvalidFields && setInvalidFields([]);
         }}
-        textareaClassName="rounded-xl border border-gray-300" // ✅ Thêm class Tailwind cho vỏ ngoài
       />
       {invalidFields?.some((el) => el.name === name) && (
         <small className="text-main text-sm">

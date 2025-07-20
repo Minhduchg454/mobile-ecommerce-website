@@ -33,7 +33,7 @@ const SpecificProductManager = ({ variationId, onClose }) => {
         }));
         setSerieNumbers(list);
 
-        if (updateStock && list.length > 0) {
+        if (updateStock) {
           await apiUpdateProductVariation(variationId, {
             stockQuantity: list.length,
           });

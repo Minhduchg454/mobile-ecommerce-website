@@ -43,10 +43,6 @@ const userBaseSchema = new mongoose.Schema(
       ref: "StatusUser",
       required: false,
     },
-    address: {
-      type: String,
-      default: "",
-    },
     roleId: {
       type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến Role
       ref: "Role",

@@ -11,6 +11,7 @@ export const userSlice = createSlice({
     mes: "",
     address: [],
     currentCart: [],
+    wishList: [],
   },
   reducers: {
     //ham cap nhat ca state noi bo
@@ -29,7 +30,6 @@ export const userSlice = createSlice({
     },
     setCart: (state, action) => {
       try {
-        // Nếu dữ liệu truyền vào là chuỗi → parse lại
         const cartData =
           typeof action.payload === "string"
             ? JSON.parse(action.payload)
@@ -39,6 +39,19 @@ export const userSlice = createSlice({
       } catch (error) {
         console.error("Lỗi khi parse currentCart:", error);
         state.currentCart = [];
+      }
+    },
+    setWishlist: (state, action) => {
+      try {
+        const wishData =
+          typeof action.payload === "string"
+            ? JSON.parse(action.payload)
+            : action.payload;
+
+        state.wishList = Array.isArray(wishData) ? wishData : [];
+      } catch (error) {
+        console.error("Lỗi khi parse wishList:", error);
+        state.wishList = [];
       }
     },
     clearMessage: (state) => {
@@ -71,6 +84,9 @@ export const userSlice = createSlice({
   },
   //Dung de xu ly asyncThunk
   extraReducers: (builder) => {
+    builder.addCase(actions.fetchWishlist.fulfilled, (state, action) => {
+      state.wishList = action.payload || [];
+    });
     builder.addCase(actions.fetchAddresses.fulfilled, (state, action) => {
       state.address = action.payload;
     });
@@ -105,13 +121,12 @@ export const userSlice = createSlice({
       state.isLoggedIn = false;
       state.token = null;
       console.error("Lỗi khi gọi getCurrent:", action);
-
       state.mes = "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!";
     });
   },
 });
 //Xuat cac actions de goi trong coponent
-export const { login, logout, clearMessage, updateCart, setCart } =
+export const { login, logout, clearMessage, updateCart, setCart, setWishlist } =
   userSlice.actions;
 //Xuat reducer gan ao configureStore
 export default userSlice.reducer;

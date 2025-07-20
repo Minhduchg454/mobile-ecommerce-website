@@ -101,6 +101,12 @@ const getProductVariations = asyncHandler(async (req, res) => {
   // Gắn filter vào query
   query = query.find(filter);
 
+  // Thêm ở đầu sau khi khởi tạo filter
+  if (req.query.productVariationIds) {
+    const ids = req.query.productVariationIds.split(",");
+    filter._id = { $in: ids };
+  }
+
   // Populate
   query = query.populate({
     path: "productId",

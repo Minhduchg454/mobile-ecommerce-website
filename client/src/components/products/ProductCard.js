@@ -11,8 +11,9 @@ import {
 import Swal from "sweetalert2";
 import path from "ultils/path";
 import { useNavigate } from "react-router-dom";
-import { getCurrent, updateCartItem } from "store/user/asyncActions";
+import { updateCartItem, fetchWishlist } from "store/user/asyncActions";
 import useRole from "hooks/useRole";
+import { apiCreateWishlist, apiDeleteWishlistByCondition } from "../../apis";
 import clsx from "clsx";
 
 const ProductCard = ({
@@ -29,13 +30,17 @@ const ProductCard = ({
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { current, isLoggedIn } = useSelector((state) => state.user);
+  const { current, isLoggedIn, wishList } = useSelector((state) => state.user);
   const { isAdmin } = useRole();
   const [isWished, setIsWished] = useState(false);
 
   useEffect(() => {
-    setIsWished(current?.wishlist?.some((item) => item._id === pvid));
-  }, [current, pvid]);
+    const found = wishList?.some((item) => {
+      const variation = item.productVariationId;
+      return variation && variation._id === pvid;
+    });
+    setIsWished(found);
+  }, [wishList, pvid]);
 
   const redirectToLogin = () => {
     Swal.fire({
@@ -60,33 +65,49 @@ const ProductCard = ({
       updateCartItem({
         product: pvid,
         quantity: 1,
-        priceAtTime: price, // 👈 đảm bảo giá có giá trị tại thời điểm
+        priceAtTime: price,
       })
     )
       .unwrap()
       .then(() => {
-        toast.success("Đã thêm vào giỏ hàng!");
+        toast.success("Đã thêm vào giỏ hàng");
       })
       .catch((err) => {
         toast.error(err || "Có lỗi khi thêm vào giỏ hàng");
       });
   };
 
-  const handleToggleWishlist = (e) => {
+  const handleToggleWishlist = async (e) => {
     e.stopPropagation();
     if (!isLoggedIn || !current) return redirectToLogin();
 
     const newWished = !isWished;
     setIsWished(newWished);
 
-    if (onToggleWishlist) {
-      onToggleWishlist();
-    } else {
-      toast.success(
-        newWished ? "Đã thêm vào yêu thích!" : "Đã bỏ khỏi yêu thích!"
-      );
+    try {
+      if (newWished) {
+        // Thêm vào wishlist
+        await apiCreateWishlist({
+          userId: current._id,
+          productVariationId: pvid,
+        });
+        toast.success("Đã thêm vào yêu thích");
+      } else {
+        // Xoá khỏi wishlist bằng điều kiện
+        await apiDeleteWishlistByCondition({
+          userId: current._id,
+          productVariationId: pvid,
+        });
+        toast.info("Đã bỏ khỏi yêu thích");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi cập nhật yêu thích");
+      console.error(error);
+      setIsWished(!newWished);
     }
-    dispatch(getCurrent());
+
+    // Gọi lại để cập nhật thông tin người dùng
+    dispatch(fetchWishlist());
   };
 
   const handleNavigate = () => {
@@ -132,10 +153,11 @@ const ProductCard = ({
           disabled={isAdmin}
           onClick={handleAddToCart}
           className={clsx(
-            "w-2/3 flex items-center justify-center rounded-md py-1 font-semibold transition-all duration-200 ease-in-out",
+            "flex items-center justify-center rounded-md py-1 font-semibold transition-all duration-200 ease-in-out",
             isAdmin
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+              : "bg-blue-100 text-blue-700 hover:bg-blue-200",
+            isLoggedIn && !isAdmin ? "w-2/3" : "w-full"
           )}
         >
           <BsFillCartPlusFill
@@ -148,22 +170,26 @@ const ProductCard = ({
         </button>
 
         {/* Yêu thích */}
-        <button
-          disabled={isAdmin}
-          onClick={handleToggleWishlist}
-          className={clsx(
-            "w-1/3 flex items-center justify-center border rounded-md py-1  transition-all",
-            isAdmin
-              ? "border-gray-500 cursor-not-allowed"
-              : "border-red-500 hover:bg-pink-600"
-          )}
-        >
-          {isWished ? (
-            <BsFillSuitHeartFill className="text-red-500" />
-          ) : (
-            <BsSuitHeart className="text-pink-300" />
-          )}
-        </button>
+        {isLoggedIn && !isAdmin && (
+          <button
+            disabled={isAdmin}
+            onClick={handleToggleWishlist}
+            className={clsx(
+              "w-1/3 flex items-center justify-center border rounded-md py-1 transition-all",
+              isAdmin
+                ? "border-gray-500 cursor-not-allowed"
+                : isWished
+                ? "bg-red-100 border-2 border-red-500 hover:bg-red-200"
+                : "border-red-300 hover:bg-pink-600"
+            )}
+          >
+            {isWished ? (
+              <BsFillSuitHeartFill className="text-red-500" />
+            ) : (
+              <BsSuitHeart className="text-red-300" />
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
