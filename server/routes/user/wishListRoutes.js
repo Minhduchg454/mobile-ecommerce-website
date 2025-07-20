@@ -20,3 +20,4 @@ router.delete("/:id", ctrls.deleteWishList); // DELETE /api/wishlist/:id
 router.get("/", ctrls.getWishListByQuery); // GET /api/wishlist?customerId=...
 
 module.exports = router;
+//Chinh sửa route lại mới
