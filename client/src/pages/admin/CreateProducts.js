@@ -8,6 +8,7 @@ import {
   Loading,
   ConfirmModal,
   SpecificationSelector,
+  CustomMarkdownEditor,
 } from "components";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
@@ -237,14 +238,14 @@ const CreateProducts = ({
             />
           </div>
 
-          <MarkdownEditor
+          <CustomMarkdownEditor
             name="description"
-            changeValue={changeValue}
             label="Mô tả sản phẩm"
+            value={payload.description}
+            changeValue={changeValue}
             invalidFields={invalidFields}
             setInvalidFields={setInvalidFields}
-            value={payload.description}
-            height={300}
+            height={100}
           />
 
           <div className="flex flex-col gap-2 mt-8">

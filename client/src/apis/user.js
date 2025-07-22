@@ -61,12 +61,6 @@ export const apiUpdateCurrent = (data, uid) =>
     data,
   });
 
-export const apiUpdateWishlist = (pid) =>
-  axios({
-    url: `/users/wishlist/` + pid,
-    method: "put",
-  });
-
 // ========== ADMIN API ENDPOINTS ==========
 export const apiCreateAdmin = (data) =>
   axios({

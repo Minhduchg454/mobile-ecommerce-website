@@ -18,7 +18,7 @@ import { FaRegHeart } from "react-icons/fa";
 import { IoMenuSharp } from "react-icons/io5";
 import { navigation } from "ultils/contants";
 import { persistor } from "store/redux";
-
+import defaultAvatar from "assets/avatarDefault.png";
 const { AiOutlineSearch, FaUserCircle } = icons;
 
 const HeaderFull = () => {
@@ -31,12 +31,13 @@ const HeaderFull = () => {
   const q = watch("q");
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { current, currentCart } = useSelector((state) => state.user);
+  const { current, currentCart, wishList } = useSelector((state) => state.user);
   const [isShowOption, setIsShowOption] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
   const roleName = current?.roleId?.roleName?.toLowerCase();
   const countCurrentCart = currentCart.length;
+  const countWishList = wishList.length;
 
   const handleSearch = () => {
     const currentQuery = q?.trim();
@@ -102,7 +103,7 @@ const HeaderFull = () => {
   };
 
   return (
-    <div className="w-full bg-header-footer shadow-lg">
+    <div className="w-full bg-header-footer shadow-md z-10">
       {/* ==== HEADER ==== */}
       <div className="xl:w-main w-full mx-auto mt-1 flex items-center justify-between md:h-[60px] py-[8px] px-4">
         {/* Logo + menu */}
@@ -156,7 +157,7 @@ const HeaderFull = () => {
               <div className="relative group cursor-pointer">
                 <FaRegHeart size={24} className="text-black" />
                 <span
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
+                  className="absolute top-8 left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
                             text-[10px] text-white bg-black rounded 
                             opacity-0 group-hover:opacity-100 
                             transition-all duration-300 delay-500 
@@ -167,11 +168,11 @@ const HeaderFull = () => {
                 </span>
               </div>
 
-              {current?.wishlist?.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
-                  {current.wishlist.length}
+              {/* {countWishList > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {countWishList}
                 </span>
-              )}
+              )} */}
             </div>
           )}
 
@@ -183,7 +184,7 @@ const HeaderFull = () => {
               <div className="relative group cursor-pointer">
                 <MdOutlineShoppingCart size={24} className="text-black" />
                 <span
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
+                  className="absolute top-8 left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
                             text-[10px] text-white bg-black rounded 
                             opacity-0 group-hover:opacity-100 
                             transition-all duration-300 delay-500 
@@ -216,42 +217,31 @@ const HeaderFull = () => {
               className="relative cursor-pointer flex items-center gap-2"
               onClick={() => setIsShowOption((prev) => !prev)}
             >
-              {current?.avatar ? (
-                <div className="relative group cursor-pointer">
-                  <div className="w-10 aspect-square rounded-full overflow-hidden border shrink-0">
-                    <img
-                      src={current.avatar}
-                      alt="avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+              <div className="relative group cursor-pointer">
+                <div className="w-10 aspect-square rounded-full overflow-hidden border shrink-0">
+                  <img
+                    src={current.avatar || defaultAvatar}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-                  {/* Tooltip tuỳ biến */}
-                  <span
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
+                {/* Tooltip tuỳ biến */}
+                <span
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
                             text-[10px] text-white bg-black rounded 
                             opacity-0 group-hover:opacity-100 
                             transition-all duration-300 delay-500 
                             transform translate-y-1 group-hover:translate-y-0 
                             whitespace-nowrap z-50"
-                  >
-                    Tài khoản
-                  </span>
+                >
+                  Tài khoản
+                </span>
 
-                  <div className="absolute -right-1 -bottom-[4px] p-1 w-5 h-5 flex items-center justify-center border border-gray-300 rounded-full bg-gray-200 text-gray-800 shadow-sm transition text-xs">
-                    ▾
-                  </div>
+                <div className="absolute -right-1 -bottom-[4px] p-1 w-5 h-5 flex items-center justify-center border border-gray-300 rounded-full bg-gray-200 text-gray-800 shadow-sm transition text-xs">
+                  ▾
                 </div>
-              ) : (
-                <div className="relative group cursor-pointer">
-                  <div className="relative group cursor-pointer">
-                    <FaUserCircle size={24} className="text-black" />
-                    <span className="absolute top-full right-0 mt-1 px-2 py-1 text-[10px] text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-transform duration-200 ease-in-out transform translate-x-2 group-hover:translate-x-0 whitespace-nowrap z-50">
-                      Tài khoản
-                    </span>
-                  </div>
-                </div>
-              )}
+              </div>
 
               {isShowOption && (
                 <div

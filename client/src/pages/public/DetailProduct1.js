@@ -19,22 +19,26 @@ import {
   apiGetValuesByProductId,
   apiGetProductVariation,
   apiFilterPreviews,
+  apiDeleteWishlistByCondition,
+  apiCreateWishlist,
 } from "apis";
-import { updateCartItem } from "../../store/user/asyncActions";
+import { updateCartItem, fetchWishlist } from "../../store/user/asyncActions";
 import {
   Breadcrumb,
   SelectQuantity,
   ProductInfomation,
   FeatureProducts,
+  ShowSwal,
 } from "components";
 import { formatMoney, fotmatPrice, renderStarFromNumber } from "ultils/helpers";
 import useRole from "hooks/useRole";
+import { BsFillSuitHeartFill, BsSuitHeart } from "react-icons/bs";
 
 const ProductDetail1 = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { current, isLoggedIn, currentCart, address } = useSelector(
+  const { current, isLoggedIn, wishList, address } = useSelector(
     (state) => state.user
   );
   const { isAdmin } = useRole();
@@ -48,7 +52,7 @@ const ProductDetail1 = () => {
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [brandId, setBrandId] = useState("");
   const [previews, setPreviews] = useState([]);
-
+  const [isWished, setIsWished] = useState(false);
   const pvid = searchParams.get("code");
   const imageList = currentProduct?.images || [];
 
@@ -177,6 +181,74 @@ const ProductDetail1 = () => {
     navigate("/checkout", { state: payload });
   };
 
+  const redirectToLogin = () => {
+    ShowSwal({
+      icon: "info",
+      title: "Bạn chưa đăng nhập",
+      text: "Vui lòng đăng nhập để thực hiện thao tác này",
+      showCancelButton: true,
+      confirmButtonText: "Đăng nhập",
+      cancelButtonText: "Để sau",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate(`/${path.LOGIN}`);
+      }
+    });
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    if (!isLoggedIn || !current) return redirectToLogin();
+
+    const newWished = !isWished;
+
+    try {
+      if (newWished) {
+        // Thêm vào wishlist
+        await apiCreateWishlist({
+          userId: current._id,
+          productVariationId: selectedVariantId,
+        });
+        toast.success("Đã thêm vào yêu thích!");
+      } else {
+        // Xoá khỏi wishlist bằng điều kiện
+        await apiDeleteWishlistByCondition({
+          userId: current._id,
+          productVariationId: selectedVariantId,
+        });
+        toast.info("Đã bỏ khỏi yêu thích!");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi cập nhật yêu thích");
+      console.error(error);
+      // Rollback lại trạng thái nếu lỗi
+      setIsWished(!newWished);
+    }
+
+    // Gọi lại để cập nhật thông tin người dùng
+    dispatch(fetchWishlist());
+  };
+
+  useEffect(() => {
+    const checkIfWished = async () => {
+      if (!isLoggedIn || !current || !selectedVariantId) return;
+
+      try {
+        const wishlist = wishList || [];
+
+        const found = wishlist.find(
+          (item) => item.productVariationId._id === selectedVariantId
+        );
+        setIsWished(!!found);
+      } catch (error) {
+        console.error("Lỗi kiểm tra wishlist:", error);
+        setIsWished(false);
+      }
+    };
+
+    checkIfWished();
+  }, [selectedVariantId, current, isLoggedIn, wishList]);
+
   const handleSelectVariant = (variantId) => {
     setSelectedVariantId(variantId);
     const currentParams = new URLSearchParams(searchParams.toString());
@@ -193,7 +265,7 @@ const ProductDetail1 = () => {
           setSelectedVariantId(variant._id);
           setImageIndex(0);
           fetchProductAndVariations(variant.productId.id);
-          fetchPreviews(variant._id); // 👈 thêm dòng này
+          fetchPreviews(variant._id);
         }
       });
     }
@@ -232,6 +304,7 @@ const ProductDetail1 = () => {
             title={product?.slug || "san-pham"}
             category={product?.categoryId?.productCategoryName || "danh-muc"}
           />
+
           <h2 className="text-[24px] font-bold">
             {product?.productName || "Không có tiêu đề"}
           </h2>
@@ -327,11 +400,34 @@ const ProductDetail1 = () => {
 
           {/* Thông tin sản phẩm */}
           <div className="lg:basis-[40%] bg-[#FFF] w-full flex flex-col gap-4 border rounded-xl p-4 shadow-md">
-            <h2 className="text-[30px] font-semibold">
-              {currentProduct?.price
-                ? `${formatMoney(fotmatPrice(currentProduct.price))} VNĐ`
-                : "Đang cập nhật"}
-            </h2>
+            <div className="flex gap-2 items-center justify-start">
+              <h2 className="text-[30px] font-semibold">
+                {currentProduct?.price
+                  ? `${formatMoney(fotmatPrice(currentProduct.price))} VNĐ`
+                  : "Đang cập nhật"}
+              </h2>
+              {isLoggedIn && (
+                <button
+                  disabled={isAdmin}
+                  onClick={handleToggleWishlist}
+                  className={clsx(
+                    "flex items-center justify-center rounded-full transition-all mt-1 p-[1px]",
+                    isAdmin
+                      ? "hidden"
+                      : isWished
+                      ? " border-red-100 hover:bg-red-200"
+                      : " border-red-300 hover:bg-pink-600"
+                  )}
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  {isWished ? (
+                    <BsFillSuitHeartFill className="text-red-500 text-2xl" />
+                  ) : (
+                    <BsSuitHeart className="text-red-300 text-2xl" />
+                  )}
+                </button>
+              )}
+            </div>
 
             <div className="flex items-center gap-2">
               {(renderStarFromNumber(currentProduct?.rating) || []).map(

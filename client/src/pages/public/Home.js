@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Sidebar,
   Banner,
   BestSeller,
   DealDaily,
@@ -8,18 +7,11 @@ import {
   CategoryList,
   FeatureInfo,
 } from "../../components";
-import { useSelector } from "react-redux";
-import icons from "../../ultils/icons";
 import withBaseComponent from "hocs/withBaseComponent";
-import { createSearchParams } from "react-router-dom";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-const { IoIosArrowForward } = icons;
 const Home = ({ navigate }) => {
-  const { newProducts } = useSelector((state) => state.products);
-  const { categories } = useSelector((state) => state.app);
-
   return (
     <div className="w-full px-2">
       {/* 

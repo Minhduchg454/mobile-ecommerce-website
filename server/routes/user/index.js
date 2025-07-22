@@ -11,5 +11,6 @@ router.use("/shoppingcart", require("./shoppingCartRoutes"));
 router.use("/address", require("./addressRoutes"));
 router.use("/role", require("./roleRoutes"));
 router.use("/accounts", require("./accountRoutes"));
+router.use("/wishlist", require("./wishListRoutes"));
 
 module.exports = router;

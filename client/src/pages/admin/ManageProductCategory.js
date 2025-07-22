@@ -97,12 +97,12 @@ const ManageProductCategory = () => {
 
     const res = await apiUpdateProductCategory(editingRowId, formData);
     if (res.success) {
-      toast.success("✅ Cập nhật thành công");
+      toast.success("Cập nhật thành công");
       setEditingRowId(null);
       setEditingData({});
       render();
     } else {
-      toast.error(res.mes || "❌ Cập nhật thất bại");
+      toast.error(res.mes || "Cập nhật thất bại");
     }
   };
 

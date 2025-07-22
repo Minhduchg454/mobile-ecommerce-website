@@ -6,6 +6,8 @@ const banners = [
   require("../../assets/banner-apple.webp"),
   require("../../assets/banner-samsung.webp"),
   require("../../assets/banner-combo.webp"),
+  require("../../assets/banner-laptop.webp"),
+  require("../../assets/banner-dongho.webp"),
 ];
 
 const Banner = ({ images = banners, delay = 0 }) => {
@@ -26,15 +28,16 @@ const Banner = ({ images = banners, delay = 0 }) => {
   };
 
   useEffect(() => {
+    // Chỉ khởi động 1 lần khi mount
     const timeout = setTimeout(() => {
       intervalRef.current = setInterval(nextSlide, 4000);
     }, delay);
 
     return () => {
       clearTimeout(timeout);
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [delay]);
+  }, []);
 
   const handleNext = () => {
     nextSlide();

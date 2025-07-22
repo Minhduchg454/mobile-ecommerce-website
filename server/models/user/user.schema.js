@@ -43,13 +43,20 @@ const userBaseSchema = new mongoose.Schema(
       ref: "StatusUser",
       required: false,
     },
-    address: {
-      type: String,
-      default: "",
-    },
     roleId: {
       type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến Role
       ref: "Role",
+      required: false,
+    },
+    // Thêm giới tính
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      required: false,
+    },
+    // Thêm ngày sinh
+    dateOfBirth: {
+      type: Date,
       required: false,
     },
     // Customer-specific fields (chỉ sử dụng khi role là customer)

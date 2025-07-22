@@ -23,7 +23,7 @@ exports.googleLogin = async (req, res) => {
     const lastName = rest.join(" ");
 
     // Kiểm tra xem User đã tồn tại chưa
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email }).populate("roleId");
 
     if (!user) {
       const role = await Role.findOne({ roleName: "customer" });
@@ -79,15 +79,25 @@ exports.googleLogin = async (req, res) => {
       }
     }
 
+    let roleValue = 0;
+    if (user.roleId?.roleName === "admin") roleValue = 1945;
+
     // Tạo JWT
-    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const accessToken = jwt.sign(
+      { id: user._id, role: roleValue },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    const userObj = user.toObject();
+    userObj.role = roleValue;
 
     return res.status(200).json({
       success: true,
       token: accessToken,
-      user,
+      user: userObj,
     });
   } catch (error) {
     console.error("Google login error:", error);

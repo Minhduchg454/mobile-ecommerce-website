@@ -42,6 +42,8 @@ const Personal = ({ navigate }) => {
       email: current?.email,
       avatar: current?.avatar,
       address: current?.address,
+      gender: current?.gender,
+      dateOfBirth: current?.dateOfBirth?.slice(0, 10), // định dạng yyyy-MM-dd cho input[type=date]
     });
   }, [current]);
 
@@ -51,7 +53,14 @@ const Personal = ({ navigate }) => {
     const formData = new FormData();
     if (data.avatar?.length > 0) formData.append("avatar", data.avatar[0]);
 
-    ["firstName", "lastName", "mobile", "address"].forEach((key) => {
+    [
+      "firstName",
+      "lastName",
+      "mobile",
+      "address",
+      "gender",
+      "dateOfBirth",
+    ].forEach((key) => {
       if (data[key]) formData.append(key, data[key]);
     });
 
@@ -169,6 +178,39 @@ const Personal = ({ navigate }) => {
                   },
                 }}
               />
+            </div>
+            {/* Giới tính */}
+            <div className="flex items-center">
+              <label className="w-[120px] font-medium">Giới tính:</label>
+              <select
+                {...register("gender")}
+                className="px-3 py-2 border border-gray-300 rounded-xl w-[300px] text-sm"
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
+
+            {/* Ngày sinh */}
+            <div className="flex items-center">
+              <label className="w-[120px] font-medium">Ngày sinh:</label>
+              <input
+                type="date"
+                {...register("dateOfBirth", {
+                  validate: (value) =>
+                    !value ||
+                    new Date(value) <= new Date() ||
+                    "Ngày sinh không hợp lệ.",
+                })}
+                className="px-3 py-2 border border-gray-300 rounded-xl w-[300px] text-sm"
+              />
+              {errors.dateOfBirth && (
+                <span className="text-sm text-red-500 ml-[10px]">
+                  {errors.dateOfBirth.message}
+                </span>
+              )}
             </div>
 
             {/* Trạng thái tài khoản */}

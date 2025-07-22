@@ -15,13 +15,13 @@ const DEFAULT_ADMIN = {
 
 module.exports = async function initAdmin() {
   const existedAdmin = await User.findOne({ email: DEFAULT_ADMIN.email });
-  if (existedAdmin) return console.log("✅ Admin đã tồn tại. Bỏ qua tạo mới.");
+  if (existedAdmin) return console.log("Admin đã tồn tại. Bỏ qua tạo mới.");
 
   const activeStatus = await StatusUser.findOne({ statusUserName: "active" });
-  if (!activeStatus) throw new Error("⚠️ Không tìm thấy trạng thái 'active'");
+  if (!activeStatus) throw new Error("Không tìm thấy trạng thái 'active'");
 
   const adminRole = await Role.findOne({ roleName: "admin" });
-  if (!adminRole) throw new Error("⚠️ Không tìm thấy vai trò 'admin'");
+  if (!adminRole) throw new Error("Không tìm thấy vai trò 'admin'");
 
   try {
     // 1. Tạo tài khoản đăng nhập
@@ -41,9 +41,11 @@ module.exports = async function initAdmin() {
     // 3. Gắn admin
     const admin = await Admin.create({ _id: user._id });
 
-    console.log(`✅ Đã tạo admin mặc định: ${DEFAULT_ADMIN.email}`);
+    console.log(
+      `Đã tạo admin mặc định: ${DEFAULT_ADMIN.email}  ${DEFAULT_ADMIN.password}`
+    );
   } catch (err) {
     await Account.deleteOne({ userName: DEFAULT_ADMIN.email });
-    console.error("❌ Lỗi khi tạo admin mặc định:", err.message);
+    console.error("Lỗi khi tạo admin mặc định:", err.message);
   }
 };

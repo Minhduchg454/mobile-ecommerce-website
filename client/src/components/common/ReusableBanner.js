@@ -5,6 +5,7 @@ const ReusableBanner = ({
   images = [],
   aspectRatio = "3/1",
   className = "",
+  delay = 5000, // 👉 thêm delay với giá trị mặc định
 }) => {
   const [index, setIndex] = useState(0);
   const intervalRef = useRef(null);
@@ -19,13 +20,13 @@ const ReusableBanner = ({
 
   const resetInterval = () => {
     clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(nextSlide, 5000);
+    intervalRef.current = setInterval(nextSlide, delay);
   };
 
   useEffect(() => {
-    intervalRef.current = setInterval(nextSlide, 5000);
+    intervalRef.current = setInterval(nextSlide, delay);
     return () => clearInterval(intervalRef.current);
-  }, []);
+  }, [delay]);
 
   const handleNext = () => {
     nextSlide();

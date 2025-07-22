@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { InputForm, Pagination, ShowSwal } from "components";
+import { InputForm, Pagination, ShowSwal, CloseButton } from "components";
 import { useForm } from "react-hook-form";
 import { apiGetProducts, apiDeleteProduct } from "apis/product";
 import {
@@ -70,7 +70,7 @@ const ManageProducts = () => {
   useEffect(() => {
     const searchParams = Object.fromEntries([...params]);
     fetchProducts(searchParams);
-  }, [params, update]);
+  }, [params, update, editProduct, currentProductForVariant]);
 
   const handleDeleteProduct = (pid) => {
     ShowSwal({
@@ -119,13 +119,10 @@ const ManageProducts = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center  bg-black/30 p-4 backdrop-blur-sm ">
           <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full">
             {/* Nút đóng luôn cố định */}
-            <button
+            <CloseButton
               onClick={() => setEditProduct(null)}
-              className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow border transition"
-            >
-              ×
-            </button>
-
+              className="top-2 right-2"
+            />
             {/* Nội dung có thể cuộn */}
             <div className="p-6 max-h-[90vh] overflow-y-auto border shadow-md rounded-xl">
               <CreateProducts
@@ -143,14 +140,10 @@ const ManageProducts = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm  shadow-md">
           <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full">
             {/* Nút đóng luôn cố định */}
-            <button
+            <CloseButton
               onClick={() => setCurrentProductForVariant(null)}
-              className="absolute top-2 right-2 p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition"
-            >
-              ×
-            </button>
-
-            {/* Nội dung có thể cuộn */}
+              className="top-2 right-2"
+            />
             <div className="p-6 max-h-[90vh] overflow-y-auto ">
               <CreateVariation
                 productId={currentProductForVariant._id}

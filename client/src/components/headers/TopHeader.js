@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import path from "ultils/path";
 import { getCurrent } from "store/user/asyncActions"; //lay thong tin nguoi dung tu token
 import { useSelector, useDispatch } from "react-redux";
 import icons from "ultils/icons";
-import { logout, clearMessage } from "store/user/userSlice"; //logout: dang xuat, clearMessage xoa thong bao loi
+import { clearMessage } from "store/user/userSlice"; //logout: dang xuat, clearMessage xoa thong bao loi
 import Swal from "sweetalert2";
 
 const { AiOutlineMail, AiOutlinePhone, AiOutlineClockCircle } = icons;
