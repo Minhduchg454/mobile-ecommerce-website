@@ -6,7 +6,7 @@ import { Button } from "components";
 import { useDispatch } from "react-redux";
 import { showModal } from "store/app/appSlice";
 
-const VoteOption = ({ nameProduct, handleSubmitVoteOption }) => {
+const VoteOption = ({ nameProduct, handleSubmitVoteOption, pvid }) => {
   const modalRef = useRef();
   const [chosenScore, setChosenScore] = useState(null);
   const dispatch = useDispatch();
@@ -61,7 +61,7 @@ const VoteOption = ({ nameProduct, handleSubmitVoteOption }) => {
           Thoát
         </button>
         <button
-          onClick={() => handleSubmitVoteOption({ comment, score })}
+          onClick={() => handleSubmitVoteOption({ comment, score, pvid })}
           className="w-[100px] border bg-[#00AFFF] rounded-xl p-2 text-white"
         >
           Gửi

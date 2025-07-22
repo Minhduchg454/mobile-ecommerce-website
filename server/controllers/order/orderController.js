@@ -17,7 +17,14 @@ exports.getAllOrders = async (req, res) => {
     const orders = await Order.find()
       .populate("shippingAddress")
       .populate("shippingProviderId")
-      .populate("customerId");
+      .populate({
+        path: "customerId",
+        populate: {
+          path: "_id",
+          model: "User",
+          select: "firstName lastName email avatar mobile roleId statusUserId",
+        },
+      });
     res.status(200).json({
       success: true,
       count: orders.length,
@@ -39,8 +46,12 @@ exports.getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate({
-        path: "customerId", // lấy thêm thông tin khách hàng
-        select: "firstName lastName email mobile avatar", // chọn các trường cần
+        path: "customerId",
+        populate: {
+          path: "_id",
+          model: "User",
+          select: "firstName lastName email avatar mobile roleId statusUserId",
+        },
       })
       .populate({
         path: "orderDetails", // lấy danh sách chi tiết đơn hàng
@@ -77,9 +88,17 @@ exports.getOrdersByUser = async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
 
-    const orders = await Order.find({ customerId: userId })
+    const { status, page = 1, limit = 10, _id } = req.query;
+
+    const queryFilter = { customerId: userId };
+    if (status) queryFilter.status = status;
+    if (_id) queryFilter._id = _id;
+
+    const orders = await Order.find(queryFilter)
       .sort({ createdAt: -1 })
-      .lean(); // `.lean()` cho kết quả nhẹ và dễ xử lý hơn
+      .skip((page - 1) * limit)
+      .limit(+limit)
+      .lean();
 
     const orderIds = orders.map((o) => o._id);
 
@@ -91,7 +110,7 @@ exports.getOrdersByUser = async (req, res) => {
         select: "productVariationName images price productId",
         populate: {
           path: "productId",
-          select: "name slug",
+          select: "productName slug",
         },
       })
       .lean();
@@ -187,10 +206,15 @@ exports.createOrder = async (req, res, next) => {
 exports.updateOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { shippingAddress, shippingProviderId, customerId, orderDetails } =
-      req.body;
+    const {
+      shippingAddress,
+      shippingProviderId,
+      customerId,
+      orderDetails,
+      status,
+    } = req.body;
 
-    // 1. Tìm Order cần update
+    // 1. Tìm Order
     const order = await Order.findById(id);
     if (!order) {
       return res
@@ -198,43 +222,57 @@ exports.updateOrder = async (req, res, next) => {
         .json({ success: false, mes: "Không tìm thấy đơn hàng." });
     }
 
-    // 2. Cập nhật thông tin đơn hàng
-    order.shippingAddress = shippingAddress || order.shippingAddress;
-    order.shippingProviderId = shippingProviderId || order.shippingProviderId;
-    order.customerId = customerId || order.customerId;
-    order.status = "Pending";
+    // 2. Cập nhật các trường nếu có
+    if (shippingAddress !== undefined) order.shippingAddress = shippingAddress;
+    if (shippingProviderId !== undefined)
+      order.shippingProviderId = shippingProviderId;
+    if (customerId !== undefined) order.customerId = customerId;
+    if (status !== undefined) order.status = status;
+
     await order.save();
 
-    // 3. Xóa tất cả các OrderDetail cũ
-    await OrderDetail.deleteMany({ orderId: order._id });
+    // 3. Nếu có orderDetails và là mảng thì mới xử lý
+    if (Array.isArray(orderDetails)) {
+      // Lấy danh sách order detail cũ
+      const existingDetails = await OrderDetail.find({ orderId: order._id });
+      const existingDetailMap = new Map(
+        existingDetails.map((d) => [d._id.toString(), d])
+      );
 
-    // 4. Tạo lại các OrderDetail mới (dùng vòng lặp)
-    if (orderDetails && orderDetails.length > 0) {
-      const createdDetails = [];
-      try {
-        for (const detail of orderDetails) {
+      const sentDetailIds = new Set();
+
+      for (const detail of orderDetails) {
+        if (detail._id) {
+          const existing = existingDetailMap.get(detail._id);
+          if (existing) {
+            if (detail.productVariationId !== undefined)
+              existing.productVariationId = detail.productVariationId;
+            if (detail.quantity !== undefined)
+              existing.quantity = detail.quantity;
+            await existing.save();
+            sentDetailIds.add(detail._id);
+          }
+        } else {
+          // Nếu là mới => tạo mới
           const newDetail = new OrderDetail({
-            ...detail,
             orderId: order._id,
-            price: 0, // tạm thời cho là 0
+            productVariationId: detail.productVariationId,
+            quantity: detail.quantity,
+            price: 0, // có thể cập nhật logic tính giá ở đây nếu cần
           });
-          const savedDetail = await newDetail.save(); // sẽ kích hoạt pre('save')
-          createdDetails.push(savedDetail);
+          await newDetail.save();
         }
-      } catch (err) {
-        // rollback nếu lỗi: xóa order detail mới và giữ lại đơn hàng cũ
-        for (const d of createdDetails) {
-          await d.deleteOne();
-        }
-        return next(err);
       }
-    } else {
-      return res
-        .status(400)
-        .json({ success: false, mes: "Danh sách sản phẩm không được trống." });
+
+      // Xóa các OrderDetail không còn tồn tại trong danh sách gửi lên
+      for (const existing of existingDetails) {
+        if (!sentDetailIds.has(existing._id.toString())) {
+          await existing.deleteOne();
+        }
+      }
     }
 
-    // 5. Trả kết quả thành công
+    // 4. Trả kết quả
     res.status(200).json({
       success: true,
       data: {

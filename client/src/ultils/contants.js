@@ -246,7 +246,7 @@ export const memberSidebar = [
   {
     id: 3,
     type: "SINGLE",
-    text: "Lịch sử đơn hàng",
+    text: "Đơn hàng",
     path: `/${path.MEMBER}/${path.HISTORY}`,
     icon: <AiOutlineHistory size={20} />,
   },

@@ -1,4 +1,4 @@
-import { apiDeleteOrderByAdmin, apiGetOrders, apiUpdateStatus } from "apis";
+import { apiDeleteOrderByAdmin, apiGetOrders, apiUpdateOrder } from "apis";
 import { Button, Pagination, InputForm } from "components";
 import useDebounce from "hooks/useDebounce";
 import moment from "moment";
@@ -25,6 +25,7 @@ const ManageOrder = () => {
   const [update, setUpdate] = useState(false);
   const [editOrder, setEditOrder] = useState();
   const [queries, setQueries] = useState({ q: "" });
+
   const fetchOrders = async (params) => {
     const response = await apiGetOrders({
       ...params,
@@ -32,8 +33,8 @@ const ManageOrder = () => {
     });
     console.log(response);
     if (response.success) {
-      setCounts(response.counts);
-      setOrders(response.orders);
+      setCounts(response.count);
+      setOrders(response.data);
     }
   };
   const render = useCallback(() => {
@@ -76,9 +77,11 @@ const ManageOrder = () => {
   };
 
   const handleUpdate = async () => {
-    const response = await apiUpdateStatus(editOrder._id, {
+    console.log("Kich hoat");
+    const response = await apiUpdateOrder(editOrder._id, {
       status: watch("status"),
     });
+
     if (response.success) {
       toast.success(response.mes);
       setUpdate(!update);
@@ -106,21 +109,6 @@ const ManageOrder = () => {
             validate={{}}
           />
         </form>
-
-        {editOrder && (
-          <div className="flex gap-3 items-center">
-            <Button type="button" handleOnClick={handleUpdate}>
-              Xác nhận
-            </Button>
-            <Button
-              type="button"
-              style="bg-gray-200"
-              handleOnClick={() => setEditOrder(null)}
-            >
-              Hủy
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Nội dung */}
@@ -129,8 +117,8 @@ const ManageOrder = () => {
           <thead className="bg-title-table text-white uppercase">
             <tr>
               <th className="py-3 px-2">STT</th>
-              <th className="py-3 px-2">Người mua</th>
-              <th className="py-3 px-2">Sản phẩm</th>
+              <th className="py-3 px-2">Mã đơn hàng</th>
+              <th className="py-3 px-2">Khách hàng</th>
               <th className="py-3 px-2">Tổng tiền</th>
               <th className="py-3 px-2">Trạng thái</th>
               <th className="py-3 px-2">Ngày mua</th>
@@ -151,47 +139,21 @@ const ManageOrder = () => {
                     idx +
                     1}
                 </td>
-                <td className="text-center py-3 px-2">
-                  {el.orderBy?.firstname + " " + el.orderBy?.lastname}
-                </td>
+
+                {/* Mã đơn hàng */}
+                <td className="text-center py-3 px-2">{el._id || "Ẩn danh"}</td>
+
+                {/* Cột sản phẩm (hiện không có dữ liệu cụ thể) */}
                 <td className="text-left py-3 px-2">
-                  <div className="flex flex-col gap-2 max-w-[400px] mx-auto">
-                    {el.products?.map((n) => (
-                      <div
-                        key={n._id}
-                        className="flex gap-2 items-center border-b pb-2"
-                      >
-                        <img
-                          src={n.thumbnail}
-                          alt={n.title}
-                          className="w-10 h-10 object-cover border rounded"
-                        />
-                        <div className="flex flex-col text-xs text-gray-700">
-                          <span className="font-semibold text-sky-800">
-                            {n.title}
-                          </span>
-                          <span>Màu: {n.color}</span>
-                          <span>{formatMoney(n.price)}</span>
-                          <span>Số lượng: {n.quantity}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </td>
-                {/* ➕ Thêm 2 cột mới tại đây */}
-                <td className="text-left py-3 px-2 text-sm">
-                  {el.shippingAddress || "Chưa có"}
-                </td>
-                <td className="text-center py-3 px-2 text-sm">
-                  {el.paymentMethod || "Chưa rõ"}
+                  {el.customerId._id.firstName || "Ẩn danh"}
                 </td>
 
+                {/* Tổng tiền */}
                 <td className="text-center py-3 px-2 font-bold text-red-500">
-                  {formatMoney(el.total * 23500) + " VND"}
+                  {formatMoney(el.totalPrice) + " đ"}
                 </td>
-                <td className="text-center py-3 px-2 font-bold text-red-500">
-                  {formatMoney(el.total * 23500) + " VND"}
-                </td>
+
+                {/* Trạng thái */}
                 <td className="text-center py-3 px-2">
                   {editOrder?._id === el._id ? (
                     <select
@@ -199,7 +161,7 @@ const ManageOrder = () => {
                       className="border border-gray-300 rounded-md py-1 px-2 text-sm w-[120px]"
                     >
                       <option value="Cancelled">Cancelled</option>
-                      <option value="Succeed">Succeed</option>
+                      <option value="Succeeded">Succeeded</option>
                       <option value="Pending">Pending</option>
                     </select>
                   ) : (
@@ -208,7 +170,7 @@ const ManageOrder = () => {
                         "px-2 py-1 rounded-md text-xs font-medium",
                         el.status === "Pending" &&
                           "bg-yellow-100 text-yellow-800",
-                        el.status === "Succeed" &&
+                        el.status === "Succeeded" &&
                           "bg-green-100 text-green-800",
                         el.status === "Cancelled" && "bg-red-100 text-red-800"
                       )}
@@ -217,17 +179,31 @@ const ManageOrder = () => {
                     </span>
                   )}
                 </td>
+
+                {/* Ngày mua */}
                 <td className="text-center py-3 px-2">
-                  {moment(el.createdAt).format("DD/MM/YYYY")}
+                  {moment(el.orderDate).format("DD/MM/YYYY")}
                 </td>
+
+                {/* Địa chỉ giao hàng */}
+                <td className="text-left py-3 px-2">
+                  {el.shippingAddress || "Không có"}
+                </td>
+
+                {/* Hình thức thanh toán */}
+                <td className="text-center py-3 px-2">
+                  {el.paymentMethod || "Không xác định"}
+                </td>
+
+                {/* Hành động */}
                 <td className="text-center py-3 px-2">
                   <div className="flex justify-center gap-2 items-center text-orange-600 text-sm">
                     {editOrder?._id === el._id ? (
                       <span
-                        onClick={() => setEditOrder(null)}
+                        onClick={handleUpdate}
                         className="hover:underline cursor-pointer"
                       >
-                        Về
+                        Lưu
                       </span>
                     ) : (
                       <span
@@ -240,12 +216,14 @@ const ManageOrder = () => {
                         Sửa
                       </span>
                     )}
-                    <span
-                      onClick={() => handleDeleteProduct(el._id)}
-                      className="hover:underline cursor-pointer"
-                    >
-                      Xoá
-                    </span>
+                    {editOrder && (
+                      <span
+                        onClick={() => setEditOrder(null)}
+                        className="hover:underline cursor-pointer text-blue-600"
+                      >
+                        Hủy
+                      </span>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -253,7 +231,7 @@ const ManageOrder = () => {
             {orders?.length === 0 && (
               <tr>
                 <td
-                  colSpan="7"
+                  colSpan="9"
                   className="text-center py-6 text-gray-500 italic"
                 >
                   Không có đơn hàng nào.

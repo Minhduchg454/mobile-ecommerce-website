@@ -46,9 +46,10 @@ export const apiCreateOrder = (data) =>
     method: "post",
     data,
   });
+
 export const apiGetOrders = (params) =>
   axios({
-    url: "/order/admin",
+    url: "/orders",
     method: "get",
     params,
   });
@@ -70,12 +71,21 @@ export const apiCancelOrder = (orderId) =>
     },
   });
 
+//Cap nhat don hang
+export const apiUpdateOrder = (orderId, data) =>
+  axios({
+    url: `/orders/${orderId}`,
+    method: "put",
+    data,
+  });
+
 export const apiUpdateStatus = (oid, data) =>
   axios({
     url: "/order/status/" + oid,
     method: "put",
     data,
   });
+
 export const apiDeleteOrderByAdmin = (oid) =>
   axios({
     url: "/order/admin/" + oid,
