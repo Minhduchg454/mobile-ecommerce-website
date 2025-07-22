@@ -20,7 +20,6 @@ const Cart = ({ dispatch, navigate }) => {
   const [variationData, setVariationData] = useState({});
   const [selectedItems, setSelectedItems] = useState([]);
 
-  // Lấy thông tin biến thể
   useEffect(() => {
     const fetchVariations = async () => {
       const newData = {};
@@ -28,11 +27,8 @@ const Cart = ({ dispatch, navigate }) => {
         currentCart?.map(async (item) => {
           if (!variationData[item.productVariationId]) {
             const res = await apiGetProductVariation(item.productVariationId);
-            if (res.success && res.variation) {
-              newData[item.productVariationId] = res.variation;
-            } else {
-              newData[item.productVariationId] = null;
-            }
+            newData[item.productVariationId] =
+              res.success && res.variation ? res.variation : null;
           }
         })
       );
@@ -42,15 +38,23 @@ const Cart = ({ dispatch, navigate }) => {
     if (currentCart?.length) fetchVariations();
   }, [currentCart]);
 
-  // Chọn tất cả
+  const validSelectableIds = currentCart
+    ?.filter(
+      (el) =>
+        variationData[el.productVariationId] &&
+        variationData[el.productVariationId].stockQuantity > 0
+    )
+    .map((el) => el.productVariationId);
+
   const isAllSelected =
-    currentCart?.length > 0 && selectedItems.length === currentCart.length;
+    validSelectableIds?.length > 0 &&
+    validSelectableIds.every((id) => selectedItems.includes(id));
 
   const toggleSelectAll = () => {
-    if (isAllSelected) {
+    if (selectedItems.length === validSelectableIds.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(currentCart.map((el) => el.productVariationId));
+      setSelectedItems(validSelectableIds);
     }
   };
 
@@ -83,14 +87,19 @@ const Cart = ({ dispatch, navigate }) => {
     return sum;
   }, 0);
 
+  const sortedCart = [...currentCart].sort((a, b) => {
+    const aVariation = variationData[a.productVariationId];
+    const bVariation = variationData[b.productVariationId];
+    const aInvalid = !aVariation || aVariation.stockQuantity < 1;
+    const bInvalid = !bVariation || bVariation.stockQuantity < 1;
+    return bInvalid - aInvalid; // sản phẩm hết hàng đưa lên đầu
+  });
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className={clsx(
-        "w-full md:w-[60vw] md:max-w-[800px] h-screen bg-white text-gray-800 flex flex-col relative"
-      )}
+      className="w-full md:w-[60vw] md:max-w-[800px] h-screen bg-white text-gray-800 flex flex-col relative"
     >
-      {/* Header */}
       <div className="sticky top-0 z-20 bg-white shadow px-4 py-3 flex justify-between items-center border-b">
         <h2 className="text-lg font-semibold">🛒 Giỏ hàng của bạn</h2>
         <span
@@ -101,7 +110,6 @@ const Cart = ({ dispatch, navigate }) => {
         </span>
       </div>
 
-      {/* Chọn tất cả */}
       {currentCart?.length > 0 && (
         <div className="px-4 py-2 border-b flex items-center gap-2">
           <div
@@ -117,31 +125,39 @@ const Cart = ({ dispatch, navigate }) => {
         </div>
       )}
 
-      {/* Danh sách sản phẩm */}
       <div className="flex-1 overflow-y-auto px-2 py-2">
         {currentCart?.length > 0 ? (
-          currentCart.map((el) => {
+          sortedCart.map((el) => {
             const variation = variationData[el.productVariationId];
             const isDeleted = variation === null;
+            const isOutOfStock = variation?.stockQuantity < 1;
+            const isDisabled = isDeleted || isOutOfStock;
             const isChecked = selectedItems.includes(el.productVariationId);
 
             return (
               <div
                 key={el.productVariationId}
-                className="flex gap-2 justify-between items-center border-b p-2"
+                className={clsx(
+                  "flex gap-2 justify-between items-center border-b p-2",
+                  isDisabled && "opacity-60"
+                )}
               >
-                {/* Checkbox */}
-                <div
-                  onClick={() => toggleSelectItem(el.productVariationId)}
-                  className={clsx(
-                    "h-5 w-5 border rounded flex items-center justify-center cursor-pointer",
-                    isChecked ? "bg-main text-white" : "bg-white"
+                <div className="w-5">
+                  {!isDisabled && (
+                    <div
+                      onClick={() => toggleSelectItem(el.productVariationId)}
+                      className={clsx(
+                        "h-5 w-5 border rounded flex items-center justify-center cursor-pointer",
+                        isChecked ? "bg-main text-white" : "bg-white"
+                      )}
+                    >
+                      {isChecked && (
+                        <span className="text-xs font-bold">✓</span>
+                      )}
+                    </div>
                   )}
-                >
-                  {isChecked && <span className="text-xs font-bold">✓</span>}
                 </div>
 
-                {/* Hình ảnh */}
                 <img
                   src={
                     isDeleted
@@ -152,18 +168,20 @@ const Cart = ({ dispatch, navigate }) => {
                   className="w-20 h-20 object-cover rounded-md border"
                 />
 
-                {/* Thông tin */}
                 <div className="flex-1">
                   <div className="font-medium text-base text-main">
                     {isDeleted
                       ? "Sản phẩm đã bị xoá"
                       : `${variation?.productId?.productName} - ${variation?.productVariationName}`}
+                    {(isDeleted || isOutOfStock) && (
+                      <span className="ml-2 text-red-500 text-xs font-semibold">
+                        {isDeleted ? "(Đã xoá)" : "(Hết hàng)"}
+                      </span>
+                    )}
                   </div>
                   <div className="text-sm text-gray-500">
                     Biến thể ID: {el.productVariationId}
                   </div>
-
-                  {/* Số lượng */}
                   <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() =>
@@ -181,7 +199,7 @@ const Cart = ({ dispatch, navigate }) => {
                         !isDeleted &&
                         updateQuantity(el.productVariationId, el.quantity + 1)
                       }
-                      disabled={isDeleted || variation?.stockQuantity < 1}
+                      disabled={isDeleted || isOutOfStock}
                       className="w-6 h-6 border rounded hover:bg-gray-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       +
@@ -189,19 +207,18 @@ const Cart = ({ dispatch, navigate }) => {
                   </div>
                 </div>
 
-                {/* Giá & Xoá */}
                 <div className="text-right">
                   {isDeleted ? (
                     <div className="text-red-500 font-semibold text-sm mb-2">
                       (Sản phẩm không tồn tại)
                     </div>
-                  ) : variation?.stockQuantity >= 1 ? (
-                    <div className="text-red-500 font-semibold mb-2">
-                      {formatMoney(el.priceAtTime * el.quantity)} VND
+                  ) : isOutOfStock ? (
+                    <div className="text-red-500 font-semibold mt-1">
+                      <p>(Sản phẩm hiện hết hàng)</p>
                     </div>
                   ) : (
-                    <div className="text-red-500 font-semibold mt-1">
-                      <p> (sản phẩm hiện hết hàng)</p>
+                    <div className="text-red-500 font-semibold mb-2">
+                      {formatMoney(el.priceAtTime * el.quantity)} VND
                     </div>
                   )}
 
@@ -223,60 +240,75 @@ const Cart = ({ dispatch, navigate }) => {
         )}
       </div>
 
-      {/* Footer */}
-      <div className="border-t p-4 shadow-[0_-2px_6px_rgba(0,0,0,0.08)] bg-white z-10">
+      {/*footer  */}
+      <div className="border-t p-4 shadow-xl bg-white z-10">
         <div className="flex justify-between font-semibold mb-1">
-          <span>Tổng cộng:</span>
-          <span>{formatMoney(total)} VND</span>
+          <div cl>
+            <p>Tổng cộng :</p>
+            {selectedItems.length > 0 && (
+              <p className="text-sm text-gray-500 ml-1">
+                ({selectedItems.length} sản phẩm)
+              </p>
+            )}
+          </div>
+
+          <span className="text-2xl text-red-500 mr-[90px]">
+            {formatMoney(total)} VND
+          </span>
         </div>
-        <span className="text-xs italic text-gray-500 mb-2 block">
-          (Chưa bao gồm VAT)
-        </span>
-        <button
-          onClick={() => {
-            if (!current?._id) {
-              ShowSwal({
-                title: "Cần đăng nhập",
-                text: "Vui lòng đăng nhập để tiếp tục thanh toán.",
-                icon: "warning",
-                confirmText: "Đăng nhập",
-                showCancelButton: true,
-                cancelText: "Hủy",
-                variant: "danger",
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  dispatch(showCart()); // đóng giỏ hàng
-                  navigate(`/${path.LOGIN}`);
-                }
-              });
-              return;
-            }
 
-            if (selectedItems.length === 0) {
-              ShowSwal({
-                title: "Chưa chọn sản phẩm",
-                text: "Vui lòng chọn ít nhất một sản phẩm để thanh toán.",
-                icon: "warning",
-                confirmText: "Đóng",
-                showCancelButton: false,
-                variant: "danger",
-              });
-              return;
-            }
+        <div className="pt-2">
+          <button
+            onClick={() => {
+              if (!current?._id) {
+                ShowSwal({
+                  title: "Cần đăng nhập",
+                  text: "Vui lòng đăng nhập để tiếp tục thanh toán.",
+                  icon: "warning",
+                  confirmText: "Đăng nhập",
+                  showCancelButton: true,
+                  cancelText: "Hủy",
+                  variant: "danger",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    dispatch(showCart());
+                    navigate(`/${path.LOGIN}`);
+                  }
+                });
+                return;
+              }
 
-            dispatch(showCart());
-            navigate(`/${path.CHECKOUT}`, {
-              state: {
-                selectedItems: currentCart.filter((el) =>
-                  selectedItems.includes(el.productVariationId)
-                ),
-              },
-            });
-          }}
-          className="w-fit p-2 bg-main py-3 rounded-xl text-white hover:bg-blue-500"
-        >
-          Thanh toán
-        </button>
+              const validSelectedItems = currentCart.filter(
+                (el) =>
+                  selectedItems.includes(el.productVariationId) &&
+                  variationData[el.productVariationId] &&
+                  variationData[el.productVariationId].stockQuantity > 0
+              );
+
+              if (validSelectedItems.length === 0) {
+                ShowSwal({
+                  title: "Không thể thanh toán",
+                  text: "Chỉ những sản phẩm còn hàng mới được thanh toán. Vui lòng kiểm tra lại lựa chọn của bạn.",
+                  icon: "warning",
+                  confirmText: "Đóng",
+                  showCancelButton: false,
+                  variant: "danger",
+                });
+                return;
+              }
+
+              dispatch(showCart());
+              navigate(`/${path.CHECKOUT}`, {
+                state: {
+                  selectedItems: validSelectedItems,
+                },
+              });
+            }}
+            className="w-fit p-2 bg-main py-3 rounded-xl text-white hover:bg-blue-500"
+          >
+            Thanh toán
+          </button>
+        </div>
       </div>
     </div>
   );

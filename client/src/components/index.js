@@ -63,3 +63,4 @@ export { default as VoucherSelectorModal } from "./products/VoucherSelectorModal
 export { default as NewAddressModal } from "./inputs/NewAddressModal";
 export { default as CloseButton } from "./buttons/CloseButton";
 export { default as CustomMarkdownEditor } from "./inputs/CustomMarkdownEditor";
+export { default as OrderSummary } from "./products/OrderSummary";

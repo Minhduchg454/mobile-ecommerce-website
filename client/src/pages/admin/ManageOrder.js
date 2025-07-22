@@ -1,5 +1,10 @@
-import { apiDeleteOrderByAdmin, apiGetOrders, apiUpdateOrder } from "apis";
-import { Button, Pagination, InputForm } from "components";
+import {
+  apiDeleteOrderByAdmin,
+  apiGetOrders,
+  apiUpdateOrder,
+  apiGetOrderById,
+} from "apis";
+import { CloseButton, Pagination, InputForm, OrderSummary } from "components";
 import useDebounce from "hooks/useDebounce";
 import moment from "moment";
 import React, { useCallback, useEffect, useState } from "react";
@@ -19,12 +24,43 @@ const ManageOrder = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const { register, watch, setValue } = useForm();
+
   const [orders, setOrders] = useState();
   const [counts, setCounts] = useState(0);
   const [update, setUpdate] = useState(false);
-  const [editOrder, setEditOrder] = useState();
   const [queries, setQueries] = useState({ q: "" });
+  const [editingId, setEditingId] = useState(null);
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
+
+  const {
+    register,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm({
+    defaultValues: {
+      _id: "",
+      status: "",
+    },
+  });
+
+  const statusCounts = {
+    Pending: orders?.filter((o) => o.status === "Pending").length || 0,
+    Succeeded: orders?.filter((o) => o.status === "Succeeded").length || 0,
+    Cancelled: orders?.filter((o) => o.status === "Cancelled").length || 0,
+  };
+
+  const handleShowDetail = async (orderId) => {
+    const response = await apiGetOrderById(orderId);
+    if (response.status === "success") {
+      setSelectedOrder(response.data.order);
+      setShowDetail(true);
+    } else {
+      toast.error("Không lấy được thông tin chi tiết đơn hàng");
+    }
+  };
 
   const fetchOrders = async (params) => {
     const response = await apiGetOrders({
@@ -43,76 +79,129 @@ const ManageOrder = () => {
   const queryDecounce = useDebounce(watch("q"), 800);
 
   useEffect(() => {
-    if (queryDecounce) {
-      navigate({
-        pathname: location.pathname,
-        search: createSearchParams({ q: queryDecounce }).toString(),
-      });
-    } else {
-      navigate({
-        pathname: location.pathname,
-      });
-    }
-  }, [queryDecounce]);
-
-  useEffect(() => {
-    const searchParams = Object.fromEntries([...params]);
-    fetchOrders(searchParams);
-  }, [params, update]);
+    const pr = Object.fromEntries([...params]);
+    fetchOrders(pr);
+    setValue("status", pr.status || "");
+  }, [params]);
 
   const handleDeleteProduct = (id) => {
     Swal.fire({
-      title: "Are you sure?",
-      text: "Are you sure remove this order",
+      title: "Xác nhận?",
+      text: "Bạn có muốn xóa đơn hàng này",
       icon: "warning",
       showCancelButton: true,
     }).then(async (rs) => {
       if (rs.isConfirmed) {
         const response = await apiDeleteOrderByAdmin(id);
-        if (response.success) toast.success(response.mes);
-        else toast.error(response.mes);
+        if (response.success) {
+          toast.success("Đơn hàng được xóa thành công");
+        } else {
+          toast.error("Đã có lỗi xảy ra, không thể xóa");
+        }
         render();
       }
     });
   };
 
-  const handleUpdate = async () => {
-    console.log("Kich hoat");
-    const response = await apiUpdateOrder(editOrder._id, {
+  const handleUpdate = async (id) => {
+    const response = await apiUpdateOrder(id, {
       status: watch("status"),
     });
 
     if (response.success) {
       toast.success(response.mes);
       setUpdate(!update);
-      setEditOrder(null);
+      setEditingId(null);
     } else toast.error(response.mes);
   };
-
   return (
-    <div className={clsx("w-full min-h-screen p-4", editOrder && "pl-16")}>
+    <div className={clsx("w-full min-h-screen p-4")}>
       {/* Thanh header cố định */}
-      <div className="sticky top-0 z-10 shadow p-4 rounded-xl mb-4 flex justify-between items-center bg-[#FFF]">
-        <form className="w-full">
+      <div className="sticky top-0 z-10 shadow p-4 rounded-xl mb-4 flex justify-between gap-4 items-center bg-[#FFF]">
+        <div className="w-full">
           <InputForm
-            id="q"
-            label=""
-            placeholder="🔍 Tìm kiếm đơn hàng theo mã đơn hàng ..."
+            id="_id"
+            register={register}
+            errors={errors}
             fullWidth
-            defaultValue={queries.q}
-            register={(name, options) => ({
-              name,
-              onChange: (e) => setQueries({ ...queries, q: e.target.value }),
-              ...options,
-            })}
-            errors={{}}
-            validate={{}}
+            inputClassName="bg-[#E5E7EB]"
+            placeholder="🔍 Tìm kiếm theo mã đơn hàng"
+            onChange={(e) => {
+              const _id = e.target.value;
+              setValue("_id", _id);
+              navigate({
+                pathname: location.pathname,
+                search: createSearchParams({
+                  status: "",
+                  _id: _id.trim(),
+                }).toString(),
+              });
+            }}
           />
-        </form>
+        </div>
+        <div className="w-[200px]">
+          <select
+            {...register("status")}
+            className="w-full border p-2 rounded-xl text-sm"
+            onChange={(e) => {
+              const status = e.target.value;
+              setValue("status", status);
+              navigate({
+                pathname: location.pathname,
+                search: createSearchParams({
+                  _id: watch("_id"),
+                  status,
+                }).toString(),
+              });
+            }}
+          >
+            <option value="">-- Tất cả trạng thái --</option>
+            <option value="Pending">Chờ duyệt</option>
+            <option value="Succeeded">Thành công</option>
+            <option value="Cancelled">Đã hủy</option>
+          </select>
+        </div>
       </div>
 
+      {showDetail && selectedOrder && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm transition"
+          onClick={() => {
+            setShowDetail(false);
+            setSelectedOrder(null);
+          }}
+        >
+          <div
+            className="relative bg-[#F5F5F7] rounded-xl shadow-xl max-w-3xl w-full"
+            onClick={(e) => e.stopPropagation()} // Ngăn sự kiện lan xuống div cha
+          >
+            <CloseButton
+              onClick={() => {
+                setShowDetail(false);
+                setSelectedOrder(null);
+              }}
+              className="top-2 right-2"
+            />
+            <div className="p-6 max-h-[90vh] overflow-y-auto border shadow-md rounded-xl">
+              <OrderSummary order={selectedOrder} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Nội dung */}
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-white rounded-xl shadow p-4 overflow-y-auto">
+        <div className="flex flex-wrap items-center gap-4 mb-4">
+          <div className="bg-green-100 text-green-800 p-2 rounded-xl text-sm">
+            Đơn thành công: {statusCounts.Succeeded}
+          </div>
+          <div className="bg-yellow-100 text-yellow-800 p-2 rounded-xl text-sm">
+            Đơn chờ duyệt: {statusCounts.Pending}
+          </div>
+          <div className="bg-red-100 text-red-800 px-4 p-2 rounded-xl text-sm">
+            Đơn Đã hủy: {statusCounts.Cancelled}
+          </div>
+        </div>
         <table className="table-auto w-full border-collapse text-sm">
           <thead className="bg-title-table text-white uppercase">
             <tr>
@@ -122,7 +211,7 @@ const ManageOrder = () => {
               <th className="py-3 px-2">Tổng tiền</th>
               <th className="py-3 px-2">Trạng thái</th>
               <th className="py-3 px-2">Ngày mua</th>
-              <th className="py-3 px-2">Địa chỉ</th>
+              <th className="py-3 px-2">Địa chỉ giao hàng</th>
               <th className="py-3 px-2">Thanh toán</th>
               <th className="py-3 px-2">Tùy chọn</th>
             </tr>
@@ -131,7 +220,10 @@ const ManageOrder = () => {
             {orders?.map((el, idx) => (
               <tr
                 key={el._id}
-                className="border-b hover:bg-sky-50 transition-all"
+                className={clsx(
+                  "border-b transition-all",
+                  editingId === el._id ? "bg-yellow-50" : "hover:bg-sky-50"
+                )}
               >
                 <td className="text-center py-3 px-2 font-semibold">
                   {(+params.get("page") > 1 ? +params.get("page") - 1 : 0) *
@@ -149,13 +241,13 @@ const ManageOrder = () => {
                 </td>
 
                 {/* Tổng tiền */}
-                <td className="text-center py-3 px-2 font-bold text-red-500">
+                <td className="text-center py-3 px-2  text-green-700 font-semibold">
                   {formatMoney(el.totalPrice) + " đ"}
                 </td>
 
                 {/* Trạng thái */}
                 <td className="text-center py-3 px-2">
-                  {editOrder?._id === el._id ? (
+                  {editingId === el._id ? (
                     <select
                       {...register("status")}
                       className="border border-gray-300 rounded-md py-1 px-2 text-sm w-[120px]"
@@ -182,7 +274,7 @@ const ManageOrder = () => {
 
                 {/* Ngày mua */}
                 <td className="text-center py-3 px-2">
-                  {moment(el.orderDate).format("DD/MM/YYYY")}
+                  {moment(el.orderDate).format("DD/MM/YYYY HH:mm")}
                 </td>
 
                 {/* Địa chỉ giao hàng */}
@@ -197,31 +289,48 @@ const ManageOrder = () => {
 
                 {/* Hành động */}
                 <td className="text-center py-3 px-2">
-                  <div className="flex justify-center gap-2 items-center text-orange-600 text-sm">
-                    {editOrder?._id === el._id ? (
-                      <span
-                        onClick={handleUpdate}
-                        className="hover:underline cursor-pointer"
-                      >
-                        Lưu
-                      </span>
+                  <div className="flex justify-center gap-2 items-center text-blue-500 text-sm">
+                    {editingId === el._id ? (
+                      <>
+                        <span
+                          onClick={() => handleUpdate(el._id)}
+                          className="hover:underline cursor-pointer"
+                        >
+                          Lưu
+                        </span>
+                        <span
+                          onClick={() => setEditingId(null)}
+                          className="hover:underline cursor-pointer text-red-500"
+                        >
+                          Hủy
+                        </span>
+                      </>
                     ) : (
-                      <span
-                        onClick={() => {
-                          setEditOrder(el);
-                          setValue("status", el.status);
-                        }}
-                        className="hover:underline cursor-pointer"
-                      >
-                        Sửa
-                      </span>
+                      <>
+                        <span
+                          onClick={() => {
+                            setEditingId(el._id);
+                            setValue("status", el.status);
+                          }}
+                          className="hover:underline cursor-pointer"
+                        >
+                          Sửa
+                        </span>
+                        <span
+                          onClick={() => handleDeleteProduct(el._id)}
+                          className="hover:underline cursor-pointer text-red-500"
+                        >
+                          Xóa
+                        </span>
+                      </>
                     )}
-                    {editOrder && (
+
+                    {editingId !== el._id && (
                       <span
-                        onClick={() => setEditOrder(null)}
-                        className="hover:underline cursor-pointer text-blue-600"
+                        onClick={() => handleShowDetail(el._id)}
+                        className="hover:underline cursor-pointer text-green-500"
                       >
-                        Hủy
+                        Chi tiết
                       </span>
                     )}
                   </div>

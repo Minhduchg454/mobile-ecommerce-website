@@ -128,10 +128,7 @@ const ManageProductCategory = () => {
       >
         {/* Form thêm danh mục */}
         {showForm && (
-          <div className="bg-white rounded-xl shadow p-6">
-            <h1 className="text-xl font-bold mb-6">
-              ➕ Thêm danh mục sản phẩm
-            </h1>
+          <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <InputForm
                 label="Tên danh mục"
@@ -194,8 +191,7 @@ const ManageProductCategory = () => {
       </div>
 
       {/* Danh sách danh mục */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-lg font-bold mb-4">📋 Danh sách danh mục</h2>
+      <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
         <table className="table-auto w-full border-collapse">
           <thead className="bg-title-table text-white text-sm uppercase">
             <tr>
