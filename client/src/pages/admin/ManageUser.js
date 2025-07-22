@@ -120,6 +120,7 @@ const ManageUser = () => {
           <InputForm
             id="q"
             label=""
+            inputClassName="bg-[#E5E7EB]"
             placeholder="🔍 Tìm kiếm tài khoản theo email, tên, ..."
             fullWidth
             defaultValue={queries.q}
@@ -135,7 +136,7 @@ const ManageUser = () => {
       </div>
 
       {/* Danh sách người dùng */}
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
         <form onSubmit={handleSubmit(handleUpdate)}>
           <table className="table-auto w-full border-collapse">
             <thead className="bg-title-table text-white text-sm uppercase">

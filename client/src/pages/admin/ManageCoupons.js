@@ -265,9 +265,8 @@ const ManageCoupons = () => {
       </div>
 
       {/* Danh sách mã giảm giá */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-lg font-bold mb-4">📋 Danh sách mã giảm giá</h2>
-        <table className="table-auto w-full border-collapse">
+      <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
+        <table className="table-auto w-full border-collapse ">
           <thead className="bg-title-table text-white text-sm uppercase">
             <tr>
               <th className="py-3 px-2">STT</th>

@@ -27,7 +27,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
     formState: { errors },
   } = useForm();
 
-  const stockQuantity = useWatch({ control, name: "stockQuantity" });
+  //const stockQuantity = useWatch({ control, name: "stockQuantity" });
 
   const [previews, setPreviews] = useState([]);
   const [oldImages, setOldImages] = useState([]);
@@ -70,7 +70,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
               mapped[specId] = item.value;
             });
             setSpecValues(mapped);
-            setSelectedSpecIds(Object.keys(mapped)); 
+            setSelectedSpecIds(Object.keys(mapped));
           }
         } catch (err) {
           toast.error("Không thể load thông số kỹ thuật");
@@ -237,7 +237,7 @@ const CreateVariantForm = ({ productId, editVariant, onDone }) => {
             </label>
             <input
               type="number"
-              value={stockQuantity || 0}
+              value={editVariant.stockQuantity}
               readOnly
               className="border border-gray-300 bg-gray-100 p-2 rounded-xl w-full text-sm cursor-not-allowed"
             />

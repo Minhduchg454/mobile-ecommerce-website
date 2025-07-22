@@ -79,15 +79,23 @@ export const apiUpdateOrder = (orderId, data) =>
     data,
   });
 
+//Lay don hang theo Id
+export const apiGetOrderById = (orderId, data) =>
+  axios({
+    url: `/orders/${orderId}`,
+    method: "get",
+    data,
+  });
+
 export const apiUpdateStatus = (oid, data) =>
   axios({
-    url: "/order/status/" + oid,
+    url: "/orders/status/" + oid,
     method: "put",
     data,
   });
 
 export const apiDeleteOrderByAdmin = (oid) =>
   axios({
-    url: "/order/admin/" + oid,
+    url: "/orders/" + oid,
     method: "delete",
   });

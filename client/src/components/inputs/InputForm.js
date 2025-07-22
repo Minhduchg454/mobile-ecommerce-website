@@ -12,13 +12,14 @@ const InputForm = ({
   placeholder,
   fullWidth,
   defaultValue,
-  style,
   readOnly,
   onChange,
   onKeyUp,
+  className, // thêm cho wrapper
+  inputClassName, // thêm cho input
 }) => {
   return (
-    <div className={clsx("flex flex-col gap-2", style)}>
+    <div className={clsx("flex flex-col gap-2", className)}>
       {label && (
         <label className="font-medium" htmlFor={id}>
           {label + ":"}
@@ -29,13 +30,13 @@ const InputForm = ({
         id={id}
         {...register(id, validate)}
         onChange={onChange}
-        onKeyUp={onKeyUp} // ✅ Gắn vào input
+        onKeyUp={onKeyUp}
         disabled={disabled}
         placeholder={placeholder}
         className={clsx(
-          "form-input my-auto rounded-xl",
+          "border p-2 my-auto rounded-xl",
           fullWidth && "w-full",
-          style
+          inputClassName // áp dụng ở đây
         )}
         defaultValue={defaultValue}
         readOnly={readOnly}

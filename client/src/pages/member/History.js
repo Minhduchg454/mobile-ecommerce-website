@@ -173,7 +173,7 @@ const History = ({ navigate, location }) => {
               placeholder="🔍 Tìm kiếm theo mã đơn hàng"
               onChange={(e) => {
                 const _id = e.target.value;
-                setValue("_id", _id); // <- cập nhật form state
+                setValue("_id", _id);
                 navigate({
                   pathname: location.pathname,
                   search: createSearchParams({

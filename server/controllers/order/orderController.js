@@ -14,7 +14,43 @@ const Product = require("../../models/product/Product");
 // @access  Public
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
+    const {
+      _id,
+      status,
+      customerId,
+      paymentMethod,
+      fromDate,
+      toDate,
+      sortByDate, // ✅ thêm tham số mới
+    } = req.query;
+
+    const filter = {};
+
+    // Lọc theo trạng thái
+    if (status) filter.status = status;
+
+    // Loc theo id đơn hàng
+    if (_id) filter._id = _id;
+
+    // Lọc theo khách hàng
+    if (customerId) filter.customerId = customerId;
+
+    // Lọc theo phương thức thanh toán
+    if (paymentMethod) filter.paymentMethod = paymentMethod;
+
+    // Lọc theo khoảng ngày tạo
+    if (fromDate || toDate) {
+      filter.createdAt = {};
+      if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+      if (toDate) filter.createdAt.$lte = new Date(toDate);
+    }
+
+    // Xác định sắp xếp theo createdAt
+    const sortOption = {};
+    if (sortByDate === "asc") sortOption.createdAt = 1;
+    else sortOption.createdAt = -1; // mặc định là mới nhất
+
+    const orders = await Order.find(filter)
       .populate("shippingAddress")
       .populate("shippingProviderId")
       .populate({
@@ -24,7 +60,9 @@ exports.getAllOrders = async (req, res) => {
           model: "User",
           select: "firstName lastName email avatar mobile roleId statusUserId",
         },
-      });
+      })
+      .sort(sortOption); // ✅ sắp xếp theo ngày
+
     res.status(200).json({
       success: true,
       count: orders.length,
@@ -54,7 +92,7 @@ exports.getOrderById = async (req, res, next) => {
         },
       })
       .populate({
-        path: "orderDetails", // lấy danh sách chi tiết đơn hàng
+        path: "orderDetails",
         populate: {
           path: "productVariationId",
           select: "productVariationName price images",
@@ -122,7 +160,7 @@ exports.getOrdersByUser = async (req, res) => {
         items: details,
       };
     });
-    console.log({ success: true, orders: ordersWithDetails });
+
     res.status(200).json({ success: true, orders: ordersWithDetails });
   } catch (error) {
     console.error(error);
@@ -137,7 +175,6 @@ exports.getOrdersByUser = async (req, res) => {
 // @route   POST /api/orders
 // @access  Private (thường sẽ cần xác thực và phân quyền)
 exports.createOrder = async (req, res, next) => {
-  //   console.log(req.body);
   try {
     const { products, total, address, appliedCoupon, paymentMethod, status } =
       req.body;
@@ -305,9 +342,9 @@ exports.deleteOrder = async (req, res, next) => {
     // 2. Xóa chi tiết đơn hàng
     await OrderDetail.deleteMany({ orderId });
 
-    res.status(204).json({
-      status: "success",
-      mess: "Đã xóa thành công",
+    return res.status(200).json({
+      success: true,
+      mes: "Xóa thành công",
     });
   } catch (err) {
     next(err);

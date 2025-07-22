@@ -127,8 +127,7 @@ const ManageBrands = () => {
         )}
       </div>
       {/* Danh sách thương hiệu */}
-      <div className="bg-white rounded-xl shadow p-6 ">
-        <h2 className="text-lg font-bold mb-4">📋 Danh sách thương hiệu</h2>
+      <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
         <table className="table-auto w-full border-collapse">
           <thead className="bg-title-table text-white text-sm uppercase">
             <tr>

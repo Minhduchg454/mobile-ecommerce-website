@@ -159,7 +159,7 @@ const ManageProducts = () => {
       )}
 
       {/* Bảng sản phẩm */}
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
         <table className="table-auto w-full border-collapse">
           <thead className="bg-title-table text-white text-sm uppercase">
             <tr>
@@ -218,6 +218,13 @@ const ManageProducts = () => {
                     >
                       Sửa
                     </span>
+
+                    <span
+                      onClick={() => handleDeleteProduct(el._id)}
+                      className="hover:underline cursor-pointer"
+                    >
+                      Xoá
+                    </span>
                     <span
                       onClick={() => {
                         setEditProduct(null); // Tắt sửa nếu đang mở
@@ -226,12 +233,6 @@ const ManageProducts = () => {
                       className="hover:underline cursor-pointer text-yellow-400"
                     >
                       Biến thể
-                    </span>
-                    <span
-                      onClick={() => handleDeleteProduct(el._id)}
-                      className="hover:underline cursor-pointer"
-                    >
-                      Xoá
                     </span>
                   </div>
                 </td>
