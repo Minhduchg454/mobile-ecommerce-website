@@ -144,7 +144,8 @@ const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
           </div>
         </div>
 
-        <div className="p-4 flex items-center justify-center text-sm flex-col gap-2">
+        {/* Thiết lập quyền sau */}
+        {/* <div className="p-4 flex items-center justify-center text-sm flex-col gap-2">
           <span>Ý kiến về sản phẩm</span>
           <Button handleOnClick={handleVoteNow}>ĐÁNH GIÁ NGAY!</Button>
 
@@ -154,7 +155,7 @@ const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
               giá của mình
             </span>
           )}
-        </div>
+        </div> */}
 
         <div className="flex flex-col gap-4">
           {Array.isArray(ratings) &&

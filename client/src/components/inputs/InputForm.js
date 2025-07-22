@@ -15,7 +15,7 @@ const InputForm = ({
   style,
   readOnly,
   onChange,
-  onKeyUp, // ✅ Thêm ở đây
+  onKeyUp,
 }) => {
   return (
     <div className={clsx("flex flex-col gap-2", style)}>

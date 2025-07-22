@@ -586,13 +586,13 @@ const ProductDetail1 = () => {
           <div className="mt-4 bg-[#FFF] rounded-xl">
             <ProductInfomation
               totalRatings={currentProduct?.totalRating}
-              ratings={previews} // ← là danh sách review từ API lọc
+              ratings={previews}
               nameProduct={product.productName}
               pid={currentProduct._id}
               rerender={() => {
                 if (selectedVariantId) {
                   fetchAllSpecifications();
-                  fetchPreviews(selectedVariantId); // ← Gọi lại khi đánh giá thay đổi
+                  fetchPreviews(selectedVariantId);
                 }
               }}
             />

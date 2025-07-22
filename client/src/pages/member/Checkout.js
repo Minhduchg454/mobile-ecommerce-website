@@ -123,16 +123,18 @@ const Checkout = ({ dispatch, navigate }) => {
       total: totalAfterDiscount,
       address: `${selectAddress.street}, ${selectAddress.ward}, ${selectAddress.district}, ${selectAddress.country}`,
       appliedCoupon: selectedVoucher?._id || null,
-      paymentMethod, // tạm thời sài cái này
+      paymentMethod,
     };
 
     const response = await apiCreateOrder({ ...payload, status: "Pending" });
     if (response.success) {
       setIsSuccess(true);
       setTimeout(() => {
-        Swal.fire("Congrat!", "Order was created.", "success").then(() => {
-          navigate("/");
-        });
+        Swal.fire("Chúc mừng", "Đơn hàng đã tạo thành công", "success").then(
+          () => {
+            navigate(`/${path.MEMBER}/${path.HISTORY}`);
+          }
+        );
       }, 1500);
     }
   };
