@@ -42,7 +42,7 @@ export const apiAddVarriant = (data, pid) =>
   });
 export const apiCreateOrder = (data) =>
   axios({
-    url: "/order/",
+    url: "/orders/",
     method: "post",
     data,
   });
@@ -52,12 +52,24 @@ export const apiGetOrders = (params) =>
     method: "get",
     params,
   });
+
 export const apiGetUserOrders = (params) =>
   axios({
-    url: "/order/",
+    url: "/orders/user",
     method: "get",
     params,
   });
+
+// Huỷ đơn hàng theo ID
+export const apiCancelOrder = (orderId) =>
+  axios({
+    url: `/orders/${orderId}`,
+    method: "put",
+    data: {
+      status: "Cancelled",
+    },
+  });
+
 export const apiUpdateStatus = (oid, data) =>
   axios({
     url: "/order/status/" + oid,

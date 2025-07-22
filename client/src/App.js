@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import Chatbot from "chatbot/Chatbot";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import OrderHistory from "pages/member/OrderHistory"; // Thêm dòng này
 import {
   Login,
   Home,
@@ -107,6 +108,7 @@ function App() {
             <Route path={path.WISHLIST} element={<Wishlist />} />
             <Route path={path.HISTORY} element={<History />} />
             <Route path={path.ADDRESS} element={<PersonalAddress />} />
+            <Route path={path.ORDER_HISTORY} element={<OrderHistory />} />
           </Route>
           <Route path={path.CHECKOUT} element={<Checkout />} />
           <Route path={path.LOGIN} element={<Login />} />

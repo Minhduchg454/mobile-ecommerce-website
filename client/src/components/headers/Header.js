@@ -264,6 +264,12 @@ const HeaderFull = () => {
                   >
                     Thông tin cá nhân
                   </Link>
+                  <Link
+                    className="block p-2 hover:bg-sky-100"
+                    to={`/${path.MEMBER}/hoa-don`}
+                  >
+                    Xem hóa đơn
+                  </Link>
                   {+current.role === 1945 && (
                     <Link
                       className="block p-2 hover:bg-sky-100"

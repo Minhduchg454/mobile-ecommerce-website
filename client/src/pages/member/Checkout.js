@@ -119,9 +119,11 @@ const Checkout = ({ dispatch, navigate }) => {
         quantity: el.quantity,
         price: variationData[el.productVariationId]?.price || 0,
       })),
-      total: totalUSD,
+      // total: totalUSD,
+      total: totalAfterDiscount,
       address: `${selectAddress.street}, ${selectAddress.ward}, ${selectAddress.district}, ${selectAddress.country}`,
       appliedCoupon: selectedVoucher?._id || null,
+      paymentMethod, // tạm thời sài cái này
     };
 
     const response = await apiCreateOrder({ ...payload, status: "Pending" });
@@ -141,7 +143,7 @@ const Checkout = ({ dispatch, navigate }) => {
       return;
     }
 
-    if (!selectAddress || !current?.address || !current?.mobile) {
+    if (!selectAddress || !current?.mobile) {
       Swal.fire({
         icon: "error",
         title: "Thông tin không đầy đủ",

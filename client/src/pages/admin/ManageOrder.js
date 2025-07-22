@@ -30,6 +30,7 @@ const ManageOrder = () => {
       ...params,
       limit: process.env.REACT_APP_LIMIT,
     });
+    console.log(response);
     if (response.success) {
       setCounts(response.counts);
       setOrders(response.orders);
@@ -133,6 +134,8 @@ const ManageOrder = () => {
               <th className="py-3 px-2">Tổng tiền</th>
               <th className="py-3 px-2">Trạng thái</th>
               <th className="py-3 px-2">Ngày mua</th>
+              <th className="py-3 px-2">Địa chỉ</th>
+              <th className="py-3 px-2">Thanh toán</th>
               <th className="py-3 px-2">Tùy chọn</th>
             </tr>
           </thead>
@@ -174,6 +177,17 @@ const ManageOrder = () => {
                       </div>
                     ))}
                   </div>
+                </td>
+                {/* ➕ Thêm 2 cột mới tại đây */}
+                <td className="text-left py-3 px-2 text-sm">
+                  {el.shippingAddress || "Chưa có"}
+                </td>
+                <td className="text-center py-3 px-2 text-sm">
+                  {el.paymentMethod || "Chưa rõ"}
+                </td>
+
+                <td className="text-center py-3 px-2 font-bold text-red-500">
+                  {formatMoney(el.total * 23500) + " VND"}
                 </td>
                 <td className="text-center py-3 px-2 font-bold text-red-500">
                   {formatMoney(el.total * 23500) + " VND"}

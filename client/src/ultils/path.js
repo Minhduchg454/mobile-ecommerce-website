@@ -37,6 +37,7 @@ const path = {
   HISTORY: "buy-history",
   WISHLIST: "wishlist",
   ADDRESS: "personal-address",
+  ORDER_HISTORY: "hoa-don",
 };
 
 export default path;
