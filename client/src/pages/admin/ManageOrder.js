@@ -19,12 +19,12 @@ import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { formatMoney } from "ultils/helpers";
 import clsx from "clsx";
+import { ORDER_STATUSES, canTransition } from "ultils/contants";
 
 const ManageOrder = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-
   const [orders, setOrders] = useState();
   const [counts, setCounts] = useState(0);
   const [update, setUpdate] = useState(false);
@@ -50,6 +50,8 @@ const ManageOrder = () => {
     Pending: orders?.filter((o) => o.status === "Pending").length || 0,
     Succeeded: orders?.filter((o) => o.status === "Succeeded").length || 0,
     Cancelled: orders?.filter((o) => o.status === "Cancelled").length || 0,
+    Shipping: orders?.filter((o) => o.status === "Shipping").length || 0,
+    Confirmed: orders?.filter((o) => o.status === "Confirmed").length || 0,
   };
 
   const handleShowDetail = async (orderId) => {
@@ -104,15 +106,26 @@ const ManageOrder = () => {
   };
 
   const handleUpdate = async (id) => {
-    const response = await apiUpdateOrder(id, {
-      status: watch("status"),
-    });
+    const currentStatus = orders.find((order) => order._id === id)?.status;
+    const newStatus = watch("status");
+
+    if (!canTransition(currentStatus, newStatus)) {
+      toast.error(
+        `Không thể chuyển từ trạng thái "${currentStatus}" sang "${newStatus}"`
+      );
+      return;
+    }
+
+    const response = await apiUpdateOrder(id, { status: newStatus });
 
     if (response.success) {
-      toast.success(response.mes);
-      setUpdate(!update);
+      toast.success(response.data.message);
+      const pr = Object.fromEntries([...params]);
+      await fetchOrders(pr);
       setEditingId(null);
-    } else toast.error(response.mes);
+    } else {
+      toast.error(response.data.message);
+    }
   };
   return (
     <div className={clsx("w-full min-h-screen p-4")}>
@@ -155,10 +168,12 @@ const ManageOrder = () => {
               });
             }}
           >
-            <option value="">-- Tất cả trạng thái --</option>
-            <option value="Pending">Chờ duyệt</option>
-            <option value="Succeeded">Thành công</option>
-            <option value="Cancelled">Đã hủy</option>
+            <option value="">Tất cả</option>
+            {Object.keys(ORDER_STATUSES).map((statusOption) => (
+              <option key={statusOption} value={statusOption}>
+                {ORDER_STATUSES[statusOption].label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -192,14 +207,52 @@ const ManageOrder = () => {
       {/* Nội dung */}
       <div className="bg-white rounded-xl shadow p-4 overflow-y-auto">
         <div className="flex flex-wrap items-center gap-4 mb-4">
-          <div className="bg-green-100 text-green-800 p-2 rounded-xl text-sm">
-            Đơn thành công: {statusCounts.Succeeded}
+          <div
+            className={clsx(
+              ORDER_STATUSES["Pending"].bg,
+              ORDER_STATUSES["Pending"].text,
+              "p-2 rounded-xl text-sm"
+            )}
+          >
+            {ORDER_STATUSES["Pending"].label}: {statusCounts.Pending}
           </div>
-          <div className="bg-yellow-100 text-yellow-800 p-2 rounded-xl text-sm">
-            Đơn chờ duyệt: {statusCounts.Pending}
+
+          <div
+            className={clsx(
+              ORDER_STATUSES["Confirmed"].bg,
+              ORDER_STATUSES["Confirmed"].text,
+              "p-2 rounded-xl text-sm"
+            )}
+          >
+            {ORDER_STATUSES["Confirmed"].label}: {statusCounts.Confirmed}
           </div>
-          <div className="bg-red-100 text-red-800 px-4 p-2 rounded-xl text-sm">
-            Đơn Đã hủy: {statusCounts.Cancelled}
+
+          <div
+            className={clsx(
+              ORDER_STATUSES["Cancelled"].bg,
+              ORDER_STATUSES["Cancelled"].text,
+              "p-2 rounded-xl text-sm"
+            )}
+          >
+            {ORDER_STATUSES["Cancelled"].label}: {statusCounts.Cancelled}
+          </div>
+          <div
+            className={clsx(
+              ORDER_STATUSES["Shipping"].bg,
+              ORDER_STATUSES["Shipping"].text,
+              "p-2 rounded-xl text-sm"
+            )}
+          >
+            {ORDER_STATUSES["Shipping"].label}: {statusCounts.Shipping}
+          </div>
+          <div
+            className={clsx(
+              ORDER_STATUSES["Succeeded"].bg,
+              ORDER_STATUSES["Succeeded"].text,
+              "p-2 rounded-xl text-sm"
+            )}
+          >
+            {ORDER_STATUSES["Succeeded"].label}: {statusCounts.Succeeded}
           </div>
         </div>
         <table className="table-auto w-full border-collapse text-sm">
@@ -248,26 +301,37 @@ const ManageOrder = () => {
                 {/* Trạng thái */}
                 <td className="text-center py-3 px-2">
                   {editingId === el._id ? (
-                    <select
-                      {...register("status")}
-                      className="border border-gray-300 rounded-md py-1 px-2 text-sm w-[120px]"
-                    >
-                      <option value="Cancelled">Cancelled</option>
-                      <option value="Succeeded">Succeeded</option>
-                      <option value="Pending">Pending</option>
-                    </select>
+                    canTransition(el.status, "Pending") ||
+                    canTransition(el.status, "Succeeded") ||
+                    canTransition(el.status, "Cancelled") ? (
+                      <select
+                        {...register("status")}
+                        className="border border-gray-300 rounded-md py-1 px-2 text-sm w-[120px]"
+                      >
+                        {Object.keys(ORDER_STATUSES)
+                          .filter((statusOption) =>
+                            canTransition(el.status, statusOption)
+                          )
+                          .map((statusOption) => (
+                            <option key={statusOption} value={statusOption}>
+                              {ORDER_STATUSES[statusOption].label}
+                            </option>
+                          ))}
+                      </select>
+                    ) : (
+                      <div className="text-sm text-red-600 italic">
+                        Không thể chuyển trạng thái
+                      </div>
+                    )
                   ) : (
                     <span
                       className={clsx(
                         "px-2 py-1 rounded-md text-xs font-medium",
-                        el.status === "Pending" &&
-                          "bg-yellow-100 text-yellow-800",
-                        el.status === "Succeeded" &&
-                          "bg-green-100 text-green-800",
-                        el.status === "Cancelled" && "bg-red-100 text-red-800"
+                        ORDER_STATUSES[el.status]?.bg,
+                        ORDER_STATUSES[el.status]?.text
                       )}
                     >
-                      {el.status}
+                      {ORDER_STATUSES[el.status]?.label || el.status}
                     </span>
                   )}
                 </td>
