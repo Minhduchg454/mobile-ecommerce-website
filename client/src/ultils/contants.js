@@ -372,3 +372,42 @@ export const infoCards = [
     color: "#5ac8fa",
   },
 ];
+
+export const ORDER_STATUSES = {
+  Pending: {
+    label: "Chờ xác nhận",
+    bg: "bg-yellow-100",
+    text: "text-yellow-800",
+  },
+  Confirmed: {
+    label: "Chờ lấy hàng",
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+  },
+  Shipping: {
+    label: "Đang giao",
+    bg: "bg-indigo-100",
+    text: "text-indigo-800",
+  },
+  Succeeded: {
+    label: "Thành công",
+    bg: "bg-green-100",
+    text: "text-green-800",
+  },
+  Cancelled: {
+    label: "Đã hủy",
+    bg: "bg-red-100",
+    text: "text-red-800",
+  },
+};
+
+export const canTransition = (current, next) => {
+  const transitions = {
+    Pending: ["Confirmed", "Cancelled"], // Chờ duyệt → Có thể xác nhận hoặc hủy
+    Confirmed: ["Shipping", "Cancelled"], // Đã xác nhận → Có thể giao hoặc hủy
+    Shipping: ["Succeeded", "Cancelled"], // Đang giao → Có thể hoàn tất hoặc hủy
+    Succeeded: [], // Đã hoàn tất → không được đổi
+    Cancelled: [], // Đã hủy → không được đổi
+  };
+  return transitions[current]?.includes(next);
+};

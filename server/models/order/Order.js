@@ -14,14 +14,7 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: [
-        "Pending",
-        "Succeeded",
-        "Processing",
-        "Shipped",
-        "Delivered",
-        "Cancelled",
-      ], // Gợi ý các trạng thái
+      enum: ["Pending", "Confirmed", "Shipping", "Succeeded", "Cancelled"],
       default: "Pending",
     },
     // Mối quan hệ với Address (Order "Gắn với" Address)

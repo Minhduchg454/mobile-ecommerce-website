@@ -45,20 +45,14 @@ const deleteValuesByVariationHandler = asyncHandler(async (req, res) => {
 const updateTotalStock = async (productId) => {
   try {
     const variations = await ProductVariation.find({ productId });
-
-    if (!variations || variations.length === 0) {
-      await Product.findByIdAndUpdate(productId, { totalStock: 0 });
-      return;
-    }
-
     const totalStock = variations.reduce(
       (sum, v) => sum + (v.stockQuantity || 0),
       0
     );
-
-    await Product.findByIdAndUpdate(productId, { totalStock }, { new: true });
+    const totalSold = variations.reduce((sum, v) => sum + (v.sold || 0), 0);
+    await Product.findByIdAndUpdate(productId, { totalStock, totalSold });
   } catch (error) {
-    console.error("Lỗi cập nhật totalStock:", error);
+    console.error("Lỗi cập nhật thông tin sản phẩm:", error);
   }
 };
 

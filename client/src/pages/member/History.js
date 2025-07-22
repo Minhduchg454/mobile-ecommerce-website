@@ -9,39 +9,18 @@ import Swal from "sweetalert2";
 import path from "../../ultils/path";
 import { showModal } from "../../store/app/appSlice";
 import { toast } from "react-toastify";
+import { ORDER_STATUSES } from "ultils/contants";
 
 import { useDispatch, useSelector } from "react-redux";
 
 const tabs = [
   { label: "Tất cả", value: "" },
   { label: "Chờ xác nhận", value: "Pending" },
+  { label: "Chờ lấy hàng", value: "Confirmed" },
+  { label: "Vận chuyển", value: "Shipping" },
   { label: "Hoàn thành", value: "Succeeded" },
   { label: "Đã hủy", value: "Cancelled" },
 ];
-
-const ORDER_STATUS_DISPLAY = {
-  Pending: {
-    label: "Chờ xác nhận",
-    color: "text-yellow-600",
-    bg: "bg-yellow-100",
-  },
-  Succeeded: {
-    label: "Hoàn thành",
-    color: "text-green-600",
-    bg: "bg-green-100",
-  },
-  Cancelled: {
-    label: "Đã hủy",
-    color: "text-red-600",
-    bg: "bg-red-100",
-  },
-  // fallback
-  default: {
-    label: "Không xác định",
-    color: "text-gray-600",
-    bg: "bg-gray-100",
-  },
-};
 
 const History = ({ navigate, location }) => {
   const [orders, setOrders] = useState(null);
@@ -157,6 +136,7 @@ const History = ({ navigate, location }) => {
       search: createSearchParams({ status: value }).toString(),
     });
   };
+  // console.log("Don hang lay duoc", orders);
 
   return (
     <div className="w-full relative px-4">
@@ -226,16 +206,17 @@ const History = ({ navigate, location }) => {
                   Mã đơn hàng #{el._id}
                 </span>
                 <span className="text-gray-500">
-                  <span className="text-xs">Trạng thái:</span>{" "}
                   {(() => {
-                    const statusInfo =
-                      ORDER_STATUS_DISPLAY[el.status] ||
-                      ORDER_STATUS_DISPLAY.default;
-                    return (
+                    const statusInfo = ORDER_STATUSES[el.status];
+                    return statusInfo ? (
                       <span
-                        className={`px-2 py-1 text-sm rounded-full font-medium ${statusInfo.bg} ${statusInfo.color}`}
+                        className={`px-2 py-1 text-sm rounded-full font-medium ${statusInfo.bg} ${statusInfo.text}`}
                       >
                         {statusInfo.label}
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-sm rounded-full font-medium bg-gray-100 text-gray-600">
+                        Không xác định
                       </span>
                     );
                   })()}
@@ -301,8 +282,13 @@ const History = ({ navigate, location }) => {
               {/* Footer đơn hàng */}
               <div className="flex flex-col border-t-2 text-sm ">
                 <div className="flex justify-between items-center py-2">
-                  <div className="text-sm italic text-gray-500">
-                    Ngày mua: {moment(el.createdAt).format("DD/MM/YYYY")}
+                  <div className="text-sm">
+                    <div>
+                      Ngày mua: {moment(el.createdAt).format("DD/MM/YYYY")}
+                    </div>
+                    <div>
+                      <span>{`Địa chỉ nhận hàng: ${el.shippingAddress}`}</span>
+                    </div>
                   </div>
 
                   <div>
@@ -317,7 +303,7 @@ const History = ({ navigate, location }) => {
                   {el.status === "Pending" && (
                     <div className="flex justify-end items-center">
                       <button
-                        className="border rounded-xl p-2 text-white bg-red-500"
+                        className="border rounded-xl px-4 py-2 text-white bg-red-500"
                         onClick={() => handleCancelOrder(el._id)}
                       >
                         Hủy đơn

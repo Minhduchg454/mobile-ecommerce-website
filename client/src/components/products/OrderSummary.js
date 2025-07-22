@@ -4,6 +4,8 @@ import { MdLocationOn } from "react-icons/md";
 import { FaMoneyCheckAlt } from "react-icons/fa";
 import clsx from "clsx";
 
+import { ORDER_STATUSES } from "ultils/contants";
+
 const OrderSummary = ({ order }) => {
   const {
     customerId,
@@ -71,35 +73,30 @@ const OrderSummary = ({ order }) => {
 
       {/* Tổng thanh toán */}
       <div className="flex justify-end border-t pt-4">
-        <table className="text-right text-md w-1/2">
-          <tbody>
-            <tr>
-              <td className="text-left font-medium">Tổng tiền:</td>
-              <td className="font-bold text-main text-lg">
-                {formatMoney(totalPrice)} VND
-              </td>
-            </tr>
-            <tr>
-              <td className="text-left">Phương thức thanh toán:</td>
-              <td className="capitalize">{paymentMethod.toLowerCase()}</td>
-            </tr>
-            <tr>
-              <td className="text-left">Trạng thái:</td>
-              <td>
-                <span
-                  className={clsx(
-                    "px-2 py-1 rounded-md text-base font-medium inline-block w-fit",
-                    status === "Pending" && "bg-yellow-100 text-yellow-800",
-                    status === "Succeeded" && "bg-green-100 text-green-800",
-                    status === "Cancelled" && "bg-red-100 text-red-800"
-                  )}
-                >
-                  {status}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="text-right text-md w-1/2 space-y-1">
+          <div className="flex justify-between">
+            <span className="text-left font-medium">Tổng tiền:</span>
+            <span className="font-bold text-main text-lg">
+              {formatMoney(totalPrice)} VND
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-left">Phương thức thanh toán:</span>
+            <span className="capitalize">{paymentMethod.toLowerCase()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-left">Trạng thái:</span>
+            <span
+              className={clsx(
+                "px-2 py-1 rounded-md text-base font-medium",
+                ORDER_STATUSES[status]?.bg,
+                ORDER_STATUSES[status]?.text
+              )}
+            >
+              {ORDER_STATUSES[status]?.label || status}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ const ShippingProvider = require("../../models/order/ShippingProvider");
 const OrderDetail = require("../../models/order/OrderDetail");
 const ProductVariation = require("../../models/product/ProductVariation");
 const Product = require("../../models/product/Product");
+const { updateTotalStock } = require("../../ultils/databaseHelpers");
 
 // @desc    Lấy tất cả các đơn hàng
 // @route   GET /api/orders
@@ -214,7 +215,13 @@ exports.createOrder = async (req, res, next) => {
       }
       variation.stockQuantity -= item.quantity;
       variation.sold += item.quantity;
+
       await variation.save();
+
+      if (variation.productId) {
+        await updateTotalStock(variation.productId);
+      }
+
       const newDetail = new OrderDetail({
         productVariationId: item.productVariationId,
         quantity: item.quantity,
@@ -251,7 +258,6 @@ exports.updateOrder = async (req, res, next) => {
       status,
     } = req.body;
 
-    // 1. Tìm Order
     const order = await Order.findById(id);
     if (!order) {
       return res
@@ -259,7 +265,39 @@ exports.updateOrder = async (req, res, next) => {
         .json({ success: false, mes: "Không tìm thấy đơn hàng." });
     }
 
-    // 2. Cập nhật các trường nếu có
+    if (status === "Cancelled" && order.status !== "Cancelled") {
+      const orderDetails = await OrderDetail.find({ orderId: order._id });
+      console.log("Danh sach tung item cua order", orderDetails);
+
+      // Duyệt qua từng sản phẩm để hoàn tồn kho
+      for (const item of orderDetails) {
+        const variation = await ProductVariation.findById(
+          item.productVariationId
+        );
+        if (variation) {
+          variation.stockQuantity += item.quantity;
+          variation.sold = Math.max(variation.sold - item.quantity, 0);
+          await variation.save();
+          if (variation.productId) {
+            await updateTotalStock(variation.productId);
+          }
+        }
+      }
+
+      // Cập nhật trạng thái đơn hàng
+      order.status = "Cancelled";
+      await order.save();
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          message: "Đơn hàng đã bị hủy và tồn kho đã được hoàn lại.",
+          orderId: order._id,
+        },
+      });
+    }
+
+    // Nếu không phải hủy => Cập nhật các trường thông thường
     if (shippingAddress !== undefined) order.shippingAddress = shippingAddress;
     if (shippingProviderId !== undefined)
       order.shippingProviderId = shippingProviderId;
@@ -268,14 +306,12 @@ exports.updateOrder = async (req, res, next) => {
 
     await order.save();
 
-    // 3. Nếu có orderDetails và là mảng thì mới xử lý
+    // Xử lý cập nhật chi tiết đơn hàng nếu có
     if (Array.isArray(orderDetails)) {
-      // Lấy danh sách order detail cũ
       const existingDetails = await OrderDetail.find({ orderId: order._id });
       const existingDetailMap = new Map(
         existingDetails.map((d) => [d._id.toString(), d])
       );
-
       const sentDetailIds = new Set();
 
       for (const detail of orderDetails) {
@@ -290,18 +326,16 @@ exports.updateOrder = async (req, res, next) => {
             sentDetailIds.add(detail._id);
           }
         } else {
-          // Nếu là mới => tạo mới
           const newDetail = new OrderDetail({
             orderId: order._id,
             productVariationId: detail.productVariationId,
             quantity: detail.quantity,
-            price: 0, // có thể cập nhật logic tính giá ở đây nếu cần
+            price: 0,
           });
           await newDetail.save();
         }
       }
 
-      // Xóa các OrderDetail không còn tồn tại trong danh sách gửi lên
       for (const existing of existingDetails) {
         if (!sentDetailIds.has(existing._id.toString())) {
           await existing.deleteOne();
@@ -309,7 +343,6 @@ exports.updateOrder = async (req, res, next) => {
       }
     }
 
-    // 4. Trả kết quả
     res.status(200).json({
       success: true,
       data: {

@@ -236,9 +236,9 @@ const Products = () => {
       </div>
 
       {/* Danh sách sản phẩm */}
-      <div className="md:w-main m-auto my-4 gap-4 flex flex-wrap">
+      <div className="lg:w-main m-auto my-4 gap-6 flex flex-wrap">
         {products.map((el) => (
-          <div className="mr-6" key={el._id}>
+          <div className="" key={el._id}>
             <ProductCard
               pid={el.productId._id}
               pvid={el._id}
