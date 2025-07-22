@@ -11,24 +11,73 @@ import { ResultTypeEnum } from "./ResultTypeEnum";
 import { apiSendMessageToChatbot } from "apis/chatbot";
 const BASE_URL = "http://localhost:3000/";
 
+function formatProductSpecs(text) {
+  const lines = text
+    .split(/\r?\n|(?=\*\*)/g)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  let result = "";
+  let currentProduct = "";
+  let details = [];
+
+  const flushProduct = () => {
+    if (currentProduct) {
+      result += `<div style="margin-bottom: 1rem;">
+        <h4 style="margin: 0; font-weight: bold;">${currentProduct}</h4>
+        <ul style="margin-top: 0.5rem;">${details
+          .map((d) => `<li>${d}</li>`)
+          .join("")}</ul>
+      </div>`;
+      currentProduct = "";
+      details = [];
+    }
+  };
+
+  for (const line of lines) {
+    if (line.startsWith("**") && line.endsWith(":**")) {
+      flushProduct();
+      currentProduct = line.replace(/\*\*/g, "").replace(/:$/, "");
+    } else if (line.startsWith("* **")) {
+      const cleaned = line.replace(/^\* \*\*/, "").replace(/\*\*:/, ":");
+      details.push(cleaned);
+    } else {
+      flushProduct();
+      result += `<p>${line}</p>`;
+    }
+  }
+
+  flushProduct();
+
+  return result;
+}
+
 function addDomainToRelativeLinks(text) {
   return text.replace(
-    /(?<!https?:\/\/)(\b(?:dien-thoai|phu-kien-dien-thoai)[^\s)]+)/g,
+    /\b(?:dien-thoai|phu-kien-dien-thoai)[^\s)"]+/g,
     (match) => {
-      // Nếu link đã chứa BASE_URL thì giữ nguyên
-      if (match.startsWith(BASE_URL)) return match;
+      // Nếu đã là URL đầy đủ thì không thêm BASE_URL nữa
+      if (match.startsWith("http://") || match.startsWith("https://"))
+        return match;
       return `${BASE_URL}${match}`;
     }
   );
 }
 
+function removeDuplicateBaseUrl(text) {
+  const doubleBase = BASE_URL + BASE_URL;
+  return text.replaceAll(doubleBase, BASE_URL);
+}
+
 function formatTextWithLinks(text) {
   const withFullLinks = addDomainToRelativeLinks(text);
-  return withFullLinks.replace(
-    /(https?:\/\/[^\s]+)/g,
-    (url) =>
-      `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">Xem chi tiết</a>`
-  );
+
+  // Không thay link đã nằm trong <a href="...">
+  return withFullLinks.replace(/(?<!href=")(https?:\/\/[^\s"<]+)/g, (url) => {
+    // Nếu đã bọc trong thẻ <a> rồi thì giữ nguyên
+    if (text.includes(`href="${url}`)) return url;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">Xem chi tiết</a>`;
+  });
 }
 
 function Chatbot() {
@@ -72,7 +121,9 @@ function Chatbot() {
           return {
             role: "bot",
             type: ResultTypeEnum.TEXT,
-            text: formatTextWithLinks(item.text),
+            text: formatProductSpecs(
+              removeDuplicateBaseUrl(formatTextWithLinks(item.text))
+            ),
           };
         }
       });
