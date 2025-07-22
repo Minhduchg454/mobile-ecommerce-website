@@ -73,7 +73,7 @@ const searchProduct = async (query) => {
       ],
     };
     const fuse = new Fuse(allProductVariations, options);
-    const results = fuse.search(query);
+    const results = fuse.search(query).slice(0, 6);
     console.log("origin search results: ", results);
 
     return results.map((result) => {
