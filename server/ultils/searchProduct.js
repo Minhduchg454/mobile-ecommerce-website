@@ -1,6 +1,7 @@
 const getCategoriesWithAllChild = require("./getCategoriesWithAllChild");
 const Fuse = require("fuse.js");
 const he = require("he");
+const { merge } = require("../routes/user");
 
 const searchProduct = async (query) => {
   try {
@@ -11,6 +12,17 @@ const searchProduct = async (query) => {
       const products = category.products || [];
 
       for (const product of products) {
+        const secondSpecifications = (product.valueOfSpecifications || []).map(
+          (v) => {
+            // console.log("v", v);
+            return {
+              type: v.specificationTypeId?.typeSpecifications || "Không rõ",
+              value: v.value,
+              unitOfMeasure: v.specificationTypeId?.unitOfMeasure,
+            };
+          }
+        );
+        // console.log("secondSpecifications", secondSpecifications);
         const variations = Array.isArray(product.variations)
           ? product.variations
           : [];
@@ -21,6 +33,7 @@ const searchProduct = async (query) => {
               return {
                 type: v.specificationTypeId?.typeSpecifications || "Không rõ",
                 value: v.value,
+                unitOfMeasure: v.specificationTypeId?.unitOfMeasure,
               };
             }
           );
@@ -48,8 +61,13 @@ const searchProduct = async (query) => {
             price: variation.price,
             image: Array.isArray(variation.images) ? variation.images[0] : null,
             specifications,
+            secondSpecifications,
+            stockQuantity: variation.stockQuantity,
+            rating: variation.rating,
+            totalRating: variation.totalRating,
           });
         }
+        // console.log("allProductVariations", allProductVariations);
       }
     }
 
@@ -74,11 +92,24 @@ const searchProduct = async (query) => {
     };
     const fuse = new Fuse(allProductVariations, options);
     const results = fuse.search(query).slice(0, 6);
-    console.log("origin search results: ", results);
+    // console.log("origin search results: ", results);
 
     return results.map((result) => {
       const item = result.item;
-      console.log("🔍 item._id typeof:", typeof item._id, item._id);
+      // console.log("🔍 item._id typeof:", typeof item._id, item._id);
+      const mergedSpecifications = [
+        ...(item.specifications || []),
+        ...(item.secondSpecifications || []),
+      ].reduce((acc, spec) => {
+        acc.set(spec.type, {
+          name: spec.type,
+          value: spec.value,
+          unitOfMeasure: spec.unitOfMeasure,
+        });
+        return acc;
+      }, new Map());
+
+      const uniqueSpecifications = Array.from(mergedSpecifications.values());
 
       return {
         id: item.varationId ? item.varationId.toString() : null,
@@ -88,10 +119,23 @@ const searchProduct = async (query) => {
         category: item.categoryName,
         description: item.descriptionText,
         image: item.image || null,
-        specifications: (item.specifications || []).map((spec) => ({
-          name: spec.type,
-          value: spec.value,
-        })),
+
+        // specifications: (item.specifications || []).map((spec) => ({
+        //   name: spec.type,
+        //   value: spec.value,
+        //   unitOfMeasure: spec.unitOfMeasure,
+        // })),
+
+        // secondSpecifications: (item.secondSpecifications || []).map((spec) => ({
+        //   name: spec.type,
+        //   value: spec.value,
+        //   unitOfMeasure: spec.unitOfMeasure,
+        // })),
+        specifications: uniqueSpecifications,
+
+        stockQuantity: item.stockQuantity,
+        rating: item.rating,
+        totalRating: item.totalRating,
       };
     });
   } catch (err) {

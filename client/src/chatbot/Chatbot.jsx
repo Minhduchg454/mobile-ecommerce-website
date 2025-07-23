@@ -11,6 +11,63 @@ import { ResultTypeEnum } from "./ResultTypeEnum";
 import { apiSendMessageToChatbot } from "apis/chatbot";
 const BASE_URL = "http://localhost:3000/";
 
+function parseMarkdownStructuredHtml(text) {
+  // 1. Xử lý khoảng trắng * khoảng trắng → xuống dòng dạng danh sách
+  text = text.replace(/\s\*\s/g, "\n- ");
+
+  // 2. Xử lý **key:** value → in đậm `key`
+  text = text.replace(/\*\*(.+?)\*\*:/g, "<strong>$1:</strong>");
+
+  // 3. Xử lý các **tiêu đề** đơn thuần (chỉ có **...** không có dấu :) => h4
+  text = text.replace(/(?:^|\n)\*\*(.+?)\*\*(?:\n|$)/g, "\n<h4>$1</h4>");
+
+  // 4. Tách thành dòng để phân biệt gạch đầu dòng vs. đoạn thường
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  let html = "";
+  let listItems = [];
+
+  const flushList = () => {
+    if (listItems.length) {
+      html += `<ul style="margin-top: 0.5rem; padding-left: 1.2rem;">${listItems
+        .map((item) => `<li>${item}</li>`)
+        .join("")}</ul>`;
+      listItems = [];
+    }
+  };
+
+  for (const line of lines) {
+    if (line.startsWith("- ")) {
+      listItems.push(line.slice(2));
+    } else if (line.startsWith("<h4>")) {
+      flushList();
+      html += line;
+    } else {
+      flushList();
+      html += `<p>${line}</p>`;
+    }
+  }
+
+  flushList();
+  return html;
+}
+
+// 🧪 Dữ liệu test:
+const sampleText = `
+Điện thoại Samsung Galaxy A55 - Black 8GB/256GB có các thông số chi tiết như sau: * **Tên sản phẩm:** Samsung Galaxy A55 - Black 8GB/256GB * **Mô tả:** Phân khúc tầm trung, pin khỏe, màn hình AMOLED sắc nét. * **Giá:** 9.900.000₫ * **Thông số kỹ thuật:** * RAM: 8GB * Bộ nhớ trong: 256GB * Màu sắc: Đen * **Link sản phẩm:** Xem chi tiết Bạn có muốn tìm hiểu thêm về sản phẩm nào khác không?
+`;
+
+const parsedHTML = parseMarkdownStructuredHtml(sampleText);
+
+console.log("✅ HTML đầu ra:");
+console.log(parsedHTML);
+
+// Nếu bạn chạy trong trình duyệt, có thể chèn vào DOM thử:
+// document.body.innerHTML = `<div style="padding:2rem;">${parsedHTML}</div>`;
+
 function formatProductSpecs(text) {
   const lines = text
     .split(/\r?\n|(?=\*\*)/g)
@@ -121,7 +178,10 @@ function Chatbot() {
           return {
             role: "bot",
             type: ResultTypeEnum.TEXT,
-            text: formatProductSpecs(
+            // text: formatProductSpecs(
+            //   removeDuplicateBaseUrl(formatTextWithLinks(item.text))
+            // ),
+            text: parseMarkdownStructuredHtml(
               removeDuplicateBaseUrl(formatTextWithLinks(item.text))
             ),
           };

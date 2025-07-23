@@ -74,6 +74,12 @@ productSchema.virtual("variations", {
   foreignField: "productId",
 });
 
+productSchema.virtual("valueOfSpecifications", {
+  ref: "ValueOfSpecifications",
+  localField: "_id",
+  foreignField: "productId",
+});
+
 productSchema.set("toObject", { virtuals: true });
 productSchema.set("toJSON", { virtuals: true });
 
