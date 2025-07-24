@@ -267,7 +267,6 @@ exports.updateOrder = async (req, res, next) => {
 
     if (status === "Cancelled" && order.status !== "Cancelled") {
       const orderDetails = await OrderDetail.find({ orderId: order._id });
-      console.log("Danh sach tung item cua order", orderDetails);
 
       // Duyệt qua từng sản phẩm để hoàn tồn kho
       for (const item of orderDetails) {

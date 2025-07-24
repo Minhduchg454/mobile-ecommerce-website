@@ -82,7 +82,7 @@ const createProductVariation = asyncHandler(async (req, res) => {
 const getProductVariations = asyncHandler(async (req, res) => {
   let query = ProductVariation.find();
 
-  // Lọc theo các trường trong biến thể
+  // --- FILTER ---
   const filter = {};
   if (req.query.price) {
     const priceQuery = req.query.price;
@@ -98,16 +98,15 @@ const getProductVariations = asyncHandler(async (req, res) => {
     };
   }
 
-  // Gắn filter vào query
-  query = query.find(filter);
-
-  // Thêm ở đầu sau khi khởi tạo filter
   if (req.query.productVariationIds) {
     const ids = req.query.productVariationIds.split(",");
     filter._id = { $in: ids };
   }
 
-  // Populate
+  // Gắn filter
+  query = query.find(filter);
+
+  // --- POPULATE ---
   query = query.populate({
     path: "productId",
     select:
@@ -118,22 +117,42 @@ const getProductVariations = asyncHandler(async (req, res) => {
     ],
   });
 
-  const variations = await query.exec();
-  let finalResult = variations;
+  let results = await query.exec();
 
+  // --- BỔ SUNG LỌC CẤP 2 ---
   if (req.query.categoryId) {
-    finalResult = finalResult.filter(
+    results = results.filter(
       (v) => v.productId?.categoryId?._id?.toString() === req.query.categoryId
     );
   }
 
   if (req.query.brandId) {
-    finalResult = finalResult.filter(
+    results = results.filter(
       (v) => v.productId?.brandId?._id?.toString() === req.query.brandId
     );
   }
 
-  // Xử lý sort
+  if (req.query.brandName) {
+    results = results.filter((v) =>
+      v.productId?.brandId?.brandName
+        ?.toLowerCase()
+        .includes(req.query.brandName.toLowerCase())
+    );
+  }
+
+  if (req.query.q) {
+    const keyword = req.query.q.toLowerCase();
+    results = results.filter(
+      (v) =>
+        v.productId?.productName &&
+        v.productId.productName.toLowerCase().includes(keyword)
+    );
+  }
+
+  // Lọc bỏ các biến thể không có productId
+  results = results.filter((v) => v.productId !== null);
+
+  // --- SORT ---
   const sortOption = req.query.sort;
   if (sortOption) {
     const jsSortMap = {
@@ -153,35 +172,27 @@ const getProductVariations = asyncHandler(async (req, res) => {
 
     const jsSortFunc = jsSortMap[sortOption];
     if (jsSortFunc) {
-      finalResult.sort(jsSortFunc);
+      results.sort(jsSortFunc);
     }
   }
-  //Loc theo thuong hieu
-  if (req.query.brandName) {
-    finalResult = finalResult.filter((v) =>
-      v.productId?.brandId?.brandName
-        ?.toLowerCase()
-        .includes(req.query.brandName.toLowerCase())
-    );
-  }
 
-  // Lọc theo tên sản phẩm nếu có query.q
-  if (req.query.q) {
-    const keyword = req.query.q.toLowerCase();
-    finalResult = finalResult.filter(
-      (v) =>
-        v.productId?.productName &&
-        v.productId.productName.toLowerCase().includes(keyword)
-    );
-  }
+  // --- PHÂN TRANG ---
 
-  // Lọc bỏ các biến thể không có productId
-  finalResult = finalResult.filter((v) => v.productId !== null);
+  const page = parseInt(req.query.page) || 1;
+  const limit =
+    parseInt(req.query.limit) || parseInt(process.env.LIMIT_PRODUCTS) || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedResults = results.slice(startIndex, endIndex);
 
   res.json({
     success: true,
-    count: finalResult.length,
-    variations: finalResult,
+    total: results.length,
+    page,
+    limit,
+    count: paginatedResults.length,
+    variations: paginatedResults,
   });
 });
 

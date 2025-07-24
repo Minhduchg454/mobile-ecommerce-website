@@ -1,7 +1,6 @@
 import React from "react";
 import { formatMoney } from "ultils/helpers";
 import { MdLocationOn } from "react-icons/md";
-import { FaMoneyCheckAlt } from "react-icons/fa";
 import clsx from "clsx";
 
 import { ORDER_STATUSES } from "ultils/contants";

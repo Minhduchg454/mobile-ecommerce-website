@@ -22,7 +22,7 @@ const ProductCard = ({
   rating,
   productName,
   thumb,
-  pvid, // chính là _id của biến thể (variant)
+  pvid,
   slugCategory,
   slug,
   onAddToCart,
@@ -117,7 +117,7 @@ const ProductCard = ({
   return (
     <div
       onClick={handleNavigate}
-      className="card-default cursor-pointer w-[230px] h-[350px] p-3 flex flex-col justify-between items-center overflow-hidden"
+      className="card-default cursor-pointer w-[245px] h-[350px] p-3 flex flex-col justify-between items-center overflow-hidden"
     >
       {/* Ảnh sản phẩm */}
       <div className="w-full h-[200px] flex justify-center items-center">
@@ -140,7 +140,9 @@ const ProductCard = ({
           {renderStarFromNumber(rating, 14)?.map((el, index) => (
             <span key={index}>{el}</span>
           ))}
-          <span className="text-gray-500 ml-2">{`Đã bán ${totalSold}`}</span>
+          <span className="text-gray-500 ml-2">{`Đã bán ${
+            totalSold ?? 0
+          }`}</span>
         </span>
         <span className="text-main font-semibold mt-1">
           {price ? `${formatMoney(price)} VNĐ` : "Liên hệ"}

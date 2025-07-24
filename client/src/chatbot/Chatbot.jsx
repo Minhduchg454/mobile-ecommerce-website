@@ -62,8 +62,8 @@ const sampleText = `
 
 const parsedHTML = parseMarkdownStructuredHtml(sampleText);
 
-console.log("✅ HTML đầu ra:");
-console.log(parsedHTML);
+// console.log("✅ HTML đầu ra:");
+// console.log(parsedHTML);
 
 // Nếu bạn chạy trong trình duyệt, có thể chèn vào DOM thử:
 // document.body.innerHTML = `<div style="padding:2rem;">${parsedHTML}</div>`;
@@ -155,7 +155,7 @@ function Chatbot() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    console.log("Hi 1");
+
     const userMessage = { role: "user", text: input.trim() };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");

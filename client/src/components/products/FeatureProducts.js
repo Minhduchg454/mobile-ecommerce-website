@@ -6,7 +6,7 @@ const FeatureProducts = ({
   title = "SẢN PHẨM",
   sort = "",
   query = {},
-  categorySlug = "", // ✅ Dùng slug truyền vào
+  categorySlug = "",
   limit = 4,
 }) => {
   const [products, setProducts] = useState([]);
@@ -28,14 +28,12 @@ const FeatureProducts = ({
       if (res.success) {
         let variations = res.variations.filter((v) => v.productId);
 
-        // ✅ Lọc theo categorySlug nếu có
         if (categorySlug) {
           variations = variations.filter(
             (v) => v.productId?.categoryId?.slug === categorySlug
           );
         }
 
-        // ✅ Giữ lại 1 biến thể duy nhất cho mỗi productId
         const uniqueMap = new Map();
         for (let v of variations) {
           const pid = v.productId._id;

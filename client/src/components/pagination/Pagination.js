@@ -1,37 +1,36 @@
-import React, { memo } from "react"
-import usePagination from "hooks/usePagination"
-import { PagiItem } from "components"
-import { useSearchParams } from "react-router-dom"
+import React, { memo } from "react";
+import usePagination from "hooks/usePagination";
+import { PagiItem } from "components";
+import { useSearchParams } from "react-router-dom";
 
 const Pagination = ({ totalCount }) => {
-  const [params] = useSearchParams()
-  const pagination = usePagination(totalCount, +params.get("page") || 1)
+  const [params] = useSearchParams();
+  const pagination = usePagination(totalCount, +params.get("page") || 1);
 
   const range = () => {
-    const currentPage = +params.get("page")
-    const pageSize = +process.env.REACT_APP_LIMIT || 10
-    const start = Math.min((currentPage - 1) * pageSize + 1, totalCount)
-    const end = Math.min(currentPage * pageSize, totalCount)
+    const currentPage = +params.get("page");
+    const pageSize = +process.env.REACT_APP_LIMIT || 10;
+    const start = Math.min((currentPage - 1) * pageSize + 1, totalCount);
+    const end = Math.min(currentPage * pageSize, totalCount);
 
-    return `${start} - ${end}`
-  }
+    return `${start} - ${end}`;
+  };
 
-  // 3 => 21 - 30
   return (
     <div className="flex w-full justify-between items-center">
       {!+params.get("page") ? (
-        <span className="text-sm hidden lg:inline-block italic">{`Show products ${Math.min(
+        <span className="text-sm hidden lg:inline-block italic">{`Hiện sản phẩm ${Math.min(
           totalCount,
           1
         )} - ${Math.min(
           +process.env.REACT_APP_LIMIT,
           totalCount
-        )} of ${totalCount}`}</span>
+        )} trong ${totalCount}`}</span>
       ) : (
         ""
       )}
       {+params.get("page") ? (
-        <span className="text-sm hidden lg:inline-block italic">{`Show products ${range()} of ${totalCount}`}</span>
+        <span className="text-sm hidden lg:inline-block italic">{`Hiện sản phẩm ${range()} trong ${totalCount}`}</span>
       ) : (
         ""
       )}
@@ -41,7 +40,7 @@ const Pagination = ({ totalCount }) => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default memo(Pagination)
+export default memo(Pagination);
