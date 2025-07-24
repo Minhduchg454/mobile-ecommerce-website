@@ -12,20 +12,23 @@ import {
   SelectableList,
 } from "../../components";
 import {
-  apiGetProductVariations,
+  apiGetProducts,
   apiGetAllProductCategories,
   apiGetBrands,
 } from "../../apis";
 import { sorts, priceRanges } from "../../ultils/contants";
 
+const LIMIT = 10; // số sản phẩm mỗi trang
+
 const Products = () => {
   const [params, setSearchParams] = useSearchParams();
-  const { category } = useParams(); // slug danh mục từ URL
+  const { category } = useParams();
   const [categoryId, setCategoryId] = useState(null);
   const [categoryName, setCategoryName] = useState("");
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
 
   const banner1 = [
     require("assets/banner-iphone.webp"),
@@ -57,7 +60,7 @@ const Products = () => {
           setCategoryId(matchedCategory._id);
           setCategoryName(matchedCategory.productCategoryName);
         } else {
-          setCategoryId(null); // không có danh mục thì lấy toàn bộ
+          setCategoryId(null);
           setCategoryName("Tất cả sản phẩm");
         }
       }
@@ -78,13 +81,13 @@ const Products = () => {
       queryObject.categoryId = categoryId;
     }
 
-    // Chuyển đổi từ `from/to` thành price[gte]/price[lte]
+    // Lọc giá
     if (queryObject.from) {
-      queryObject["price[gte]"] = queryObject.from;
+      queryObject["minPrice[gte]"] = queryObject.from;
       delete queryObject.from;
     }
     if (queryObject.to) {
-      queryObject["price[lte]"] = queryObject.to;
+      queryObject["minPrice[lte]"] = queryObject.to;
       delete queryObject.to;
     }
 
@@ -92,7 +95,12 @@ const Products = () => {
       queryObject.q = queries.q;
     }
 
-    // Xóa các trường rỗng hoặc không hợp lệ
+    // Xử lý phân trang
+    const page = Number(params.get("page")) || 1;
+    queryObject.page = page;
+    queryObject.limit = LIMIT;
+
+    // Xoá field rỗng
     Object.keys(queryObject).forEach((key) => {
       if (
         !queryObject[key] ||
@@ -103,20 +111,10 @@ const Products = () => {
       }
     });
 
-    const res = await apiGetProductVariations(queryObject);
-
+    const res = await apiGetProducts(queryObject);
     if (res.success) {
-      const filtered = res.variations.filter((item) => item.productId);
-
-      const uniqueProductsMap = new Map();
-      for (let item of filtered) {
-        const pid = item.productId._id;
-        if (!uniqueProductsMap.has(pid)) {
-          uniqueProductsMap.set(pid, item);
-        }
-      }
-
-      setProducts([...uniqueProductsMap.values()]);
+      setProducts(res.products);
+      setTotal(res.total);
     }
   };
 
@@ -129,6 +127,7 @@ const Products = () => {
     return () => clearTimeout(timeout);
   }, [params, categoryId]);
 
+  // Xử lý xóa param rỗng `q=`
   useEffect(() => {
     const q = params.get("q");
     if (q === "") {
@@ -137,6 +136,8 @@ const Products = () => {
       setSearchParams(createSearchParams(current));
     }
   }, [params]);
+
+  const page = Number(params.get("page")) || 1;
 
   return (
     <div className="w-full p-4">
@@ -237,26 +238,40 @@ const Products = () => {
 
       {/* Danh sách sản phẩm */}
       <div className="lg:w-main m-auto my-4 gap-6 flex flex-wrap">
-        {products.map((el) => (
-          <div className="" key={el._id}>
-            <ProductCard
-              pid={el.productId._id}
-              pvid={el._id}
-              price={el.price}
-              thumb={el.productId.thumb || el.images?.[0]}
-              slug={el.productId.slug}
-              slugCategory={el.productId.categoryId?.slug}
-              productName={el.productId.productName}
-              rating={el.productId.rating || 0}
-              totalSold={el.productId.totalSold || 0}
-            />
-          </div>
-        ))}
+        {products.map((el) => {
+          // Tìm biến thể có giá nhỏ nhất
+          const cheapestVariation = el.variations?.reduce((prev, curr) =>
+            curr.price < prev.price ? curr : prev
+          );
+
+          return (
+            <div className="" key={el._id}>
+              <ProductCard
+                pvid={cheapestVariation?._id}
+                price={cheapestVariation?.price || el.minPrice}
+                thumb={el.thumb}
+                slug={el.slug}
+                slugCategory={el.categoryId?.slug}
+                productName={el.productName}
+                rating={el.rating || 0}
+                totalSold={el.totalSold || 0}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Phân trang */}
       <div className="w-main m-auto my-4 flex justify-end">
-        <Pagination totalCount={products?.length || 0} />
+        <Pagination
+          totalCount={total}
+          pageSize={LIMIT}
+          currentPage={page}
+          onPageChange={(newPage) => {
+            const current = Object.fromEntries([...params.entries()]);
+            setSearchParams(createSearchParams({ ...current, page: newPage }));
+          }}
+        />
       </div>
 
       <div className="w-full h-[100px]" />

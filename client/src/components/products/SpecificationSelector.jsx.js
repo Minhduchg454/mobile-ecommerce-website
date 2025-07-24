@@ -42,7 +42,6 @@ const SpecificationSelector = ({
                 <div key={specId} className="relative">
                   <label className="text-sm font-medium block mb-1">
                     {spec?.typeSpecifications}
-                    {spec?.unitOfMeasure}
                   </label>
                   <div className="relative">
                     <input
