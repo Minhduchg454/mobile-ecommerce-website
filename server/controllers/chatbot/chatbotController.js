@@ -9,7 +9,7 @@ exports.getResponse = async (req, res) => {
   if (!message) {
     return res.status(400).json({ error: "Message is required." });
   }
-  console.log(req.body);
+  // console.log(req.body);
   let contents = prepareContents(message, history);
   const responseContent = [];
 
@@ -46,10 +46,10 @@ exports.getResponse = async (req, res) => {
           continue; // QUAN TRỌNG
         } else {
           contents.push(response.candidates[0].content); // ghi nhận model gọi hàm
-          console.log(
-            "response.candidates[0].content",
-            response.candidates[0].content
-          );
+          // console.log(
+          //   "response.candidates[0].content",
+          //   response.candidates[0].content
+          // );
           contents.push(buildFunctionResponse(toolCall.name, result)); // trả kết quả
           continue; // QUAN TRỌNG
         }

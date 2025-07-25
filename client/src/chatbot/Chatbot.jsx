@@ -9,6 +9,11 @@ import ProductCard from "./component/ProductCard";
 
 import { ResultTypeEnum } from "./ResultTypeEnum";
 import { apiSendMessageToChatbot } from "apis/chatbot";
+import { marked } from "marked";
+
+const markdown = "**Xin chào** bạn!";
+const html = marked(markdown);
+console.log("html", html);
 const BASE_URL = "http://localhost:3000/";
 
 function parseMarkdownStructuredHtml(text) {
@@ -55,12 +60,148 @@ function parseMarkdownStructuredHtml(text) {
   return html;
 }
 
+function convertMarkdownToHTML(markdown) {
+  const lines = markdown.split("\n");
+
+  let html = "";
+  let insideList = false;
+
+  for (let line of lines) {
+    line = line.trim();
+
+    // Tiêu đề sản phẩm (định dạng **1. Tên sản phẩm**)
+    if (/^\*\*\d+\..+\*\*$/.test(line)) {
+      const title = line.replace(/\*\*/g, "");
+      if (insideList) {
+        html += "</ul>";
+        insideList = false;
+      }
+      html += `<h4 style="margin-top: 1rem;">${title}</h4>`;
+    }
+
+    // Gạch đầu dòng dạng thông tin: * **key:** value
+    else if (/^\*\s+\*\*.+?:\*\*/.test(line)) {
+      const cleaned = line
+        .replace(/^\*\s+/, "") // bỏ dấu *
+        .replace(/\*\*(.+?):\*\*/g, "<strong>$1:</strong>"); // in đậm key
+      if (!insideList) {
+        html += '<ul style="padding-left:1.2rem;">';
+        insideList = true;
+      }
+      html += `<li>${cleaned}</li>`;
+    }
+
+    // Link markdown: [text](url)
+    else if (/\[.+?\]\(.+?\)/.test(line)) {
+      const converted = line.replace(
+        /\[(.+?)\]\((.+?)\)/g,
+        '<a href="$2" target="_blank">$1</a>'
+      );
+      html += `<p>${converted}</p>`;
+    }
+
+    // Các dòng khác
+    else if (line) {
+      if (insideList) {
+        html += "</ul>";
+        insideList = false;
+      }
+      html += `<p>${line}</p>`;
+    }
+  }
+
+  if (insideList) html += "</ul>";
+
+  return html;
+}
+
 // 🧪 Dữ liệu test:
 const sampleText = `
 Điện thoại Samsung Galaxy A55 - Black 8GB/256GB có các thông số chi tiết như sau: * **Tên sản phẩm:** Samsung Galaxy A55 - Black 8GB/256GB * **Mô tả:** Phân khúc tầm trung, pin khỏe, màn hình AMOLED sắc nét. * **Giá:** 9.900.000₫ * **Thông số kỹ thuật:** * RAM: 8GB * Bộ nhớ trong: 256GB * Màu sắc: Đen * **Link sản phẩm:** Xem chi tiết Bạn có muốn tìm hiểu thêm về sản phẩm nào khác không?
 `;
 
-const parsedHTML = parseMarkdownStructuredHtml(sampleText);
+const sampleText2 = `
+Dưới đây là một số sản phẩm Samsung màu xanh mà bạn có thể quan tâm:
+
+**1. Samsung galaxy a55 - Xanh 12/128**
+*   **Giá:** 8.300.000₫
+*   **Mô tả:** Nhỏ gọn, trẻ trung, năng động
+*   **RAM:** 12GB
+*   **Bộ nhớ trong:** 128GB
+*   **Màu sắc:** Xanh
+*   **Hệ điều hành:** Android 14
+*   **Link sản phẩm:** [https://cuahangdientu.com/dien-thoai/samsung-galaxy-a55/?code=68714619d39eff05f032c6ee](https://cuahangdientu.com/dien-thoai/samsung-galaxy-a55/?code=68714619d39eff05f032c6ee)
+*   *Sản phẩm này hiện đang hết hàng.*
+
+**2. Ốp lưng dẻo cao cấp samsung s25 - Dẻo**
+*   **Giá:** 456.000₫
+*   **Mô tả:** Bảo vệ vượt trội
+*   **Màu sắc:** Xanh
+*   **Link sản phẩm:** [https://cuahangdientu.com/phu-kien-dien-thoai/op-lung-deo-cao-cap-samsung-s25/?code=687f5d85703ad62c06905c15](https://cuahangdientu.com/phu-kien-dien-thoai/op-lung-deo-cao-cap-samsung-s25/?code=687f5d85703ad62c06905c15)
+
+Bạn có muốn xem chi tiết sản phẩm nào không? Hoặc bạn có muốn tìm kiếm sản phẩm Samsung màu xanh khác không?
+`;
+
+const sampleText3 = `
+"Đã tìm thấy 3 sản phẩm Samsung cho bạn:
+
+**1. Samsung galaxy a55 - Black 8/256**
+* Giá: 8.500.000₫
+* Mô tả: Nhỏ gọn, trẻ trung, năng động
+* Đánh giá: 5/5
+* Số lượng còn lại: 2
+* Link sản phẩm: https://res.cloudinary.com/dedyoxsln/image/upload/v1752254826/cuahangdientu/gxmr0narqp6yoccxhasr.jpg
+* Thông số kỹ thuật:
+    * RAM: 8GB
+    * Color: Black
+    * Internal Storage: 256GB
+    * Operating System: Android 14
+    * Processor: Exynos 1480 8 nhân
+    * Screen Size: 6.6"
+    * Camera (Front): 32 MP
+    * Screen Resolution: Full HD+
+    * Camera (Rear): Chính 50 MP & Phụ 12 MP, 5 MP
+    * Graphics Card: MD Titan 1WGP
+    * Material: Khung kim loại & Mặt lưng kính
+    * Weight: 0,216kg
+    * Battery Capacity: 5000 mAh
+    * Dimensions: Dài 161.1 mm - Ngang 77.4 mm - Dày 8.2 mm
+
+**2. Samsung galaxy a55 - Xanh 12/128**
+* Giá: 8.300.000₫
+* Mô tả: Nhỏ gọn, trẻ trung, năng động
+* Đánh giá: 4/5
+* Số lượng còn lại: 0
+* Link sản phẩm: https://res.cloudinary.com/dedyoxsln/image/upload/v1752253976/cuahangdientu/bsbkks4tjbmxg9b5fslj.jpg
+* Thông số kỹ thuật:
+    * RAM: 12GB
+    * Internal Storage: 128GB
+    * Color: Xanh
+    * Operating System: Android 14
+    * Processor: Exynos 1480 8 nhân
+    * Screen Size: 6.6"
+    * Camera (Front): 32 MP
+    * Screen Resolution: Full HD+
+    * Camera (Rear): Chính 50 MP & Phụ 12 MP, 5 MP
+    * Graphics Card: MD Titan 1WGP
+    * Material: Khung kim loại & Mặt lưng kính
+    * Weight: 0,216kg
+    * Battery Capacity: 5000 mAh
+    * Dimensions: Dài 161.1 mm - Ngang 77.4 mm - Dày 8.2 mm
+
+**3. Ốp lưng dẻo cao cấp samsung s25 - Dẻo**
+* Giá: 456.000₫
+* Mô tả: Bảo vệ vượt trội
+* Đánh giá: 0/5
+* Số lượng còn lại: 9
+* Link sản phẩm: https://res.cloudinary.com/dedyoxsln/image/upload/v1753177477/cuahangdientu/dtc4jvi2wvzw73fstjn5.webp
+* Thông số kỹ thuật:
+    * Color: Xanh
+
+Bạn có muốn xem chi tiết sản phẩm nào không?"
+`;
+
+const parsedHTML = convertMarkdownToHTML(sampleText2);
 
 console.log("✅ HTML đầu ra:");
 console.log(parsedHTML);
@@ -143,6 +284,8 @@ function Chatbot() {
   const [open, setOpen] = useState(false);
   const bottomRef = useRef(null);
   const [showIntro, setShowIntro] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     setMessages([
       { role: "bot", text: "Chào mừng bạn đến với cửa hàng FONE!" },
@@ -159,13 +302,14 @@ function Chatbot() {
     const userMessage = { role: "user", text: input.trim() };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setIsLoading(true); // ⏳ Bắt đầu loading
 
     try {
       const res = await apiSendMessageToChatbot({
         message: userMessage.text,
         history: messages,
       });
-      console.log(res.responseContent);
+      console.log("res.responseContent", res.responseContent);
       const newBotMessages = res.responseContent.map((item) => {
         if (item.type === ResultTypeEnum.DISPLAY) {
           return {
@@ -181,7 +325,7 @@ function Chatbot() {
             // text: formatProductSpecs(
             //   removeDuplicateBaseUrl(formatTextWithLinks(item.text))
             // ),
-            text: parseMarkdownStructuredHtml(
+            text: marked(
               removeDuplicateBaseUrl(formatTextWithLinks(item.text))
             ),
           };
@@ -196,6 +340,8 @@ function Chatbot() {
         text: "Xin lỗi, đã có lỗi xảy ra.",
       };
       setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false); // ✅ Kết thúc loading
     }
   };
 
@@ -294,6 +440,33 @@ function Chatbot() {
                 )}
               </div>
             ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-blue-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  <span>Đang phản hồi...</span>
+                </div>
+              </div>
+            )}
             <div ref={bottomRef}></div>
           </div>
 

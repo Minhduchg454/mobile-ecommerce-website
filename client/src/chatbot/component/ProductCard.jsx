@@ -1,11 +1,7 @@
 function ProductCard({ product }) {
   return (
     <div className="border rounded-lg shadow-sm hover:shadow-lg overflow-hidden bg-white">
-      <a
-        href={`http://localhost:3000/${product.link}`}
-        target="_blank"
-        rel="noreferrer"
-      >
+      <a href={`${product.link}`} target="_blank" rel="noreferrer">
         <img
           src={product.image}
           alt={product.name}
