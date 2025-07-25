@@ -12,7 +12,7 @@ const sections = [
           Điện thoại: <span className="opacity-70">0909 567 999</span>
         </p>
         <p>
-          Email: <span className="opacity-70">hotro@student.ctu.edu.vn</span>
+          Email: <span className="opacity-70">Fone@gmail.com.vn</span>
         </p>
       </>
     ),

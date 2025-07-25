@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { apiGetDashboard, apiGetNewUserStats, apiGetProducts } from "apis";
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  apiGetDashboard,
+  apiGetNewUserStats,
+  apiGetProducts,
+  apiGetOrders,
+} from "apis";
 import BoxInfo from "components/chart/BoxInfo";
 import CustomChart from "components/chart/CustomChart";
 import { AiOutlineUserAdd } from "react-icons/ai";
@@ -66,7 +71,8 @@ const pieOptions = {
         const dataArr = context.chart.data.datasets[0].data;
         const total = dataArr.reduce((acc, val) => acc + val, 0);
         const percent = ((value / total) * 100).toFixed(1);
-        return `${percent}%`;
+        const label = context.chart.data.labels[context.dataIndex];
+        return `${label}: ${value} \n(${percent}%)`;
       },
       font: {
         size: 13,
@@ -91,6 +97,23 @@ const Dashboard = () => {
   const [totalInventoryValue, setTotalInventoryValue] = useState(0);
   const [totalStockQuantity, setTotalStockQuantity] = useState(0);
   const [totalSoldQuantity, setTotalSoldQuantity] = useState(0);
+  const [orders, setOrders] = useState([]);
+  const [totalOrders, setTotalOrders] = useState(0);
+
+  const { totalPaid, totalUnpaid } = useMemo(() => {
+    let totalPaid = 0;
+    let totalUnpaid = 0;
+
+    orders.forEach((order) => {
+      if (order.status === "Succeeded") {
+        totalPaid += order.totalPrice || 0;
+      } else if (order.status === "Pending") {
+        totalUnpaid += order.totalPrice || 0;
+      }
+    });
+
+    return { totalPaid, totalUnpaid };
+  }, [orders]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -98,6 +121,17 @@ const Dashboard = () => {
       if (res?.products) setProductList(res.products);
     };
     fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const res = await apiGetOrders();
+      if (res?.success) {
+        setOrders(res.data);
+        setTotalOrders(res.count);
+      }
+    };
+    fetchOrders();
   }, []);
 
   useEffect(() => {
@@ -209,25 +243,25 @@ const Dashboard = () => {
 
   const handleCustomTime = () => setCustomTime({ from: "", to: "" });
 
-  const pieData = {
-    labels: ["Tổng đơn đã hủy", "Tổng đơn thành công"],
-    datasets: [
-      {
-        label: "Tổng đơn",
-        data: [
-          (data?.pieData || defaultPieData)?.find(
-            (el) => el.status === "Cancelled"
-          )?.sum || 0,
-          (data?.pieData || defaultPieData)?.find(
-            (el) => el.status === "Succeed"
-          )?.sum || 0,
-        ],
-        backgroundColor: ["rgba(255, 99, 132, 0.4)", "rgba(54, 162, 235, 0.4)"],
-        borderColor: ["rgba(255, 99, 132, 1)", "rgba(54, 162, 235, 1)"],
-        borderWidth: 1,
-      },
-    ],
-  };
+  const computedPieData = useMemo(() => {
+    const cancelled = orders.filter((o) => o.status === "Cancelled").length;
+    const succeed = orders.filter((o) => o.status === "Succeeded").length;
+
+    return {
+      labels: ["Đã hủy", "Thành công"],
+      datasets: [
+        {
+          data: [cancelled, succeed],
+          backgroundColor: [
+            "rgba(255, 99, 132, 0.4)",
+            "rgba(54, 162, 235, 0.4)",
+          ],
+          borderColor: ["rgba(255, 99, 132, 1)", "rgba(54, 162, 235, 1)"],
+          borderWidth: 1,
+        },
+      ],
+    };
+  }, [orders]);
 
   return (
     <div className="w-full flex flex-col gap-4 px-4 my-3">
@@ -338,28 +372,20 @@ const Dashboard = () => {
         <BoxInfo
           text="Tổng số đơn hàng"
           icon={<HiOutlineClipboardList size={22} />}
-          number={data?.pieData?.reduce((acc, el) => acc + el.sum, 0) || 0}
+          number={totalOrders || 0}
           className="bg-yellow-500 text-white border-yellow-500 rounded-xl"
         />
 
         <BoxInfo
           text="Số tiền đã được thanh toán"
           icon={<img src="/dong.svg" className="h-6 object-contain" />}
-          number={
-            data?.totalSuccess?.length > 0
-              ? formatMoney(Math.round(data?.totalSuccess[0]?.count * 23500))
-              : 0
-          }
+          number={formatMoney(Math.round(totalPaid))}
           className="bg-green-500 text-white border-green-500 rounded-xl"
         />
         <BoxInfo
           text="Số tiền chưa thanh toán"
           icon={<img src="/dong.svg" className="h-6 object-contain" />}
-          number={
-            data?.totalFailed?.length > 0
-              ? formatMoney(Math.round(data?.totalFailed[0]?.count * 23500))
-              : 0
-          }
+          number={formatMoney(Math.round(totalUnpaid))}
           className="bg-orange-500 text-white border-orange-500 rounded-xl"
         />
 
@@ -455,7 +481,7 @@ const Dashboard = () => {
         {/* Biểu đồ tròn */}
         <div className="col-span-1 lg:col-span-3 bg-white rounded-xl shadow-md p-4">
           <h2 className="font-semibold mb-4">Tỉ lệ đơn hàng</h2>
-          <Pie data={pieData} options={pieOptions} />
+          <Pie data={computedPieData} options={pieOptions} />
         </div>
       </div>
     </div>

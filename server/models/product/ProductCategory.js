@@ -6,6 +6,7 @@ var productCategorySchema = new mongoose.Schema(
     productCategoryName: {
       type: String,
       required: true,
+      unique: true,
     },
     slug: {
       type: String,
@@ -27,17 +28,17 @@ productCategorySchema.set("toJSON", {
   versionKey: false,
 });
 
-productCategorySchema.virtual('products', {
-  ref: 'Product',
-  localField: '_id',
-  foreignField: 'categoryId'
+productCategorySchema.virtual("products", {
+  ref: "Product",
+  localField: "_id",
+  foreignField: "categoryId",
 });
 
-productCategorySchema.set('toObject', { virtuals: true });
-productCategorySchema.set('toJSON', { virtuals: true });
-productCategorySchema.set('toJSON', {
-  versionKey: false
-})
+productCategorySchema.set("toObject", { virtuals: true });
+productCategorySchema.set("toJSON", { virtuals: true });
+productCategorySchema.set("toJSON", {
+  versionKey: false,
+});
 
 //Export the model
 module.exports = mongoose.model("ProductCategory", productCategorySchema);

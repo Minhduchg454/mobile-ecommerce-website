@@ -49,7 +49,7 @@ const TopHeaders = () => {
           </span>
           <span className="hidden md:inline-block">|</span>
           <span className="flex items-center gap-1">
-            <AiOutlineMail size={14} /> hotro@student.ctu.edu.vn
+            <AiOutlineMail size={14} /> Fone@gmail.com.vn
           </span>
         </div>
 

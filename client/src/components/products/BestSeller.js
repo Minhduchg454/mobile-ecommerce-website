@@ -21,10 +21,14 @@ const BestSeller = () => {
       if (!res.success) return;
 
       const productsData = res.products.map((p) => {
-        // Tìm biến thể có giá rẻ nhất trong sản phẩm
-        const cheapestVariation = p.variations?.reduce((prev, curr) =>
-          curr.price < prev.price ? curr : prev
-        );
+        const variations = Array.isArray(p.variations) ? p.variations : [];
+
+        const cheapestVariation =
+          variations.length > 0
+            ? variations.reduce((prev, curr) =>
+                curr.price < prev.price ? curr : prev
+              )
+            : null;
 
         return {
           ...p,
@@ -32,7 +36,6 @@ const BestSeller = () => {
           price: cheapestVariation?.price || p.minPrice,
         };
       });
-
       setProducts(productsData);
     } catch (error) {
       console.error("❌ Lỗi khi lấy sản phẩm:", error);
