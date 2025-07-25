@@ -69,7 +69,7 @@ const ManageOrder = () => {
       ...params,
       limit: process.env.REACT_APP_LIMIT,
     });
-    console.log(response);
+
     if (response.success) {
       setCounts(response.count);
       setOrders(response.data);

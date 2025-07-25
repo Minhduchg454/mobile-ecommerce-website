@@ -1,111 +1,48 @@
 import React, { useState, useEffect, memo } from "react";
-import { apiGetProductVariations, apiGetProducts } from "apis";
+import { apiGetProducts } from "apis";
 import { CustomSlider1, ProductCard } from "components";
 import clsx from "clsx";
 import { useSelector } from "react-redux";
 
 const tabs = [
-  { id: 1, name: "Bán chạy nhất" },
-  { id: 2, name: "Thiết bị mới nhất" },
+  { id: 1, name: "Bán chạy nhất", sort: "-totalSold" },
+  { id: 2, name: "Thiết bị mới nhất", sort: "newest" },
 ];
 
 const BestSeller = () => {
-  const [bestSellers, setBestSellers] = useState([]);
-  const [newProducts, setNewProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [activedTab, setActivedTab] = useState(1);
   const { isShowModal } = useSelector((state) => state.app);
 
-  const fetchProductByVariations = async () => {
+  const fetchProducts = async (sort) => {
     try {
-      // Gọi song song 2 API
-      const [resVariations, resProducts] = await Promise.all([
-        apiGetProductVariations(),
-        apiGetProducts(),
-      ]);
+      const res = await apiGetProducts({ sort, limit: 20 });
 
-      if (!resVariations.success || !resProducts.success) return;
+      if (!res.success) return;
 
-      const variations = resVariations.variations.filter(
-        (v) => v.productId && v.productId._id
-      );
+      const productsData = res.products.map((p) => {
+        // Tìm biến thể có giá rẻ nhất trong sản phẩm
+        const cheapestVariation = p.variations?.reduce((prev, curr) =>
+          curr.price < prev.price ? curr : prev
+        );
 
-      // Tạo map sản phẩm đầy đủ (để lấy slug & category slug)
-      const allProductsMap = new Map(
-        resProducts.products.map((p) => [p._id, p])
-      );
-
-      // Gom các biến thể theo productId
-      const productMap = new Map();
-      variations.forEach((v) => {
-        const pid = v.productId._id;
-        if (!productMap.has(pid)) {
-          productMap.set(pid, {
-            product: v.productId,
-            variations: [],
-          });
-        }
-        productMap.get(pid).variations.push(v);
+        return {
+          ...p,
+          pvid: cheapestVariation?._id,
+          price: cheapestVariation?.price || p.minPrice,
+        };
       });
 
-      // Trong phần bestSellersList
-      const bestSellersList = Array.from(productMap.values())
-        .map(({ product, variations }) => {
-          const latest = variations.reduce((a, b) =>
-            new Date(a.updatedAt) > new Date(b.updatedAt) ? a : b
-          );
-
-          const fullProduct = allProductsMap.get(product._id);
-          return {
-            ...product,
-            pvid: latest._id,
-            price: latest.price,
-            slug: fullProduct?.slug,
-            categorySlug: fullProduct?.categoryId?.slug,
-            thumb: fullProduct?.thumb,
-            rating: fullProduct?.rating,
-            totalSold: fullProduct?.totalSold,
-          };
-        })
-        .sort((a, b) => b.totalSold - a.totalSold);
-
-      // Mới nhất
-      const newestList = variations
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .filter(
-          (v, i, arr) =>
-            arr.findIndex((el) => el.productId._id === v.productId._id) === i
-        )
-        .map((v) => {
-          const fullProduct = allProductsMap.get(v.productId._id);
-          return {
-            ...v.productId,
-            pvid: v._id,
-            price: v.price,
-            slug: fullProduct?.slug,
-            categorySlug: fullProduct?.categoryId?.slug,
-            thumb: fullProduct?.thumb,
-            rating: fullProduct?.rating,
-            totalSold: fullProduct?.totalSold,
-          };
-        });
-
-      setBestSellers(bestSellersList);
-      setNewProducts(newestList);
-      setProducts(bestSellersList); // Tab mặc định
+      setProducts(productsData);
     } catch (error) {
-      console.error("❌ Lỗi khi xử lý biến thể:", error);
+      console.error("❌ Lỗi khi lấy sản phẩm:", error);
     }
   };
 
   useEffect(() => {
-    fetchProductByVariations();
-  }, []);
-
-  useEffect(() => {
-    if (activedTab === 1) setProducts(bestSellers);
-    else if (activedTab === 2) setProducts(newProducts);
-  }, [activedTab, bestSellers, newProducts]);
+    const currentTab = tabs.find((tab) => tab.id === activedTab);
+    if (currentTab) fetchProducts(currentTab.sort);
+  }, [activedTab]);
 
   return (
     <div className={clsx(isShowModal ? "hidden" : "")}>
@@ -134,7 +71,7 @@ const BestSeller = () => {
               price={el.price}
               thumb={el.thumb}
               slug={el.slug}
-              slugCategory={el.categorySlug}
+              slugCategory={el.categoryId?.slug}
               rating={el.rating}
               productName={el.productName}
               totalSold={el.totalSold}

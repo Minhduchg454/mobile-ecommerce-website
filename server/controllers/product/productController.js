@@ -5,6 +5,7 @@ const ProductVariation = require("../../models/product/ProductVariation");
 const { deleteProductVariationById } = require("../../ultils/databaseHelpers");
 
 const slugify = require("slugify");
+const { Query } = require("mongoose");
 
 // Tạo ra một chuỗi ID ngắn duy nhất, ví dụ dùng cho mã sản phẩm (SKU).const makeSKU = require("uniqid");
 
@@ -67,6 +68,7 @@ const getProduct = asyncHandler(async (req, res) => {
 const getProducts = asyncHandler(async (req, res) => {
   const queries = { ...req.query };
   const excludeFields = ["limit", "sort", "page", "fields", "q"];
+
   excludeFields.forEach((el) => delete queries[el]);
 
   let queryString = JSON.stringify(queries);
@@ -106,17 +108,22 @@ const getProducts = asyncHandler(async (req, res) => {
     };
   }
 
-  // ✅ Kiểm tra hợp lệ trước khi gán brandId
-  if (req.query.brandId && mongoose.Types.ObjectId.isValid(req.query.brandId)) {
-    formatedQueries.brandId = req.query.brandId;
+  if (req.query.brandId) {
+    try {
+      formatedQueries.brandId = new mongoose.Types.ObjectId(req.query.brandId);
+    } catch (error) {
+      //console.log(" brandId không hợp lệ:", req.query.brandId);
+    }
   }
 
-  // ✅ Kiểm tra hợp lệ trước khi gán categoryId
-  if (
-    req.query.categoryId &&
-    mongoose.Types.ObjectId.isValid(req.query.categoryId)
-  ) {
-    formatedQueries.categoryId = req.query.categoryId;
+  if (req.query.categoryId) {
+    try {
+      formatedQueries.categoryId = new mongoose.Types.ObjectId(
+        req.query.categoryId
+      );
+    } catch (err) {
+      //console.log("Không thể parse categoryId:", req.query.categoryId);
+    }
   }
 
   const finalQuery = {
@@ -129,8 +136,33 @@ const getProducts = asyncHandler(async (req, res) => {
     .populate("categoryId", "productCategoryName slug");
 
   if (req.query.sort) {
-    const sortBy = req.query.sort.split(",").join(" ");
-    queryCommand = queryCommand.sort(sortBy);
+    const sortBy = req.query.sort;
+    const sortMap = {
+      "-minPrice": { minPrice: -1 },
+      minPrice: { minPrice: 1 },
+      "-totalSold": { totalSold: -1 },
+      totalSold: { totalSold: 1 },
+      "-rating": { rating: -1 },
+      rating: { rating: 1 },
+      nameAsc: {
+        productName: 1,
+      },
+      nameDesc: {
+        productName: -1,
+      },
+      newest: {
+        createAt: -1,
+      },
+      oldest: {
+        createAt: 1,
+      },
+    };
+
+    const sortSelect = sortMap[sortBy] || { createdAt: -1 }; // fallback
+
+    queryCommand = queryCommand
+      .collation({ locale: "vi", strength: 1 })
+      .sort(sortSelect);
   }
 
   if (req.query.fields) {
@@ -138,20 +170,48 @@ const getProducts = asyncHandler(async (req, res) => {
     queryCommand = queryCommand.select(fields);
   }
 
-  const page = +req.query.page || 1;
-  const limit = +req.query.limit || +process.env.LIMIT_PRODUCTS || 10;
-  const skip = (page - 1) * limit;
-  queryCommand = queryCommand.skip(skip).limit(limit);
+  const rawLimit = req.query.limit;
+  const limit =
+    +rawLimit === 0 ? 0 : +rawLimit || +process.env.LIMIT_PRODUCTS || 10;
 
-  queryCommand.exec(async (err, response) => {
+  if (limit === 0) {
+    // Không giới hạn, không phân trang
+    queryCommand = queryCommand.limit(0);
+  } else {
+    const page = +req.query.page || 1;
+    const skip = (page - 1) * limit;
+    queryCommand = queryCommand.skip(skip).limit(limit);
+  }
+
+  queryCommand.exec(async (err, products) => {
     if (err)
       return res.status(500).json({ success: false, message: err.message });
 
     const total = await Product.countDocuments(finalQuery);
+
+    // Lấy danh sách _id sản phẩm
+    const productIds = products.map((p) => p._id);
+
+    // Truy vấn biến thể theo productId
+    const variations = await ProductVariation.find({
+      productId: { $in: productIds },
+    });
+
+    // Gộp biến thể vào từng sản phẩm
+    const enrichedProducts = products.map((product) => {
+      const matchedVariations = variations.filter((v) =>
+        v.productId.equals(product._id)
+      );
+      return {
+        ...product.toObject(),
+        variations: matchedVariations,
+      };
+    });
+
     return res.status(200).json({
       success: true,
       total,
-      products: response || [],
+      products: enrichedProducts,
     });
   });
 });
