@@ -182,7 +182,9 @@ const ManageUser = () => {
                     <td className="text-center py-3 px-2">
                       {editElm?._id === el._id ? (
                         <input
-                          {...register("firstName")}
+                          {...register("firstName", {
+                            required: "Không được để trống",
+                          })}
                           defaultValue={el.firstName}
                           className="w-full border border-gray-300 rounded px-2 py-1"
                         />
@@ -195,7 +197,9 @@ const ManageUser = () => {
                     <td className="text-center py-3 px-2">
                       {editElm?._id === el._id ? (
                         <input
-                          {...register("lastName")}
+                          {...register("lastName", {
+                            required: "Không được để trống",
+                          })}
                           defaultValue={el.lastName}
                           className="w-full border border-gray-300 rounded px-2 py-1"
                         />

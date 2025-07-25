@@ -22,7 +22,7 @@ exports.getAllOrders = async (req, res) => {
       paymentMethod,
       fromDate,
       toDate,
-      sortByDate, // ✅ thêm tham số mới
+      sortByDate,
     } = req.query;
 
     const filter = {};

@@ -539,7 +539,7 @@ const Checkout = ({ dispatch, navigate }) => {
                   <tr>
                     <td className="text-left">Tổng thanh toán:</td>
                     <td className="text-right font-bold text-main text-xl">
-                      {formatMoney(totalAfterDiscount)} VND
+                      {formatMoney(totalAfterDiscount)} VNĐ
                     </td>
                   </tr>
                 </tbody>
