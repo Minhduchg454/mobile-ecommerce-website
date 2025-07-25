@@ -46,8 +46,8 @@ const Login = () => {
   const validateInput = () => {
     const err = {};
     if (isRegister) {
-      if (!payload.firstname.trim()) err.firstname = "Họ không được để trống.";
-      if (!payload.lastname.trim()) err.lastname = "Tên không được để trống.";
+      if (!payload.firstname.trim()) err.firstname = "Tên không được để trống.";
+      if (!payload.lastname.trim()) err.lastname = "Họ không được để trống.";
       if (!payload.mobile.trim()) err.mobile = "SĐT không được để trống.";
       else if (!/^0\d{9}$/.test(payload.mobile))
         err.mobile = "SĐT không hợp lệ.";
