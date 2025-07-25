@@ -3,7 +3,8 @@ const Fuse = require("fuse.js");
 const he = require("he");
 const { merge } = require("../routes/user");
 
-const searchProduct = async (query) => {
+const searchProduct = async (query, options = {}) => {
+  const { limit = 10, threshold = 0.5 } = options; // giá trị mặc định
   try {
     const categories = await getCategoriesWithAllChild();
     const allProductVariations = [];
@@ -73,7 +74,7 @@ const searchProduct = async (query) => {
 
     // console.log(allProductVariations[0])
 
-    const options = {
+    const fuseOptions = {
       includeScore: true,
       threshold: 0.5,
       ignoreLocation: true,
@@ -90,8 +91,8 @@ const searchProduct = async (query) => {
         "specifications.value", // ✅ tìm theo giá trị thông số
       ],
     };
-    const fuse = new Fuse(allProductVariations, options);
-    const results = fuse.search(query).slice(0, 6);
+    const fuse = new Fuse(allProductVariations, fuseOptions);
+    const results = fuse.search(query).slice(0, 10);
     // console.log("origin search results: ", results);
 
     return results.map((result) => {
@@ -113,7 +114,7 @@ const searchProduct = async (query) => {
 
       return {
         id: item.varationId ? item.varationId.toString() : null,
-        link: item.link,
+        link: process.env.CLIENT_URL + "/" + item.link,
         name: `${item.productName} - ${item.variationName}`,
         price: `${item.price.toLocaleString("vi-VN")}₫`,
         category: item.categoryName,

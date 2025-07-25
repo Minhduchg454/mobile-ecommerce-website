@@ -1,20 +1,19 @@
 // utilities.js
 // const { Query } = require("mongoose");
-const searchProduct = require("../../../ultils/searchProduct");
+const searchProductByIds = require("../../../ultils/searchProductByIds");
 const ResultTypeEnum = require("../ResultTypeEnum");
 
-async function displayAllProductWithKeyWord(query) {
-  console.log(query);
+async function displayProductWithIds(query) {
+  console.log(displayProductWithIds, query);
 
-  const result = await searchProduct(query.query, { limit: 6 });
-
+  const result = await searchProductByIds(query.variationIds); // trả về danh sách sản phẩm
   if (!Array.isArray(result) || result.length === 0) {
     return {
       suggestions: "❌ Không tìm thấy sản phẩm nào phù hợp với yêu cầu.",
     };
   }
 
-  console.log(displayAllProductWithKeyWord, result);
+  console.log(displayProductWithIds, result);
 
   return {
     type: ResultTypeEnum.DISPLAY,
@@ -22,4 +21,4 @@ async function displayAllProductWithKeyWord(query) {
   }; // bọc text trong object để tương thích với Gemini
 }
 
-module.exports = { displayAllProductWithKeyWord };
+module.exports = { displayProductWithIds };

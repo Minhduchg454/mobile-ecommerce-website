@@ -28,7 +28,7 @@ const getCategoriesWithAllChild = async () => {
         ],
       })
       .lean();
-    console.log("getCategoriesWithAllChild", categories[0].products[0]);
+    // console.log("getCategoriesWithAllChild", categories);
     return categories;
   } catch (error) {
     console.error("❌ Lỗi khi lấy categories:", error);

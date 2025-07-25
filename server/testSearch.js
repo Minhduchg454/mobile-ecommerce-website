@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 require("dotenv").config(); // nếu bạn dùng biến môi trường
 const searchProduct = require("./ultils/searchProduct"); // đường dẫn đúng tới file bạn đưa ở trên
+// const searchProductById = require("./ultils/searchProductById"); // đường dẫn đúng tới file bạn đưa ở trên
 
 // Kết nối database
 mongoose
