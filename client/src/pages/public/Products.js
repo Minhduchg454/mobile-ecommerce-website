@@ -240,9 +240,12 @@ const Products = () => {
       <div className="lg:w-main m-auto my-4 gap-6 flex flex-wrap">
         {products.map((el) => {
           // Tìm biến thể có giá nhỏ nhất
-          const cheapestVariation = el.variations?.reduce((prev, curr) =>
-            curr.price < prev.price ? curr : prev
-          );
+          const variations = el.variations || [];
+          const cheapestVariation = variations.length
+            ? variations.reduce((prev, curr) =>
+                curr.price < prev.price ? curr : prev
+              )
+            : null;
 
           return (
             <div className="" key={el._id}>
