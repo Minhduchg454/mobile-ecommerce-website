@@ -10,6 +10,7 @@ import ProductCard from "./component/ProductCard";
 import { ResultTypeEnum } from "./ResultTypeEnum";
 import { apiSendMessageToChatbot } from "apis/chatbot";
 import { marked } from "marked";
+import useRole from "hooks/useRole";
 
 const markdown = "**Xin chào** bạn!";
 const html = marked(markdown);
@@ -285,6 +286,7 @@ function Chatbot() {
   const bottomRef = useRef(null);
   const [showIntro, setShowIntro] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const { isAdmin } = useRole();
 
   useEffect(() => {
     setMessages([
@@ -344,6 +346,7 @@ function Chatbot() {
       setIsLoading(false); // ✅ Kết thúc loading
     }
   };
+  if (isAdmin) return null;
 
   return (
     <div className="fixed bottom-20 right-10 z-50">

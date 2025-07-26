@@ -38,6 +38,8 @@ const HeaderFull = () => {
   const roleName = current?.roleId?.roleName?.toLowerCase();
   const countCurrentCart = currentCart.length;
   const countWishList = wishList.length;
+  console.log("Thong tin nguoi dung", current);
+  //console.log("Hinh anh nguoi dung tu google", current.avatar);
 
   const handleSearch = () => {
     const currentQuery = q?.trim();
@@ -220,7 +222,11 @@ const HeaderFull = () => {
               <div className="relative group cursor-pointer">
                 <div className="w-10 aspect-square rounded-full overflow-hidden border shrink-0">
                   <img
-                    src={current.avatar || defaultAvatar}
+                    src={current?.avatar || defaultAvatar}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = defaultAvatar;
+                    }}
                     alt="avatar"
                     className="w-full h-full object-cover"
                   />
