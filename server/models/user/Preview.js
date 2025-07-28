@@ -30,6 +30,11 @@ const previewSchema = new mongoose.Schema(
       ref: "ProductVariation",
       required: true,
     },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+    },
   },
   {
     timestamps: true, // Tự động thêm createdAt và updatedAt

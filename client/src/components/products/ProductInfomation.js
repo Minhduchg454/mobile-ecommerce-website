@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 import defaultAvatar from "../../assets/avatarDefault.png";
 
 const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
-  const [activedTab, setActivedTab] = useState(1);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isLoggedIn, current } = useSelector((state) => state.user);
@@ -143,19 +142,6 @@ const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
             })}
           </div>
         </div>
-
-        {/* Thiết lập quyền sau */}
-        {/* <div className="p-4 flex items-center justify-center text-sm flex-col gap-2">
-          <span>Ý kiến về sản phẩm</span>
-          <Button handleOnClick={handleVoteNow}>ĐÁNH GIÁ NGAY!</Button>
-
-          {daysLeftToEdit !== null && (
-            <span className="text-xs italic text-gray-500">
-              Bạn còn <strong>{daysLeftToEdit} ngày</strong> để chỉnh sửa đánh
-              giá của mình
-            </span>
-          )}
-        </div> */}
 
         <div className="flex flex-col gap-4">
           {Array.isArray(ratings) &&

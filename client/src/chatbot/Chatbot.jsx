@@ -311,7 +311,7 @@ function Chatbot() {
         message: userMessage.text,
         history: messages,
       });
-      console.log("res.responseContent", res.responseContent);
+      //console.log("res.responseContent", res.responseContent);
       const newBotMessages = res.responseContent.map((item) => {
         if (item.type === ResultTypeEnum.DISPLAY) {
           return {

@@ -39,13 +39,15 @@ const updateProductVariationRating = async (productVariationId) => {
 
 // Tạo mới Preview (đánh giá sản phẩm)
 exports.createPreview = asyncHandler(async (req, res) => {
-  // Lấy dữ liệu từ body
-  const { previewComment, previewRating, userId, productVariationId } =
+  const { previewComment, previewRating, userId, productVariationId, orderId } =
     req.body;
+
   const missingFields = [];
   if (previewRating === undefined) missingFields.push("previewRating");
   if (!userId) missingFields.push("userId");
   if (!productVariationId) missingFields.push("productVariationId");
+  if (!orderId) missingFields.push("orderId");
+
   if (missingFields.length > 0) {
     return res.status(400).json({
       success: false,
@@ -53,26 +55,27 @@ exports.createPreview = asyncHandler(async (req, res) => {
     });
   }
 
-  //Kiểm tra xem người dùng đã từng đánh giá biến thể này chưa
-  const existingPreview = await Preview.findOne({ userId, productVariationId });
+  const existingPreview = await Preview.findOne({
+    userId,
+    productVariationId,
+    orderId,
+  });
 
   let preview;
   if (existingPreview) {
-    // Nếu đã có => cập nhật lại đánh giá cũ
     existingPreview.previewRating = previewRating;
     existingPreview.previewComment = previewComment;
     preview = await existingPreview.save();
   } else {
-    // Nếu chưa có => tạo đánh giá mới
     preview = await Preview.create({
       previewComment,
       previewRating,
       userId,
       productVariationId,
+      orderId,
     });
   }
 
-  // Sau khi tạo/cập nhật xong → tính lại rating trung bình + tổng rating
   await updateProductVariationRating(productVariationId);
 
   const variation = await ProductVariation.findById(
@@ -80,9 +83,9 @@ exports.createPreview = asyncHandler(async (req, res) => {
   ).populate("productId");
 
   if (variation?.productId?._id) {
-    //console.log('updateProductRating = ', updateProductRating);
     await updateProductRating(variation.productId._id);
   }
+
   return res.status(201).json({ success: true, preview });
 });
 
@@ -142,11 +145,12 @@ exports.deletePreview = asyncHandler(async (req, res) => {
 
 // Lấy danh sách Preview theo điều kiện lọc
 exports.filterPreviews = asyncHandler(async (req, res) => {
-  const { productVariationId, userId, previewRating } = req.query;
+  const { productVariationId, userId, previewRating, orderId } = req.query;
 
   // Tạo object điều kiện lọc động
   const queryObj = {};
   if (productVariationId) queryObj.productVariationId = productVariationId;
+  if (orderId) queryObj.orderId = orderId;
   if (userId) queryObj.userId = userId;
   if (previewRating) queryObj.previewRating = Number(previewRating); // đảm bảo là số
 
