@@ -1,4 +1,9 @@
-import { apiGetUserOrders, apiCancelOrder, apiCreatePreview } from "apis";
+import {
+  apiGetUserOrders,
+  apiCancelOrder,
+  apiCreatePreview,
+  apiFilterPreviews,
+} from "apis";
 import { InputForm, Pagination, VoteOption } from "components";
 import withBaseComponent from "hocs/withBaseComponent";
 import moment from "moment";
@@ -27,8 +32,9 @@ const History = ({ navigate, location }) => {
   const [counts, setCounts] = useState(0);
   const [params] = useSearchParams();
   const { isLoggedIn, current } = useSelector((state) => state.user);
-  const dispatch = useDispatch();
 
+  const dispatch = useDispatch();
+  const REVIEW_EXPIRE_DAYS = 3;
   const {
     register,
     formState: { errors },
@@ -77,7 +83,7 @@ const History = ({ navigate, location }) => {
   };
 
   //Gửi đánh giá
-  const handleSubmitVoteOption = async ({ comment, score, pvid }) => {
+  const handleSubmitVoteOption = async ({ comment, score, pvid, orderId }) => {
     if (!comment || !pvid || !score) {
       alert("Vui lòng chọn sao và nhập nhận xét!");
       return;
@@ -87,6 +93,7 @@ const History = ({ navigate, location }) => {
       productVariationId: pvid,
       previewComment: comment,
       previewRating: score,
+      orderId: orderId,
     });
     if (res.success) {
       toast.success("Đánh giá thành công");
@@ -96,19 +103,27 @@ const History = ({ navigate, location }) => {
     dispatch(showModal({ isShowModal: false, modalChildren: null }));
   };
 
-  const handleVoteNow = (productName, pvid) => {
+  const handleVoteNow = async (productName, pvid, deliveryDate, orderId) => {
     if (!isLoggedIn) {
-      Swal.fire({
+      const rs = await Swal.fire({
         text: "Vui lòng đăng nhập để đánh giá",
         cancelButtonText: "Hủy",
         confirmButtonText: "Đăng nhập",
         title: "Oops!",
         showCancelButton: true,
-      }).then((rs) => {
-        if (rs.isConfirmed) navigate(`/${path.LOGIN}`);
       });
+      if (rs.isConfirmed) navigate(`/${path.LOGIN}`);
       return;
     }
+
+    const res = await apiFilterPreviews({
+      productVariationId: pvid,
+      orderId: orderId,
+      userId: current._id,
+    });
+
+    const preview =
+      res?.success && res.previews?.length > 0 ? res.previews[0] : null;
 
     dispatch(
       showModal({
@@ -117,7 +132,11 @@ const History = ({ navigate, location }) => {
           <VoteOption
             nameProduct={productName}
             pvid={pvid}
+            deliveryDate={deliveryDate}
             handleSubmitVoteOption={handleSubmitVoteOption}
+            orderId={orderId}
+            expireDays={REVIEW_EXPIRE_DAYS}
+            oldPreview={preview}
           />
         ),
       })
@@ -129,14 +148,6 @@ const History = ({ navigate, location }) => {
     fetchPOrders(pr);
     setValue("status", pr.status || "");
   }, [params]);
-
-  const handleSearchStatus = ({ value }) => {
-    navigate({
-      pathname: location.pathname,
-      search: createSearchParams({ status: value }).toString(),
-    });
-  };
-  // console.log("Don hang lay duoc", orders);
 
   return (
     <div className="w-full relative px-4">
@@ -255,24 +266,36 @@ const History = ({ navigate, location }) => {
                         <div className="text-red-500  text-base">
                           {priceFormatted}
                         </div>
-                        {el.status === "Succeeded" &&
-                          //So ngay troi qua tu ngay mua
-                          moment().diff(moment(el.createdAt), "days") <= 3 && (
-                            <div className="mt-1 text-right">
-                              <button
-                                className="text-sm text-white bg-orange-400 hover:bg-orange-600 hover:scale-103 rounded-xl px-2 py-1 transition"
-                                onClick={() =>
-                                  handleVoteNow(
-                                    item.productVariationId?.productId
-                                      ?.productName,
-                                    item.productVariationId?._id
-                                  )
-                                }
-                              >
-                                Đánh giá ngay
-                              </button>
-                            </div>
-                          )}
+                        {el.status === "Succeeded" && (
+                          <div className="mt-1 text-right">
+                            <button
+                              className={`text-sm rounded-xl px-2 py-1 transition ${
+                                el.deliveryDate &&
+                                moment().diff(
+                                  moment(el.deliveryDate),
+                                  "days"
+                                ) <= REVIEW_EXPIRE_DAYS
+                                  ? "bg-orange-400 hover:bg-orange-600 text-white hover:scale-103"
+                                  : "bg-gray-400 hover:bg-gray-500 text-white"
+                              }`}
+                              onClick={() =>
+                                handleVoteNow(
+                                  item.productVariationId?.productId
+                                    ?.productName,
+                                  item.productVariationId?._id,
+                                  el.deliveryDate,
+                                  el._id
+                                )
+                              }
+                            >
+                              {el.deliveryDate &&
+                              moment().diff(moment(el.deliveryDate), "days") <=
+                                REVIEW_EXPIRE_DAYS
+                                ? "Đánh giá ngay"
+                                : "Xem đánh giá"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -284,8 +307,15 @@ const History = ({ navigate, location }) => {
                 <div className="flex justify-between items-center py-2">
                   <div className="text-sm">
                     <div>
-                      Ngày mua: {moment(el.createdAt).format("DD/MM/YYYY")}
+                      Ngày mua:{" "}
+                      {moment(el.createdAt).format("DD/MM/YYYY HH:mm")}
                     </div>
+                    {el.deliveryDate && (
+                      <div>
+                        Ngày nhận hàng:{" "}
+                        {moment(el.deliveryDate).format("DD/MM/YYYY HH:mm")}
+                      </div>
+                    )}
                     <div>
                       <span>{`Địa chỉ nhận hàng: ${el.shippingAddress}`}</span>
                     </div>

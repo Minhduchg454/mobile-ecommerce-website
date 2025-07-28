@@ -11,6 +11,10 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: Date.now, // Tự động điền ngày hiện tại khi tạo
     },
+    deliveryDate: {
+      type: Date,
+      default: null, // Mặc định không có giá trị
+    },
     status: {
       type: String,
       required: true,

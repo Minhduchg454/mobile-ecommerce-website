@@ -49,7 +49,7 @@ exports.getAllOrders = async (req, res) => {
     // Xác định sắp xếp theo createdAt
     const sortOption = {};
     if (sortByDate === "asc") sortOption.createdAt = 1;
-    else sortOption.createdAt = -1; // mặc định là mới nhất
+    else sortOption.updatedAt = -1; // mặc định là mới nhất
 
     const orders = await Order.find(filter)
       .populate("shippingAddress")
@@ -128,13 +128,16 @@ exports.getOrdersByUser = async (req, res) => {
     const userId = req.user._id || req.user.id;
 
     const { status, page = 1, limit = 10, _id } = req.query;
+    //console.log("Duoc goi", req.query);
 
     const queryFilter = { customerId: userId };
     if (status) queryFilter.status = status;
     if (_id) queryFilter._id = _id;
 
     const orders = await Order.find(queryFilter)
-      .sort({ createdAt: -1 })
+      .sort({
+        updatedAt: -1,
+      })
       .skip((page - 1) * limit)
       .limit(+limit)
       .lean();
@@ -301,7 +304,13 @@ exports.updateOrder = async (req, res, next) => {
     if (shippingProviderId !== undefined)
       order.shippingProviderId = shippingProviderId;
     if (customerId !== undefined) order.customerId = customerId;
-    if (status !== undefined) order.status = status;
+    if (status !== undefined) {
+      // Nếu trạng thái mới là 'Succeeded' và khác trạng thái hiện tại
+      if (status === "Succeeded" && order.status !== "Succeeded") {
+        order.deliveryDate = new Date();
+      }
+      order.status = status;
+    }
 
     await order.save();
 
