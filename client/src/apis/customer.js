@@ -54,7 +54,7 @@ export const apiCheckMobileExists = (mobile) =>
     params: { mobile },
   });
 
-// ✅ Lấy giỏ hàng của customer
+//Lấy giỏ hàng của customer
 export const apiGetCustomerCart = (cid) =>
   axios({
     url: `/customer/${cid}/cart`,

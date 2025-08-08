@@ -56,7 +56,7 @@ const Home = ({ navigate }) => {
           title="Những phụ kiện mới nhất"
           sort="newest"
           categorySlug="phu-kien-dien-thoai"
-          limit={6}
+          limit={5}
         />
       </div>
 

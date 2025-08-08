@@ -1,5 +1,5 @@
 const { default: mongoose } = require("mongoose");
-const ProductVariation = require("../models/product/ProductVariation");
+//const ProductVariation = require("../models/product/ProductVariation");
 
 mongoose.set("strictQuery", false);
 const dbConnect = async () => {

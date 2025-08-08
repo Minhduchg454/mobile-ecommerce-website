@@ -391,3 +391,28 @@ exports.deleteOrder = async (req, res, next) => {
     next(err);
   }
 };
+
+// controllers/order.js
+exports.getOrderCountsByStatus = async (req, res) => {
+  try {
+    const userId = req.params.id; // hoặc req.params.id nếu bạn dùng userId truyền từ FE
+    const counts = await Order.aggregate([
+      { $match: { userId: userId } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const result = {};
+    counts.forEach((item) => {
+      result[item._id] = item.count;
+    });
+
+    res.json({ success: true, counts: result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};

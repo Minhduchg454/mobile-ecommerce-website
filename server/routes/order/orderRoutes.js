@@ -6,6 +6,7 @@ const {
   updateOrder,
   deleteOrder,
   getOrdersByUser,
+  getOrderCountsByStatus,
 } = require("../../controllers/order/orderController"); // Đảm bảo đường dẫn này đúng
 const { verifyAccessToken } = require("../../middlewares/verifyToken");
 const router = express.Router();
@@ -14,6 +15,7 @@ const router = express.Router();
 // GET /api/orders        (Lấy tất cả)
 // POST /api/orders       (Tạo mới)
 router.route("/").get(getAllOrders).post(verifyAccessToken, createOrder);
+router.get("/count-by-status", getOrderCountsByStatus);
 
 router.get("/user", verifyAccessToken, getOrdersByUser);
 // Route cho việc thao tác với một đơn hàng cụ thể theo ID

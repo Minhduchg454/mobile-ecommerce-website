@@ -270,7 +270,7 @@ const ManageCoupons = () => {
           <thead className="bg-title-table text-white text-sm uppercase">
             <tr>
               <th className="py-3 px-2">STT</th>
-              <th className="py-3 px-2">Mã</th>
+              <th className="py-3 px-2 text-left">Mã</th>
               <th className="py-3 px-2">Mô tả</th>
               <th className="py-3 px-2">Giảm</th>
               <th className="py-3 px-2">Loại</th>

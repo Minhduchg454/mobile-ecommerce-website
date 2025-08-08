@@ -44,7 +44,7 @@ const productSchema = new mongoose.Schema({
   rating: {
     // Điểm đánh giá trung bình
     type: Number, // NumberInt
-    default: 0,
+    default: 5,
     min: 0,
     max: 5, // Điểm đánh giá thường từ 0 đến 5
   },
