@@ -1,6 +1,6 @@
 import axios from "../axios";
 
-// ✅ Tạo liên kết coupon với biến thể sản phẩm
+// Tạo liên kết coupon với biến thể sản phẩm
 export const apiCreateCouponProductVariation = (data) =>
   axios({
     url: "/couponProductVariations",
@@ -8,7 +8,7 @@ export const apiCreateCouponProductVariation = (data) =>
     data,
   });
 
-// ✅ Lấy toàn bộ liên kết coupon - biến thể
+//Lấy toàn bộ liên kết coupon - biến thể
 export const apiGetCouponProductVariations = (params) =>
   axios({
     url: "/couponProductVariations",
@@ -16,7 +16,7 @@ export const apiGetCouponProductVariations = (params) =>
     params,
   });
 
-// ✅ Cập nhật liên kết theo ID
+// Cập nhật liên kết theo ID
 export const apiUpdateCouponProductVariation = (id, data) =>
   axios({
     url: `/couponProductVariations/${id}`,
@@ -24,7 +24,7 @@ export const apiUpdateCouponProductVariation = (id, data) =>
     data,
   });
 
-// ✅ Xoá liên kết theo ID
+// Xoá liên kết theo ID
 export const apiDeleteCouponProductVariation = (id) =>
   axios({
     url: `/couponProductVariations/${id}`,

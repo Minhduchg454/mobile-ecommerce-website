@@ -160,7 +160,7 @@ const HeaderFull = () => {
                   className="absolute top-8 left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
                             text-[10px] text-white bg-black rounded 
                             opacity-0 group-hover:opacity-100 
-                            transition-all duration-300 delay-500 
+                            transition-all duration-300 delay-[900ms] 
                             transform translate-y-1 group-hover:translate-y-0 
                             whitespace-nowrap z-50"
                 >
@@ -187,7 +187,7 @@ const HeaderFull = () => {
                   className="absolute top-8 left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
                             text-[10px] text-white bg-black rounded 
                             opacity-0 group-hover:opacity-100 
-                            transition-all duration-300 delay-500 
+                            transition-all duration-300 delay-[900ms] 
                             transform translate-y-1 group-hover:translate-y-0 
                             whitespace-nowrap z-50"
                 >
@@ -235,7 +235,7 @@ const HeaderFull = () => {
                   className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 
                             text-[10px] text-white bg-black rounded 
                             opacity-0 group-hover:opacity-100 
-                            transition-all duration-300 delay-500 
+                            transition-all duration-300 delay-[900ms] 
                             transform translate-y-1 group-hover:translate-y-0 
                             whitespace-nowrap z-50"
                 >

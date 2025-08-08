@@ -269,7 +269,10 @@ const updateProductVariation = asyncHandler(async (req, res) => {
 const deleteProductVariation = asyncHandler(async (req, res) => {
   const { pvid } = req.params;
 
+  //Xoa gia tri thong so cua bien the
   await deleteValuesByVariation(pvid);
+
+  //Xoa serial cua bien the
   await deleteSpecificProductsByVariation(pvid);
 
   const response = await deleteProductVariationById(pvid);

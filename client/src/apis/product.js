@@ -99,3 +99,10 @@ export const apiDeleteOrderByAdmin = (oid) =>
     url: "/orders/" + oid,
     method: "delete",
   });
+
+export const apiGetOrderCountsByStatus = (params) =>
+  axios({
+    url: "/orders/count-by-status",
+    method: "get",
+    params,
+  });

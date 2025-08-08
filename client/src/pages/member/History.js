@@ -3,6 +3,7 @@ import {
   apiCancelOrder,
   apiCreatePreview,
   apiFilterPreviews,
+  apiGetOrderCountsByStatus,
 } from "apis";
 import { InputForm, Pagination, VoteOption } from "components";
 import withBaseComponent from "hocs/withBaseComponent";
@@ -32,6 +33,7 @@ const History = ({ navigate, location }) => {
   const [counts, setCounts] = useState(0);
   const [params] = useSearchParams();
   const { isLoggedIn, current } = useSelector((state) => state.user);
+  const [countsByStatus, setCountsByStatus] = useState({});
 
   const dispatch = useDispatch();
   const REVIEW_EXPIRE_DAYS = 3;
@@ -54,9 +56,22 @@ const History = ({ navigate, location }) => {
       ...params,
       limit: process.env.REACT_APP_LIMIT,
     });
+
     if (response.success) {
       setOrders(response.orders);
       setCounts(response.counts || response.orders?.length || 0);
+    }
+  };
+
+  const fetchCountsByStatus = async () => {
+    try {
+      const res = await apiGetOrderCountsByStatus({ id: current._id });
+      console.log("Ket noi ok", res.counts);
+      if (res.success) {
+        setCountsByStatus(res.counts || {});
+      }
+    } catch (err) {
+      console.error("Failed to fetch counts by status:", err);
     }
   };
 
@@ -146,6 +161,7 @@ const History = ({ navigate, location }) => {
   useEffect(() => {
     const pr = Object.fromEntries([...params]);
     fetchPOrders(pr);
+    fetchCountsByStatus();
     setValue("status", pr.status || "");
   }, [params]);
 
@@ -179,27 +195,42 @@ const History = ({ navigate, location }) => {
 
         {/* Tabs trạng thái đơn hàng */}
         <div className="flex flex-wrap items-center gap-4 mt-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => {
-                setValue("_id", ""); // reset form input
-                navigate({
-                  pathname: location.pathname,
-                  search: createSearchParams({
-                    status: tab.value,
-                  }).toString(),
-                });
-              }}
-              className={`py-2 px-3 border-b-2 transition-all duration-200 ${
-                (status || "") === tab.value
-                  ? "border-orange-500 text-orange-600 font-semibold"
-                  : "border-transparent text-gray-700 hover:text-orange-500"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const hiddenCountTabs = ["", "Succeeded", "Cancelled"];
+            const shouldShowCount =
+              tab.value &&
+              !hiddenCountTabs.includes(tab.value) &&
+              countsByStatus[tab.value];
+
+            return (
+              <button
+                key={tab.value}
+                onClick={() => {
+                  setValue("_id", "");
+                  navigate({
+                    pathname: location.pathname,
+                    search: createSearchParams({
+                      status: tab.value,
+                    }).toString(),
+                  });
+                }}
+                className={`py-2 px-3 border-b-2 transition-all duration-200 ${
+                  (status || "") === tab.value
+                    ? "border-orange-500 text-orange-600 font-semibold"
+                    : "border-transparent text-gray-700 hover:text-orange-500"
+                }`}
+              >
+                <span>
+                  {tab.label}{" "}
+                  {shouldShowCount && (
+                    <span className="text-orange-500 font-semibold">
+                      ({countsByStatus[tab.value]})
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

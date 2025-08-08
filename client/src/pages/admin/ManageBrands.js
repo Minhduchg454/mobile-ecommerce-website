@@ -96,7 +96,6 @@ const ManageBrands = () => {
       >
         {showForm && (
           <div className="bg-white rounded-xl shadow p-6">
-            <h1 className="text-xl font-bold mb-6">➕ Thêm thương hiệu</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <InputForm
                 label="Tên thương hiệu"

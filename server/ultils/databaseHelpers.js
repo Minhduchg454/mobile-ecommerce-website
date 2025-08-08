@@ -22,7 +22,7 @@ const deleteValuesByVariation = async (variationId) => {
   return response.deletedCount;
 };
 
-// ✅ Hàm API handler cho router (khác hoàn toàn)
+// Hàm API handler cho router (khác hoàn toàn)
 const deleteValuesByVariationHandler = asyncHandler(async (req, res) => {
   const { variationId } = req.params;
 
@@ -57,8 +57,7 @@ const updateTotalStock = async (productId) => {
 };
 
 const deleteProductVariationById = async (pvid) => {
-  await deleteValuesByVariation(pvid); // dùng hàm helper nội bộ
-
+  await deleteValuesByVariation(pvid);
   const oldVariation = await ProductVariation.findById(pvid);
   const response = await ProductVariation.findByIdAndDelete(pvid);
 
@@ -66,7 +65,6 @@ const deleteProductVariationById = async (pvid) => {
     await updateMinPrice(oldVariation.productId);
     await updateTotalStock(oldVariation.productId);
   }
-
   return response;
 };
 

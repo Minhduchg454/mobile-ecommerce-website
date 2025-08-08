@@ -11,7 +11,6 @@ import {
   FAQ,
   Services,
   DetailProduct1,
-  DetailBlogs,
   Products,
   ResetPassword,
 } from "pages/public";
@@ -22,8 +21,6 @@ import {
   ManageUser,
   CreateProducts,
   Dashboard,
-  CreateBlog,
-  ManageBlog,
   CreateVariation,
   ManageProductCategory,
   ManageBrands,
@@ -75,7 +72,6 @@ function App() {
           <Route path={path.PUBLIC} element={<Public />}>
             <Route index element={<Home />} />
             <Route path={path.HOME} element={<Home />} />
-            <Route path={path.BLOGS__ID__TITLE} element={<DetailBlogs />} />
 
             <Route
               path={path.DETAIL_PRODUCT__CATEGORY__PID__TITLE}
@@ -93,8 +89,7 @@ function App() {
             <Route path={path.MANAGE_PRODUCTS} element={<ManageProducts />} />
             <Route path={path.MANAGE_USER} element={<ManageUser />} />
             <Route path={path.CREATE_PRODUCTS} element={<CreateProducts />} />
-            <Route path={path.CREATE_BLOG} element={<CreateBlog />} />
-            <Route path={path.MANAGE_BLOGS} element={<ManageBlog />} />
+
             <Route path={path.CREATE_VARIATION} element={<CreateVariation />} />
             <Route
               path={path.MANAGE_PRODUCTS_CATEGORIES}

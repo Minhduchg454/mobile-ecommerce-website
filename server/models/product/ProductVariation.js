@@ -40,7 +40,7 @@ const productVariationSchema = new mongoose.Schema(
     rating: {
       // Đánh giá trung bình của biến thể này
       type: Number, // Sử dụng NumberDouble để lưu trữ giá trị thập phâ
-      default: 0,
+      default: 5,
       min: 0,
       max: 5,
     },

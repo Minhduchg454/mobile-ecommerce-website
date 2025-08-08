@@ -34,7 +34,7 @@ export { default as SelectQuantity } from "./common/SelectQuantity";
 export { default as ProductExtraInfoItem } from "./products/ProductExtraInfoItem";
 export { default as ProductInfomation } from "./products/ProductInfomation";
 export { default as Cart } from "./products/Cart";
-export { default as Blogs } from "./products/Blogs";
+
 export { default as SearchItem } from "./search/SearchItem";
 export { default as InputSelect } from "./inputs/InputSelect";
 export { default as CustomSelect } from "./inputs/CustomSelect";

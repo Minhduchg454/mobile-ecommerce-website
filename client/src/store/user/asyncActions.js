@@ -36,7 +36,10 @@ export const updateCartItem = createAsyncThunk(
       const cartRes = await apis.apiGetCustomerCart(current._id);
       const shoppingCartId = cartRes?.cart?._id;
 
-      if (!shoppingCartId) return;
+      if (!shoppingCartId) {
+        console.log("Không có cardId gây lỗi");
+        return;
+      }
 
       const cartItemsRes = await apis.apiGetCartItems(shoppingCartId);
       const cartItems = cartItemsRes?.cartItems || [];

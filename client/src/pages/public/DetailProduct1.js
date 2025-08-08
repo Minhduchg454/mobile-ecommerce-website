@@ -30,7 +30,7 @@ import {
   FeatureProducts,
   ShowSwal,
 } from "components";
-import { formatMoney, fotmatPrice, renderStarFromNumber } from "ultils/helpers";
+import { formatMoney, renderStarFromNumber } from "ultils/helpers";
 import useRole from "hooks/useRole";
 import { BsFillSuitHeartFill, BsSuitHeart } from "react-icons/bs";
 
@@ -99,7 +99,7 @@ const ProductDetail1 = () => {
         setVariations(resVariations.variations);
       }
     } catch (err) {
-      console.error("❌ Lỗi khi lấy sản phẩm và biến thể:", err);
+      console.error("Lỗi khi lấy sản phẩm và biến thể:", err);
     }
   };
 
@@ -108,7 +108,7 @@ const ProductDetail1 = () => {
       const res = await apiFilterPreviews({ productVariationId: variationId });
       setPreviews(res.success ? res.previews : []);
     } catch (error) {
-      console.error("❌ Lỗi khi lấy đánh giá:", error);
+      console.error("Lỗi khi lấy đánh giá:", error);
       setPreviews([]);
     }
   }, []);
@@ -146,7 +146,7 @@ const ProductDetail1 = () => {
       }
       setSpecifications(allSpecs);
     } catch (err) {
-      console.error("❌ Lỗi lấy thông số tổng hợp:", err);
+      console.error("Lỗi lấy thông số tổng hợp:", err);
       setSpecifications([]);
     }
   };
@@ -162,7 +162,7 @@ const ProductDetail1 = () => {
       .unwrap()
       .then(() => toast.success("Đã thêm vào giỏ hàng!"))
       .catch((err) => {
-        console.error("❌ Lỗi khi thêm vào giỏ:", err);
+        console.error("Lỗi khi thêm vào giỏ:", err);
         toast.error("Không thể thêm vào giỏ hàng.");
       });
   };
@@ -381,6 +381,14 @@ const ProductDetail1 = () => {
               </div>
             </div>
 
+            {/* Giới thiệu sơ lược */}
+            {product?.description && (
+              <div className="w-full text-sm border p-4 rounded-xl shadow-md bg-[#FFF]">
+                <h4 className="font-bold mb-3">Thông tin nổi bật</h4>
+                <p>{product.description}</p>
+              </div>
+            )}
+
             {/* Cấu hình sản phẩm */}
             {specifications.length > 0 && (
               <div className="w-full text-sm border p-4 rounded-xl shadow-md bg-[#FFF]">
@@ -403,7 +411,7 @@ const ProductDetail1 = () => {
             <div className="flex gap-2 items-center justify-start">
               <h2 className="text-[30px] font-semibold">
                 {currentProduct?.price
-                  ? `${formatMoney(fotmatPrice(currentProduct.price))} VNĐ`
+                  ? `${formatMoney(currentProduct.price)} VNĐ`
                   : "Đang cập nhật"}
               </h2>
               {isLoggedIn && (

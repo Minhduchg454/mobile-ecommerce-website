@@ -124,15 +124,21 @@ exports.updateCustomer = async (req, res) => {
 exports.getCartByCustomerId = async (req, res) => {
   try {
     const cart = await ShoppingCart.findOne({ userId: req.params.id });
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
-
+    //if (!cart) return res.status(404).json({ message: "Cart not found" });
+    if (!cart) {
+      const newCart = await ShoppingCart.create({
+        userId: req.params.id,
+        totalPrice: 0,
+      });
+      return res.json({ success: true, cart: newCart });
+    }
     res.json({ success: true, cart });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ✅ XÓA TOÀN BỘ: Customer → Admin → User → Account
+// XÓA TOÀN BỘ: Customer → Admin → User → Account
 exports.deleteCustomer = async (req, res) => {
   try {
     const userId = req.params.id;

@@ -92,7 +92,7 @@ const Cart = ({ dispatch, navigate }) => {
     const bVariation = variationData[b.productVariationId];
     const aInvalid = !aVariation || aVariation.stockQuantity < 1;
     const bInvalid = !bVariation || bVariation.stockQuantity < 1;
-    return bInvalid - aInvalid; // sản phẩm hết hàng đưa lên đầu
+    return bInvalid - aInvalid;
   });
 
   return (
