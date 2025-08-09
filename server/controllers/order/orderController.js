@@ -395,9 +395,9 @@ exports.deleteOrder = async (req, res, next) => {
 // controllers/order.js
 exports.getOrderCountsByStatus = async (req, res) => {
   try {
-    const userId = req.params.id; // hoặc req.params.id nếu bạn dùng userId truyền từ FE
+    const { userId } = req.query;
     const counts = await Order.aggregate([
-      { $match: { userId: userId } },
+      { $match: { customerId: new mongoose.Types.ObjectId(userId) } },
       {
         $group: {
           _id: "$status",

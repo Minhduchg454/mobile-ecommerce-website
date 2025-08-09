@@ -44,6 +44,7 @@ const ManageProducts = () => {
   const fetchProducts = async (params) => {
     const response = await apiGetProducts({
       ...params,
+      sort: "newest",
       limit: process.env.REACT_APP_LIMIT,
     });
     if (response.success) {

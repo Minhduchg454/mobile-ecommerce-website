@@ -33,7 +33,7 @@ const ManageProductCategory = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await apiGetAllProductCategories();
+      const res = await apiGetAllProductCategories({ sort: "newest" });
       if (res.success) setCategories(res.prodCategories);
     };
     fetchData();

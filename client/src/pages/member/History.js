@@ -65,9 +65,10 @@ const History = ({ navigate, location }) => {
 
   const fetchCountsByStatus = async () => {
     try {
-      const res = await apiGetOrderCountsByStatus({ id: current._id });
-      console.log("Ket noi ok", res.counts);
+      const res = await apiGetOrderCountsByStatus({ userId: current._id });
+
       if (res.success) {
+        console.log("Ket qua nhan duoc", res.counts);
         setCountsByStatus(res.counts || {});
       }
     } catch (err) {

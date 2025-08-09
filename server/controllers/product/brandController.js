@@ -13,7 +13,16 @@ const createNewBrand = asyncHandler(async (req, res) => {
 });
 
 const getBrands = asyncHandler(async (req, res) => {
-  const response = await Brand.find();
+  const { sort } = req.query;
+  let sortOption = {};
+  if (sort === "oldest") {
+    sortOption.createdAt = 1; // cũ nhất trước
+  } else if (sort === "newest") {
+    sortOption.createdAt = -1; // mới nhất trước
+  }
+
+  const response = await Brand.find().sort(sortOption);
+
   return res.json({
     success: response ? true : false,
     brands: response ? response : "Cannot get brand",

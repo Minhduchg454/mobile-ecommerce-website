@@ -194,7 +194,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 
 // Lấy danh sách tất cả user
 const getUsers = asyncHandler(async (req, res) => {
-  const { q } = req.query;
+  const { q, sort } = req.query;
 
   const queryObject = {};
 
@@ -206,9 +206,17 @@ const getUsers = asyncHandler(async (req, res) => {
     ];
   }
 
+  let sortOption = {};
+  if (sort === "oldest") {
+    sortOption.createdAt = 1; // cũ nhất trước
+  } else if (sort === "newest") {
+    sortOption.createdAt = -1; // mới nhất trước
+  }
+
   const users = await User.find(queryObject)
     .populate("roleId", "roleName")
-    .populate("statusUserId", "statusUserName");
+    .populate("statusUserId", "statusUserName")
+    .sort(sortOption);
 
   return res.json({ success: true, users });
 });

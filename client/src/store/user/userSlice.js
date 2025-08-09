@@ -26,6 +26,8 @@ export const userSlice = createSlice({
       state.token = null;
       state.isLoading = false;
       state.mes = "";
+      state.currentCart = [];
+      state.wishList = [];
       localStorage.removeItem("accessToken");
     },
     setCart: (state, action) => {

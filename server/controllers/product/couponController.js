@@ -53,7 +53,15 @@ const createNewCoupon = asyncHandler(async (req, res) => {
 */
 
 const getCoupons = asyncHandler(async (req, res) => {
-  const response = await Coupon.find().select("-createdAt -updatedAt -__v");
+  const { sort } = req.query;
+
+  let sortOption = {};
+  if (sort === "oldest") {
+    sortOption.createdAt = 1; // cũ nhất trước
+  } else if (sort === "newest") {
+    sortOption.createdAt = -1; // mới nhất trước
+  }
+  const response = await Coupon.find().sort(sortOption);
 
   return res.json({
     success: !!response,

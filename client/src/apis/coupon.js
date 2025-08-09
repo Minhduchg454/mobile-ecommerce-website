@@ -10,10 +10,11 @@ export const apiCreateCoupon = (data) =>
   });
 
 // Lấy tất cả mã giảm giá
-export const apiGetAllCoupons = () =>
+export const apiGetAllCoupons = (params) =>
   axios({
     url: "/coupons",
     method: "get",
+    params,
   });
 
 // Lấy thông tin mã giảm giá theo id hoặc code
