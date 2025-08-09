@@ -31,7 +31,15 @@ const createCategory = asyncHandler(async (req, res) => {
 
 // GET ALL
 const getCategories = asyncHandler(async (req, res) => {
-  const categories = await ProductCategory.find();
+  const { sort } = req.query;
+
+  let sortOption = {};
+  if (sort === "oldest") {
+    sortOption.createdAt = 1; // cũ nhất trước
+  } else if (sort === "newest") {
+    sortOption.createdAt = -1; // mới nhất trước
+  }
+  const categories = await ProductCategory.find().sort(sortOption);
   return res.json({
     success: categories ? true : false,
     prodCategories: categories || "Cannot get product categories",

@@ -37,7 +37,7 @@ const ManageUser = () => {
   const [roles, setRoles] = useState([]);
   const [statusUsers, setStatusUsers] = useState([]);
   const fetchUsers = async (params) => {
-    const response = await apiGetUsers({ ...params });
+    const response = await apiGetUsers({ sort: "newest", ...params });
     if (response.success) setUsers(response.users);
   };
 

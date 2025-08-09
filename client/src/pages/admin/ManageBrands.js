@@ -33,7 +33,7 @@ const ManageBrands = () => {
 
   useEffect(() => {
     const fetchBrands = async () => {
-      const res = await apiGetBrands();
+      const res = await apiGetBrands({ sort: "newest" });
       if (res.success) setBrands(res.brands);
     };
     fetchBrands();

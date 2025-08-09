@@ -33,7 +33,7 @@ const ManageCoupons = () => {
 
   useEffect(() => {
     const fetchCoupons = async () => {
-      const res = await apiGetAllCoupons();
+      const res = await apiGetAllCoupons({ sort: "newest" });
       if (res.success) setCoupons(res.coupons);
     };
     fetchCoupons();
@@ -134,19 +134,7 @@ const ManageCoupons = () => {
                 fullWidth
                 placeholder="Nhập mô tả"
               />
-              <InputForm
-                label="Giá trị giảm"
-                id="discount"
-                register={register}
-                errors={errors}
-                validate={{
-                  required: "Không được để trống",
-                  min: { value: 0, message: "Phải >= 0" },
-                }}
-                type="number"
-                fullWidth
-                placeholder="Nhập giá trị giảm"
-              />
+
               <div className="flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="discountType">
                   Loại giảm giá
@@ -168,6 +156,20 @@ const ManageCoupons = () => {
                   </small>
                 )}
               </div>
+
+              <InputForm
+                label="Giá trị giảm"
+                id="discount"
+                register={register}
+                errors={errors}
+                validate={{
+                  required: "Không được để trống",
+                  min: { value: 0, message: "Phải >= 0" },
+                }}
+                type="number"
+                fullWidth
+                placeholder="Nhập giá trị giảm"
+              />
 
               <InputForm
                 label="Giảm tối đa (nếu có)"

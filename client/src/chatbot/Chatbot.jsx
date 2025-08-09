@@ -204,12 +204,6 @@ Bạn có muốn xem chi tiết sản phẩm nào không?"
 
 const parsedHTML = convertMarkdownToHTML(sampleText2);
 
-// console.log("✅ HTML đầu ra:");
-// console.log(parsedHTML);
-
-// Nếu bạn chạy trong trình duyệt, có thể chèn vào DOM thử:
-// document.body.innerHTML = `<div style="padding:2rem;">${parsedHTML}</div>`;
-
 function formatProductSpecs(text) {
   const lines = text
     .split(/\r?\n|(?=\*\*)/g)

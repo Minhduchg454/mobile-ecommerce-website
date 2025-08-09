@@ -1,6 +1,6 @@
 import axios from "../axios";
 
-// ✅ Tạo mới một danh mục sản phẩm
+// Tạo mới một danh mục sản phẩm
 export const apiCreateProductCategory = (data) =>
   axios({
     url: "/productCategories",
@@ -8,11 +8,12 @@ export const apiCreateProductCategory = (data) =>
     data,
   });
 
-// ✅ Lấy toàn bộ danh mục sản phẩm
-export const apiGetAllProductCategories = () =>
+//Lấy toàn bộ danh mục sản phẩm
+export const apiGetAllProductCategories = (params) =>
   axios({
     url: "/productCategories",
     method: "get",
+    params,
   });
 
 // Lấy danh mục theo tên (trả về ID)
