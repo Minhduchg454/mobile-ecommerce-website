@@ -33,7 +33,7 @@ const getVariationDetailsByIds = async (variationIds) => {
     console.log(getVariationDetailsByIds, variations);
     return variations;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy thông tin variations:", error);
+    console.error("Lỗi khi lấy thông tin variations:", error);
     return [];
   }
 };

@@ -13,7 +13,7 @@ mongoose
     }
   )
   .then(async () => {
-    console.log("✅ Đã kết nối MongoDB");
+    console.log("Đã kết nối MongoDB");
 
     const sampleVariationIds = [
       "687145d2d39eff05f032c6de", // thay bằng id thật trong DB của bạn
@@ -30,5 +30,5 @@ mongoose
     mongoose.disconnect();
   })
   .catch((err) => {
-    console.error("❌ Lỗi kết nối MongoDB:", err);
+    console.error("Lỗi kết nối MongoDB:", err);
   });

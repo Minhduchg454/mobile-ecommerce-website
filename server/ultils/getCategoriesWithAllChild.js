@@ -31,7 +31,7 @@ const getCategoriesWithAllChild = async () => {
     // console.log("getCategoriesWithAllChild", categories);
     return categories;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy categories:", error);
+    console.error("Lỗi khi lấy categories:", error);
     return [];
   }
 };

@@ -85,7 +85,7 @@ const searchProductByIds = async (variationIds) => {
       };
     });
   } catch (err) {
-    console.error("❌ Lỗi khi tìm kiếm:", err);
+    console.error("Lỗi khi tìm kiếm:", err);
     return [];
   }
 };
