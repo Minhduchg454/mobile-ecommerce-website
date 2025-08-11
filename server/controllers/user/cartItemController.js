@@ -2,7 +2,7 @@ const CartItem = require("../../models/user/CartItem");
 const ShoppingCart = require("../../models/user/ShoppingCart");
 const asyncHandler = require("express-async-handler");
 
-// Cập nhật lại tổng giá trị giỏ hàng
+//Cập nhật lại tổng giá trị giỏ hàng
 const updateCartTotalPrice = async (shoppingCartId) => {
   const items = await CartItem.find({ shoppingCart: shoppingCartId });
   const total = items.reduce(
@@ -12,7 +12,7 @@ const updateCartTotalPrice = async (shoppingCartId) => {
   await ShoppingCart.findByIdAndUpdate(shoppingCartId, { totalPrice: total });
 };
 
-// ✅ Tạo mới CartItem hoặc tăng số lượng nếu trùng
+//Tạo mới CartItem hoặc tăng số lượng nếu trùng
 exports.createCartItem = asyncHandler(async (req, res) => {
   const { quantity, price, shoppingCart, productVariationId } = req.body;
   if (!quantity || !price || !shoppingCart || !productVariationId) {
@@ -42,7 +42,7 @@ exports.createCartItem = asyncHandler(async (req, res) => {
   return res.status(201).json({ success: true, cartItem });
 });
 
-// ✅ Lấy danh sách CartItem theo shoppingCart
+//Lấy danh sách CartItem theo shoppingCart
 exports.getCartItems = asyncHandler(async (req, res) => {
   const { shoppingCart } = req.query;
   if (!shoppingCart)
@@ -61,7 +61,7 @@ exports.getCartItems = asyncHandler(async (req, res) => {
   return res.json({ success: true, cartItems });
 });
 
-// ✅ Cập nhật CartItem
+//Cập nhật CartItem
 exports.updateCartItem = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updated = await CartItem.findByIdAndUpdate(id, req.body, { new: true });
@@ -72,7 +72,7 @@ exports.updateCartItem = asyncHandler(async (req, res) => {
   return res.json({ success: !!updated, cartItem: updated || "Update failed" });
 });
 
-// ✅ Xóa CartItem
+//Xóa CartItem
 exports.deleteCartItem = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const deleted = await CartItem.findByIdAndDelete(id);
@@ -85,7 +85,7 @@ exports.deleteCartItem = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ Lấy CartItem theo id
+//Lấy CartItem theo id
 exports.getCartItem = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const cartItem = await CartItem.findById(id).populate({
@@ -97,7 +97,7 @@ exports.getCartItem = asyncHandler(async (req, res) => {
   return res.json({ success: true, cartItem });
 });
 
-// ✅ Xoá toàn bộ sản phẩm trong giỏ
+//Xoá toàn bộ sản phẩm trong giỏ
 exports.clearCartItems = asyncHandler(async (req, res) => {
   const { shoppingCart } = req.query;
   if (!shoppingCart)
@@ -110,7 +110,7 @@ exports.clearCartItems = asyncHandler(async (req, res) => {
   return res.json({ success: true, mes: "All items removed from cart" });
 });
 
-// ✅ Lấy tổng số lượng item trong giỏ
+//Lấy tổng số lượng item trong giỏ
 exports.getCartItemCount = asyncHandler(async (req, res) => {
   const { shoppingCart } = req.query;
   if (!shoppingCart)

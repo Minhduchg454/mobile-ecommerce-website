@@ -69,24 +69,29 @@ const register = asyncHandler(async (req, res) => {
 });
 
 // Đăng nhập
+// Đăng nhập
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
     return res
       .status(400)
-      .json({ success: false, mes: "Missing email or password" });
+      .json({ success: false, mes: "Vui lòng nhập đầy đủ email và mật khẩu" });
 
   const account = await Account.findOne({ userName: email });
   if (!account)
-    return res.status(404).json({ success: false, mes: "Account not found" });
+    return res
+      .status(404)
+      .json({ success: false, mes: "Không tìm thấy tài khoản" });
 
   const isMatch = await account.isCorrectPassword(password);
   if (!isMatch)
-    return res.status(401).json({ success: false, mes: "Invalid password" });
+    return res.status(401).json({ success: false, mes: "Mật khẩu không đúng" });
 
   const user = await User.findOne({ email }).populate("roleId");
   if (!user)
-    return res.status(404).json({ success: false, mes: "User not found" });
+    return res
+      .status(404)
+      .json({ success: false, mes: "Không tìm thấy người dùng" });
 
   let roleValue = 0;
   if (user.roleId?.roleName === "admin") roleValue = 1945;
@@ -100,7 +105,12 @@ const login = asyncHandler(async (req, res) => {
   const userObj = user.toObject();
   userObj.role = roleValue;
 
-  return res.json({ success: true, token, user: userObj });
+  return res.json({
+    success: true,
+    token,
+    user: userObj,
+    mes: "Đăng nhập thành công",
+  });
 });
 
 // Lấy user hiện tại từ token

@@ -87,8 +87,8 @@ const searchProduct = async (query, options = {}) => {
         "categoryName",
         "color",
         "storage",
-        "specifications.type", // ✅ tìm theo loại thông số
-        "specifications.value", // ✅ tìm theo giá trị thông số
+        "specifications.type", //tìm theo loại thông số
+        "specifications.value", //tìm theo giá trị thông số
       ],
     };
     const fuse = new Fuse(allProductVariations, fuseOptions);
@@ -140,7 +140,7 @@ const searchProduct = async (query, options = {}) => {
       };
     });
   } catch (err) {
-    console.error("❌ Lỗi khi tìm kiếm:", err);
+    console.error("Lỗi khi tìm kiếm:", err);
     return [];
   }
 };

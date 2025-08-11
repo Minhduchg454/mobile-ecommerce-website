@@ -25,5 +25,5 @@ mongoose
     mongoose.disconnect();
   })
   .catch((err) => {
-    console.error("❌ Lỗi kết nối MongoDB:", err);
+    console.error("Lỗi kết nối MongoDB:", err);
   });
