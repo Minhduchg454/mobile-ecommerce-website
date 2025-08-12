@@ -17,7 +17,7 @@ mongoose
 
     const sampleVariationIds = [
       "687145d2d39eff05f032c6de", // thay bằng id thật trong DB của bạn
-      "686207de0deead23bc1269fe",
+      "686207de0deead23bc1269fe", // cap nhat moi
     ];
     const query = "samsung 8Gb";
 
