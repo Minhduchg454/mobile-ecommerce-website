@@ -381,7 +381,7 @@ function Chatbot() {
             fixed bottom-0 right-0 left-0 top-0
             md:bottom-4 md:right-4 md:left-auto md:top-auto
             w-full h-full
-            md:w-[500px] md:h-[700px]
+            xl:w-[800px] xl:h-[800px]
             bg-white shadow-lg rounded-none md:rounded-xl
             flex flex-col border border-gray-300
           "
