@@ -68,7 +68,6 @@ const History = ({ navigate, location }) => {
       const res = await apiGetOrderCountsByStatus({ userId: current._id });
 
       if (res.success) {
-        console.log("Ket qua nhan duoc", res.counts);
         setCountsByStatus(res.counts || {});
       }
     } catch (err) {

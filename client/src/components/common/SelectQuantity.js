@@ -2,7 +2,7 @@ import React, { memo } from "react";
 
 const SelectQuantity = ({ quantity, handleQuantity, handleChangeQuantity }) => {
   return (
-    <div className="flex border border-gray-300 rounded-md overflow-hidden w-fit">
+    <div className="flex border border-gray-300 rounded-2xl overflow-hidden w-fit">
       {/* Nút "-" */}
       <button
         onClick={() => handleChangeQuantity("minus")}
@@ -22,7 +22,7 @@ const SelectQuantity = ({ quantity, handleQuantity, handleChangeQuantity }) => {
       {/* Nút "+" */}
       <button
         onClick={() => handleChangeQuantity("plus")}
-        className="w-10 text-gray-500 border-l border-gray-300 text-xl hover:bg-gray-100"
+        className="w-10 text-gray-500 border-l  border-gray-300 text-xl hover:bg-gray-100"
       >
         +
       </button>

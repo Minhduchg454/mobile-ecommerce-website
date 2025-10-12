@@ -3,6 +3,8 @@ import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   XMarkIcon,
+  ArrowUpIcon,
+  ChatBubbleOvalLeftIcon,
 } from "@heroicons/react/24/solid";
 
 import ProductCard from "./component/ProductCard";
@@ -11,6 +13,7 @@ import { ResultTypeEnum } from "./ResultTypeEnum";
 import { apiSendMessageToChatbot } from "apis/chatbot";
 import { marked } from "marked";
 import useRole from "hooks/useRole";
+import { APP_INFO } from "../ultils/contants";
 
 const markdown = "**Xin chào** bạn!";
 const html = marked(markdown);
@@ -284,7 +287,10 @@ function Chatbot() {
 
   useEffect(() => {
     setMessages([
-      { role: "bot", text: "Chào mừng bạn đến với cửa hàng FONE!" },
+      {
+        role: "bot",
+        text: `Chào mừng Anh/Chị đến với sàn điện tử ${APP_INFO.NAME} !`,
+      },
     ]);
   }, []);
 
@@ -337,29 +343,33 @@ function Chatbot() {
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false); // ✅ Kết thúc loading
+      setIsLoading(false);
     }
   };
   if (isAdmin) return null;
 
   return (
-    <div className="fixed bottom-20 right-10 z-50">
-      <div className="fixed bottom-10 right-10 z-50 flex flex-col items-end gap-2">
+    <div className="fixed bottom-5 right-10 z-50">
+      <div className="group fixed bottom-5 right-10 z-50 flex flex-col items-end gap-2">
         {!open && showIntro && (
-          <div className="relative bg-white/60 border backdrop-blur-md border-gray-300 shadow-md px-3 py-2 rounded-lg text-sm text-gray-800 max-w-[500px]">
+          <div className="glass relative border  border-gray-300 shadow-md px-3 py-2 rounded-3xl text-sm text-gray-800 max-w-[500px]">
             <button
               onClick={() => {
                 setShowIntro(false);
               }}
-              className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+              className="absolute w-6 h-6 p-1 flex justify-center items-center border bg-gray-400 rounded-full -top-7 right-0  text-white hover:text-black hover:bg-white opacity-0 group-hover:opacity-100"
             >
-              ✖
+              <XMarkIcon />
             </button>
             <div>
-              <p> Xin chào anh/chị! </p>
+              <p>Xin chào anh/chị 👋</p>
               <p>
-                Em là trợ lý AI của cửa hàng{" "}
-                <span className="font-semibold text-blue-600">FONE</span>{" "}
+                Em là{" "}
+                <span className="font-semibold text-blue-600">trợ lý AI</span>{" "}
+                của{" "}
+                <span className="font-semibold text-blue-600">
+                  {APP_INFO.NAME}
+                </span>
               </p>
             </div>
           </div>
@@ -368,9 +378,9 @@ function Chatbot() {
         {!open && (
           <button
             onClick={() => setOpen(true)}
-            className="bg-white/60 border backdrop-blur-md hover:bg-blue-400  border-gray-300 hover:shadow-xl text-blue-700 p-3 rounded-full shadow-xl focus:outline-none transition duration-200"
+            className="glass   hover:bg-gray-200  border-gray-300 hover:shadow-xl text-blue-700 p-2 rounded-full shadow-xl focus:outline-none transition duration-200 border"
           >
-            <ChatBubbleLeftRightIcon className="w-8 h-8" />
+            <ChatBubbleOvalLeftIcon className="w-7 h-7 md:w-10 md:h-10" />
           </button>
         )}
       </div>
@@ -378,39 +388,36 @@ function Chatbot() {
       {open && (
         <div
           className="
-            fixed bottom-0 right-0 left-0 top-0
-            md:bottom-4 md:right-4 md:left-auto md:top-auto
+            fixed bottom-0 right-0 
+            md:bottom-10 md:right-10 
             w-full h-full
-            xl:w-[800px] xl:h-[800px]
-            bg-white shadow-lg rounded-none md:rounded-xl
-            flex flex-col border border-gray-300
+            md:w-[500px] md:h-[700px]
+            bg-white/70 backdrop-blur-md shadow-2xl rounded-none md:rounded-3xl
+            flex flex-col  transition-transform duration-300 z-30 border
           "
         >
           {/* Header */}
-          <div className="bg-blue-600 text-white p-4 rounded-t-xl flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="relative  bg-white/0 p-2 rounded-t-2xl flex items-center justify-center">
+            <div className="flex flex-col items-center">
               <img
                 src="/favicon.ico"
                 alt="Admin avatar"
-                className="w-8 h-8 rounded-full border-2 border-white"
+                className="w-12 h-12 rounded-full border-2 border-black shadow-md "
               />
-              <div>
-                <p className="font-semibold text-sm">Nhắn tin với trợ lý AI</p>
-                <p className="text-xs opacity-80">
-                  Thường trả lời sau vài phút
-                </p>
+              <div className="-mt-1 flex flex-col items-center justify-center bg-white shadow-md text-black px-2 py-1 rounded-2xl -z-10">
+                <p className="font-semibold text-sm text-center">Trợ lý AI</p>
               </div>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="text-white hover:text-gray-200"
+              className="absolute top-2 right-2 w-7 h-7 text-black font-bold rounded-full p-1 bg-button-bg hover:bg-white shadow-md"
             >
-              <XMarkIcon className="w-5 h-5" />
+              <XMarkIcon />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+          <div className="flex-1 overflow-y-auto px-2 py-1 space-y-2">
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -468,21 +475,21 @@ function Chatbot() {
           </div>
 
           {/* Input */}
-          <div className="p-3 flex items-center border-t border-gray-300">
+          <div className="p-3 flex items-center">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nhập tin nhắn..."
+              className="flex-1 px-4 py-2 border  bg-button-bg rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Hỏi bất kì điều gì..."
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim()}
-              className="ml-2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full disabled:opacity-50"
+              className="ml-2 bg-button-bg-ac hover:bg-button-bg-hv text-white p-2 rounded-full disabled:opacity-50"
             >
-              <PaperAirplaneIcon className="w-5 h-5" />
+              <ArrowUpIcon className="w-5 h-5" />
             </button>
           </div>
         </div>

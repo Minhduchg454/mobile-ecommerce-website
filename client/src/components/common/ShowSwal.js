@@ -5,25 +5,25 @@ const MySwal = withReactContent(Swal);
 
 const swalPresets = {
   default: {
-    popup: "bg-white rounded-xl shadow-sm border",
+    popup: "!bg-white/60 !backdrop-blur-sm !rounded-2xl !shadow-sm !border",
     confirmButton:
-      "focus:outline-none ml-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700",
+      "!ml-3 !bg-blue-600 !text-white !px-4 !py-2 !rounded-2xl hover:bg-blue-700",
     cancelButton:
-      "focus:outline-none bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400",
+      "!bg-gray-300 !text-black !px-4 !py-2 !rounded-2xl hover:bg-gray-400",
   },
   success: {
-    popup: "bg-white rounded-xl shadow-sm border",
+    popup: "!bg-white/60 !backdrop-blur-sm !rounded-2xl !shadow-sm !border",
     confirmButton:
-      "focus:outline-none ml-3 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700",
+      "!ml-3 !bg-green-600 !text-white !px-4 !py-2 !rounded-2xl hover:bg-green-700",
     cancelButton:
-      "focus:outline-none bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400",
+      "!bg-gray-300 !text-black !px-4 !py-2 !rounded-2xl hover:bg-gray-400",
   },
   danger: {
-    popup: "bg-white rounded-xl shadow-sm border",
+    popup: "!bg-white/60 !backdrop-blur-sm !rounded-2xl !shadow-sm !border",
     confirmButton:
-      "ml-3 focus:outline-none bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700",
+      "!ml-3 !bg-red-600 !text-white !px-4 !py-2 !rounded-2xl hover:bg-red-700",
     cancelButton:
-      "focus:outline-none bg-gray-300 text-black px-4 py-2 border-none rounded hover:bg-gray-400",
+      "!bg-gray-300 !text-black !px-4 !py-2 !rounded-2xl hover:bg-gray-400",
   },
 };
 

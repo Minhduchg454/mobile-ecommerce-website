@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;200;300;400;500;600;700;800;900&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -107,16 +109,115 @@ code {
 
 @layer components {
   .card-default {
-    @apply bg-card-bg border  shadow-lg rounded-xl transition transform hover:scale-103;
+    @apply bg-card-bg rounded-3xl shadow-md hover:scale-103 select-none transition-all duration-300;
+  }
+  .text-title {
+    @apply font-semibold text-sm md:text-lg transition-all duration-300 text-justify;
+  }
+  .text-description {
+    @apply text-xs md:text-sm transition-all duration-300 text-justify;
+  }
+  .button-action {
+    @apply bg-gray-action rounded-2xl hover:scale-103 hover:bg-gray-400/70 shadow-md;
   }
 }
 
-/* Có thể thêm vào App.css hoặc inline */
-.hide-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+.scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
+/* globals.css */
+@keyframes aurora {
+  0% {
+    transform: translate(-10%, -10%) scale(1);
+  }
+  50% {
+    transform: translate(10%, 10%) scale(1.2);
+  }
+  100% {
+    transform: translate(-10%, -10%) scale(1);
+  }
+}
+.aurora {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate; /* để layer không ảnh hưởng bên ngoài */
+}
+.aurora::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(60% 60% at 30% 30%, #a78bfa55, transparent 60%),
+    radial-gradient(60% 60% at 70% 70%, #60a5fa55, transparent 60%),
+    radial-gradient(70% 70% at 40% 80%, #f472b655, transparent 60%);
+  filter: blur(40px);
+  animation: aurora 12s ease-in-out infinite;
+  z-index: -1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before {
+    animation: none;
+  }
+}
+
+@keyframes gradient-x {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.gradient-animate {
+  background: linear-gradient(90deg, #06b6d4, #8b5cf6, #f43f5e);
+  background-size: 200% 200%;
+  animation: gradient-x 10s ease infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gradient-animate {
+    animation: none;
+  }
+}
+
+@keyframes border-move {
+  to {
+    background-position: 200% 0;
+  }
+}
+.rainbow-border {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    #f43f5e,
+    #f59e0b,
+    #10b981,
+    #3b82f6,
+    #8b5cf6,
+    #f43f5e
+  );
+  background-size: 200% 100%;
+  animation: border-move 15s linear infinite;
+}
+.rainbow-border > .inner {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rainbow-border {
+    animation: none;
+  }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(5px) saturate(200%) brightness(1.1);
+  -webkit-backdrop-filter: blur(5px) saturate(200%) brightness(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
