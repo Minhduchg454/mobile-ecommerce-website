@@ -7,9 +7,9 @@ const useRole = () => {
   return {
     roleName,
     isLoggedIn,
-    isAdmin: roleName === "admin",
-    isUser: roleName === "user",
-    current,
+    isAdmin: current?.roles?.includes("admin"),
+    isUser: current?.roles?.includes("customer"),
+    isShop: current?.roles?.includes("shop"),
   };
 };
 

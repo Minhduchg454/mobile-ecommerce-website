@@ -1,0 +1,10 @@
+export { BannerHomePage } from "./coupon/bannerHomePage";
+export { CategoryList } from "./product/categoryList";
+export { ThemeList } from "./product/themeList";
+export { PolicyList } from "./product/policyList";
+export { TopSoldProducts } from "./product/topSoldProduct";
+export { ShopList } from "./shop/shopList";
+export { RecommendMlList } from "./product/recommendMlList";
+export { SaleHomePage } from "./product/saleHomePage";
+export { RecommentList } from "./product/recommendList";
+export { ShopCategoryList } from "./shop/shopCategoryList";

@@ -1,7 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import { Header } from "components";
-import Footer from "components/footer/Footer";
+import { Header, Footer } from "components";
 import TopHeaders from "components/headers/TopHeader";
 const Public = () => {
   return (

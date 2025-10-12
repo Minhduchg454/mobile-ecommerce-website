@@ -117,7 +117,7 @@ const HeaderFull = () => {
           </span>
 
           {/* Logo */}
-          <Link
+          <link
             to={`/${path.HOME}`}
             className="h-[60px] w-[120px] flex items-center justify-start px-2 shrink-0"
           >
@@ -128,7 +128,7 @@ const HeaderFull = () => {
                 className="h-full w-full object-contain"
               />
             </div>
-          </Link>
+          </link>
         </div>
 
         {/* Search box */}

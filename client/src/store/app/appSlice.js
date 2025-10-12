@@ -23,19 +23,6 @@ export const appSlice = createSlice({
       state.isShowWishlist = !state.isShowWishlist;
     },
   },
-  extraReducers: (builder) => {
-    builder.addCase(actions.getCategories.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(actions.getCategories.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.categories = action.payload;
-    });
-    builder.addCase(actions.getCategories.rejected, (state, action) => {
-      state.isLoading = false;
-      state.errorMessage = action.payload.message;
-    });
-  },
 });
 export const { showModal, showCart, showWishlist } = appSlice.actions;
 

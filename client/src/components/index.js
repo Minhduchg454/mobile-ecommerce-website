@@ -1,4 +1,5 @@
 export { default as Header } from "./headers/Header";
+export { Header1 } from "./headers/Header1";
 export { default as Sidebar } from "./sidebar/Sidebar";
 export { default as Banner } from "./common/Banner";
 export { default as Navigation } from "./navigation/Navigation";
@@ -23,7 +24,7 @@ export { default as CustomSlider1 } from "./common/CustomSlider1";
 export { default as SelectableList } from ".//search/SelectableList";
 
 // export { default as TopHeader } from './headers/TopHeader'
-export { default as Footer } from "./footer/Footer";
+export { Footer } from "./footer/Footer";
 export { default as InputField } from "./inputs/InputField";
 export { default as MdEditor } from "./inputs/MdEditor";
 export { default as InputFile } from "./inputs/InputFile";
@@ -64,3 +65,18 @@ export { default as NewAddressModal } from "./inputs/NewAddressModal";
 export { default as CloseButton } from "./buttons/CloseButton";
 export { default as CustomMarkdownEditor } from "./inputs/CustomMarkdownEditor";
 export { default as OrderSummary } from "./products/OrderSummary";
+
+export { InputField1 } from "./ui/input/inputField";
+export { ButtonCustom } from "./ui/button/buttonCustom";
+export { ThemeCard } from "./common/ThemeCard";
+export { PolicyCard } from "./common/PolicyCard";
+export { HorizontalScroller } from "./common/HorizontalScroller";
+export { ProductCard1 } from "./common/ProductCard1";
+export { ShopChip } from "./common/ShopShip";
+export { ShopCard } from "./common/ShopCard";
+export { ImageBrowser } from "./common/ImageBrower";
+export { ScrollToTop } from "./common/ScrollToTop";
+export { FilterPanel } from "./common/FilterPanel";
+export { ProductExplorer } from "./common/ProductExplorer";
+export { ListPage } from "./common/ListPage";
+export { GlassAlert } from "./common/GlassAlert";

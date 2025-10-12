@@ -112,8 +112,8 @@ const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
 
   return (
     <div>
-      <div className="w-full flex flex-col p-4 border rounded-xl shadow-md">
-        <div className="flex border rounded-xl">
+      <div className="w-full flex rounded-2xl flex-col shadow-md">
+        <div className="flex border rounded-2xl">
           <div className="flex-4 flex-col flex items-center justify-center ">
             <span className="font-semibold text-3xl">{averageRating}/5</span>
             <span className="flex items-center gap-1">

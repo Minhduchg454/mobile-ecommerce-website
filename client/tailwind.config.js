@@ -3,8 +3,8 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   theme: {
     fontFamily: {
-      main: ["Poppins", "sans-serif;"],
-      jp: ["Noto Sans JP", "sans-serif;"],
+      main: ["Inter", "sans-serif"],
+      alt: ["Manrope", "sans-serif"],
     },
     listStyleType: {
       none: "none",
@@ -32,12 +32,57 @@ module.exports = {
         overlay: "rgba(0,0,0,0.7)",
       },
       colors: {
+        /**
+         * Vung-Loai-ChiTiet
+         */
+        //App
         main: "#ee3131",
+        "app-bg": "#F2F4F7",
+        "app-fg": "#000000",
+
+        //text
+        "text-ac": "#1B6FCF",
+
+        //Auth
+        "auth-text": "#0OOOOOO",
+        "auth-text-ac": "#1B6FCF",
+
+        //menu
+        "menu-hover": "#E2E5E9",
+
+        //sidebar
+        "sidebar-bg": "#FFFFFF",
+        "sidebar-bg-select": "#E5E5E5",
+        "sidebar-t-select": "#0074FF",
+        "sidebar-hv": "#EAEAEA",
+
+        //Input
+        "input-bg": "#E2E5E9",
+        "input-fc": "#8AB1F9",
+
+        //button
+        "button-bg": "#E2E5E9",
+        "button-bg-ac": "#0071E3",
+        "button-bg-hv": "#1E4ED8",
+        "button-hv": "#E2E5E9",
+        "button-t-hv": "#0074FF",
+        "button-bd-ac": "#2563eb",
+
+        //card
         "card-bg": "#fefefe",
-        "gray-sidebar": "#E0E2E6", // sidebar nền nhẹ
-        "blue-selected": "#57A0FF", // màu xanh dương chọn (blue-600)
+        "card-t-price": "#ee3131",
+
+        "gray-sidebar": "#E0E2E6",
+        "blue-selected": "#57A0FF",
         "title-table": "#57A0FF",
         "header-footer": "#FFF",
+        "gray-apple": "#F5F5F7",
+        "gray-action": "#E2E5E9",
+        //state
+        success: "#16A34A",
+        warning: "#F59E0B",
+        danger: "#DC2626",
+        info: "#0EA5E9",
       },
       flex: {
         2: "2 2 0%",
@@ -99,6 +144,7 @@ module.exports = {
         "scale-up-center":
           "scale-up-center 0.15s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;",
       },
+
       scale: {
         103: "1.02",
       },

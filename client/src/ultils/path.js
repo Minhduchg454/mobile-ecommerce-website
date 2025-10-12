@@ -3,6 +3,7 @@ const path = {
   HOME: "",
   ALL: "*",
   LOGIN: "login",
+  REGISTER: "register",
   PRODUCTS__CATEGORY: ":category",
   BLOGS__ID__TITLE: "blogs/:id/:title",
   BLOGS: "blogs",
@@ -15,6 +16,7 @@ const path = {
   CHECKOUT: "checkout",
   PRODUCTS: "products",
   SEARCH_HOME: "tat-ca-san-pham",
+  SHOP: "shops",
 
   // Admin
   ADMIN: "admin",
@@ -38,6 +40,12 @@ const path = {
   WISHLIST: "wishlist",
   ADDRESS: "personal-address",
   ORDER_HISTORY: "hoa-don",
+
+  //Customer
+  CUSTOMER: "customer",
+  C_PROFILE: "profile",
+  C_ADDRESS: "addreeses",
+  C_ORDER: "orders",
 };
 
 export default path;

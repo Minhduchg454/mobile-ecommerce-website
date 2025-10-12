@@ -1,17 +1,19 @@
 import { createAsyncThunk, current } from "@reduxjs/toolkit"; //giup tao cac hanh dong bat dong bo, thuong goi la api
 import * as apis from "../../apis";
+import { apiGetCurrent } from "../../services/auth.api";
 import { updateCart, setCart } from "./userSlice";
 
 export const getCurrent = createAsyncThunk(
   "user/current",
   async (_, { dispatch, getState, rejectWithValue }) => {
     try {
-      const response = await apis.apiGetCurrent();
+      const response = await apiGetCurrent();
       if (!response.success) return rejectWithValue(response);
       const user = response.user;
+      //user.huuduc = "sai lam";
       return user;
     } catch (error) {
-      console.error("❌ Lỗi trong getCurrent:", error);
+      console.error(" Lỗi trong getCurrent:", error);
       return rejectWithValue(error.response?.data || "Lỗi không xác định");
     }
   }

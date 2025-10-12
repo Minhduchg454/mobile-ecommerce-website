@@ -1,11 +1,11 @@
 <template>
   <div class="chatbot-config">
     <h1>Chatbot Configuration</h1>
-    
+
     <div class="config-form" v-if="config">
       <div class="form-group">
         <label>Welcome Message</label>
-        <textarea 
+        <textarea
           v-model="config.welcomeMessage"
           rows="3"
           placeholder="Enter welcome message..."
@@ -14,38 +14,22 @@
 
       <div class="form-group">
         <label>Primary Color</label>
-        <input 
-          type="color" 
-          v-model="config.primaryColor"
-        >
+        <input type="color" v-model="config.primaryColor" />
       </div>
 
       <div class="form-group">
         <label>Secondary Color</label>
-        <input 
-          type="color" 
-          v-model="config.secondaryColor"
-        >
+        <input type="color" v-model="config.secondaryColor" />
       </div>
 
       <div class="form-group">
         <label>Width (px)</label>
-        <input 
-          type="number" 
-          v-model="config.width"
-          min="200"
-          max="800"
-        >
+        <input type="number" v-model="config.width" min="200" max="800" />
       </div>
 
       <div class="form-group">
         <label>Height (px)</label>
-        <input 
-          type="number" 
-          v-model="config.height"
-          min="300"
-          max="800"
-        >
+        <input type="number" v-model="config.height" min="300" max="800" />
       </div>
 
       <div class="form-group">
@@ -59,18 +43,12 @@
       </div>
 
       <div class="form-actions">
-        <button class="btn-save" @click="saveConfig">
-          Save Changes
-        </button>
-        <button class="btn-preview" @click="previewConfig">
-          Preview
-        </button>
+        <button class="btn-save" @click="saveConfig">Save Changes</button>
+        <button class="btn-preview" @click="previewConfig">Preview</button>
       </div>
     </div>
 
-    <div v-else class="loading">
-      Loading configuration...
-    </div>
+    <div v-else class="loading">Loading configuration...</div>
 
     <!-- Preview Modal -->
     <div class="preview-modal" v-if="showPreview">
@@ -90,52 +68,52 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import Chatbot from '@/components/Chatbot.vue'
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import Chatbot from "@/components/Chatbot.vue";
 
 export default {
-  name: 'ChatbotConfig',
+  name: "ChatbotConfig",
   components: {
-    Chatbot
+    Chatbot,
   },
   setup() {
-    const config = ref(null)
-    const showPreview = ref(false)
+    const config = ref(null);
+    const showPreview = ref(false);
 
     const fetchConfig = async () => {
       try {
-        const response = await axios.get('/api/chatbot/config')
-        config.value = response.data
+        const response = await axios.get("/api/chatbot/config");
+        config.value = response.data;
       } catch (error) {
-        console.error('Error fetching config:', error)
+        console.error("Error fetching config:", error);
       }
-    }
+    };
 
     const saveConfig = async () => {
       try {
-        await axios.put('/api/chatbot/config', config.value)
-        alert('Configuration saved successfully!')
+        await axios.put("/api/chatbot/config", config.value);
+        alert("Configuration saved successfully!");
       } catch (error) {
-        console.error('Error saving config:', error)
-        alert('Failed to save configuration')
+        console.error("Error saving config:", error);
+        alert("Failed to save configuration");
       }
-    }
+    };
 
     const previewConfig = () => {
-      showPreview.value = true
-    }
+      showPreview.value = true;
+    };
 
-    onMounted(fetchConfig)
+    onMounted(fetchConfig);
 
     return {
       config,
       showPreview,
       saveConfig,
-      previewConfig
-    }
-  }
-}
+      previewConfig,
+    };
+  },
+};
 </script>
 
 <style scoped>
@@ -153,7 +131,7 @@ h1 {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .form-group {
@@ -231,7 +209,7 @@ button {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -273,4 +251,4 @@ button {
   padding: 1rem;
   overflow: auto;
 }
-</style> 
+</style>

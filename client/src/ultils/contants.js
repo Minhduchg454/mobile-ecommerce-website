@@ -2,11 +2,24 @@ import path from "./path";
 import icons from "./icons";
 import {
   MdAutorenew,
-  MdPayment,
   MdTagFaces,
-  MdLocalShipping,
   MdLocalOffer,
   MdLocationOn,
+  MdVerifiedUser,
+  MdLocalShipping,
+  MdPayment,
+  MdSupportAgent,
+  MdOutlineDiscount,
+  MdReplayCircleFilled,
+  MdSecurity,
+  MdShoppingCartCheckout,
+  MdStarRate,
+  MdCategory,
+  MdInventory,
+  MdOutlineLocalShipping,
+  MdBatteryChargingFull,
+  MdPhonelinkSetup,
+  MdGroups,
 } from "react-icons/md";
 import {
   AiFillAccountBook,
@@ -14,17 +27,7 @@ import {
   AiOutlineDashboard,
   AiOutlineHistory,
 } from "react-icons/ai";
-import {
-  MdGroups,
-  MdCategory,
-  MdInventory,
-  MdOutlineLocalShipping,
-  MdSecurity,
-  MdSupportAgent,
-  MdStarRate,
-  MdBatteryChargingFull,
-  MdPhonelinkSetup,
-} from "react-icons/md";
+
 import { RiBillLine } from "react-icons/ri";
 import { FaTrademark } from "react-icons/fa"; // cho thương hiệu
 
@@ -318,58 +321,67 @@ export const priceRanges = [
 
 export const infoCards = [
   {
-    icon: <MdAutorenew />,
-    title: "Đổi trả dễ dàng",
-    description: "Đổi thiết bị trong 7 ngày nếu có lỗi.",
-    color: "#007aff",
+    id: 1,
+    icon: <MdVerifiedUser />,
+    title: "Người mua an tâm",
+    description: "Được hoàn tiền 100% nếu hàng không đúng mô tả hoặc lỗi.",
+    color: "#00b14f",
   },
   {
-    icon: <MdPayment />,
-    title: "Trả góp 0%",
-    description: "Thanh toán linh hoạt, không lãi suất.",
-    color: "#34c759",
-  },
-  {
-    icon: <MdTagFaces />,
-    title: "Cá nhân hoá miễn phí",
-    description: "Khắc tên, biểu tượng, không tính phí.",
-    color: "#af52de",
-  },
-  {
-    icon: <MdLocalShipping />,
-    title: "Giao hàng nhanh",
-    description: "Giao trong ngày tại TP.Cần Thơ.",
+    id: 2,
+    icon: <MdSecurity />,
+    title: "Bảo vệ người bán",
+    description: "Hệ thống chống gian lận và quản lý đơn hàng tự động.",
     color: "#ff9500",
   },
   {
-    icon: <MdSecurity />,
-    title: "Bảo hành chính hãng",
-    description: "Tất cả sản phẩm được bảo hành 12–24 tháng.",
+    id: 3,
+    icon: <MdLocalShipping />,
+    title: "Vận chuyển toàn quốc",
+    description: "Kết nối hơn 10 đối tác giao hàng uy tín trên toàn quốc.",
+    color: "#007aff",
+  },
+  {
+    id: 4,
+    icon: <MdPayment />,
+    title: "Thanh toán an toàn",
+    description: "Hỗ trợ ví điện tử, thẻ ngân hàng, và COD linh hoạt.",
+    color: "#34c759",
+  },
+  {
+    id: 5,
+    icon: <MdOutlineDiscount />,
+    title: "Ưu đãi toàn sàn",
+    description: "Săn sale 0đ, freeship, voucher khủng mỗi ngày.",
+    color: "#af52de",
+  },
+  {
+    id: 6,
+    icon: <MdReplayCircleFilled />,
+    title: "Đổi trả dễ dàng",
+    description: "Hỗ trợ trả hàng trong 7 ngày nếu không hài lòng.",
     color: "#ff3b30",
   },
   {
+    id: 7,
     icon: <MdSupportAgent />,
     title: "Hỗ trợ 24/7",
-    description: "Đội ngũ tư vấn luôn sẵn sàng hỗ trợ bạn.",
+    description: "Trung tâm trợ giúp và chatbot hoạt động suốt ngày đêm.",
     color: "#5856d6",
   },
   {
-    icon: <MdStarRate />,
-    title: "Sản phẩm uy tín",
-    description: "Chỉ bán hàng chính hãng từ Apple, Samsung, Dell,...",
-    color: "#ffd60a",
-  },
-  {
-    icon: <MdBatteryChargingFull />,
-    title: "Phụ kiện bền bỉ",
-    description: "Cáp sạc, tai nghe chất lượng cao, bảo vệ thiết bị tối đa.",
+    id: 8,
+    icon: <MdShoppingCartCheckout />,
+    title: "Mua sắm tiện lợi",
+    description: "Giao diện thân thiện, theo dõi đơn hàng dễ dàng.",
     color: "#00c7be",
   },
   {
-    icon: <MdPhonelinkSetup />,
-    title: "Cài đặt miễn phí",
-    description: "Cài ứng dụng, sao lưu dữ liệu miễn phí tại cửa hàng.",
-    color: "#5ac8fa",
+    id: 9,
+    icon: <MdStarRate />,
+    title: "Đánh giá minh bạch",
+    description: "Hệ thống sao và bình luận giúp người mua chọn đúng sản phẩm.",
+    color: "#ffd60a",
   },
 ];
 
@@ -410,4 +422,14 @@ export const canTransition = (current, next) => {
     Cancelled: [], // Đã hủy → không được đổi
   };
   return transitions[current]?.includes(next);
+};
+
+export const APP_INFO = {
+  NAME: "GoCart",
+  SLOGAN: "Sàn giao dịch điện tử thông minh",
+  EMAIL: "support@gocart.vn",
+  PHONE: "0589 378 927",
+  COPYRIGHT: `© ${new Date().getFullYear()} GoCart. All rights reserved.`,
+  ADDRESS:
+    "Đại học Cần Thơ, đường 3/2, phường Xuân Khánh, quận Ninh Kiều, TPCT",
 };
