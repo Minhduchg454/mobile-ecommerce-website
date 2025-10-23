@@ -1,13 +1,14 @@
 // CloseButton.jsx
 import React from "react";
+import { HiXMark } from "react-icons/hi2";
 
 const CloseButton = ({ onClick, className = "" }) => {
   return (
     <button
       onClick={onClick}
-      className={`absolute p-1 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 hover:text-white text-gray-800 shadow transition ${className}`}
+      className={`absolute p-0.5 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-600 hover:text-white text-gray-800 shadow transition ${className}`}
     >
-      ×
+      <HiXMark size={18} />
     </button>
   );
 };

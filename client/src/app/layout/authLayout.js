@@ -14,7 +14,7 @@ import { APP_INFO } from "../../ultils/contants";
 
 export const AuthLayout = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-[#4ADEDE] to-[#787FF6] grid lg:flex p-4 justify-around items-center relative">
+    <div className="min-h-screen bg-gradient-to-tr from-[#4ADEDE] to-[#787FF6] grid lg:flex p-4 justify-around items-center relative animate-fadeIn">
       {/* Logo MOBILE: absolute để không đẩy layout, ẩn trên lg */}
       <Link
         to="/"

@@ -10,18 +10,13 @@ import { APP_INFO } from "../../ultils/contants";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { FaRegHeart } from "react-icons/fa";
 import React, { useState, useRef, useEffect } from "react";
-import { ShowSwal, InputFormSearch, GlassAlert } from "components";
+import { showAlert } from "store/app/appSlice";
+import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import defaultAvatar from "assets/avatarDefault.png";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "store/user/userSlice";
 import { persistor } from "store/redux";
-import {
-  AiOutlineUser,
-  AiOutlineSearch,
-  AiOutlineHistory,
-  AiOutlineClose,
-  AiOutlineArrowDown,
-} from "react-icons/ai";
+import { AiOutlineUser, AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
 import { FiLogOut } from "react-icons/fi";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
@@ -31,7 +26,6 @@ export const Header1 = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const menuRef = useRef(null);
   const { current, isLoggedIn } = useSelector((state) => state.user);
-  const [openLogout, setOpenLogout] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -39,8 +33,30 @@ export const Header1 = () => {
 
   const handleLogout = () => {
     setIsShowMenu(false);
-    setOpenLogout(true);
+    const id = nextAlertId();
+    registerHandlers(id, {
+      onConfirm: () => {
+        dispatch(logout());
+        navigate(`/`);
+        persistor.purge();
+      },
+      onCancel: () => {},
+      onClose: () => {},
+    });
+
+    dispatch(
+      showAlert({
+        id,
+        title: "Xác nhận đăng xuất",
+        message: "Bạn có chắc chắn muốn đăng xuất không?",
+        variant: "danger",
+        showCancelButton: true,
+        confirmText: "Đăng xuất",
+        cancelText: "Huỷ",
+      })
+    );
   };
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener("resize", handleResize);
@@ -57,7 +73,7 @@ export const Header1 = () => {
     {
       label: "Giỏ hàng",
       icon: <MdOutlineShoppingCart size="27" />,
-      path: `${path.DETAIL_CART}`,
+      path: `${path.CART}`,
       isShow: true,
     },
   ];
@@ -207,9 +223,9 @@ export const Header1 = () => {
           ) : (
             <Link
               to={`/${path.LOGIN}`}
-              className="rounded-3xl p-1  md:px-2 md:py-1.5 bg-button-bg-ac backdrop-blur-sm text-white hover:scale-105 transition-transform"
+              className="rounded-3xl px-2 py-2 md:py-1 bg-button-bg-ac backdrop-blur-sm text-white hover:scale-105 transition-transform"
             >
-              <p className="text-xs lg:text-base text-center font-normal">
+              <p className="text-xs lg:text-base text-center font-normal whitespace-nowrap">
                 Đăng nhập
               </p>
             </Link>
@@ -217,9 +233,8 @@ export const Header1 = () => {
 
           {/* Dropdown menu */}
           {isShowMenu && current?.roles?.includes("customer") && (
-            <div className="bg-white absolute right-0 top-full mt-2 w-[250px] border rounded-md shadow-lg    ">
+            <div className="bg-white absolute right-0 top-full mt-2 w-[250px] border rounded-md shadow-lg">
               {mergedMenu.map((item, idx) => {
-                // nếu icon tồn tại thì gán lại size mới
                 const iconEl = item.icon
                   ? React.cloneElement(item.icon, {
                       size: 20,
@@ -251,22 +266,6 @@ export const Header1 = () => {
           )}
         </div>
       </div>
-      <GlassAlert
-        open={openLogout}
-        title="Xác nhận đăng xuất"
-        message="Bạn có chắc chắn muốn đăng xuất không?"
-        showCancelButton
-        confirmText="Đăng xuất"
-        cancelText="Huỷ"
-        variant="danger"
-        onConfirm={() => {
-          dispatch(logout());
-          persistor.purge();
-          setOpenLogout(false);
-        }}
-        onCancel={() => setOpenLogout(false)}
-        onClose={() => setOpenLogout(false)}
-      />
     </div>
   );
 };

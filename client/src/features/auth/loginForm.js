@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "store/user/userSlice";
+import { showAlert } from "store/app/appSlice";
 import {
   getCurrent,
   syncCartFromServer,
@@ -12,7 +13,6 @@ import { apiLogin } from "../../services/auth.api";
 import path from "ultils/path";
 import axios from "axios";
 import { FaLock, FaPhone, FaEye, FaEyeSlash } from "react-icons/fa";
-import { GlassAlert } from "components";
 
 export const LoginForm = () => {
   const [payload, setPayload] = useState({ password: "", accountName: "" });
@@ -22,38 +22,6 @@ export const LoginForm = () => {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const redirectPath = searchParams.get("redirect") || `/${path.HOME}`;
-
-  // ---- GlassAlert local state (thay cho ShowSwal) ----
-  const [alert, setAlert] = useState({
-    open: false,
-    title: "",
-    message: "",
-    variant: "default",
-    showCancelButton: false,
-    confirmText: "OK",
-  });
-
-  const showAlert = (opts) =>
-    setAlert((prev) => ({
-      ...prev,
-      open: true,
-      title: opts.title || "",
-      message: opts.text || opts.message || "",
-      variant: opts.variant || "default",
-      showCancelButton: !!opts.showCancelButton,
-      confirmText: opts.confirmText || "OK",
-      cancelText: opts.cancelText || "Huỷ",
-      onConfirm: opts.onConfirm,
-      onCancel: opts.onCancel,
-    }));
-
-  const closeAlert = () =>
-    setAlert((prev) => ({
-      ...prev,
-      open: false,
-      onConfirm: undefined,
-      onCancel: undefined,
-    }));
 
   const validateInput = () => {
     const err = {};
@@ -93,15 +61,17 @@ export const LoginForm = () => {
         );
 
         // Alert thành công (không chặn điều hướng)
-        showAlert({
-          title: "Thành công",
-          text: `Chào mừng ${
-            data.user?.userLastName || data.user?.userEmail
-          } quay lại`,
-          variant: "success",
-          showCancelButton: false,
-          confirmText: "OK",
-        });
+        dispatch(
+          showAlert({
+            title: "Thành công",
+            message: `Chào mừng ${
+              data.user?.userLastName || data.user?.userEmail
+            } quay lại`,
+            variant: "success",
+            showCancelButton: false,
+            confirmText: "OK",
+          })
+        );
 
         dispatch(getCurrent()).then((res2) => {
           if (res2.meta.requestStatus === "fulfilled") {
@@ -116,18 +86,22 @@ export const LoginForm = () => {
 
         navigate(redirectPath);
       } else {
-        showAlert({
-          title: "Lỗi",
-          text: data.message || "Đăng nhập Google thất bại",
-          variant: "danger",
-        });
+        dispatch(
+          showAlert({
+            title: "Lỗi",
+            message: data.message || "Đăng nhập Google thất bại",
+            variant: "danger",
+          })
+        );
       }
     } catch (err) {
-      showAlert({
-        title: "Lỗi",
-        text: "Đăng nhập Google thất bại",
-        variant: "danger",
-      });
+      dispatch(
+        showAlert({
+          title: "Lỗi",
+          message: "Đăng nhập Google thất bại",
+          variant: "danger",
+        })
+      );
       console.error("Lỗi đăng nhập Google:", err);
     }
   };
@@ -158,18 +132,28 @@ export const LoginForm = () => {
         })
       );
 
-      // Alert thành công (giống ShowSwal trước đây)
-      showAlert({
-        title: "Thành công",
-        text: `Chào mừng ${res.user?.lastname || res.user?.email} quay lại`,
-        variant: "success",
-        showCancelButton: false,
-        confirmText: "OK",
-      });
+      dispatch(
+        showAlert({
+          title: "Chào mừng",
+          message: `${res.user?.userFistName || res.user?.userEmail} quay lại`,
+          variant: "success",
+          duration: 1500,
+          showConfirmButton: false,
+        })
+      );
+      dispatch(syncCartFromServer(res.user._id));
+      dispatch(fetchWishlist());
       navigate(redirectPath);
     } else {
-      const msg = res.message || res.error || "Đăng nhập thất bại";
-      showAlert({ title: "Lỗi", text: msg, variant: "danger" });
+      const msg = res.message || res.err || "Đăng nhập thất bại";
+      dispatch(
+        showAlert({
+          title: "Lỗi",
+          message: msg,
+          variant: "danger",
+          confirmText: "Thử lại",
+        })
+      );
     }
   };
 
@@ -261,28 +245,6 @@ export const LoginForm = () => {
       >
         Trang chủ
       </Link>
-
-      {/* GlassAlert thay cho ShowSwal */}
-      <GlassAlert
-        key={alert.open ? "open" : "closed"} // đảm bảo remount mỗi lần mở
-        open={alert.open}
-        title={alert.title}
-        message={alert.message}
-        variant={alert.variant} // "default" | "success" | "danger"
-        showCancelButton={alert.showCancelButton}
-        confirmText={alert.confirmText}
-        cancelText={alert.cancelText}
-        onConfirm={() => {
-          // Nếu caller có onConfirm riêng -> gọi trước khi đóng
-          if (typeof alert.onConfirm === "function") alert.onConfirm();
-          closeAlert();
-        }}
-        onCancel={() => {
-          if (typeof alert.onCancel === "function") alert.onCancel();
-          closeAlert();
-        }}
-        onClose={closeAlert}
-      />
     </div>
   );
 };

@@ -74,9 +74,7 @@ export function HorizontalScroller({
           <div
             key={keyExtractor ? keyExtractor(item, idx) : idx}
             className={`flex-shrink-0 ${
-              isLeft
-                ? "first:ml-2 first:md:ml-28" // nếu canh trái
-                : ""
+              isLeft ? "first:ml-2 first:md:ml-28" : ""
             }`}
           >
             {renderItem(item, idx)}

@@ -33,7 +33,7 @@ const DealDaily = ({ dispatch }) => {
         await apiUpdateProductVariation(product.variantId, {
           price: product.originalPrice,
         });
-        console.log("Đã khôi phục giá gốc cho biến thể");
+        //console.log("Đã khôi phục giá gốc cho biến thể");
       } catch (err) {
         console.error("Lỗi khôi phục giá gốc:", err);
       }

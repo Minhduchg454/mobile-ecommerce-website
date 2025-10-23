@@ -86,7 +86,7 @@ const FilterPanel = ({
                   key={c._id || c.categorySlug}
                   className={`${filterLi} ${
                     selectedCategoryIds.includes(c._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
+                      ? "text-sidebar-t-select"
                       : ""
                   }`}
                   onClick={() =>
@@ -109,7 +109,7 @@ const FilterPanel = ({
                   key={cs._id || cs.categorySlug}
                   className={`${filterLi} ${
                     selectedCategoryShopIds.includes(cs._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
+                      ? "text-sidebar-t-select"
                       : ""
                   }`}
                   onClick={() =>
@@ -147,7 +147,7 @@ const FilterPanel = ({
                   key={b._id || b.brandSlug}
                   className={`${filterLi} ${
                     selectedBrandIds.includes(b._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
+                      ? "text-sidebar-t-select"
                       : ""
                   }`}
                   onClick={() =>
@@ -166,7 +166,7 @@ const FilterPanel = ({
             <H1 icon={MdLocalOffer}>Khuyến mãi, ưu đãi</H1>
             <label
               className={`${filterLi} ${
-                hasSale ? "text-sidebar-t-select bg-sidebar-bg-select" : ""
+                hasSale ? "text-sidebar-t-select " : ""
               }`}
             >
               <input
@@ -185,7 +185,7 @@ const FilterPanel = ({
             <H1 icon={RiVipCrown2Line}>Loại cửa hàng</H1>
             <label
               className={`${filterLi} ${
-                hasMall ? "text-sidebar-t-select bg-sidebar-bg-select" : ""
+                hasMall ? "text-sidebar-t-select" : ""
               }`}
             >
               <input
@@ -208,7 +208,7 @@ const FilterPanel = ({
                   key={s._id || s.shopSlug}
                   className={`${filterLi} ${
                     selectedShopIds.includes(s._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
+                      ? "text-sidebar-t-select"
                       : ""
                   }`}
                   onClick={() =>

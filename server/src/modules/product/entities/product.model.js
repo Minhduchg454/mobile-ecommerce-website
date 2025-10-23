@@ -70,13 +70,17 @@ const productSchema = new mongoose.Schema({
     {
       type: {
         type: String,
-        enum: ["text", "image", "video"],
+        enum: ["text", "image", "video", "videoUrl"],
         required: true,
       },
       content: String, // text content
-      url: String, // image/video URL
-      alt: String, // alternative text
-      thumbnail: String, // for video
+      url: String, // image/video/videoUrl URL,
+      format: {
+        type: String,
+        enum: ["plain", "markdown", "html"],
+        default: "plain",
+      },
+      alt: String,
       order: { type: Number, index: 1 },
     },
   ],

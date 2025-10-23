@@ -1,5 +1,16 @@
 import { createAsyncThunk, current } from "@reduxjs/toolkit"; //giup tao cac hanh dong bat dong bo, thuong goi la api
 import * as apis from "../../apis";
+import { apiGetCustomerCart } from "../../services/customer.api";
+import {
+  apiClearCartItems,
+  apiCreateCartItem,
+  apiDeleteCartItem,
+  apiGetCartItem,
+  apiGetCartItemCount,
+  apiUpdateCartItem,
+  apiGetCartItems,
+  apiGetWishlistByQuery,
+} from "../../services/shopping.api";
 import { apiGetCurrent } from "../../services/auth.api";
 import { updateCart, setCart } from "./userSlice";
 
@@ -21,49 +32,92 @@ export const getCurrent = createAsyncThunk(
 
 export const updateCartItem = createAsyncThunk(
   "user/updateCartItem",
-  async ({ product, quantity, priceAtTime }, { dispatch, getState }) => {
+  async (
+    { pvId, cartItemQuantity, priceAtTime, add, maxItemQuantity = false },
+    { dispatch, getState }
+  ) => {
     const state = getState();
-    const { isLoggedIn, current } = state.user;
+    const { isLoggedIn, current } = state.user || state;
+    // 0) Chuẩn hoá id
+    const key = String(pvId);
 
-    // 1. Cập nhật Redux ngay lập tức để UI phản hồi nhanh
+    // 1) Tính số lượng cuối cùng cho Redux (optimistic)
+    const currentLocal = (getState().user.currentCart || []).find(
+      (it) => String(it.pvId) === key
+    );
+    const localQty = Number(currentLocal?.cartItemQuantity || 0);
+
+    const inc = Number(cartItemQuantity) || 0;
+
+    // Nếu từ ProductDetail -> cộng dồn, nếu từ Cart -> ghi đè
+    let finalQtyLocal = add ? Math.max(0, localQty + inc) : Math.max(0, inc);
+    if (finalQtyLocal > maxItemQuantity) finalQtyLocal = maxItemQuantity;
+
+    // 2) Cập nhật Redux ngay với finalQtyLocal (đồng bộ với UI)
     dispatch(
-      updateCart({ productVariationId: product, quantity, priceAtTime })
+      updateCart({ pvId: key, cartItemQuantity: finalQtyLocal, priceAtTime })
     );
 
-    // 2. Nếu chưa đăng nhập thì chỉ cập nhật local
+    // 3) Nếu chưa đăng nhập thì dừng tại đây (local only)
     if (!isLoggedIn) return;
 
     try {
-      // 3. Nếu đã đăng nhập → sync với server
-      const cartRes = await apis.apiGetCustomerCart(current._id);
-      const shoppingCartId = cartRes?.cart?._id;
-
-      if (!shoppingCartId) {
-        console.log("Không có cardId gây lỗi");
+      // 4) Lấy cartId từ server
+      const cartRes = await apiGetCustomerCart(current._id);
+      const cartId = cartRes?.cartId || cartRes?.cart?._id;
+      if (!cartId) {
+        console.warn("Không lấy được cartId");
         return;
       }
 
-      const cartItemsRes = await apis.apiGetCartItems(shoppingCartId);
+      // 5) Lấy danh sách cart items hiện có trên server
+      const cartItemsRes = await apiGetCartItems(cartId);
       const cartItems = cartItemsRes?.cartItems || [];
 
-      // Tìm cartItem tương ứng trong DB
+      // 6) Tìm item tương ứng trên server (chuẩn hoá id khi so sánh)
       const matched = cartItems.find(
-        (item) =>
-          item.productVariationId === product ||
-          item.productVariationId?._id === product
+        (it) => String(it?.pvId?._id || it?.pvId) === key
       );
 
       if (matched?._id) {
-        // Đã có trong DB → update lại
-        await apis.apiUpdateCartItem(matched._id, { quantity });
-      } else {
-        // Chưa có trong DB → thêm mới
-        await apis.apiCreateCartItem({
-          productVariationId: product,
-          quantity,
-          price: priceAtTime,
-          shoppingCart: shoppingCartId,
+        // Đã có trong DB:
+        const currentQtyServer = Number(matched.cartItemQuantity || 0);
+        let finalQtyServer = add
+          ? Math.max(0, currentQtyServer + inc) // cộng dồn
+          : Math.max(0, inc); // ghi đè
+        if (finalQtyServer > maxItemQuantity) finalQtyServer = maxItemQuantity;
+
+        await apiUpdateCartItem(matched._id, {
+          cartItemQuantity: finalQtyServer,
         });
+
+        // Optional: đảm bảo Redux = Server (nếu sợ race-condition)
+        if (finalQtyLocal !== finalQtyServer) {
+          dispatch(
+            updateCart({
+              pvId: key,
+              cartItemQuantity: finalQtyServer,
+              priceAtTime,
+            })
+          );
+        }
+      } else {
+        // Chưa có trong DB -> tạo mới
+        // Từ ProductDetail: tạo với inc (số vừa thêm), không phải finalQtyLocal (vì server chưa có)
+        // Từ Cart (ghi đè): tạo với inc
+        const createQty = Math.max(0, inc);
+
+        // Nếu createQty = 0 thì không tạo
+        if (createQty > 0) {
+          await apiCreateCartItem({
+            pvId: key,
+            cartItemQuantity: createQty,
+            cartItemPrice: priceAtTime,
+            cartId,
+          });
+        } else {
+          // Nếu user set về 0 ở Cart nhưng server chưa có -> không cần gọi create
+        }
       }
     } catch (error) {
       console.error("Không thể đồng bộ giỏ hàng với server:", error);
@@ -73,14 +127,12 @@ export const updateCartItem = createAsyncThunk(
 
 export const removeCartItem = createAsyncThunk(
   "user/removeCartItem",
-  async (productVariationId, { dispatch, getState }) => {
+  async (pvId, { dispatch, getState }) => {
     const state = getState();
     const { currentCart, isLoggedIn, current } = state.user;
 
     // 1. Xóa khỏi Redux (UI phản hồi tức thì)
-    const filtered = currentCart.filter(
-      (el) => el.productVariationId !== productVariationId
-    );
+    const filtered = currentCart.filter((el) => el.pvId !== pvId);
     dispatch(setCart(filtered));
 
     // 2. Nếu chưa login thì không gọi server
@@ -88,21 +140,19 @@ export const removeCartItem = createAsyncThunk(
 
     try {
       // 3. Lấy đúng cartItem._id từ server
-      const cartRes = await apis.apiGetCustomerCart(current._id);
-      const shoppingCartId = cartRes?.cart?._id;
+      const cartRes = await apiGetCustomerCart(current._id);
+      const shoppingCartId = cartRes?.cartId;
       if (!shoppingCartId) return;
 
-      const cartItemsRes = await apis.apiGetCartItems(shoppingCartId);
+      const cartItemsRes = await apiGetCartItems(shoppingCartId);
       const cartItems = cartItemsRes?.cartItems || [];
 
       const matchedItem = cartItems.find(
-        (item) =>
-          item.productVariationId === productVariationId ||
-          item.productVariationId?._id === productVariationId
+        (item) => item.pvId === pvId || item.pvId?._id === pvId
       );
 
       if (matchedItem?._id) {
-        await apis.apiDeleteCartItem(matchedItem._id); //
+        await apiDeleteCartItem(matchedItem._id);
       } else {
         console.warn("Không tìm thấy cartItem cần xoá trong server.");
       }
@@ -135,10 +185,10 @@ export const fetchWishlist = createAsyncThunk(
   "user/fetchWishlist",
   async (_, { getState, rejectWithValue }) => {
     try {
-      const userId = getState().user.current?._id;
-      if (!userId) return [];
+      const customerId = getState().user.current?._id;
+      if (!customerId) return [];
 
-      const res = await apis.apiGetWishlistByQuery({ userId });
+      const res = await apiGetWishlistByQuery({ customerId });
 
       if (res.success) {
         return res.wishList;
@@ -156,12 +206,12 @@ export const syncCartFromServer = createAsyncThunk(
   async (userId, { getState, dispatch, rejectWithValue }) => {
     try {
       const localCartBackup = getState().user.currentCart;
-      const shoppingRes = await apis.apiGetCustomerCart(userId);
-      const shoppingCartId = shoppingRes.cart?._id;
+      const shoppingRes = await apiGetCustomerCart(userId);
+      const cartId = shoppingRes.cartId;
 
       let serverCartItems = [];
-      if (shoppingCartId) {
-        const cartRes = await apis.apiGetCartItems(shoppingCartId);
+      if (cartId) {
+        const cartRes = await apiGetCartItems(cartId);
         if (cartRes.success) serverCartItems = cartRes.cartItems;
       }
 
@@ -169,31 +219,28 @@ export const syncCartFromServer = createAsyncThunk(
 
       for (const localItem of localCartBackup) {
         const matchedItem = serverCartItems.find(
-          (item) =>
-            item.productVariationId === localItem.productVariationId ||
-            item.productVariationId?._id === localItem.productVariationId
+          (item) => item.pvId?._id === localItem.pvId
         );
 
         if (matchedItem) {
           const matchedId =
-            typeof matchedItem.productVariationId === "string"
-              ? matchedItem.productVariationId
-              : matchedItem.productVariationId._id;
+            typeof matchedItem.pvId === "string"
+              ? matchedItem.pvId
+              : matchedItem.pvId._id;
 
-          if (matchedItem.quantity !== localItem.quantity) {
-            await apis.apiUpdateCartItem({
-              product: matchedId,
-              quantity: localItem.quantity,
+          if (matchedItem.cartItemQuantity !== localItem.cartItemQuantity) {
+            await apiUpdateCartItem({
+              id: matchedId,
+              cartItemQuantity: localItem.cartItemQuantity,
             });
-
-            matchedItem.quantity = localItem.quantity;
+            matchedItem.cartItemQuantity = localItem.cartItemQuantity;
           }
         } else {
-          const res = await apis.apiCreateCartItem({
-            productVariationId: localItem.productVariationId,
-            quantity: localItem.quantity,
-            price: localItem.priceAtTime,
-            shoppingCart: shoppingCartId,
+          const res = await apiCreateCartItem({
+            pvId: localItem.pvId,
+            cartItemQuantity: localItem.cartItemQuantity,
+            cartItemPrice: localItem.priceAtTime,
+            cartId,
           });
 
           if (res.success) {
@@ -203,14 +250,11 @@ export const syncCartFromServer = createAsyncThunk(
       }
 
       const normalized = mergedCart
-        .filter((item) => item.productVariationId !== null)
+        .filter((item) => item.pvId !== null)
         .map((item) => ({
-          productVariationId:
-            typeof item.productVariationId === "string"
-              ? item.productVariationId
-              : item.productVariationId._id,
-          quantity: item.quantity,
-          priceAtTime: item.price,
+          pvId: typeof item.pvId === "string" ? item.pvId : item.pvId._id,
+          cartItemQuantity: item.cartItemQuantity,
+          priceAtTime: item.cartItemPrice,
         }));
 
       dispatch(setCart(normalized));

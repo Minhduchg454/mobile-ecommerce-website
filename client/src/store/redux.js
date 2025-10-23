@@ -13,7 +13,7 @@ const commonConfig = {
 //Luu cac bien isLoggedIn, token,... vao localStorage theo shop/user
 const userConfig = {
   ...commonConfig,
-  whitelist: ["isLoggedIn", "token", "current", "currentCart"],
+  whitelist: ["isLoggedIn", "token", "current", "currentCart", "wishList"],
   key: "shop/user",
 };
 

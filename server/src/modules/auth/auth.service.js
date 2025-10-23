@@ -8,14 +8,14 @@ const User = require("../user/entities/user.model");
 const Customer = require("../customer/entities/customer.model");
 const Account = require("./entities/account.model");
 const UserStatus = require("../user/entities/user-status.model");
-const ShoppingCart = require("../cart/entities/shopping-cart.model");
+const ShoppingCart = require("../shopping/entities/shopping-cart.model");
 const Admin = require("./../admin/entities/admin.model");
 const UserRole = require("../user/entities/user-role.model");
 const Shop = require("../shop/entitties/shop.model");
 
 //Import service
 const userService = require("../user/user.service");
-const cartService = require("../cart/cart.service");
+const cartService = require("../shopping/cart.service");
 const shopService = require("../shop/shop.service");
 
 //Import orders
@@ -193,7 +193,6 @@ exports.registerAdmin = async (body) => {
       userMobile: phone,
       userDateOfBirth: dateOfBirth,
       userStatusId: activeStatusId,
-      // cartId: undefined (bỏ qua)
     });
     createdDocs.user = userRes.user;
 
@@ -247,10 +246,13 @@ exports.registerAdmin = async (body) => {
 
 //Dang ky tai khoan shop
 exports.registerShop = async (body, files) => {
-  const { userId, shopName, shopDescription, shopColor } = body;
+  const { userId, shopName, shopDescription, shopColor, shopIsOffical } = body;
 
-  // 1) Validate
+  if (shopIsOffical) {
+    body.shopIsOffical = true;
+  }
   if (!userId || !shopName) {
+    // 1) Validate
     const err = new Error("Thiếu userId, shopName hoặc shopSlug");
     err.status = 400;
     throw err;
@@ -296,7 +298,7 @@ exports.registerShop = async (body, files) => {
     };
 
     // 6) Tạo shop (id = userId)
-    const shopRes = await shopService.createShop(bodyShop, files);
+    const shopRes = await shopService.createShop(body, files);
     createdDocs.shop = shopRes.shop; // shopService đang trả { success, shop }
 
     return {
@@ -318,6 +320,66 @@ exports.registerShop = async (body, files) => {
 
     throw err;
   }
+};
+
+// Đổi mật khẩu
+exports.changePassword = async (body) => {
+  // chấp nhận cả oldPassword và oldPasword (typo)
+
+  const { newPassword, oldPassword, uId } = body;
+
+  // Ưu tiên id từ token (an toàn hơn), fallback về body.uId (nếu bạn chưa bật middleware)
+
+  // 1) Validate đầu vào
+  if (!uId || !oldPassword || !newPassword) {
+    const err = new Error("Thiếu thông tin: uId, oldPassword, newPassword");
+    err.status = 400;
+    throw err;
+  }
+  if (typeof newPassword !== "string" || newPassword.length < 6) {
+    const err = new Error("Mật khẩu mới phải từ 6 ký tự");
+    err.status = 400;
+    throw err;
+  }
+
+  // 2) Tìm account theo userId
+  const account = await Account.findOne({ userId: uId });
+  if (!account) {
+    const err = new Error("Không tìm thấy tài khoản");
+    err.status = 404;
+    throw err;
+  }
+
+  // 3) So khớp mật khẩu cũ
+  const isMatch = await bcrypt.compare(oldPassword, account.accountPassword);
+  if (!isMatch) {
+    const err = new Error("Mật khẩu hiện tại không đúng");
+    err.status = 401;
+    throw err;
+  }
+
+  // 4) Chặn trường hợp đặt lại đúng mật khẩu hiện tại (không bắt buộc nhưng nên có)
+  const sameAsCurrent = await bcrypt.compare(
+    newPassword,
+    account.accountPassword
+  );
+  if (sameAsCurrent) {
+    const err = new Error("Mật khẩu mới không được trùng mật khẩu hiện tại");
+    err.status = 400;
+    throw err;
+  }
+
+  // 5) Hash mật khẩu mới và lưu
+  const SALT_ROUNDS = 10;
+  const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  account.accountPassword = hashed;
+
+  await account.save();
+
+  return {
+    success: true,
+    message: "Đổi mật khẩu thành công",
+  };
 };
 
 exports.login = async (body) => {
@@ -359,9 +421,6 @@ exports.login = async (body) => {
   const user = current.user.toObject
     ? current.user.toObject()
     : { ...current.user };
-
-  // Gán thêm accountName
-  user.accountName = accountName;
 
   // 5) Ký token
   const token = jwt.sign({ id: user._id, roles: user.roles }, JWT_SECRET, {
@@ -531,4 +590,23 @@ exports.googleLogin = async (body) => {
     console.error("Google login error:", error);
     throw error;
   }
+};
+
+exports.getAccountName = async (userId) => {
+  if (!userId) {
+    const err = new Error("Không có id tài khoản");
+    err.status = 404;
+    throw err;
+  }
+  const account = await Account.findOne({ userId });
+  if (!account) {
+    const err = new Error("Không tìm thấy tài khoản");
+    err.status = 404;
+    throw err;
+  }
+  return {
+    success: true,
+    mesage: "Lấy tên tài khoản thành công",
+    accountName: account.accountName,
+  };
 };

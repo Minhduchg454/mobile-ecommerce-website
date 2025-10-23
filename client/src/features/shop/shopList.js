@@ -46,27 +46,37 @@ export const ShopList = () => {
 
   return (
     <div className="w-full">
-      <HorizontalScroller
-        items={shops}
-        keyExtractor={(s) => s._id}
-        // edgePadding cho đẹp; card đầu sát mép có thể dùng first:ml-* trong ShopCard wrapper nếu muốn
-        contentClassName="pb-2"
-        renderItem={(s) => (
-          <ShopCard
-            shopSlug={s.shopSlug}
-            shopName={s.shopName}
-            shopLogo={s.shopLogo}
-            shopDescription={s.shopDescription}
-            shopCreateAt={s.shopCreateAt || s.createdAt}
-            shopColor={s.shopColor}
-            shopRateAvg={s.shopRateAvg}
-            shopSoldCount={s.shopSoldCount}
-            shopProductCount={s.shopProductCount}
-            shopBackground={s.shopBackground}
-            shopId={s._id}
-          />
-        )}
-      />
+      {loading || shops.length === 0 ? (
+        <div className="first:pl-2 first:md:pl-28 flex gap-4 md:mx-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-[100px] h-[150px] rounded-xl bg-gray-200/70 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : (
+        <HorizontalScroller
+          items={shops}
+          keyExtractor={(s) => s._id}
+          contentClassName="pb-2"
+          renderItem={(s) => (
+            <ShopCard
+              shopSlug={s.shopSlug}
+              shopName={s.shopName}
+              shopLogo={s.shopLogo}
+              shopDescription={s.shopDescription}
+              shopCreateAt={s.shopCreateAt || s.createdAt}
+              shopColor={s.shopColor}
+              shopRateAvg={s.shopRateAvg}
+              shopSoldCount={s.shopSoldCount}
+              shopProductCount={s.shopProductCount}
+              shopBackground={s.shopBackground}
+              shopId={s._id}
+            />
+          )}
+        />
+      )}
     </div>
   );
 };

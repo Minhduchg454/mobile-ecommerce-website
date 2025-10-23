@@ -17,6 +17,8 @@ const path = {
   PRODUCTS: "products",
   SEARCH_HOME: "tat-ca-san-pham",
   SHOP: "shops",
+  CART: "carts",
+  ORDER: "orders",
 
   // Admin
   ADMIN: "admin",

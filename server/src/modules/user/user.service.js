@@ -1,9 +1,11 @@
 //user.service
 const User = require("./entities/user.model");
 const UserStatus = require("./entities/user-status.model");
-const ShoppingCart = require("../cart/entities/shopping-cart.model");
+const ShoppingCart = require("../shopping/entities/shopping-cart.model");
 const Role = require("./entities/role.model");
 const UserRole = require("./entities/user-role.model");
+const AccountService = require("../auth/auth.service");
+const Address = require("./entities/address.model");
 
 exports.createUser = async (body, file) => {
   // 1) Gắn file (nếu có) vào body
@@ -124,6 +126,11 @@ exports.getCurrent = async (body, userToken) => {
   const userObj = user.toObject();
   userObj.roles = roles;
 
+  const account = await AccountService.getAccountName(id);
+  if (account.success) {
+    userObj.accountName = account.accountName;
+  }
+
   return {
     success: true,
     user: userObj,
@@ -145,6 +152,8 @@ exports.getRole = async (body) => {
 };
 
 exports.updateUser = async (uId, body, file) => {
+  //console.log("Nhan du lieu duoc gui", uId, body, file);
+
   if (!uId) {
     const err = new Error("Thiếu uId");
     err.status = 400;
@@ -201,4 +210,147 @@ exports.updateUser = async (uId, body, file) => {
     message: "Cập nhật user thành công",
     user: updated,
   };
+};
+
+/**
+ * Address
+ */
+
+exports.createAddress = async (body) => {
+  // bắt buộc
+  const required = [
+    "addressUserName",
+    "addressNumberPhone",
+    "addressStreet",
+    "addressWard",
+    "addressDistrict",
+    "addressCity",
+    "addressCountry",
+    "userId",
+  ];
+  const missing = required.filter((f) => !body[f]);
+  if (missing.length) {
+    const err = new Error(`Missing fields: ${missing.join(", ")}`);
+    err.status = 400;
+    throw err;
+  }
+
+  if (body.addressIsDefault === true) {
+    await Address.updateMany(
+      { userId: body.userId, addressIsDefault: true },
+      { $set: { addressIsDefault: false } }
+    );
+  }
+
+  const doc = await Address.create(body);
+
+  return {
+    success: true,
+    message: "Tạo địa chỉ thành công",
+    address: doc,
+  };
+};
+
+/**
+ * query hỗ trợ:
+ * - userId: lọc theo user
+ * - q: tìm theo tên/ngõ/đường/phường/quận/thành phố/quốc gia/số điện thoại (regex)
+ * - sort: newest|oldest|name_asc|name_desc|default_first
+ */
+exports.getAddresses = async (query = {}) => {
+  // console.log("Duoc goi dia chi", query);
+  const { userId, q, sort } = query;
+
+  const filter = {};
+  if (userId) filter.userId = userId;
+
+  if (q && String(q).trim()) {
+    const kw = String(q).trim();
+    filter.$or = [
+      { addressUserName: { $regex: kw, $options: "i" } },
+      { addressNumberPhone: { $regex: kw, $options: "i" } },
+      { addressStreet: { $regex: kw, $options: "i" } },
+      { addressWard: { $regex: kw, $options: "i" } },
+      { addressDistrict: { $regex: kw, $options: "i" } },
+      { addressCity: { $regex: kw, $options: "i" } },
+      { addressCountry: { $regex: kw, $options: "i" } },
+    ];
+  }
+
+  const sortMap = {
+    newest: { _id: -1 }, // dùng _id thay createdAt (schema chưa bật timestamps)
+    oldest: { _id: 1 },
+    name_asc: { addressUserName: 1 },
+    name_desc: { addressUserName: -1 },
+    default_first: { addressIsDefault: -1, _id: -1 },
+  };
+  const sortOption = sortMap[sort] || { addressIsDefault: -1, _id: -1 };
+
+  const items = await Address.find(filter)
+    .sort(sortOption)
+    .lean()
+    .populate(
+      "userId",
+      "userFirstName userLastName userAvatar userGender userDateOfBirth"
+    );
+
+  return {
+    success: true,
+    message: "Lấy danh sách địa chỉ thành công",
+    addresses: items,
+  };
+};
+
+// addressId từ params, userId từ body hoặc params tuỳ router
+exports.updateAddress = async (addressId, userId, body) => {
+  //console.log("Nhan cap nhat thong tin", addressId, userId, body);
+  if (!addressId || !userId) {
+    const e = new Error("Thiếu addressId hoặc userId");
+    e.status = 400;
+    throw e;
+  }
+
+  // Nếu gán mặc định cho địa chỉ này, hạ cờ các địa chỉ khác trước
+  if (typeof body.addressIsDefault !== "undefined" && body.addressIsDefault) {
+    await Address.updateMany(
+      { userId, _id: { $ne: addressId }, addressIsDefault: true },
+      { $set: { addressIsDefault: false } }
+    );
+  }
+
+  const updated = await Address.findOneAndUpdate(
+    { _id: addressId, userId },
+    body,
+    { new: true }
+  );
+
+  if (!updated) {
+    const err = new Error("Không tìm thấy địa chỉ của người dùng");
+    err.status = 404;
+    throw err;
+  }
+
+  return {
+    success: true,
+    message: "Cập nhật địa chỉ thành công",
+    address: updated,
+  };
+};
+
+// addressId từ params, userId từ body/params
+exports.deleteAddress = async (addressId, userId) => {
+  if (!addressId || !userId) {
+    const e = new Error("Thiếu addressId hoặc userId");
+    e.status = 400;
+    throw e;
+  }
+
+  const deleted = await Address.findOneAndDelete({ _id: addressId, userId });
+  if (!deleted) {
+    const e = new Error("Không tìm thấy địa chỉ của người dùng");
+    e.status = 404;
+    throw e;
+  }
+
+  return { success: true, message: "Xoá địa chỉ thành công" };
 };

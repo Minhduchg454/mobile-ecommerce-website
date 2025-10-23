@@ -29,12 +29,12 @@ export const TopSoldProducts = () => {
 
   return (
     <div className="w-full">
-      {loading ? (
-        <div className="flex gap-2 mx-2 md:mx-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+      {loading || products.length === 0 ? (
+        <div className="first:pl-2 first:md:pl-28 flex gap-4 md:mx-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="w-[250px] h-[350px] rounded-xl bg-gray-200/70 animate-pulse"
+              className="w-[100px] h-[150px] rounded-xl bg-gray-200/70 animate-pulse"
             />
           ))}
         </div>

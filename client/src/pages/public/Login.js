@@ -199,7 +199,7 @@ const Login = () => {
       } else {
         ShowSwal({
           title: "Lỗi",
-          text: res.mes || res.error || "Đăng nhập thất bại",
+          message: res.message || res.error || "Đăng nhập thất bại",
           icon: "error",
         });
       }

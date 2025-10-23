@@ -27,3 +27,11 @@ export const apiGetCurrent = () =>
     url: "/user/current",
     method: "get",
   });
+
+export const apiChangePassword = (data) =>
+  axios({
+    url: "auth/change-password",
+    method: "post",
+    data,
+    headers: { "Content-Type": "application/json" },
+  });

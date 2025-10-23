@@ -30,7 +30,7 @@ const getVariationDetailsByIds = async (variationIds) => {
         ],
       })
       .lean();
-    console.log(getVariationDetailsByIds, variations);
+    //console.log(getVariationDetailsByIds, variations);
     return variations;
   } catch (error) {
     console.error("Lỗi khi lấy thông tin variations:", error);

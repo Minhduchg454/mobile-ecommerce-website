@@ -62,11 +62,15 @@ module.exports = {
 
         //button
         "button-bg": "#E2E5E9",
+        "button-hv": "#D1D5DC",
         "button-bg-ac": "#0071E3",
         "button-bg-hv": "#1E4ED8",
-        "button-hv": "#E2E5E9",
+
         "button-t-hv": "#0074FF",
         "button-bd-ac": "#2563eb",
+
+        //options
+        "options-bg": "#E3E3E4",
 
         //card
         "card-bg": "#fefefe",

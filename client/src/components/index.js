@@ -80,3 +80,4 @@ export { FilterPanel } from "./common/FilterPanel";
 export { ProductExplorer } from "./common/ProductExplorer";
 export { ListPage } from "./common/ListPage";
 export { GlassAlert } from "./common/GlassAlert";
+export { GlobalGlassAlert } from "./common/GlobalGlassAlert";

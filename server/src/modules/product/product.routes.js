@@ -36,7 +36,7 @@ router.get("/product/:pId", productController.getProductById);
 router.post(
   "/product",
   uploadCloud.fields([
-    { name: "productThumb", maxCount: 1 }, // optional
+    { name: "productThumb", maxCount: 1 },
     { name: "blockFiles", maxCount: 20 },
   ]),
   productController.createProduct

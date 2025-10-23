@@ -26,6 +26,13 @@ const addressSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+
+  addressCity: {
+    type: String, // Thành phố/tỉnh
+    required: true,
+    trim: true,
+  },
+
   addressCountry: {
     type: String, // Quốc gia
     required: true,

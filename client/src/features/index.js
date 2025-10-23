@@ -8,3 +8,7 @@ export { RecommendMlList } from "./product/recommendMlList";
 export { SaleHomePage } from "./product/saleHomePage";
 export { RecommentList } from "./product/recommendList";
 export { ShopCategoryList } from "./shop/shopCategoryList";
+export { CheckOut1 } from "./order/checkOut";
+export { AddressFormModal } from "./user/AddressFormModal";
+export { WishList } from "./shopping/WishList";
+export { Carts } from "./shopping/Cart";

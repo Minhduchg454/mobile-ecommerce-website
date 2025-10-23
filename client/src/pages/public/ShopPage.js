@@ -101,7 +101,7 @@ export const ShopPage = () => {
   };
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="w-full flex flex-col animate-fadeIn">
       {/* --- HEADER SHOP --- */}
       <section
         ref={homeRef}

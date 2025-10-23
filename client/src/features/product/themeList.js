@@ -29,16 +29,16 @@ export const ThemeList = () => {
 
   return (
     <section className="w-full">
-      {loading ? (
-        <div className="flex gap-4 mx-2 md:mx-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+      {loading || themes.length === 0 ? (
+        <div className="first:pl-2 first:md:pl-28 flex gap-4 md:mx-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="w-[250px] h-[350px] rounded-xl bg-gray-200/70 animate-pulse"
+              className="w-[100px] h-[150px] rounded-xl bg-gray-200/70 animate-pulse"
             />
           ))}
         </div>
-      ) : themes.length > 0 ? (
+      ) : (
         <HorizontalScroller
           items={themes}
           keyExtractor={(t) => t.themeId}
@@ -52,10 +52,6 @@ export const ThemeList = () => {
             />
           )}
         />
-      ) : (
-        <p className="text-gray-500 text-sm italic py-4">
-          Không có xu hướng nào
-        </p>
       )}
     </section>
   );

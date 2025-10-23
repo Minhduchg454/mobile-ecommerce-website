@@ -9,7 +9,7 @@ import {
 
 export const ListProductsPage = () => {
   return (
-    <div className="h-[calc(100vh-82px)]">
+    <div className="h-[calc(100vh-82px)] animate-fadeIn">
       <ListPage
         // fetchers
         fetchItems={apiGetProducts}

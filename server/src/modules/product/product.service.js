@@ -212,7 +212,16 @@ exports.createProduct = async (reqBody, files = {}) => {
         url: f?.path || "",
         content: b.content || "",
         alt: b.alt || "",
-        order: Number.isFinite(b.order) ? Number(b.order) : idx, // 👈 dùng order client, fallback idx
+        order: Number.isFinite(b.order) ? Number(b.order) : idx,
+      };
+    }
+    if (b.type === "videoUrl") {
+      return {
+        type: "videoUrl",
+        url: b?.url || "",
+        content: b.content || "",
+        alt: b.alt || "",
+        order: Number.isFinite(b.order) ? Number(b.order) : idx,
       };
     }
     return {
@@ -511,6 +520,15 @@ exports.updateProduct = async (params, reqBody, files = {}) => {
             order: orderVal,
           };
         }
+        if (b.type === "videoUrl") {
+          return {
+            type: "videoUrl",
+            url: b?.url || "",
+            content: b.content || "",
+            alt: b.alt || "",
+            order: Number.isFinite(b.order) ? Number(b.order) : idx,
+          };
+        }
         // text block
         return {
           type: "text",
@@ -770,6 +788,13 @@ exports.getProductVariationById = async (params) => {
   const doc = await ProductVariation.findOne({
     _id: pvId,
     isDeleted: { $ne: true },
+  }).populate({
+    path: "productId",
+    select: "productName shopId",
+    populate: {
+      path: "shopId",
+      select: "shopName shopLogo shopOfficial",
+    },
   });
   if (!doc) {
     const err = new Error("Không tìm thấy biến thể");
@@ -792,7 +817,9 @@ exports.getProductVariations = async (query) => {
     filter.productId = pId;
   }
 
-  const list = await ProductVariation.find(filter).sort({ createdAt: -1 });
+  const list = await ProductVariation.find(filter)
+    .sort({ createdAt: -1 })
+    .populate("productId", "productName ");
 
   return {
     success: true,

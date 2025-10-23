@@ -5,3 +5,6 @@ export { ShopPage } from "./public/ShopPage";
 export { InformationUserPage } from "./public/InformationUserPage";
 export { UserAddress } from "./public/UserAddress";
 export { CustomerOrders } from "./customer/CustomerOrders";
+export { CheckOutPage } from "./public/CheckOutPage";
+export { WishListPage } from "./public/WishListPage";
+export { CartsPage } from "./public/CartsPage";

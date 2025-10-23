@@ -4,7 +4,7 @@ import { Wishlist } from "pages/member";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Cart, Modal } from "components";
+import { Cart, Modal, GlobalGlassAlert } from "components";
 import { showCart, showWishlist } from "store/app/appSlice";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { RouterProvider } from "react-router-dom";
@@ -36,6 +36,7 @@ function App() {
           </div>
         )}
         {isShowModal && <Modal>{modalChildren}</Modal>}
+        <GlobalGlassAlert />
         <RouterProvider router={router} />
         <ToastContainer
           position="top-center"

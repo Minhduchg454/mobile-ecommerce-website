@@ -18,7 +18,7 @@ export const userSlice = createSlice({
     login: (state, action) => {
       state.isLoggedIn = action.payload.isLoggedIn;
       state.token = action.payload.token;
-      state.current = action.payload.userData; // Lưu luôn userData vào current
+      state.current = action.payload.userData;
     },
     logout: (state, action) => {
       state.isLoggedIn = false;
@@ -60,28 +60,28 @@ export const userSlice = createSlice({
       state.mes = "";
     },
     updateCart: (state, action) => {
-      const { productVariationId, quantity, priceAtTime } = action.payload;
+      const { pvId, cartItemQuantity, priceAtTime } = action.payload;
 
-      // Copy để xử lý
-      const updatedCart = [...state.currentCart];
-      const index = updatedCart.findIndex(
-        (item) => item.productVariationId === productVariationId
-      );
+      // Chuẩn hoá key để tránh lệch kiểu (ObjectId vs string)
+      const key = String(pvId);
 
-      if (index !== -1) {
-        // Nếu đã có → cập nhật số lượng
-        updatedCart[index].quantity = quantity;
+      const idx = state.currentCart.findIndex((it) => String(it.pvId) === key);
+
+      if (idx >= 0) {
+        // Đã có: cập nhật số lượng (và giá nếu gửi kèm)
+        state.currentCart[idx] = {
+          ...state.currentCart[idx],
+          cartItemQuantity,
+          ...(priceAtTime != null && { priceAtTime }),
+        };
       } else {
-        // Nếu chưa có → thêm mới
-        updatedCart.push({
-          productVariationId,
-          quantity,
-          priceAtTime, // lưu giá tại thời điểm thêm
+        // Chưa có: thêm mới
+        state.currentCart.push({
+          pvId: key,
+          cartItemQuantity,
+          ...(priceAtTime != null && { priceAtTime }),
         });
       }
-
-      // Cập nhật lại giỏ hàng
-      state.currentCart = updatedCart;
     },
   },
   //Dung de xu ly asyncThunk

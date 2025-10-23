@@ -10,7 +10,7 @@ import { MdLocationOn } from "react-icons/md";
 import { useState } from "react";
 import clsx from "clsx";
 import { Breadcrumb } from "../../components";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import defaultAvatar from "assets/avatarDefault.png";
 
 export const CustomerLayout = () => {
@@ -25,7 +25,7 @@ export const CustomerLayout = () => {
     },
     {
       icon: <MdLocationOn size={20} />,
-      label: "Địa chỉ",
+      label: "Địa chỉ giao hàng",
       to: `/${path.CUSTOMER}/${customerId}/${path.C_ADDRESS}`,
     },
     {
@@ -39,9 +39,9 @@ export const CustomerLayout = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="h-[100vh] w-full grid grid-cols-12 bg-app-bg gap-x-4">
+    <div className="h-[100vh] w-full grid grid-cols-12 bg-app-bg gap-x-4 animate-fadeIn">
       {/* SideBar */}
-      <div className="hidden md:block md:col-span-4 lg:col-span-3 m-4 glass rounded-3xl shadow-lg p-2 md:py-0 px-4 overflow-y-auto scroll-hidden">
+      <div className="hidden md:col-span-4 lg:col-span-3 m-4 glass rounded-3xl shadow-lg p-2 md:py-0 px-4 overflow-y-auto scroll-hidden  md:flex flex-col ">
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md pt-4 flex flex-col items-center justify-center">
           <div
             className="w-24 cursor-pointer aspect-square rounded-full overflow-hidden border z-10"
@@ -61,11 +61,11 @@ export const CustomerLayout = () => {
             />
           </div>
           <p className="-mt-2 font-bold text-base border rounded-3xl p-2 shadow-md z-5">
-            {current.userLastName} {current.userFirstName}
+            {current?.userLastName} {current?.userFirstName}
           </p>
         </div>
 
-        <div className="w-full flex flex-col mt-4">
+        <div className="w-full flex flex-col mt-4 flex-1 ">
           {dataButtons.map((b, i) => (
             <NavLink
               key={i}
@@ -83,6 +83,14 @@ export const CustomerLayout = () => {
               </p>
             </NavLink>
           ))}
+        </div>
+        <div className="sticky bottom-0 z-10 backdrop-blur-md pb-4 md:bg-white/90 mt-auto">
+          <button
+            className="w-full px-3 py-1 font-bold border shadow-md rounded-3xl bg-gray-action hover:text-text-ac hover:scale-103 transition"
+            onClick={() => navigate(`/`)}
+          >
+            Trang chủ
+          </button>
         </div>
       </div>
 

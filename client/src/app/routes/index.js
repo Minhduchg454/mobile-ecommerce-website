@@ -15,6 +15,9 @@ import {
   InformationUserPage,
   UserAddress,
   CustomerOrders,
+  CheckOutPage,
+  WishListPage,
+  CartsPage,
 } from "../../pages";
 import { LoginForm } from "../../features/auth/loginForm";
 import { RegisterForm } from "../../features/auth/registerForm";
@@ -25,9 +28,12 @@ export const router = createBrowserRouter([
     element: <SiteLayout />,
     children: [
       { path: "/", element: <HomePage /> },
-      { path: "/products", element: <ListProductsPage /> },
-      { path: "/products/:pvId", element: <DetailProductPage /> },
-      { path: "/shops/:shopId", element: <ShopPage /> },
+      { path: `/${path.PRODUCTS}`, element: <ListProductsPage /> },
+      { path: `/${path.PRODUCTS}/:pvId`, element: <DetailProductPage /> },
+      { path: `/${path.SHOP}/:shopId`, element: <ShopPage /> },
+      { path: `/${path.CHECKOUT}`, element: <CheckOutPage /> },
+      { path: `/${path.CART}`, element: <CartsPage /> },
+      { path: `/${path.WISHLIST}`, element: <WishListPage /> },
     ],
   },
 
