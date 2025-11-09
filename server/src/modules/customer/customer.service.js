@@ -39,3 +39,42 @@ exports.getCartByCustomerId = async (cId) => {
     cartId: newCartId,
   };
 };
+
+exports.getCustomerDetail = async (cId) => {
+  // cId ở đây chính là _id của Customer,
+  // trong schema Customer của bạn _id = ref User (bạn set thủ công)
+  // => Customer.findById(cId) là đúng.
+
+  const customer = await Customer.findById(cId)
+    .populate({
+      path: "_id", // _id trong Customer -> ref "User"
+      model: "User",
+      select:
+        "userFirstName userLastName userEmail userMobile userAvatar userGender", // tùy bạn
+    })
+    .populate({
+      path: "cartId", // cartId trong Customer -> ref "ShoppingCart"
+      model: "ShoppingCart",
+      // select: "items totalPrice", // bạn có thể giới hạn field nếu muốn
+    })
+    .lean();
+
+  if (!customer) {
+    // không tìm thấy customer
+    return {
+      success: false,
+      message: "Customer không tồn tại",
+      data: null,
+    };
+  }
+
+  // Trả ra dữ liệu đã populate
+  return {
+    success: true,
+    message: "Lấy thông tin customer thành công",
+    data: {
+      user: customer._id, // sau populate _id không còn là ObjectId nữa mà là object User
+      cart: customer.cartId, // sau populate cartId không còn là ObjectId nữa mà là object ShoppingCart
+    },
+  };
+};

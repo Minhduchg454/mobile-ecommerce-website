@@ -1,7 +1,7 @@
-import axios from "../axios";
+import axios from "./axios";
 
 export const apiGetCustomerCart = (cid) =>
   axios({
-    url: `/customer/${cid}/cart`,
+    url: `/customers/${cid}/cart`,
     method: "get",
   });

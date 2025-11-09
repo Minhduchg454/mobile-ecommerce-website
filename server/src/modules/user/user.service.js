@@ -1,7 +1,6 @@
 //user.service
 const User = require("./entities/user.model");
 const UserStatus = require("./entities/user-status.model");
-const ShoppingCart = require("../shopping/entities/shopping-cart.model");
 const Role = require("./entities/role.model");
 const UserRole = require("./entities/user-role.model");
 const AccountService = require("../auth/auth.service");
@@ -103,10 +102,10 @@ exports.getCurrent = async (body, userToken) => {
   }
 
   // 1) Lấy thông tin user theo $or
-  const user = await User.findOne({ $or: orConds }).populate(
-    "userStatusId",
-    "userStatusName"
-  );
+  const user = await User.findOne({
+    $or: orConds,
+    isDeleted: false,
+  }).populate("userStatusId", "userStatusName");
 
   if (!user) {
     const err = new Error("Tài khoản không tồn tại");
@@ -151,21 +150,158 @@ exports.getRole = async (body) => {
   };
 };
 
-exports.updateUser = async (uId, body, file) => {
-  //console.log("Nhan du lieu duoc gui", uId, body, file);
+exports.getUsers = async (query = {}) => {
+  const {
+    s, // từ khóa tìm kiếm
+    roleName, // lọc theo vai trò
+    statusName, // lọc theo trạng thái
+    gender,
+    userId,
+    isDeleted,
+    includeDeleted,
+    page = 1,
+    limit, // nếu không truyền -> lấy tất cả
+    sort = "-createdAt",
+  } = query;
 
+  const filter = {};
+
+  // ====== 1. Từ khóa tìm kiếm ======
+  if (s) {
+    const keyword = String(s).trim();
+    const regex = new RegExp(keyword, "i");
+    filter.$or = [
+      { userFirstName: regex },
+      { userLastName: regex },
+      { userEmail: regex },
+      { userMobile: regex },
+    ];
+  }
+  if (userId) {
+    filter._id = userId;
+  }
+
+  // ====== 2. Lọc trạng thái ======
+  if (statusName) {
+    const st = await UserStatus.findOne({ userStatusName: statusName }).lean();
+    if (st) filter.userStatusId = st._id;
+    else return { success: true, users: [], total: 0 };
+  }
+
+  // ====== 3. Lọc giới tính ======
+  if (gender && ["male", "female", "other"].includes(gender)) {
+    filter.userGender = gender;
+  }
+
+  // ====== 4. Lọc xóa mềm ======
+  if (includeDeleted === "true" || includeDeleted === true) {
+    if (isDeleted === "true" || isDeleted === true) filter.isDeleted = true;
+    else if (isDeleted === "false" || isDeleted === false)
+      filter.isDeleted = false;
+  } else {
+    filter.isDeleted = false;
+  }
+
+  // ====== 5. Lọc vai trò ======
+  let userIds = null;
+  if (roleName) {
+    const role = await Role.findOne({ roleName }).lean();
+    if (!role) return { success: true, users: [], total: 0, page, limit: 0 };
+    const userRoles = await UserRole.find({ roleId: role._id }).lean();
+    userIds = userRoles.map((ur) => ur.userId);
+    if (!userIds.length)
+      return { success: true, users: [], total: 0, page, limit: 0 };
+    filter._id = { $in: userIds };
+  }
+
+  // ====== 6. Phân trang & limit ======
+  const pageNum = Math.max(1, parseInt(page));
+  const total = await User.countDocuments(filter);
+
+  let limitNum;
+  let skip = 0;
+
+  if (limit === undefined || limit === null || limit === "" || limit === "0") {
+    // Không truyền limit => lấy toàn bộ
+    limitNum = total;
+  } else {
+    limitNum = Math.max(1, parseInt(limit));
+    skip = (pageNum - 1) * limitNum;
+  }
+
+  // ====== 7. Truy vấn danh sách ======
+  const users = await User.find(filter)
+    .populate("userStatusId", "userStatusName")
+    .sort(sort)
+    .skip(skip)
+    .limit(limitNum)
+    .lean();
+
+  // ====== 8. Gắn roles ======
+  const ids = users.map((u) => u._id);
+  const allRoles = await UserRole.find({ userId: { $in: ids } })
+    .populate("roleId", "roleName")
+    .lean();
+
+  const roleMap = {};
+  allRoles.forEach((r) => {
+    const key = String(r.userId);
+    if (!roleMap[key]) roleMap[key] = [];
+    if (r.roleId?.roleName) roleMap[key].push(r.roleId.roleName);
+  });
+
+  const result = users.map((u) => ({
+    ...u,
+    roles: roleMap[String(u._id)] || [],
+  }));
+
+  return {
+    success: true,
+    total,
+    page: pageNum,
+    limit: limitNum,
+    users: result,
+  };
+};
+
+// Xóa mềm user
+exports.deleteUser = async (uId) => {
   if (!uId) {
     const err = new Error("Thiếu uId");
     err.status = 400;
     throw err;
   }
 
-  // 1) Gắn file (nếu có) vào body
+  const user = await User.findById(uId);
+  if (!user || user.isDeleted) {
+    const err = new Error("Không tìm thấy user hoặc user đã bị xóa");
+    err.status = 404;
+    throw err;
+  }
+
+  user.isDeleted = true;
+  user.deletedAt = new Date();
+  await user.save();
+
+  return {
+    success: true,
+    message: "Xóa tài khoản (soft delete) thành công",
+  };
+};
+
+exports.updateUser = async (uId, body, file) => {
+  if (!uId) {
+    const err = new Error("Thiếu uId");
+    err.status = 400;
+    throw err;
+  }
+
+  // 1) Gắn file (nếu có)
   if (file?.path) {
     body.userAvatar = file.path;
   }
 
-  // 2) Chuẩn hoá field text
+  // 2) Chuẩn hoá dữ liệu text
   if (body.userFirstName)
     body.userFirstName = String(body.userFirstName).trim();
   if (body.userLastName) body.userLastName = String(body.userLastName).trim();
@@ -173,7 +309,18 @@ exports.updateUser = async (uId, body, file) => {
     body.userEmail = String(body.userEmail).trim().toLowerCase();
   if (body.userMobile) body.userMobile = String(body.userMobile).trim();
 
-  // 3) Chỉ cho phép update các field hợp lệ
+  // 3) Nếu có statusName thì tìm hoặc tạo UserStatus tương ứng
+  if (body.statusName) {
+    const statusDoc = await UserStatus.findOneAndUpdate(
+      { userStatusName: body.statusName },
+      { $setOnInsert: { userStatusName: body.statusName } },
+      { new: true, upsert: true }
+    );
+    body.userStatusId = statusDoc._id;
+    delete body.statusName; // tránh để field lạ trong schema
+  }
+
+  // 4) Chỉ cho phép update các field hợp lệ
   const allow = [
     "userFirstName",
     "userLastName",
@@ -197,8 +344,11 @@ exports.updateUser = async (uId, body, file) => {
     throw err;
   }
 
-  // 4) Thực hiện update
-  const updated = await User.findByIdAndUpdate(uId, dataUpdate, { new: true });
+  // 5) Cập nhật user
+  const updated = await User.findByIdAndUpdate(uId, dataUpdate, { new: true })
+    .populate("userStatusId", "userStatusName")
+    .lean();
+
   if (!updated) {
     const err = new Error("Không tìm thấy user để cập nhật");
     err.status = 404;
@@ -217,7 +367,6 @@ exports.updateUser = async (uId, body, file) => {
  */
 
 exports.createAddress = async (body) => {
-  // bắt buộc
   const required = [
     "addressUserName",
     "addressNumberPhone",
@@ -228,6 +377,7 @@ exports.createAddress = async (body) => {
     "addressCountry",
     "userId",
   ];
+
   const missing = required.filter((f) => !body[f]);
   if (missing.length) {
     const err = new Error(`Missing fields: ${missing.join(", ")}`);
@@ -235,14 +385,25 @@ exports.createAddress = async (body) => {
     throw err;
   }
 
+  // Xác định group: customer hay shop
+  const scopeFor = body.addressFor || "customer";
+
   if (body.addressIsDefault === true) {
     await Address.updateMany(
-      { userId: body.userId, addressIsDefault: true },
+      {
+        userId: body.userId,
+        addressFor: scopeFor,
+        isDeleted: false,
+        addressIsDefault: true,
+      },
       { $set: { addressIsDefault: false } }
     );
   }
 
-  const doc = await Address.create(body);
+  const doc = await Address.create({
+    ...body,
+    addressFor: scopeFor,
+  });
 
   return {
     success: true,
@@ -258,11 +419,11 @@ exports.createAddress = async (body) => {
  * - sort: newest|oldest|name_asc|name_desc|default_first
  */
 exports.getAddresses = async (query = {}) => {
-  // console.log("Duoc goi dia chi", query);
-  const { userId, q, sort } = query;
+  const { userId, q, sort, addressFor } = query;
 
-  const filter = {};
+  const filter = { isDeleted: false };
   if (userId) filter.userId = userId;
+  if (addressFor) filter.addressFor = addressFor;
 
   if (q && String(q).trim()) {
     const kw = String(q).trim();
@@ -278,7 +439,7 @@ exports.getAddresses = async (query = {}) => {
   }
 
   const sortMap = {
-    newest: { _id: -1 }, // dùng _id thay createdAt (schema chưa bật timestamps)
+    newest: { _id: -1 },
     oldest: { _id: 1 },
     name_asc: { addressUserName: 1 },
     name_desc: { addressUserName: -1 },
@@ -303,24 +464,42 @@ exports.getAddresses = async (query = {}) => {
 
 // addressId từ params, userId từ body hoặc params tuỳ router
 exports.updateAddress = async (addressId, userId, body) => {
-  //console.log("Nhan cap nhat thong tin", addressId, userId, body);
   if (!addressId || !userId) {
     const e = new Error("Thiếu addressId hoặc userId");
     e.status = 400;
     throw e;
   }
 
-  // Nếu gán mặc định cho địa chỉ này, hạ cờ các địa chỉ khác trước
+  // Lấy bản hiện tại để biết nó thuộc group nào
+  const current = await Address.findOne({
+    _id: addressId,
+    userId,
+    isDeleted: false,
+  });
+  if (!current) {
+    const err = new Error("Không tìm thấy địa chỉ của người dùng");
+    err.status = 404;
+    throw err;
+  }
+
+  const scopeFor = body.addressFor || current.addressFor || "customer";
+
   if (typeof body.addressIsDefault !== "undefined" && body.addressIsDefault) {
     await Address.updateMany(
-      { userId, _id: { $ne: addressId }, addressIsDefault: true },
+      {
+        userId,
+        addressFor: scopeFor,
+        isDeleted: false,
+        _id: { $ne: addressId },
+        addressIsDefault: true,
+      },
       { $set: { addressIsDefault: false } }
     );
   }
 
   const updated = await Address.findOneAndUpdate(
-    { _id: addressId, userId },
-    body,
+    { _id: addressId, userId, isDeleted: false },
+    { ...body, addressFor: scopeFor },
     { new: true }
   );
 
@@ -345,12 +524,28 @@ exports.deleteAddress = async (addressId, userId) => {
     throw e;
   }
 
-  const deleted = await Address.findOneAndDelete({ _id: addressId, userId });
-  if (!deleted) {
+  const current = await Address.findOne({
+    _id: addressId,
+    userId,
+    isDeleted: false,
+  });
+  if (!current) {
     const e = new Error("Không tìm thấy địa chỉ của người dùng");
     e.status = 404;
     throw e;
   }
 
-  return { success: true, message: "Xoá địa chỉ thành công" };
+  const updated = await Address.findOneAndUpdate(
+    { _id: addressId, userId, isDeleted: false },
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        addressIsDefault: false,
+      },
+    },
+    { new: true } // tra ve ban ghi sau cap nhat
+  );
+
+  return { success: true, message: "Xoá địa chỉ (mềm) thành công" };
 };

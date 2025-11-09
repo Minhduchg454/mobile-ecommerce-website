@@ -32,9 +32,6 @@ module.exports = {
         overlay: "rgba(0,0,0,0.7)",
       },
       colors: {
-        /**
-         * Vung-Loai-ChiTiet
-         */
         //App
         main: "#ee3131",
         "app-bg": "#F2F4F7",
@@ -153,7 +150,7 @@ module.exports = {
         103: "1.02",
       },
       boxShadow: {
-        card: "0 4px 10px rgba(0, 0, 0, 0.1)", // shadow mềm
+        card: "0 4px 10px rgba(0, 0, 0, 0.1)",
       },
     },
   },

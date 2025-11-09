@@ -99,6 +99,8 @@ export const RegisterForm = () => {
             title: "Thành công",
             message: "Đăng ký thành công, hãy đăng nhập.",
             variant: "success",
+            showConfirmButton: false,
+            duration: 1500,
           })
         );
 

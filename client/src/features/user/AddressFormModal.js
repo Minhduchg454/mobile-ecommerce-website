@@ -1,33 +1,20 @@
-// src/components/address/AddressFormModal.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
-import {
-  apiCreateAddress,
-  apiUpdateAddress,
-  apiDeleteAddress,
-} from "../../services/user.api";
-
+import { apiCreateAddress, apiUpdateAddress } from "../../services/user.api";
 import { CloseButton } from "../../components";
 import { showAlert } from "store/app/appSlice";
-
-const chWidth = (len, min = 3, max = 40, extraPx = 15) =>
-  `calc(${Math.min(max, Math.max(min || 0, len || 0))}ch + ${extraPx}px)`;
-
-const rowCls =
-  "flex justify-between items-center gap-3 pb-2 border-b border-gray-200 mt-1";
-const labelCls = "text-sm md:text-base text-gray-700";
-const inputCls =
-  "inline-block rounded-lg bg-button-bg px-2 py-1 text-right outline-none focus:ring-2 focus:ring-blue-400 transition w-fit";
+import { locations } from "../../ultils/contants";
+import { FaCheck } from "react-icons/fa";
 
 export const AddressFormModal = ({
-  open,
   onClose,
   userId,
   initialAddress = null,
   onSuccess,
   titleCreate = "Thêm địa chỉ mới",
   titleEdit = "Cập nhật địa chỉ",
+  addressFor = "customer",
 }) => {
   const dispatch = useDispatch();
 
@@ -36,6 +23,7 @@ export const AddressFormModal = ({
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isValid, isSubmitting },
   } = useForm({
     mode: "onChange",
@@ -71,13 +59,28 @@ export const AddressFormModal = ({
   const vWard = watch("addressWard");
   const vDistrict = watch("addressDistrict");
   const vCity = watch("addressCity");
-  const vCountry = watch("addressCountry");
 
-  if (!open) return null;
+  const provinces = Object.keys(locations);
+  const districts = vCity && locations[vCity] ? locations[vCity].districts : [];
+
+  React.useEffect(() => {
+    if (vCity && initialAddress?.addressDistrict) {
+      if (districts.includes(initialAddress.addressDistrict)) {
+        setValue("addressDistrict", initialAddress.addressDistrict);
+      } else {
+        setValue("addressDistrict", "");
+      }
+    }
+  }, [vCity, initialAddress, districts, setValue]);
+
+  React.useEffect(() => {
+    if (vCity && !districts.includes(vDistrict)) {
+      setValue("addressDistrict", "");
+    }
+  }, [vCity, vDistrict, setValue, districts]);
 
   const handleClose = () => {
     onClose?.();
-    // không reset cứng để khi mở lại (edit) vẫn giữ values từ props
   };
 
   const onSubmit = async (vals) => {
@@ -92,29 +95,46 @@ export const AddressFormModal = ({
     }
 
     try {
+      const payload = {
+        ...vals,
+        userId,
+        addressFor: addressFor || "customer",
+      };
+      let savedAddress = null;
+
       if (initialAddress?._id) {
-        await apiUpdateAddress({ ...vals, userId }, initialAddress._id);
+        const res = await apiUpdateAddress(payload, initialAddress._id);
+        savedAddress = res?.address || {
+          ...initialAddress,
+          ...payload,
+        };
+
         dispatch(
           showAlert({
             title: "Thành công",
             message: "Cập nhật địa chỉ xong",
             variant: "success",
             duration: 1500,
+            showConfirmButton: false,
           })
         );
       } else {
-        await apiCreateAddress({ ...vals, userId });
+        const res = await apiCreateAddress(payload);
+        savedAddress = res?.address || null;
+
         dispatch(
           showAlert({
             title: "Thành công",
             message: "Thêm địa chỉ xong",
             variant: "success",
             duration: 1500,
+            showConfirmButton: false,
           })
         );
-        reset(); // tạo xong thì reset
+        reset();
       }
-      onSuccess?.(); // để parent fetch lại
+
+      onSuccess?.(savedAddress);
       handleClose();
     } catch (e) {
       dispatch(
@@ -127,208 +147,200 @@ export const AddressFormModal = ({
     }
   };
 
-  const onDelete = async () => {
-    if (!initialAddress?._id) return;
-    if (!window.confirm("Xoá địa chỉ này?")) return;
-    try {
-      await apiDeleteAddress(initialAddress._id, userId);
-      dispatch(
-        showAlert({
-          title: "Đã xoá",
-          message: "Xoá địa chỉ thành công",
-          variant: "success",
-          duration: 1200,
-        })
-      );
-      onSuccess?.();
-      handleClose();
-    } catch (e) {
-      dispatch(
-        showAlert({
-          title: "Lỗi",
-          message: e?.response?.data?.message || "Xoá địa chỉ thất bại",
-          variant: "danger",
-        })
-      );
-    }
-  };
+  const labelInput = "text-sm px-2";
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-3">
-      <div className="bg-white backdrop-blur rounded-3xl shadow-xl w-full max-w-xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">
-            {initialAddress?._id ? titleEdit : titleCreate}
-          </h3>
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="relative border bg-white p-2 md:p-4 rounded-3xl shadow-md w-full md:w-[500px]"
+    >
+      <CloseButton onClick={onClose} className="absolute top-2 right-2" />
+      <h2 className="text-lg font-bold mb-4 text-center">
+        {initialAddress?._id ? titleEdit : titleCreate}
+      </h2>
 
-          <CloseButton className="top-4 right-4" onClick={handleClose} />
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-4 text-sm"
+      >
+        {/* Tên người nhận */}
+        <div>
+          <label className={labelInput}>
+            {addressFor === "customer" ? "Tên người nhận" : "Tên người gửi"} *
+          </label>
+          <input
+            {...register("addressUserName", {
+              required: "Vui lòng nhập tên người nhận",
+              validate: (v) => v.trim().length > 0 || "Không được để trống",
+            })}
+            className="border rounded-xl w-full p-2 mt-1"
+            placeholder="VD: Nguyễn Văn A"
+          />
+          {errors.addressUserName && (
+            <p className="text-red-500 text-xs">
+              {errors.addressUserName.message}
+            </p>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
-          <div className="bg-app-bg border rounded-xl p-3 text-base">
-            <div className={rowCls}>
-              <label className={labelCls}>Tên người nhận</label>
-              <input
-                className={inputCls}
-                placeholder="VD: Nguyễn Văn A"
-                style={{ width: chWidth(vName?.length, 6, 26) }}
-                {...register("addressUserName", {
-                  required: "Vui lòng nhập tên người nhận",
-                  validate: (v) => v.trim().length > 0 || "Không được để trống",
-                })}
-              />
-            </div>
-            {errors.addressUserName && (
-              <p className="text-xs text-red-600 text-right">
-                {errors.addressUserName.message}
-              </p>
-            )}
+        {/* Số điện thoại */}
+        <div>
+          <label className={labelInput}>Số điện thoại *</label>
+          <input
+            {...register("addressNumberPhone", {
+              required: "Vui lòng nhập số điện thoại",
+              pattern: {
+                value: phoneRegex,
+                message: "Số điện thoại không hợp lệ",
+              },
+            })}
+            className="border rounded-xl w-full p-2 mt-1"
+            placeholder="VD: 0909xxxxxx"
+          />
+          {errors.addressNumberPhone && (
+            <p className="text-red-500 text-xs">
+              {errors.addressNumberPhone.message}
+            </p>
+          )}
+        </div>
 
-            <div className={rowCls}>
-              <label className={labelCls}>Số điện thoại</label>
-              <input
-                className={inputCls}
-                placeholder="VD: 0909xxxxxx"
-                style={{ width: chWidth(vPhone?.length, 10, 18) }}
-                {...register("addressNumberPhone", {
-                  required: "Vui lòng nhập số điện thoại",
-                  pattern: {
-                    value: phoneRegex,
-                    message: "Số điện thoại không hợp lệ",
-                  },
-                })}
-              />
-            </div>
-            {errors.addressNumberPhone && (
-              <p className="text-xs text-red-600 text-right">
-                {errors.addressNumberPhone.message}
-              </p>
-            )}
-
-            <div className={rowCls}>
-              <label className={labelCls}>Địa chỉ/Đường</label>
-              <input
-                className={inputCls}
-                placeholder="Nhà trọ An Khang, phòng số 1"
-                style={{ width: chWidth(vStreet?.length, 10, 34) }}
-                {...register("addressStreet", {
-                  required: "Vui lòng nhập địa chỉ/đường",
-                  validate: (v) => v.trim().length > 0 || "Không được để trống",
-                })}
-              />
-            </div>
-            {errors.addressStreet && (
-              <p className="text-xs text-red-600 text-right">
-                {errors.addressStreet.message}
-              </p>
-            )}
-
-            <div className={rowCls}>
-              <label className={labelCls}>Phường/Xã</label>
-              <input
-                className={inputCls}
-                placeholder="VD: An Khánh"
-                style={{ width: chWidth(vWard?.length, 6, 20) }}
-                {...register("addressWard", {
-                  required: "Vui lòng nhập phường/xã",
-                })}
-              />
-            </div>
-            {errors.addressWard && (
-              <p className="text-xs text-red-600 text-right">
-                {errors.addressWard.message}
-              </p>
-            )}
-
-            <div className={rowCls}>
-              <label className={labelCls}>Quận/Huyện</label>
-              <input
-                className={inputCls}
-                placeholder="VD: Ninh Kiều"
-                style={{ width: chWidth(vDistrict?.length, 6, 20) }}
-                {...register("addressDistrict", {
-                  required: "Vui lòng nhập quận/huyện",
-                })}
-              />
-            </div>
-            {errors.addressDistrict && (
-              <p className="text-xs text-red-600 text-right">
-                {errors.addressDistrict.message}
-              </p>
-            )}
-
-            <div className={rowCls}>
-              <label className={labelCls}>Thành phố/Tỉnh</label>
-              <input
-                className={inputCls}
-                placeholder="VD: Cần Thơ"
-                style={{ width: chWidth(vCity?.length, 6, 18) }}
-                {...register("addressCity", {
-                  required: "Vui lòng nhập thành phố/tỉnh",
-                })}
-              />
-            </div>
+        {/* Thành phố & Quận/Huyện */}
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex-1">
+            <label className={labelInput}>Thành phố/Tỉnh *</label>
+            <select
+              {...register("addressCity", {
+                required: "Vui lòng chọn thành phố/tỉnh",
+              })}
+              className="border rounded-xl w-full p-2 mt-1"
+            >
+              <option value="">Chọn thành phố/tỉnh</option>
+              {provinces.map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
             {errors.addressCity && (
-              <p className="text-xs text-red-600 text-right">
+              <p className="text-red-500 text-xs">
                 {errors.addressCity.message}
               </p>
             )}
+          </div>
 
-            <div className={rowCls}>
-              <label className={labelCls}>Quốc gia</label>
-              <input
-                className={inputCls}
-                placeholder="Việt Nam"
-                style={{ width: chWidth(vCountry?.length, 6, 16) }}
-                {...register("addressCountry", {
-                  required: "Vui lòng nhập quốc gia",
-                })}
-              />
-            </div>
+          <div className="flex-1">
+            <label className={labelInput}>Quận/Huyện *</label>
+            <select
+              {...register("addressDistrict", {
+                required: "Vui lòng chọn quận/huyện",
+              })}
+              className="border rounded-xl w-full p-2 mt-1"
+            >
+              <option value="">Chọn quận/huyện</option>
+              {districts.map((district) => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+            </select>
+            {errors.addressDistrict && (
+              <p className="text-red-500 text-xs">
+                {errors.addressDistrict.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Phường/Xã & Địa chỉ chi tiết */}
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex-1">
+            <label className={labelInput}>Phường/Xã *</label>
+            <input
+              {...register("addressWard", {
+                required: "Vui lòng nhập phường/xã",
+              })}
+              className="border rounded-xl w-full p-2 mt-1"
+              placeholder="VD: An Khánh"
+            />
+            {errors.addressWard && (
+              <p className="text-red-500 text-xs">
+                {errors.addressWard.message}
+              </p>
+            )}
+          </div>
+          <div className="flex-1">
+            <label className={labelInput}>Quốc gia *</label>
+            <input
+              {...register("addressCountry", {
+                required: "Vui lòng nhập quốc gia",
+              })}
+              className="border rounded-xl w-full p-2 mt-1"
+              placeholder="Việt Nam"
+              defaultValue="Việt Nam"
+            />
             {errors.addressCountry && (
-              <p className="text-xs text-red-600 text-right">
+              <p className="text-red-500 text-xs">
                 {errors.addressCountry.message}
               </p>
             )}
-
-            <div className="flex justify-between items-center mt-2">
-              <label className={labelCls + " flex items-center gap-2"}>
-                <input
-                  type="checkbox"
-                  {...register("addressIsDefault")}
-                  className="w-5 h-5 cursor-pointer border border-gray-400 rounded-sm appearance-none  checked:text-black checked:after:content-['✔'] checked:after:flex checked:after:items-center checked:after:justify-center"
-                />
-                Đặt làm địa chỉ mặc định
-              </label>
-            </div>
           </div>
+        </div>
 
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 rounded-3xl bg-gray-200 hover:bg-gray-300 ml-auto"
-            >
-              Huỷ
-            </button>
-            <button
-              type="submit"
-              disabled={!isValid || isSubmitting}
-              className={`px-4 py-2 rounded-3xl text-white ${
-                !isValid || isSubmitting
-                  ? "bg-blue-400/50 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {isSubmitting
-                ? "Đang xử lý..."
-                : initialAddress?._id
-                ? "Cập nhật"
-                : "Thêm mới"}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Quốc gia & Mặc định */}
+        <div className="flex-1">
+          <label className={labelInput}>Địa chỉ chi tiết *</label>
+          <input
+            {...register("addressStreet", {
+              required: "Vui lòng nhập địa chỉ chi tiết",
+              validate: (v) => v.trim().length > 0 || "Không được để trống",
+            })}
+            className="border rounded-xl w-full p-2 mt-1"
+            placeholder="Nhà trọ An Khang, phòng số 1"
+          />
+          {errors.addressStreet && (
+            <p className="text-red-500 text-xs">
+              {errors.addressStreet.message}
+            </p>
+          )}
+        </div>
+
+        {/* Đặt làm mặc định */}
+        <div className="flex-1 flex items-end px-2">
+          <label className="flex items-center gap-2 cursor-pointer text-sm">
+            <span className="relative inline-flex items-center justify-center">
+              <input
+                type="checkbox"
+                {...register("addressIsDefault")}
+                className="peer appearance-none w-4 h-4 border border-black rounded-sm"
+              />
+              <FaCheck className="absolute text-black opacity-0 peer-checked:opacity-100 w-3 h-3" />
+            </span>
+            Đặt làm mặc định
+          </label>
+        </div>
+
+        {/* Nút hành động */}
+        <div className="flex justify-end mt-3 gap-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-1 rounded-3xl border hover:bg-gray-100"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            disabled={!isValid || isSubmitting}
+            className="px-4 py-1 rounded-3xl bg-button-bg-ac hover:bg-button-bg-hv text-white disabled:opacity-50"
+          >
+            {isSubmitting
+              ? "Đang lưu..."
+              : initialAddress?._id
+              ? "Cập nhật"
+              : "Thêm mới"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

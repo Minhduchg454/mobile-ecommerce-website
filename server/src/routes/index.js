@@ -8,13 +8,18 @@ const shopRoutes = require("../modules/shop/shop.routes");
 const productRoutes = require("../modules/product/product.routes");
 const shoppingRoutes = require("../modules/shopping/cart.routes");
 const customerRoutes = require("../modules/customer/customer.routes");
+const couponRoutes = require("../modules/coupon/coupon.routes");
+const paymentRoutes = require("../modules/payment/payment.routes");
+const orderRoutes = require("../modules/order/order.routes");
 
 //gan vao prefix
-router.use("/auth", authRoutes);
-router.use("/user", userRoutes);
-router.use("/shop", shopRoutes);
-router.use("/catalog", productRoutes);
-router.use("/shopping", shoppingRoutes);
-router.use("/customer", customerRoutes);
-
+router.use("/auths", authRoutes);
+router.use("/users", userRoutes);
+router.use("/shops", shopRoutes);
+router.use("/catalogs", productRoutes);
+router.use("/shoppings", shoppingRoutes);
+router.use("/customers", customerRoutes);
+router.use("/coupons", couponRoutes);
+router.use("/payments", paymentRoutes);
+router.use("/orders", orderRoutes);
 module.exports = router;

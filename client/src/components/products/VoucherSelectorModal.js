@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import moment from "moment";
 import { apiGetAllCoupons } from "apis";
+import { apiGetCoupons } from "../../services/coupon.api";
 import { showModal } from "store/app/appSlice";
 import { formatMoney } from "ultils/helpers";
 import { CloseButton } from "../../components";
 
 moment.locale("vi");
 
-const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
+const VoucherSelectorModal = ({ onSelectVoucher, orderTotal, createdById }) => {
   const dispatch = useDispatch();
   const [coupons, setCoupons] = useState([]);
 
@@ -18,26 +19,35 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
 
   const fetchCoupons = async () => {
     try {
-      const res = await apiGetAllCoupons();
+      let res;
+      if (createdById) {
+        res = await apiGetCoupons({
+          createdById,
+        });
+      } else {
+        res = await apiGetAllCoupons({ createdByType: "Admin" });
+      }
+
       if (res?.success) {
         const now = new Date();
         const activeCoupons = res.coupons
           .filter(
             (cp) =>
-              cp.isActive &&
-              new Date(cp.startDate) <= now &&
-              new Date(cp.expirationDate) >= now &&
-              orderTotal >= cp.miniOrderAmount
+              cp.couponIsActive &&
+              new Date(cp.couponStartDate) <= now &&
+              new Date(cp.couponExpirationDate) >= now &&
+              orderTotal >= cp.couponMiniOrderAmount &&
+              cp.couponUsedCount < cp.couponUsageLimit
           )
           .map((cp) => {
             let color = "bg-gray-100";
-            if (cp.discountType === "percentage") {
-              if (cp.discount <= 5) color = "bg-green-100";
-              else if (cp.discount <= 10) color = "bg-purple-100";
+            if (cp.couponDiscountType === "percentage") {
+              if (cp.couponDiscount <= 5) color = "bg-green-100";
+              else if (cp.couponDiscount <= 10) color = "bg-purple-100";
               else color = "bg-blue-100";
             } else {
-              if (cp.discount <= 20000) color = "bg-orange-100";
-              else if (cp.discount <= 50000) color = "bg-red-100";
+              if (cp.couponDiscount <= 20000) color = "bg-orange-100";
+              else if (cp.couponDiscount <= 50000) color = "bg-red-100";
               else color = "bg-orange-300";
             }
             return { ...cp, color };
@@ -63,7 +73,7 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
 
   return (
     <div
-      className="bg-white rounded-xl w-[500px] max-h-[60vh] overflow-hidden flex flex-col relative shadow-md border"
+      className="bg-white/60 backdrop-blur-md rounded-xl w-[500px] max-h-[60vh] overflow-hidden flex flex-col relative shadow-md border"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Đóng */}
@@ -86,21 +96,22 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
                 <div className="font-bold text-main text-sm">
                   {cp.couponCode}
                 </div>
-                <div className="text-sm text-gray-800">{cp.description}</div>
-                <div className="text-xs text-gray-600">
-                  HSD: {moment(cp.expirationDate).format("DD/MM/YYYY")} • Đơn
-                  tối thiểu: {formatMoney(cp.miniOrderAmount)}đ
+                <div className="text-sm text-gray-800">
+                  {cp.couponDescription}
                 </div>
-                {cp.discountType === "percentage" && (
-                  <div className="text-xs text-gray-500 italic">
-                    Giảm tối đa: {formatMoney(cp.maxDiscountAmount)}đ
-                  </div>
-                )}
+                <div className="text-xs text-gray-600">
+                  HSD: {moment(cp.couponExpirationDate).format("DD/MM/YYYY")} •
+                  Đơn tối thiểu: {formatMoney(cp.couponMiniOrderAmount)}đ
+                </div>
+
+                <div className="text-xs text-gray-500 italic">
+                  Giảm tối đa: {formatMoney(cp.couponMaxDiscountAmount)}đ
+                </div>
               </div>
               <div className="text-right text-blue-600 font-semibold text-sm">
                 {cp.discountType === "percentage"
-                  ? `- ${cp.discount}%`
-                  : `- ${formatMoney(cp.discount)}đ`}
+                  ? `- ${cp.couponDiscount}%`
+                  : `- ${formatMoney(cp.couponDiscount)}đ`}
               </div>
             </div>
           ))
@@ -116,7 +127,7 @@ const VoucherSelectorModal = ({ onSelectVoucher, orderTotal }) => {
           onClick={() => handleSelect(null)}
           className="text-sm text-red-500 hover:underline"
         >
-          Không áp dụng mã giảm giá
+          Không áp dụng.
         </button>
       </div>
     </div>

@@ -301,7 +301,7 @@ export const Carts = () => {
     "cursor-pointer checked:text-black checked:after:content-['✔'] checked:after:text-[18px]";
 
   return (
-    <div className="relative w-full md:w-main mx-auto p-2 md:p-4">
+    <div className="relative xl:mx-auto xl:w-main p-2 md:p-4">
       {/* Header */}
       <div className="mb-4 px-2 md:px-4">
         <h2 className="text-lg md:text-xl font-bold">Giỏ hàng</h2>
@@ -472,7 +472,7 @@ export const Carts = () => {
           );
         })
       ) : (
-        <div className="flex flex-col items-center justify-center">
+        <div className="bg-white rounded-3xl p-2 md:p-4 flex flex-col items-center justify-center w-full h-[500px]">
           <img src={emptyCart} alt="" className="w-36 h-36 mb-2" />
           <p className="text-center italic text-gray-400 mb-2">
             Giỏ hàng của bạn còn trống.

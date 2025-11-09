@@ -7,6 +7,8 @@ const CategoryShop = require("./entitties/category-shop.model");
 const slugify = require("slugify");
 
 //Shop
+// shop.service.js
+
 exports.createShop = async (body, files) => {
   // 1. Validate
   const required = ["userId", "shopName"];
@@ -29,8 +31,11 @@ exports.createShop = async (body, files) => {
     body.shopBanner = files.shopBanner.map((f) => f.path).filter(Boolean);
   }
 
-  // 4. Check trùng shop (1 user chỉ 1 shop)
-  const existed = await Shop.findById(body.userId);
+  // 4. Check trùng shop (1 user chỉ 1 shop "chưa bị xoá")
+  const existed = await Shop.findOne({
+    _id: body.userId,
+    isDeleted: false,
+  });
   if (existed) {
     const err = new Error("Người dùng đã có shop");
     err.status = 409;
@@ -57,7 +62,7 @@ exports.getShopByUser = async (userId) => {
     throw err;
   }
 
-  const shop = await Shop.findById(userId);
+  const shop = await Shop.findOne({ _id: userId, isDeleted: false });
   if (!shop) {
     const err = new Error("Không tìm thấy shop");
     err.status = 404;
@@ -72,7 +77,6 @@ exports.getShopByUser = async (userId) => {
 };
 
 exports.getShops = async (query) => {
-  //console.log("Nhan tham so truyen tu shop", query);
   const {
     shopId,
     userId,
@@ -80,10 +84,13 @@ exports.getShops = async (query) => {
     status, // Trạng thái shop: pending / active / banned
     isMall, // Lọc shop mall
     sort = "-createdAt", // Thứ tự sắp xếp
-    limit = 20, // Giới hạn kết quả
+    limit, // Giới hạn kết quả
   } = query;
 
   const filter = {};
+
+  // luôn chỉ lấy shop chưa bị xoá (tương đương trước đây xoá cứng)
+  filter.isDeleted = false;
 
   // Lọc theo ID
   if (shopId) {
@@ -97,7 +104,7 @@ exports.getShops = async (query) => {
     filter._id = { $in: ids.map((id) => id.trim()) };
   }
 
-  //Tìm kiếm theo tên
+  // Tìm kiếm theo tên
   if (s) {
     filter.shopName = { $regex: s, $options: "i" };
   }
@@ -111,12 +118,12 @@ exports.getShops = async (query) => {
     };
   }
 
-  // 5Lọc shop mall (chính hãng)
+  // Lọc shop mall (chính hãng)
   if (isMall === "true" || isMall === true) {
-    filter.shopOfficial = true;
+    filter.shopIsOfficial = true;
   }
 
-  // Sort động: có thể truyền nhiều tiêu chí, ví dụ `sort=-shopRateAvg,shopProductCount`
+  // Sort động
   let sortOption = {};
 
   if (typeof sort === "string" && sort.trim()) {
@@ -130,15 +137,12 @@ exports.getShops = async (query) => {
       }
     });
   } else if (typeof sort === "object" && !Array.isArray(sort)) {
-    // Nếu client gửi object kiểu { shopSoldCount: -1 }
     sortOption = sort;
   }
-  // console.log("dieu kien loc in ra", sortOption);
 
-  //Query DB
   const shops = await Shop.find(filter)
     .sort(sortOption)
-    .limit(Number(limit))
+    .limit(limit ? Number(limit) : 0)
     .lean();
 
   return {
@@ -149,46 +153,54 @@ exports.getShops = async (query) => {
 };
 
 exports.updateShop = async (userId, body, files) => {
-  //console.log("Nhan thong tin", userId, body, files);
   if (!userId) {
     const err = new Error("Thiếu userId");
     err.status = 400;
     throw err;
   }
 
-  // Chuẩn hóa dữ liệu
-  if (body.shopName) {
-    body.shopName = String(body.shopName).trim();
-    body.shopSlug = slugify(body.shopName, { lower: true });
+  const payload = { ...body };
+
+  // Chuẩn hóa tên shop
+  if (payload.shopName) {
+    payload.shopName = String(payload.shopName).trim();
+    payload.shopSlug = slugify(payload.shopName, { lower: true });
   }
 
-  // Files -> merge vào body nếu có
-  if (files?.shopLogo?.[0]) body.shopLogo = files.shopLogo[0].path;
-  if (files?.shopBackground?.[0])
-    body.shopBackground = files.shopBackground[0].path;
-  if (Array.isArray(files?.shopBanner)) {
-    body.shopBanner = files.shopBanner.map((f) => f.path).filter(Boolean);
+  // ========== LOGO ==========
+  if (files?.shopLogo?.[0]) {
+    payload.shopLogo = files.shopLogo[0].path;
   }
 
-  // Chỉ cập nhật các field hợp lệ
-  /*
-  const allow = [
-    "shopName",
-    "shopSlug",
-    "shopDescription",
-    "shopLogo",
-    "shopBanner",
-    "shopBackground",
-    "shopColor",
-  ];
-  const dataUpdate = {};
-  for (const k of allow) {
-    if (body[k] !== undefined) dataUpdate[k] = body[k];
-  }*/
+  // ========== BACKGROUND ==========
+  if (files?.shopBackground?.[0]) {
+    payload.shopBackground = files.shopBackground[0].path;
+  } else {
+    if (Object.prototype.hasOwnProperty.call(payload, "shopBackground")) {
+      // giữ nguyên giá trị FE gửi (có thể là "")
+    }
+  }
 
-  const updated = await Shop.findByIdAndUpdate(userId, body, {
-    new: true,
-  });
+  // ========== BANNER ==========
+  if (Array.isArray(files?.shopBanner) && files.shopBanner.length > 0) {
+    payload.shopBanner = files.shopBanner.map((f) => f.path).filter(Boolean);
+  } else {
+    if (Object.prototype.hasOwnProperty.call(payload, "shopBanner")) {
+      if (
+        typeof payload.shopBanner === "string" &&
+        payload.shopBanner.trim() === "[]"
+      ) {
+        payload.shopBanner = [];
+      }
+    }
+  }
+
+  // Chỉ update shop chưa bị xoá
+  const updated = await Shop.findOneAndUpdate(
+    { _id: userId, isDeleted: false },
+    payload,
+    { new: true }
+  );
 
   if (!updated) {
     const err = new Error("Không tìm thấy shop để cập nhật");
@@ -210,11 +222,18 @@ exports.deleteShop = async (userId) => {
     throw err;
   }
 
-  // (Tuỳ ý) Chặn xoá nếu shop còn sản phẩm/đơn hàng…
-  // const hasProduct = await Product.findOne({ shopId: userId });
-  // if (hasProduct) { ... throw err 400 ... }
+  // Xoá mềm: đánh dấu isDeleted + deletedAt
+  const deleted = await Shop.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    },
+    { new: true }
+  );
 
-  const deleted = await Shop.findByIdAndDelete(userId);
   if (!deleted) {
     const err = new Error("Không tìm thấy shop để xoá");
     err.status = 404;
@@ -227,7 +246,66 @@ exports.deleteShop = async (userId) => {
   };
 };
 
+exports.incrementShopSoldCount = async (shopId, qty = 1) => {
+  if (!shopId) {
+    const err = new Error("Thiếu shopId");
+    err.status = 400;
+    throw err;
+  }
+
+  const qtyNum = Math.max(1, Math.floor(qty));
+
+  const updated = await Shop.findOneAndUpdate(
+    { _id: shopId, isDeleted: false },
+    { $inc: { shopSoldCount: qtyNum } },
+    { new: true, select: "shopSoldCount" }
+  );
+
+  if (!updated) {
+    const err = new Error("Không tìm thấy shop");
+    err.status = 404;
+    throw err;
+  }
+
+  return {
+    success: true,
+    message: "Cập nhật số lượng bán thành công",
+    shopSoldCount: updated.shopSoldCount,
+  };
+};
+
 //Service Plan
+// helper chuẩn hoá serviceFeatures
+
+// Chuẩn hoá mảng quyền lợi
+const normalizeFeatures = (features) => {
+  if (!Array.isArray(features)) return [];
+
+  return features
+    .filter((f) => f && f.key && f.label)
+    .map((f) => {
+      const typeList = ["string", "number", "boolean"];
+      const normalizedType = typeList.includes(f.type) ? f.type : "string";
+
+      const obj = {
+        key: String(f.key).trim(),
+        label: String(f.label).trim(),
+        value:
+          f.value === null || f.value === undefined
+            ? ""
+            : String(f.value).trim(),
+        type: normalizedType,
+      };
+
+      if (f.unit !== undefined && f.unit !== null) {
+        obj.unit = String(f.unit).trim();
+      }
+
+      return obj;
+    });
+};
+
+// =============== CREATE =================
 exports.createServicePlan = async (body) => {
   const {
     serviceName,
@@ -235,6 +313,7 @@ exports.createServicePlan = async (body) => {
     serviceBillingCycle,
     servicePrice,
     serviceColor,
+    serviceFeatures,
   } = body;
 
   if (!serviceName || !serviceBillingCycle || servicePrice == null) {
@@ -245,12 +324,30 @@ exports.createServicePlan = async (body) => {
     throw err;
   }
 
+  const trimmedName = String(serviceName).trim();
+
+  // kiểm tra trùng (name + billingCycle) trong các gói chưa xoá
+  const existing = await ServicePlan.findOne({
+    serviceName: trimmedName,
+    serviceBillingCycle,
+    isDeleted: false,
+  });
+
+  if (existing) {
+    const err = new Error(
+      "Gói với tên này và chu kỳ này đã tồn tại (vui lòng chọn tên khác hoặc chu kỳ khác)"
+    );
+    err.status = 400;
+    throw err;
+  }
+
   const plan = await ServicePlan.create({
-    serviceName: serviceName.trim(),
+    serviceName: trimmedName,
     serviceDescription: serviceDescription || "",
     serviceBillingCycle,
     servicePrice,
     serviceColor: serviceColor || "#ffffff",
+    serviceFeatures: normalizeFeatures(serviceFeatures),
   });
 
   return {
@@ -260,13 +357,63 @@ exports.createServicePlan = async (body) => {
   };
 };
 
-exports.getServicePlans = async (sort) => {
-  const sortOption = !sort
-    ? {}
-    : sort === "oldest"
-    ? { createdAt: 1 }
-    : { createdAt: -1 };
-  const plans = await ServicePlan.find().sort(sortOption);
+// =============== GET LIST =================
+exports.getServicePlans = async (query = {}) => {
+  const { s, includeDeleted, isDeleted, sort } = query;
+
+  const filter = {};
+
+  // 1. Lọc xóa mềm
+  if (includeDeleted === "true" || includeDeleted === true) {
+    if (isDeleted === "true" || isDeleted === true) filter.isDeleted = true;
+    else if (isDeleted === "false" || isDeleted === false)
+      filter.isDeleted = false;
+  } else {
+    filter.isDeleted = false;
+  }
+
+  // 2. Keyword
+  if (s) {
+    const keyword = String(s).trim();
+    const regex = new RegExp(keyword, "i");
+    filter.$or = [{ serviceName: regex }, { serviceDescription: regex }];
+  }
+
+  // 4. Sort
+  let sortOption = {};
+  switch (sort) {
+    case "oldest":
+      sortOption = { createdAt: 1 };
+      break;
+    case "newest":
+      sortOption = { createdAt: -1 };
+      break;
+    case "name_asc":
+      sortOption = { serviceName: 1 };
+      break;
+    case "name_desc":
+      sortOption = { serviceName: -1 };
+      break;
+    case "price_asc":
+      sortOption = { servicePrice: 1 };
+      break;
+    case "price_desc":
+      sortOption = { servicePrice: -1 };
+      break;
+    case "billingCycle_monthly":
+      filter.serviceBillingCycle = "monthly";
+      sortOption = { createdAt: -1 };
+      break;
+    case "billingCycle_yearly":
+      filter.serviceBillingCycle = "yearly";
+      sortOption = { createdAt: -1 };
+      break;
+    default:
+      sortOption = { createdAt: -1 };
+      break;
+  }
+
+  const plans = await ServicePlan.find(filter).sort(sortOption);
 
   return {
     success: true,
@@ -275,22 +422,82 @@ exports.getServicePlans = async (sort) => {
   };
 };
 
+// =============== UPDATE =================
 exports.updateServicePlan = async (sid, body) => {
-  const dataUpdate = {};
-  const allow = [
-    "serviceName",
-    "serviceDescription",
-    "serviceBillingCycle",
-    "servicePrice",
-    "serviceColor",
-  ];
-  for (const k of allow) {
-    if (body[k] !== undefined) dataUpdate[k] = body[k];
+  const {
+    serviceName,
+    serviceDescription,
+    serviceBillingCycle,
+    servicePrice,
+    serviceColor,
+    serviceFeatures,
+  } = body;
+  console.log("Duoc goi", body, sid);
+
+  // lấy gói hiện tại để tính newName / newCycle
+  const current = await ServicePlan.findOne({ _id: sid, isDeleted: false });
+  if (!current) {
+    const err = new Error("Không tìm thấy gói dịch vụ để cập nhật");
+    err.status = 404;
+    throw err;
   }
 
-  const updated = await ServicePlan.findByIdAndUpdate(sid, dataUpdate, {
-    new: true,
+  const newName =
+    serviceName !== undefined
+      ? String(serviceName).trim()
+      : current.serviceName;
+
+  const newCycle =
+    serviceBillingCycle !== undefined
+      ? serviceBillingCycle
+      : current.serviceBillingCycle;
+
+  // check trùng (name + billing) với gói khác
+  const existing = await ServicePlan.findOne({
+    _id: { $ne: sid },
+    serviceName: newName,
+    serviceBillingCycle: newCycle,
+    isDeleted: false,
   });
+
+  if (existing) {
+    const err = new Error("Tên gói + chu kỳ này đã được sử dụng bởi gói khác");
+    err.status = 400;
+    throw err;
+  }
+
+  const dataUpdate = {};
+
+  if (serviceName !== undefined) {
+    dataUpdate.serviceName = newName;
+  }
+  if (serviceDescription !== undefined) {
+    dataUpdate.serviceDescription = serviceDescription;
+  }
+  if (serviceBillingCycle !== undefined) {
+    dataUpdate.serviceBillingCycle = newCycle;
+  }
+  if (servicePrice !== undefined) {
+    dataUpdate.servicePrice = servicePrice;
+  }
+  if (serviceColor !== undefined) {
+    dataUpdate.serviceColor = serviceColor;
+  }
+  if (serviceFeatures !== undefined) {
+    dataUpdate.serviceFeatures = normalizeFeatures(serviceFeatures);
+  }
+
+  const updated = await ServicePlan.findOneAndUpdate(
+    { _id: sid, isDeleted: false },
+    dataUpdate,
+    { new: true }
+  );
+
+  if (!updated) {
+    const err = new Error("Không tìm thấy gói dịch vụ để cập nhật");
+    err.status = 404;
+    throw err;
+  }
 
   return {
     success: true,
@@ -299,18 +506,34 @@ exports.updateServicePlan = async (sid, body) => {
   };
 };
 
+// =============== DELETE (SOFT) =================
 exports.deleteServicePlan = async (sid) => {
-  // Nếu có bảng subscribe, kiểm tra tham chiếu
-  if (ShopSubscribe) {
+  // Nếu có ShopSubscribe thì dùng typeof để không bị ReferenceError
+  if (typeof ShopSubscribe !== "undefined" && ShopSubscribe) {
     const isUsed = await ShopSubscribe.findOne({ serviceId: sid });
     if (isUsed) {
-      const err = new Error("Không thể xoá: gói đang được sử dụng bởi shop.");
+      const err = new Error("Không thể xoá gói vì đang được sử dụng bởi shop.");
       err.status = 400;
       throw err;
     }
   }
 
-  await ServicePlan.findByIdAndDelete(sid);
+  const deleted = await ServicePlan.findByIdAndUpdate(
+    sid,
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    },
+    { new: true }
+  );
+
+  if (!deleted) {
+    const err = new Error("Không tìm thấy gói dịch vụ để xoá");
+    err.status = 404;
+    throw err;
+  }
 
   return {
     success: true,
@@ -424,12 +647,10 @@ exports.createCategoryShop = async (body, file) => {
 };
 
 exports.getCategoryShops = async (query) => {
-  //console.log("Nhận điều kiện lọc shop:", query);
-  const { shopId, sort } = query;
-
+  const { shopId, sort, s } = query;
   const filter = {};
 
-  // Nếu có shopId thì kiểm tra hợp lệ và tồn tại
+  // Nếu có shopId → kiểm tra hợp lệ
   if (shopId) {
     const shop = await Shop.findById(shopId).select("_id shopName");
     if (!shop) {
@@ -440,7 +661,13 @@ exports.getCategoryShops = async (query) => {
     filter.shopId = shopId;
   }
 
-  // Map sort options
+  // Nếu có từ khóa tìm kiếm (theo csName)
+  if (s && typeof s === "string" && s.trim() !== "") {
+    // Tìm tên danh mục chứa 1 phần chuỗi từ khóa (không phân biệt hoa/thường)
+    filter.csName = { $regex: s.trim(), $options: "i" };
+  }
+
+  // Sắp xếp
   const sortMap = {
     newest: { createdAt: -1 },
     oldest: { createdAt: 1 },
@@ -449,6 +676,7 @@ exports.getCategoryShops = async (query) => {
   };
   const sortOption = sortMap[sort] || { createdAt: 1 };
 
+  // ⚙️ Truy vấn
   const items = await CategoryShop.find(filter)
     .sort(sortOption)
     .populate("shopId", "shopName")
@@ -458,11 +686,13 @@ exports.getCategoryShops = async (query) => {
     success: true,
     message: "Lấy danh mục shop thành công",
     categoryShops: items,
+    count: items.length,
   };
 };
 
 // Cập nhật (csId từ params, shopId từ body)
 exports.updateCategoryShop = async (csId, shopId, body, file) => {
+  //console.log("Duoc goi cap nhat", body);
   if (!csId || !shopId) {
     const e = new Error("Thiếu csId hoặc shopId");
     e.status = 400;
@@ -507,14 +737,15 @@ exports.updateCategoryShop = async (csId, shopId, body, file) => {
 };
 
 // Xoá (csId từ params, shopId từ body)
-exports.deleteCategoryShop = async (csId, shopId) => {
-  if (!csId || !shopId) {
-    const e = new Error("Thiếu csId hoặc shopId");
+exports.deleteCategoryShop = async (csId) => {
+  //console.log("Giu lieu gui den", csId);
+  if (!csId) {
+    const e = new Error("Thiếu csId");
     e.status = 400;
     throw e;
   }
 
-  const deleted = await CategoryShop.findOneAndDelete({ _id: csId, shopId });
+  const deleted = await CategoryShop.findOneAndDelete({ _id: csId });
   if (!deleted) {
     const e = new Error("Không tìm thấy danh mục của shop");
     e.status = 404;
@@ -522,4 +753,151 @@ exports.deleteCategoryShop = async (csId, shopId) => {
   }
 
   return { success: true, message: "Xoá danh mục shop thành công" };
+};
+
+// =============== SHOP DASHBOARD FOR ADMIN =================
+exports.getShopDashboardStats = async (query = {}) => {
+  const { limit } = query;
+  const match = { isDeleted: false };
+
+  // Nếu có truyền limit thì giới hạn, không thì lấy hết
+  const limitNum = parseInt(limit, 10);
+  const hasLimit = !isNaN(limitNum) && limitNum > 0;
+
+  const [result] = await Shop.aggregate([
+    { $match: match },
+    {
+      $facet: {
+        // 1) Tóm tắt tổng quan
+        summary: [
+          {
+            $group: {
+              _id: null,
+              totalShops: { $sum: 1 },
+              pendingCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$shopStatus", "pending"] }, 1, 0],
+                },
+              },
+              approvedCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$shopStatus", "approved"] }, 1, 0],
+                },
+              },
+              blockedCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$shopStatus", "blocked"] }, 1, 0],
+                },
+              },
+              officialCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$shopIsOfficial", true] }, 1, 0],
+                },
+              },
+              totalSold: { $sum: "$shopSoldCount" },
+              totalProducts: { $sum: "$shopProductCount" },
+              avgRating: { $avg: "$shopRateAvg" },
+            },
+          },
+        ],
+
+        // 2) Gom theo trạng thái shop
+        byStatus: [
+          {
+            $group: {
+              _id: "$shopStatus",
+              count: { $sum: 1 },
+              totalSold: { $sum: "$shopSoldCount" },
+              totalProducts: { $sum: "$shopProductCount" },
+              avgRating: { $avg: "$shopRateAvg" },
+            },
+          },
+        ],
+
+        // 3) Gom theo shopIsOfficial (Mall / thường)
+        byOfficial: [
+          {
+            $group: {
+              _id: "$shopIsOfficial",
+              count: { $sum: 1 },
+              totalSold: { $sum: "$shopSoldCount" },
+              totalProducts: { $sum: "$shopProductCount" },
+            },
+          },
+        ],
+
+        // 4) Top shop bán nhiều nhất
+        topSold: [
+          { $sort: { shopSoldCount: -1, _id: 1 } },
+          ...(hasLimit ? [{ $limit: limitNum }] : []),
+          {
+            $project: {
+              shopName: 1,
+              shopLogo: 1,
+              shopSlug: 1,
+              shopStatus: 1,
+              shopIsOfficial: 1,
+              shopSoldCount: 1,
+              shopProductCount: 1,
+              shopRateAvg: 1,
+              shopRateCount: 1,
+              shopCreateAt: 1,
+            },
+          },
+        ],
+
+        // 5) Top shop bán ít nhất
+        bottomSold: [
+          { $sort: { shopSoldCount: 1, _id: 1 } },
+          ...(hasLimit ? [{ $limit: limitNum }] : []),
+          {
+            $project: {
+              shopName: 1,
+              shopLogo: 1,
+              shopSlug: 1,
+              shopStatus: 1,
+              shopIsOfficial: 1,
+              shopSoldCount: 1,
+              shopProductCount: 1,
+              shopRateAvg: 1,
+              shopRateCount: 1,
+              shopCreateAt: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        summary: { $arrayElemAt: ["$summary", 0] },
+        byStatus: 1,
+        byOfficial: 1,
+        topSold: 1,
+        bottomSold: 1,
+      },
+    },
+  ]);
+
+  const safeSummary = result?.summary || {
+    totalShops: 0,
+    pendingCount: 0,
+    approvedCount: 0,
+    blockedCount: 0,
+    officialCount: 0,
+    totalSold: 0,
+    totalProducts: 0,
+    avgRating: 0,
+  };
+
+  return {
+    success: true,
+    message: "Lấy thống kê shop cho hệ thống thành công",
+    data: {
+      summary: safeSummary,
+      byStatus: result?.byStatus || [],
+      byOfficial: result?.byOfficial || [],
+      topSold: result?.topSold || [],
+      bottomSold: result?.bottomSold || [],
+    },
+  };
 };

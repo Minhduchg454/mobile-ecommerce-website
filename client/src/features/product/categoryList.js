@@ -13,7 +13,7 @@ export const CategoryList = () => {
     (async () => {
       try {
         setLoading(true);
-        const res = await apiGetProductCategories();
+        const res = await apiGetProductCategories({ sort: "oldest" });
         setCategories(res?.success ? res.categories : []);
       } catch (e) {
         console.error(e);

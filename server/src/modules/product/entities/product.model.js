@@ -65,7 +65,11 @@ const productSchema = new mongoose.Schema({
     type: Number,
     default: 0.0,
   },
-
+  productStatus: {
+    type: String,
+    enum: ["pending", "approved", "blocked"],
+    default: "pending",
+  },
   productContentBlocks: [
     {
       type: {
@@ -111,8 +115,25 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của Brand
     ref: "Brand", // Tên model Brand
   },
+
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  deletedAt: {
+    type: Date,
+  },
 });
 
-productSchema.index({ shopId: 1, productSlug: 1 }, { unique: true });
+productSchema.index(
+  { shopId: 1, productSlug: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: { $ne: true },
+    },
+  }
+);
 
 module.exports = mongoose.model("Product", productSchema);

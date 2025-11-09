@@ -5,9 +5,7 @@ const couponSchema = new mongoose.Schema(
   {
     // Bạn có thể thêm các trường bổ sung thường có cho coupon như:
     couponCode: {
-      // Mã code thực tế để người dùng nhập (ví dụ: 'SALE20')
       type: String,
-      unique: true,
       trim: true,
       uppercase: true,
       required: true,
@@ -21,6 +19,8 @@ const couponSchema = new mongoose.Schema(
       enum: ["percentage", "fixed_amount"], // Ví dụ: 'percentage' (%), 'fixed_amount' (giá trị cố định)
       required: true,
     },
+
+    //Gia tri giam dua tren couponDiscountType
     couponDiscount: {
       type: Number,
       required: true,
@@ -56,7 +56,7 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    couponmaxDiscountAmount: {
+    couponMaxDiscountAmount: {
       type: Number,
       default: null,
     },
@@ -70,10 +70,22 @@ const couponSchema = new mongoose.Schema(
       required: true,
       refPath: "createdByType",
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true, // Tự động thêm createdAt và updatedAt
   }
+);
+couponSchema.index(
+  { couponCode: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } }
 );
 
 module.exports = mongoose.model("Coupon", couponSchema);

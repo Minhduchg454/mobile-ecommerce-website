@@ -11,6 +11,24 @@ exports.getCurrent = async (req, res, next) => {
   }
 };
 
+exports.getUsers = async (req, res, next) => {
+  try {
+    const result = await userService.getUsers(req.query);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const result = await userService.deleteUser(req.params.uId);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.updateUser = async (req, res, next) => {
   try {
     const { uId } = req.params;

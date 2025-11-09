@@ -105,20 +105,18 @@ export const ShopPage = () => {
       {/* --- HEADER SHOP --- */}
       <section
         ref={homeRef}
-        style={{ scrollMarginTop: stickyOffset }}
+        style={{
+          scrollMarginTop: stickyOffset,
+          backgroundImage: hasBg ? `url(${shop?.shopBackground})` : "none",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
         className={clsx(
-          "mb-3 h-full md:h-[150px]",
+          "mb-3 h-full md:h-[150px] bg-black/20 ",
           hasBg ? "text-white" : "text-black"
         )}
       >
-        <div
-          className="w-full h-full flex justify-between items-center gap-5 bg-black/20 p-4"
-          style={{
-            backgroundImage: hasBg ? `url(${shop?.shopBackground})` : "none",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
+        <div className="w-full md:w-main mx-auto h-full flex justify-between items-center gap-5 p-4">
           <div className="flex gap-4">
             <div className="relative">
               {shop?.shopLogo ? (
@@ -135,7 +133,7 @@ export const ShopPage = () => {
                   {(shop?.shopName || "S").slice(0, 1).toUpperCase()}
                 </div>
               )}
-              {shop?.shopOfficial && (
+              {shop?.shopIsOfficial && (
                 <div className="w-full absolute bottom-0 right-1/2 translate-x-1/2 border rounded-lg bg-red-600 text-white text-[7px] md:text-[10px] text-center">
                   Shop Mall
                 </div>
@@ -143,7 +141,7 @@ export const ShopPage = () => {
             </div>
 
             <div className="flex flex-col mb-2">
-              <span className="font-semibold truncate text-lg md:text-2xl">
+              <span className="font-bold truncate text-lg md:text-xl">
                 {shop?.shopName ||
                   (loadingShop ? "Đang tải..." : "Không có tên")}
               </span>
@@ -225,9 +223,9 @@ export const ShopPage = () => {
       <section
         ref={bestRef}
         style={{ scrollMarginTop: stickyOffset }}
-        className="mb-2 md:mb-5"
+        className="w-full md:w-main mx-auto px-2 md:px-0 mb-2 md:mb-5"
       >
-        <h2 className="md:w-main ml-2 md:ml-28 font-bold text-base md:text-xl">
+        <h2 className="font-bold text-base md:text-xl">
           Sản phẩm bán chạy nhất
         </h2>
         {loadingProducts ? (
@@ -241,6 +239,7 @@ export const ShopPage = () => {
           </div>
         ) : (
           <HorizontalScroller
+            isLeft={false}
             items={products}
             keyExtractor={(p) => p._id}
             renderItem={(p) => (

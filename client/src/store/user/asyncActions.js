@@ -1,12 +1,9 @@
-import { createAsyncThunk, current } from "@reduxjs/toolkit"; //giup tao cac hanh dong bat dong bo, thuong goi la api
+import { createAsyncThunk } from "@reduxjs/toolkit"; //giup tao cac hanh dong bat dong bo, thuong goi la api
 import * as apis from "../../apis";
 import { apiGetCustomerCart } from "../../services/customer.api";
 import {
-  apiClearCartItems,
   apiCreateCartItem,
   apiDeleteCartItem,
-  apiGetCartItem,
-  apiGetCartItemCount,
   apiUpdateCartItem,
   apiGetCartItems,
   apiGetWishlistByQuery,
@@ -16,12 +13,11 @@ import { updateCart, setCart } from "./userSlice";
 
 export const getCurrent = createAsyncThunk(
   "user/current",
-  async (_, { dispatch, getState, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
       const response = await apiGetCurrent();
       if (!response.success) return rejectWithValue(response);
       const user = response.user;
-      //user.huuduc = "sai lam";
       return user;
     } catch (error) {
       console.error(" Lỗi trong getCurrent:", error);
@@ -72,6 +68,7 @@ export const updateCartItem = createAsyncThunk(
 
       // 5) Lấy danh sách cart items hiện có trên server
       const cartItemsRes = await apiGetCartItems(cartId);
+
       const cartItems = cartItemsRes?.cartItems || [];
 
       // 6) Tìm item tương ứng trên server (chuẩn hoá id khi so sánh)

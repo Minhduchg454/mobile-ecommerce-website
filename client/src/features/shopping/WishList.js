@@ -11,7 +11,7 @@ import { SelectQuantity } from "../../components";
 import { showAlert } from "store/app/appSlice";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import emptyWishList from "../../assets/empty-wishlist.png";
-import imageNotFound from "../../assets/image-not-found.jpg";
+import imageNotFound from "../../assets/image-not-found.png";
 import { fetchWishlist, updateCartItem } from "store/user/asyncActions";
 import {
   apiDeleteWishlist,
@@ -29,7 +29,6 @@ export const WishList = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    console.log("WishList", wishList);
     const fetchVariations = async () => {
       const newData = {};
       await Promise.all(
@@ -130,9 +129,9 @@ export const WishList = () => {
   }, [wishList, variationData]);
 
   const buttonAction =
-    "w-fit text-xs md:text-sm whitespace-nowrap border px-2 py-1 rounded-3xl flex items-center gap-1 text-black bg-button-bg hover:bg-button-hv";
+    "text-xs md:text-sm whitespace-nowrap border px-2 py-1 rounded-3xl flex items-center gap-1 text-black bg-button-bg hover:bg-button-hv";
   return (
-    <div className="w-full lg:w-main mx-auto p-2 md:p-4 ">
+    <div className="xl:mx-auto xl:w-main p-2 md:p-4 ">
       {/*header */}
       <div className={`mb-4 px-2 md:px-4 flex justify-between items-center`}>
         <h2 className="text-lg md:text-xl font-bold">Danh sách yêu thích</h2>
@@ -238,7 +237,7 @@ export const WishList = () => {
           );
         })
       ) : (
-        <div className="flex flex-col items-center justify-center">
+        <div className="bg-white rounded-3xl p-2 md:p-4 flex flex-col items-center justify-center w-full h-[500px]">
           <img src={emptyWishList} alt="" className="w-36 h-36 mb-2" />
           <p className="text-center italic text-gray-400 mb-2">
             Danh sách yêu thích của bạn còn trống.

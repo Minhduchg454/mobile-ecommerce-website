@@ -16,7 +16,7 @@ export const CheckOutPage = () => {
     setItems(payload.selectedItems);
   }, []);
   return (
-    <div className="md:w-main w-full mx-auto py-4 md:py-2 animate-fadeIn">
+    <div className="animate-fadeIn">
       <CheckOut1 items={items} />
     </div>
   );

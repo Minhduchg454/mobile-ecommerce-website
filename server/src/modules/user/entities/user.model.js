@@ -52,6 +52,14 @@ const userBaseSchema = new mongoose.Schema(
       ref: "ShoppingCart",
       required: false,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true, // Tự động thêm createdAt và updatedAt

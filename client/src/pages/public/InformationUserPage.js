@@ -10,13 +10,13 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { logout } from "store/user/userSlice";
 import { useNavigate } from "react-router-dom";
 import path from "ultils/path";
-import { duration } from "moment";
 
 export const InformationUserPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current, updating } = useSelector((state) => state.user);
-  const [isShow, setIsShow] = useState(false); // toggle modal
+  const { isShowModal } = useSelector((s) => s.app);
+  const [isShow, setIsShow] = useState(false);
 
   const GENDER_OPTIONS = [
     { value: "female", label: "Nữ" },
@@ -165,7 +165,7 @@ export const InformationUserPage = () => {
     return () => URL.revokeObjectURL(url);
   }, [chosenFile]);
 
-  // ===================== 🔵 useForm đổi mật khẩu (RIÊNG BIỆT)
+  // ===================== useForm đổi mật khẩu (RIÊNG BIỆT)
   const {
     register: registerPw,
     handleSubmit: handleSubmitPw,
@@ -255,7 +255,7 @@ export const InformationUserPage = () => {
   const pwDisabled = !pwIsDirty || !pwIsValid || pwIsSubmitting;
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative animate-fadeIn">
       {/* FORM THÔNG TIN CHUNG */}
       <form
         className="grid grid-cols-12 gap-4"
@@ -309,7 +309,7 @@ export const InformationUserPage = () => {
         {/* Trái (Form) */}
         <div className="col-span-12 ">
           <h1 className={title}>Thông tin chung</h1>
-          <div className="glass p-3 md:p-4 rounded-3xl mb-4">
+          <div className="bg-white p-3 md:p-4 rounded-3xl mb-4">
             <div className={inputRow}>
               <label className={labelCls}>Tên tài khoản</label>
               <p className={readOnlyCls}>{current?.accountName || "-"}</p>
@@ -514,7 +514,7 @@ export const InformationUserPage = () => {
 
           {/* khối đổi mật khẩu */}
           <h1 className={title}>Bảo mật</h1>
-          <div className="glass p-3 md:p-4 rounded-3xl">
+          <div className="bg-white p-3 md:p-4 rounded-3xl">
             <div className={inputRow}>
               <label className={labelCls}>Mật khẩu</label>
               <button

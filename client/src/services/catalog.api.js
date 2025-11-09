@@ -5,9 +5,60 @@ import axios from "./axios";
  */
 export const apiGetProductCategories = (query) =>
   axios({
-    url: "catalog/category",
+    url: "catalogs/categories",
     method: "get",
     params: query,
+  });
+
+export const apiCreateCategory = (data) =>
+  axios({
+    url: "catalogs/categories/",
+    method: "post",
+    data,
+  });
+
+export const apiDeleteCategory = (cId) =>
+  axios({
+    url: `catalogs/categories/${cId}`,
+    method: "delete",
+  });
+
+export const apiUpdateCategory = (data, cId) =>
+  axios({
+    url: `catalogs/categories/${cId}`,
+    method: "put",
+    data,
+  });
+
+/**
+ * Brands
+ */
+
+export const apiGetBrands = (query) =>
+  axios({
+    url: "catalogs/brands",
+    method: "get",
+    params: query,
+  });
+
+export const apiCreateBrand = (data) =>
+  axios({
+    url: "catalogs/brands",
+    method: "post",
+    data,
+  });
+
+export const apiDeleteBrand = (bId) =>
+  axios({
+    url: `catalogs/brands/${bId}`,
+    method: "delete",
+  });
+
+export const apiUpdateBrand = (data, bId) =>
+  axios({
+    url: `catalogs/brands/${bId}`,
+    method: "put",
+    data,
   });
 
 /**
@@ -16,13 +67,13 @@ export const apiGetProductCategories = (query) =>
 
 export const apiGetThemesWithProducts = () =>
   axios({
-    url: "catalog/theme-with-product",
+    url: "catalogs/theme-with-product",
     method: "get",
   });
 
 export const apiGetThemes = (query) =>
   axios({
-    url: "catalog/themes",
+    url: "catalogs/themes",
     method: "get",
     params: query,
   });
@@ -34,33 +85,52 @@ export const apiGetThemes = (query) =>
 // GET /catalog/product/?productId=
 export const apiGetProducts = (query) =>
   axios({
-    url: "catalog/products/",
+    url: "catalogs/products/",
     method: "get",
     params: query,
   });
 
-// GET /catalog/product/:pId
+export const apiGetShopProductsWithVariations = (query) =>
+  axios({
+    url: "catalogs/shop-products/",
+    method: "get",
+    params: query,
+  });
+
+export const apiGetProductStats = (shopId) =>
+  axios({
+    url: `catalogs/products/stats${shopId ? `/${shopId}` : ""}`,
+    method: "get",
+  });
+
+export const apiGetProductDashboardReport = (params) =>
+  axios({
+    url: `catalogs/products/dash-board`,
+    method: "get",
+    params,
+  });
+
 export const apiGetProduct = (pId) =>
   axios({
-    url: `catalog/product/${pId}`,
+    url: `catalogs/product/${pId}`,
     method: "get",
   });
 
 export const apiCreateProduct = (data) =>
   axios({
-    url: "catalog/product/",
+    url: "catalogs/product/",
     method: "post",
     data,
   });
 export const apiUpdateProduct = (data, pId) =>
   axios({
-    url: `catalog/product/:${pId}`,
+    url: `catalogs/product/${pId}`,
     method: "put",
     data,
   });
 export const apiDeleteProduct = (pId) =>
   axios({
-    url: `catalog/product/:${pId}`,
+    url: `catalogs/product/${pId}`,
     method: "delete",
   });
 
@@ -69,15 +139,35 @@ export const apiDeleteProduct = (pId) =>
  */
 export const apiGetProductVariation = (pvId) =>
   axios({
-    url: `catalog/product-variation/${pvId}`,
+    url: `catalogs/product-variation/${pvId}`,
     method: "get",
   });
 
 export const apiGetProductVariations = (query) =>
   axios({
-    url: `catalog/product-variations/`,
+    url: `catalogs/product-variations/`,
     method: "get",
     params: query,
+  });
+
+export const apiCreateProductVariation = (data) =>
+  axios({
+    url: "catalogs/product-variation/",
+    method: "post",
+    data,
+  });
+
+export const apiUpdateProductVariation = (data, pvId) =>
+  axios({
+    url: `catalogs/product-variation/${pvId}`,
+    method: "put",
+    data,
+  });
+
+export const apiDeleteProductVariation = (pvId) =>
+  axios({
+    url: `catalogs/product-variation/${pvId}`,
+    method: "delete",
   });
 
 /**
@@ -86,18 +176,7 @@ export const apiGetProductVariations = (query) =>
 
 export const apiGetShops = (query) =>
   axios({
-    url: "shop/profiles/",
-    method: "get",
-    params: query,
-  });
-
-/**
- * Brands
- */
-
-export const apiGetBrands = (query) =>
-  axios({
-    url: "catalog/brands/",
+    url: "shops/profiles/",
     method: "get",
     params: query,
   });

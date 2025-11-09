@@ -3,7 +3,7 @@ const port = process.env.PORT || 5001;
 
 console.log("=== ĐÃ KHỞI ĐỘNG Server ===");
 
-//const initAdmin = require("./ultils/initAdmin");
+const { initDefaultAdmin } = require("./ultils/initAdmin");
 
 // Nếu có dùng app.use(morgan('dev')) hoặc custom log request, hãy xóa hoặc comment dòng đó
 app.get("/api/test", (req, res) => {
@@ -13,7 +13,7 @@ app.get("/api/test", (req, res) => {
 app.listen(port, async () => {
   console.log(`Server running on port ${port}`);
   try {
-    //await initAdmin();
+    await initDefaultAdmin();
   } catch (err) {
     console.error("Lỗi khi tạo admin mặc định:", err.message);
   }

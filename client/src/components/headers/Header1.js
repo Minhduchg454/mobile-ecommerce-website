@@ -15,10 +15,17 @@ import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import defaultAvatar from "assets/avatarDefault.png";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "store/user/userSlice";
+import { clearSeller } from "store/seller/sellerSlice";
 import { persistor } from "store/redux";
-import { AiOutlineUser, AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
-import { FiLogOut } from "react-icons/fi";
+import {
+  AiOutlineUser,
+  AiOutlineSearch,
+  AiOutlineClose,
+  AiOutlineShop,
+} from "react-icons/ai";
+import { FiLogOut, FiSettings } from "react-icons/fi";
 import { HiOutlineClipboardList } from "react-icons/hi";
+
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 
 export const Header1 = () => {
@@ -30,13 +37,14 @@ export const Header1 = () => {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-
+  const isAdmin = Boolean(current?.roles?.includes("admin"));
+  const isLogged = Boolean(isLoggedIn);
   const handleLogout = () => {
     setIsShowMenu(false);
     const id = nextAlertId();
     registerHandlers(id, {
       onConfirm: () => {
-        dispatch(logout());
+        dispatch(logout(), clearSeller());
         navigate(`/`);
         persistor.purge();
       },
@@ -68,13 +76,13 @@ export const Header1 = () => {
       label: "Yêu thích",
       icon: <FaRegHeart size="25" />,
       path: `${path.WISHLIST}`,
-      isShow: isLoggedIn,
+      isShow: isLogged && !isAdmin,
     },
     {
       label: "Giỏ hàng",
       icon: <MdOutlineShoppingCart size="27" />,
       path: `${path.CART}`,
-      isShow: true,
+      isShow: !isAdmin,
     },
   ];
 
@@ -83,13 +91,25 @@ export const Header1 = () => {
       label: "Thông tin tài khoản",
       icon: <AiOutlineUser size="16" />,
       path: `/${path.CUSTOMER}/${current?._id}/${path.C_PROFILE}`,
-      isShow: true,
+      isShow: !current?.roles?.includes("admin"),
     },
     {
       label: "Đơn hàng của tôi",
       icon: <HiOutlineClipboardList size="16" />,
       path: `/${path.CUSTOMER}/${current?._id}/${path.C_ORDER}`,
-      isShow: true,
+      isShow: current?.roles?.includes("shop", "customer") || false,
+    },
+    {
+      label: "Kênh quản lý hệ thống",
+      icon: <FiSettings size="16" />,
+      path: `/${path.ADMIN}/${current?._id}/${path.A_DASHBOARD}`,
+      isShow: isAdmin,
+    },
+    {
+      label: "Kênh bán hàng",
+      icon: <AiOutlineShop size="16" />,
+      path: `/${path.SELLER}/${current?._id}/${path.S_DASHBOARD}`,
+      isShow: current?.roles?.includes("shop") || false,
     },
     {
       label: "Đăng xuất",
@@ -176,21 +196,23 @@ export const Header1 = () => {
       </div>
 
       <div className="flex items-center">
-        {/* Group Button — chỉ hiện khi không phải mobile */}
-        {!isMobile && (
+        {/* Group Button — chỉ hiện khi không phải mobile, và không phải admin */}
+        {!isAdmin && !isMobile && (
           <div className="flex gap-4 mx-4 border rounded-3xl py-1 px-3 bg-button-bg/60">
-            {dataButtons.map(
-              (btn, idx) =>
-                btn.isShow && (
-                  <Link
-                    key={idx}
-                    to={btn.path}
-                    className="flex items-center hover:text-button-t-hv transition"
-                  >
-                    {btn.icon}
-                  </Link>
-                )
-            )}
+            {dataButtons
+              .filter((btn) => btn.isShow)
+              .map(
+                (btn, idx) =>
+                  btn.isShow && (
+                    <Link
+                      key={idx}
+                      to={btn.path}
+                      className="flex items-center hover:text-button-t-hv transition"
+                    >
+                      {btn.icon}
+                    </Link>
+                  )
+              )}
           </div>
         )}
 
@@ -232,36 +254,38 @@ export const Header1 = () => {
           )}
 
           {/* Dropdown menu */}
-          {isShowMenu && current?.roles?.includes("customer") && (
+          {isShowMenu && (
             <div className="bg-white absolute right-0 top-full mt-2 w-[250px] border rounded-md shadow-lg">
-              {mergedMenu.map((item, idx) => {
-                const iconEl = item.icon
-                  ? React.cloneElement(item.icon, {
-                      size: 20,
-                      className: "text-gray-600",
-                    })
-                  : null;
+              {mergedMenu
+                .filter((item) => item.isShow)
+                .map((item, idx) => {
+                  const iconEl = item.icon
+                    ? React.cloneElement(item.icon, {
+                        size: 20,
+                        className: "text-gray-600",
+                      })
+                    : null;
 
-                return item.onClick ? (
-                  <button
-                    key={idx}
-                    onClick={item.onClick}
-                    className="w-full flex items-center gap-2 px-4 py-2 hover:bg-menu-hover text-left"
-                  >
-                    {iconEl}
-                    {item.label}
-                  </button>
-                ) : (
-                  <Link
-                    key={idx}
-                    to={item.path}
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
-                  >
-                    {iconEl}
-                    {item.label}
-                  </Link>
-                );
-              })}
+                  return item.onClick ? (
+                    <button
+                      key={idx}
+                      onClick={item.onClick}
+                      className="w-full flex items-center gap-2 px-4 py-2 hover:bg-menu-hover text-left"
+                    >
+                      {iconEl}
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link
+                      key={idx}
+                      to={item.path}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                    >
+                      {iconEl}
+                      {item.label}
+                    </Link>
+                  );
+                })}
             </div>
           )}
         </div>

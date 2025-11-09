@@ -12,6 +12,8 @@ router.put(
   uploadCloud.single("userAvatar"),
   userController.updateUser
 );
+router.get("/profiles", userController.getUsers);
+router.delete("/profiles/:uId", userController.deleteUser);
 
 /**
  * Address

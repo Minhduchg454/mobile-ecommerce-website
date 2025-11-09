@@ -171,9 +171,10 @@ export const DetailProductPage = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [brandId, setBrandId] = useState("");
   const { pvId } = useParams();
-  const scrollRef = useRef(null); // Tạo ref cho div cuộn
+  const scrollRef = useRef(null);
   const { pathname, search } = useLocation();
   const [isWished, setIsWished] = useState(false);
+  const isAdmin = Boolean(current?.roles?.includes("admin"));
 
   const isLogin = isLoggedIn || false;
 
@@ -397,14 +398,14 @@ export const DetailProductPage = () => {
   //Kiem tra
   const isInStock = currentProduct?.pvStockQuantity >= 1;
   const maxQuantity = quantity > currentProduct?.pvStockQuantity;
-  const disableAction = !isInStock || maxQuantity;
+  const disableAction = !isInStock || maxQuantity || isAdmin;
 
   //css
   const textTitle = "text-sm md:text-lg";
   return (
     <div
       key={pathname + search}
-      className="w-full md:w-main mx-auto px-2 pt-1 md:pt-2 animate-fadeIn"
+      className="w-full xl:w-main mx-auto px-2 pt-1 md:pt-2 animate-fadeIn"
     >
       {/* Cụm điều khiển */}
       <div className="sticky top-[58px] flex flex-col justify-start items-start mb-4 z-10">
@@ -418,9 +419,9 @@ export const DetailProductPage = () => {
       </div>
 
       {/* Ảnh và mua sắm */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-[60%_40%] mb-6">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-[60%_40%]  mb-6">
         {/* Bên trái */}
-        <div className="w-full h-[400px] md:h-[500px]">
+        <div className="w-full h-[400px] lg:h-[500px]">
           <ImageBrowser
             images={currentProduct?.pvImages || []}
             initialIndex={0}
@@ -446,7 +447,7 @@ export const DetailProductPage = () => {
                 <p className="text-sm">
                   Kho: {currentProduct?.pvStockQuantity}
                 </p>
-                <p className="text-sm">Đã bán: {product?.productSoldCount}</p>
+                <p className="text-sm">Đã bán: {currentProduct?.pvSoldCount}</p>
               </div>
             </div>
             {/* Giá */}
@@ -510,8 +511,13 @@ export const DetailProductPage = () => {
           <div>
             {/* Mua ngay */}
             <button
-              disabled={disableAction}
-              className="w-full mb-2 border rounded-3xl bg-button-bg-ac  hover:bg-button-bg-hv px-2 py-1 text-title text-center text-white cursor-pointer transition"
+              disabled={disableAction || isAdmin}
+              className={`w-full mb-2 border rounded-3xl px-2 py-1 text-title text-center text-white transition
+      ${
+        isAdmin
+          ? "bg-gray-400 cursor-not-allowed opacity-50"
+          : "bg-button-bg-ac hover:bg-button-bg-hv cursor-pointer"
+      }`}
               onClick={() => handleBuyNow()}
             >
               Mua
@@ -519,18 +525,31 @@ export const DetailProductPage = () => {
 
             {/* Thêm vào danh sách yêu thích, giỏ hàng */}
             <div className="flex justify-center items-center gap-3">
+              {/* Giỏ hàng */}
               <button
-                disabled={maxQuantity}
-                className="flex flex-1 justify-center items-center border border-gray-500 rounded-3xl px-2 py-1 gap-2 hover:bg-button-hv hover:border-none cursor-pointer transition"
+                disabled={maxQuantity || isAdmin}
+                className={`flex flex-1 justify-center items-center border border-gray-500 rounded-3xl px-2 py-1 gap-2 transition
+        ${
+          isAdmin
+            ? "opacity-50 cursor-not-allowed bg-gray-100"
+            : "hover:bg-button-hv hover:border-none cursor-pointer"
+        }`}
                 onClick={() => handleAddToCart()}
               >
                 <MdOutlineShoppingCart size={20} />
                 <p className="text-sm md:text-lg ">Thêm vào giỏ hàng</p>
               </button>
+
+              {/* Yêu thích */}
               <button
-                className={` flex justify-center items-center border  border-gray-500 rounded-3xl px-2 py-1 gap-2 hover:bg-button-hv hover:border-none ${
-                  isWished ? "text-main" : ""
-                }`}
+                disabled={isAdmin}
+                className={`flex justify-center items-center border border-gray-500 rounded-3xl px-2 py-1 gap-2 transition
+        ${isWished ? "text-main" : ""}
+        ${
+          isAdmin
+            ? "opacity-50 cursor-not-allowed bg-gray-100"
+            : "hover:bg-button-hv hover:border-none"
+        }`}
                 onClick={handleToggleWishlist}
               >
                 {isWished ? (
@@ -564,7 +583,7 @@ export const DetailProductPage = () => {
                 {shop?.shopName}
               </div>
             )}
-            {shop?.shopOfficial && (
+            {shop?.shopIsOfficial && (
               <div className="border rounded-lg line-clamp-1 absolute -bottom-2 right-1/2 translate-x-1/2 bg-red-600 text-white py-0.5 px-1 text-[10px]">
                 Mall
               </div>

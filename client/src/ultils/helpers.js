@@ -10,8 +10,16 @@ export const createSlug = (string) =>
     .split(" ")
     .join("-");
 
-export const formatMoney = (number) =>
-  Number(number?.toFixed(1)).toLocaleString();
+export const formatMoney = (number) => {
+  if (number === null || number === undefined || number === "") return "";
+  const num = Number(String(number).replace(/\D/g, "")) || 0;
+  return num.toLocaleString("vi-VN");
+};
+
+export const handleMoneyChange = (e, onChange) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  onChange(Number(raw || 0));
+};
 
 export const renderStarFromNumber = (number, size) => {
   if (!Number(number)) return;
@@ -154,3 +162,31 @@ export const formatVnDate = (dateStr) =>
 
 export const formatVnCurrency = (value) =>
   typeof value === "number" ? value.toLocaleString("vi-VN") + "₫" : value;
+
+const R = 6371; // Bán kính Trái Đất (km)
+
+export const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c); // Làm tròn đến số nguyên (km)
+};
+
+export const getDistanceBetweenProvinces = (
+  province1,
+  province2,
+  locationsData
+) => {
+  if (!locationsData[province1] || !locationsData[province2]) {
+    return null;
+  }
+  const { lat: lat1, lng: lng1 } = locationsData[province1].center;
+  const { lat: lat2, lng: lng2 } = locationsData[province2].center;
+  return calculateDistance(lat1, lng1, lat2, lng2);
+};

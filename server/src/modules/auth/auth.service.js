@@ -22,6 +22,7 @@ const shopService = require("../shop/shop.service");
 const { OAuth2Client } = require("google-auth-library");
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = process.env.JWT_EXPIRES || "7d";
+const slugify = require("slugify");
 
 //Dang ky tai khoan khach hang
 exports.registerCustomer = async (body) => {
@@ -245,24 +246,24 @@ exports.registerAdmin = async (body) => {
 };
 
 //Dang ky tai khoan shop
+
 exports.registerShop = async (body, files) => {
-  const { userId, shopName, shopDescription, shopColor, shopIsOffical } = body;
+  const { userId, shopName, shopDescription, shopIsOffical } = body;
 
   if (shopIsOffical) {
     body.shopIsOffical = true;
   }
+
   if (!userId || !shopName) {
-    // 1) Validate
-    const err = new Error("Thiếu userId, shopName hoặc shopSlug");
+    const err = new Error("Thiếu userId hoặc shopName");
     err.status = 400;
     throw err;
   }
 
-  // Theo dõi để rollback
   const createdDocs = { shop: null, userRole: null };
 
   try {
-    // 2) User phải tồn tại
+    // 1️Kiểm tra user tồn tại
     const userRes = await userService.getCurrent({ id: userId });
     if (!userRes.user) {
       const err = new Error("Người dùng không tồn tại");
@@ -270,7 +271,7 @@ exports.registerShop = async (body, files) => {
       throw err;
     }
 
-    // 3) Không được có shop trước đó
+    // 2️⃣ Kiểm tra user đã có shop chưa
     const existedShop = await Shop.findById(userId);
     if (existedShop) {
       const err = new Error("Người dùng đã có shop");
@@ -278,10 +279,26 @@ exports.registerShop = async (body, files) => {
       throw err;
     }
 
-    // 4) Đảm bảo role 'shop' tồn tại
-    const shopRole = await userService.getRole({ roleName: "shop" }); // { role: doc }
+    // tạo slug từ tên shop
+    const shopSlug = slugify(shopName, {
+      lower: true, // chuyển về chữ thường
+    });
 
-    // 5) Nếu user chưa có role 'shop' thì gán
+    // Kiểm tra trùng tên hoặc slug
+    const duplicate = await Shop.findOne({
+      $or: [{ shopName: shopName.trim() }, { shopSlug }],
+    });
+
+    if (duplicate) {
+      const err = new Error("Tên cửa hàng hoặc slug đã tồn tại");
+      err.status = 409;
+      throw err;
+    }
+
+    // 5️⃣ Đảm bảo role "shop" tồn tại
+    const shopRole = await userService.getRole({ roleName: "shop" });
+
+    // 6️⃣ Nếu user chưa có role "shop" thì gán
     const existedUserRole = await UserRole.findOne({
       userId,
       roleId: shopRole.role._id,
@@ -290,16 +307,10 @@ exports.registerShop = async (body, files) => {
       const ur = await UserRole.create({ userId, roleId: shopRole.role._id });
       createdDocs.userRole = ur;
     }
-    const bodyShop = {
-      userId,
-      shopName,
-      shopDescription,
-      shopColor,
-    };
 
-    // 6) Tạo shop (id = userId)
+    // 7️⃣ Tạo shop
     const shopRes = await shopService.createShop(body, files);
-    createdDocs.shop = shopRes.shop; // shopService đang trả { success, shop }
+    createdDocs.shop = shopRes.shop;
 
     return {
       success: true,
@@ -309,7 +320,7 @@ exports.registerShop = async (body, files) => {
   } catch (err) {
     console.error("Đăng ký shop bị lỗi:", err);
 
-    // rollback: xoá shop nếu vừa tạo, rồi xoá userRole nếu vừa gán
+    // rollback
     try {
       if (createdDocs.shop) await Shop.findByIdAndDelete(createdDocs.shop._id);
     } catch (_) {}

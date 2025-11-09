@@ -6,47 +6,47 @@ import axios from "./axios";
 
 export const apiCreateCartItem = (data) =>
   axios({
-    url: "shopping/cart-item/",
+    url: "shoppings/cart-item/",
     method: "post",
     data,
   });
 
 export const apiGetCartItems = (cartId) =>
   axios({
-    url: "shopping/cart-item/",
+    url: "shoppings/cart-item/",
     method: "get",
     params: { cartId },
   });
 
 export const apiGetCartItem = (id) =>
   axios({
-    url: "shopping/cart-item/" + id,
+    url: "shoppings/cart-item/" + id,
     method: "get",
   });
 
 export const apiUpdateCartItem = (id, data) =>
   axios({
-    url: "shopping/cart-item/" + id,
+    url: "shoppings/cart-item/" + id,
     method: "put",
     data,
   });
 
 export const apiDeleteCartItem = (id) =>
   axios({
-    url: "shopping/cart-item/" + id,
+    url: "shoppings/cart-item/" + id,
     method: "delete",
   });
 
 export const apiClearCartItems = (cartId) =>
   axios({
-    url: "shopping/cart-item/clear",
+    url: "shoppings/cart-item/clear",
     method: "get",
     params: { cartId },
   });
 
 export const apiGetCartItemCount = (cartId) =>
   axios({
-    url: "shopping/cart-item/count",
+    url: "shoppings/cart-item/count",
     method: "get",
     params: { cartId },
   });
@@ -56,26 +56,26 @@ export const apiGetCartItemCount = (cartId) =>
  */
 export const apiCreateWishlist = (data) =>
   axios({
-    url: "shopping/wishlist",
+    url: "shoppings/wishlist",
     method: "post",
     data,
   });
 
 export const apiGetWishlist = () =>
   axios({
-    url: `shopping/wishlist`,
+    url: `shoppings/wishlist`,
   });
 
 export const apiGetWishlistByQuery = (params) =>
   axios({
-    url: "shopping/wishlist/search",
+    url: "shoppings/wishlist/search",
     method: "get",
     params,
   });
 
 export const apiDeleteAllWishlistByCustomerId = (params) =>
   axios({
-    url: "shopping/wishlist/clear",
+    url: "shoppings/wishlist/clear",
     method: "delete",
     params,
   });
@@ -83,20 +83,20 @@ export const apiDeleteAllWishlistByCustomerId = (params) =>
 // Xóa wishlist theo điều kiện (query: customerId, productVariationId, ...)
 export const apiDeleteWishlistByCondition = (params) =>
   axios({
-    url: "shopping/wishlist",
+    url: "shoppings/wishlist",
     method: "delete",
     params,
   });
 
 export const apiUpdateWishlist = (id, data) =>
   axios({
-    url: `shopping/wishlist/${id}`,
+    url: `shoppings/wishlist/${id}`,
     method: "put",
     data,
   });
 
 export const apiDeleteWishlist = (id) =>
   axios({
-    url: `/shopping/wishlist/${id}`,
+    url: `/shoppings/wishlist/${id}`,
     method: "delete",
   });

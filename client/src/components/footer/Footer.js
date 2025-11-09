@@ -55,7 +55,7 @@ export const Footer = () => {
 
   return (
     <footer className="w-full bg-header-footer text-black text-sm mt-10">
-      <div className="md:w-main mx-auto p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 sm:gap-4 md:gap-6">
+      <div className="lg:w-main mx-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4 md:gap-6">
         {sections.map((section, index) => (
           <div key={index} className="min-w-[200px] rounded-md p-2">
             <h3 className="text-title mb-4 text-left uppercase">

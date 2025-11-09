@@ -8,6 +8,7 @@ import {
   syncCartFromServer,
   fetchWishlist,
 } from "store/user/asyncActions";
+import { fetchSellerCurrent } from "store/seller/asynsActions";
 import { GoogleLogin } from "@react-oauth/google";
 import { apiLogin } from "../../services/auth.api";
 import path from "ultils/path";
@@ -121,7 +122,6 @@ export const LoginForm = () => {
     });
 
     if (res.success && res.token && res.user) {
-      //console.log("Thong tin nhan duoc tu login", res.user);
       axios.defaults.headers.common["Authorization"] = `Bearer ${res.token}`;
       localStorage.setItem("accessToken", res.token);
       dispatch(
@@ -141,9 +141,15 @@ export const LoginForm = () => {
           showConfirmButton: false,
         })
       );
-      dispatch(syncCartFromServer(res.user._id));
+      let roles = res?.user?.roles || [];
+
+      if (roles.includes("shop")) {
+        dispatch(fetchSellerCurrent(res?.user._id));
+      }
+      dispatch(syncCartFromServer(res?.user._id));
       dispatch(fetchWishlist());
-      navigate(redirectPath);
+      navigatePath(roles, res?.user._id);
+      //navigate(redirectPath);
     } else {
       const msg = res.message || res.err || "Đăng nhập thất bại";
       dispatch(
@@ -157,6 +163,15 @@ export const LoginForm = () => {
     }
   };
 
+  const navigatePath = (roles, userId) => {
+    if (roles.includes("admin")) {
+      navigate(`/${path.ADMIN}/${userId}/${path.A_DASHBOARD}`);
+    } else if (roles.includes("shop")) {
+      navigate(`/${path.SELLER}/${userId}/${path.S_DASHBOARD}`);
+    } else {
+      navigate(`/${path.HOME}`);
+    }
+  };
   const renderError = (field) =>
     errors[field] && (
       <span className="text-red-500 text-xs">{errors[field]}</span>

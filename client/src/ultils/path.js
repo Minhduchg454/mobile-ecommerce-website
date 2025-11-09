@@ -1,16 +1,18 @@
+import { REGISTER } from "redux-persist";
+
 const path = {
   PUBLIC: "/",
   HOME: "",
   ALL: "*",
   LOGIN: "login",
   REGISTER: "register",
+  REGISTER_SHOP: "register-shop",
   PRODUCTS__CATEGORY: ":category",
   BLOGS__ID__TITLE: "blogs/:id/:title",
   BLOGS: "blogs",
   OUR_SERVICES: "services",
   FAQ: "faqs",
   DETAIL_PRODUCT__CATEGORY__PID__TITLE: ":categoryName/:slug",
-  FINAL_REGISTER: "finalregister/:status",
   RESET_PASSWORD: "reset-password/:token",
   DETAIL_CART: "my-cart",
   CHECKOUT: "checkout",
@@ -22,6 +24,16 @@ const path = {
 
   // Admin
   ADMIN: "admin",
+  A_DASHBOARD: "dashboard",
+  A_MANAGE_USERS: "manage-users",
+  A_MANAGE_BLOCK_USERS: "manage-block-users",
+  A_MANAGE_SHOPS: "manage-shops",
+  A_MANAGE_BLOCK_SHOPS: "manage-block-shops",
+  A_MANAGE_COUPONS: "manage-coupons",
+  A_MANAGE_SERVICE_PLAN: "manage-service_plans",
+  A_MANAGE_CATEGORY: "manage-categorys",
+  A_MANAGE_BRANDS: "manage-brands",
+
   DASHBOARD: "dashboard",
   MANAGE_USER: "manage-user",
   MANAGE_PRODUCTS: "manage-products",
@@ -34,20 +46,26 @@ const path = {
   MANAGE_BRANDS: "manage-brands",
   MANAGE_COUPONS: "manage-coupons",
 
-  // Member
-  MEMBER: "member",
-  PERSONAL: "personal",
-  MY_CART: "my-cart",
-  HISTORY: "buy-history",
-  WISHLIST: "wishlist",
-  ADDRESS: "personal-address",
-  ORDER_HISTORY: "hoa-don",
-
   //Customer
   CUSTOMER: "customer",
   C_PROFILE: "profile",
   C_ADDRESS: "addreeses",
   C_ORDER: "orders",
+  C_SUCCEEDED_ORDER: "succeeded-orders",
+  C_MANAGESELLER: "manage-seller",
+
+  //Shop
+  SELLER: "seller",
+  S_PROFILE: "profile",
+  S_ADDRESS: "addreeses",
+  S_ORDER: "manage-orders",
+  S_MANAGE_COUPONS: "manage-coupons",
+  S_CANCEL_ORDER: "manage-cancel-orders",
+  S_MANAGE_PRODUCTS: "manage-products",
+  S_CREATE_PRODUCT: "create-product",
+  S_MANAGE_CATEGORIES: "manage-categories",
+  S_CREATE_CATEGORIES: "create-category",
+  S_DASHBOARD: "dashboard",
 };
 
 export default path;

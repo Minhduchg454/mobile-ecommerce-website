@@ -2,9 +2,22 @@ import axios from "./axios";
 
 export const apiUpdateUser = (data, uId) =>
   axios({
-    url: `user/profile/${uId}`,
+    url: `users/profile/${uId}`,
     method: "put",
     data,
+  });
+
+export const apiGetUsers = (query) =>
+  axios({
+    url: "users/profiles",
+    method: "get",
+    params: query,
+  });
+
+export const apiDeleteUser = (uId) =>
+  axios({
+    url: "users/profiles/" + uId,
+    method: "delete",
   });
 
 /**
@@ -12,28 +25,28 @@ export const apiUpdateUser = (data, uId) =>
  */
 export const apiGetAddresses = (query) =>
   axios({
-    url: "user/addresses",
+    url: "users/addresses",
     method: "get",
     params: query, // có thể truyền { userId, q, sort } nếu backend hỗ trợ query
   });
 
 export const apiCreateAddress = (data) =>
   axios({
-    url: "user/addresses",
+    url: "users/addresses",
     method: "post",
-    data, // body chứa thông tin địa chỉ
+    data,
   });
 
 export const apiUpdateAddress = (data, addressId) =>
   axios({
-    url: `user/addresses/${addressId}`,
+    url: `users/addresses/${addressId}`,
     method: "put",
     data,
   });
 
 export const apiDeleteAddress = (addressId, userId) =>
   axios({
-    url: `user/addresses/${addressId}`,
+    url: `users/addresses/${addressId}`,
     method: "delete",
     data: { userId },
   });

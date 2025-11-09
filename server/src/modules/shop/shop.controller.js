@@ -39,6 +39,15 @@ exports.getShops = async (req, res, next) => {
   }
 };
 
+exports.getShopDashboardStats = async (req, res, next) => {
+  try {
+    const result = await shopService.getShopDashboardStats(req.query);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.updateShop = async (req, res, next) => {
   try {
     const { userId } = req.params;
@@ -73,8 +82,7 @@ exports.createServicePlan = async (req, res, next) => {
 
 exports.getServicePlans = async (req, res, next) => {
   try {
-    const { sort } = req.query; // newest|oldest
-    const result = await shopService.getServicePlans(sort);
+    const result = await shopService.getServicePlans(req.query);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -83,8 +91,8 @@ exports.getServicePlans = async (req, res, next) => {
 
 exports.updateServicePlan = async (req, res, next) => {
   try {
-    const { sid } = req.params;
-    const result = await shopService.updateServicePlan(sid, req.body);
+    const { sId } = req.params;
+    const result = await shopService.updateServicePlan(sId, req.body);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -93,8 +101,8 @@ exports.updateServicePlan = async (req, res, next) => {
 
 exports.deleteServicePlan = async (req, res, next) => {
   try {
-    const { sid } = req.params;
-    const result = await shopService.deleteServicePlan(sid);
+    const { sId } = req.params;
+    const result = await shopService.deleteServicePlan(sId);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -155,7 +163,7 @@ exports.updateCategoryShop = async (req, res, next) => {
   try {
     const { csId } = req.params;
     const { shopId } = req.body;
-    const result = await service.updateCategoryShop(
+    const result = await shopService.updateCategoryShop(
       csId,
       shopId,
       req.body,
@@ -170,8 +178,7 @@ exports.updateCategoryShop = async (req, res, next) => {
 exports.deleteCategoryShop = async (req, res, next) => {
   try {
     const { csId } = req.params;
-    const { shopId } = req.body;
-    const result = await shopService.deleteCategoryShop(csId, shopId);
+    const result = await shopService.deleteCategoryShop(csId);
     res.status(200).json(result);
   } catch (err) {
     next(err);

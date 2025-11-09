@@ -10,7 +10,6 @@ export const ShopList = () => {
   useEffect(() => {
     (async () => {
       try {
-        // nếu backend hỗ trợ sort theo bán nhiều nhất
         const res = await apiGetShops({
           sort: "-shopProductCount",
           limit: 10,
@@ -67,7 +66,6 @@ export const ShopList = () => {
               shopLogo={s.shopLogo}
               shopDescription={s.shopDescription}
               shopCreateAt={s.shopCreateAt || s.createdAt}
-              shopColor={s.shopColor}
               shopRateAvg={s.shopRateAvg}
               shopSoldCount={s.shopSoldCount}
               shopProductCount={s.shopProductCount}

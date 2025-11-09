@@ -8,3 +8,13 @@ exports.getCartByCustomerId = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getCustomerDetail = async (req, res, next) => {
+  try {
+    const { cId } = req.params;
+    const result = await service.getCustomerDetail(cId);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+};

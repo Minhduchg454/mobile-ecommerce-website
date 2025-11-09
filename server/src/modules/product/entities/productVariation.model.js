@@ -61,16 +61,40 @@ const productVariationSchema = new mongoose.Schema(
       ref: "Product", // Tên model Product
       required: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true, // Tự động thêm createdAt và updatedAt
   }
 );
 
-// Đảm bảo tên biến thể là duy nhất trong mỗi productId
-productVariationSchema.index({ productId: 1, pvName: 1 }, { unique: true });
+// Tên biến thể duy nhất trong mỗi productId (chỉ áp dụng cho biến thể chưa xóa)
+productVariationSchema.index(
+  { productId: 1, pvName: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: { $ne: true },
+    },
+  }
+);
 
-// Đảm bảo slug là duy nhất trong mỗi productId
-productVariationSchema.index({ productId: 1, pvSlug: 1 }, { unique: true });
+// Slug biến thể duy nhất trong mỗi productId (chỉ áp dụng cho biến thể chưa xóa)
+productVariationSchema.index(
+  { productId: 1, pvSlug: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: { $ne: true },
+    },
+  }
+);
 
 module.exports = mongoose.model("ProductVariation", productVariationSchema);

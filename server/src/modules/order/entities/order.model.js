@@ -3,8 +3,28 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
+    orderSubtotalPrice: {
+      type: Number,
+      required: true,
+    },
+    orderShippingFee: {
+      type: Number,
+      required: true,
+    },
+    orderShippingDiscount: {
+      type: Number,
+      default: 0,
+    },
+    orderShopDiscount: {
+      type: Number,
+      default: 0,
+    },
+    orderSystemDiscount: {
+      type: Number,
+      default: 0,
+    },
     orderTotalPrice: {
-      type: Number, // NumberDouble
+      type: Number,
       required: true,
     },
     orderDate: {
@@ -19,6 +39,11 @@ const orderSchema = new mongoose.Schema(
     orderStatusId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderStatus",
+      required: true,
+    },
+    shopId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Shop",
       required: true,
     },
     spId: {

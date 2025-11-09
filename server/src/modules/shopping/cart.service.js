@@ -373,7 +373,6 @@ exports.deleteWishListByCondition = async (query = {}) => {
 };
 
 exports.deleteAllWishListByCustomerId = async (customerId) => {
-  console.log("Nhan thong tin", customerId);
   if (!customerId) {
     const err = new Error("Thiếu customerId");
     err.status = 400;

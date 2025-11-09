@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import path from "ultils/path";
 import { FaCheck } from "react-icons/fa";
 import { ShowSwal } from "../../components";
-import imageNotFound from "../../assets/image-not-found.jpg";
+import imageNotFound from "../../assets/image-not-found.png";
 
 const Cart = ({ dispatch, navigate }) => {
   const { current, currentCart } = useSelector((state) => state.user);

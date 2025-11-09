@@ -42,10 +42,23 @@ const addressSchema = new mongoose.Schema({
     type: Boolean, // Đánh dấu địa chỉ mặc định
     default: false,
   },
+  addressFor: {
+    type: String,
+    enum: ["customer", "shop"],
+    default: "customer",
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của User
     ref: "User",
     required: true,
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  deletedAt: {
+    type: Date,
   },
 });
 
