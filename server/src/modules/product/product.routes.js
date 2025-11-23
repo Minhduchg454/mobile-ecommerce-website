@@ -23,6 +23,7 @@ router.post(
   productController.createBrand
 );
 router.get("/brands", productController.getBrand);
+router.get("/brand-stats", productController.getBrandStats);
 router.put(
   "/brands/:bId",
   uploadCloud.single("brandLogo"),

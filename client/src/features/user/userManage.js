@@ -9,16 +9,15 @@ import {
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import noData from "../../assets/data-No.png";
 import { showAlert, showModal } from "store/app/appSlice";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import defaultAvatar from "assets/avatarDefault.png";
 import { Loading } from "../../components";
-import path from "ultils/path";
 
 import { AiOutlineDelete } from "react-icons/ai";
 import { IoLockClosedOutline, IoLockOpenOutline } from "react-icons/io5";
 
-export const UserManage = ({ sortKey, sortDir }) => {
+export const UserManage = ({ status }) => {
   const dispatch = useDispatch();
   const { current } = useSelector((s) => s.user);
 
@@ -26,43 +25,34 @@ export const UserManage = ({ sortKey, sortDir }) => {
   const [count, setCount] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const [isShowSort, setIsShowSort] = useState(false);
+  const [isShowStatus, setIsShowStatus] = useState(false);
 
+  const statusParam = searchParams.get("status") || "";
   const sortKeyParam = searchParams.get("sortKey") || "createdAt";
   const sortDirParam = searchParams.get("sortDir") || "-1";
   const searchKeyword = searchParams.get("s") || "";
   const userId = current?._id || "";
 
+  const statusOptions = [
+    { label: "Hoạt động", value: "active" },
+    { label: "Đã bị khóa", value: "block" },
+  ];
+
   const sortOptions = [
     { label: "Mới nhất", sortKey: "createdAt", sortDir: "-1" },
     { label: "Cũ nhất", sortKey: "createdAt", sortDir: "1" },
-    { label: "Khóa", sortKey: "statusName", sortDir: "block" },
-    { label: "Hoạt động", sortKey: "statusName", sortDir: "active" },
     { label: "Nam", sortKey: "gender", sortDir: "male" },
     { label: "Nữ", sortKey: "gender", sortDir: "female" },
     { label: "Khác", sortKey: "gender", sortDir: "other" },
   ];
 
+  const currentStatus =
+    statusOptions.find((opt) => opt.value === statusParam) || statusOptions[0];
+
   const currentSort =
     sortOptions.find(
       (opt) => opt.sortKey === sortKeyParam && opt.sortDir === sortDirParam
     ) || sortOptions[0];
-
-  // ============= MOUNT: áp props sortKey/sortDir vào URL nếu có ============
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    let changed = false;
-
-    if (sortKey && !params.get("sortKey")) {
-      params.set("sortKey", sortKey);
-      changed = true;
-    }
-    if (sortDir && !params.get("sortDir")) {
-      params.set("sortDir", sortDir);
-      changed = true;
-    }
-
-    if (changed) setSearchParams(params);
-  }, []);
 
   // ============= FETCH USERS ============
   const fetchUsers = async () => {
@@ -71,11 +61,13 @@ export const UserManage = ({ sortKey, sortDir }) => {
 
       if (sortKeyParam === "createdAt") {
         query.sort = sortDirParam === "-1" ? "-createdAt" : "createdAt";
-      } else if (sortKeyParam === "statusName") {
-        query.statusName = sortDirParam;
       } else if (sortKeyParam === "gender") {
         query.gender = sortDirParam;
       }
+
+      if (status) {
+        query.statusName = status;
+      } else if (statusParam) query.statusName = statusParam;
 
       const res = await apiGetUsers(query);
       if (res?.success) {
@@ -101,7 +93,7 @@ export const UserManage = ({ sortKey, sortDir }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchKeyword, sortKeyParam, sortDirParam]);
+  }, [searchKeyword, sortKeyParam, sortDirParam, statusParam]);
 
   // ============= HANDLERS ============
   const handleBlockUser = (user) => {
@@ -113,9 +105,12 @@ export const UserManage = ({ sortKey, sortDir }) => {
       onConfirm: async () => {
         dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
 
-        const res = await apiUpdateUser(user._id, {
-          statusName: nextStatusName,
-        });
+        const res = await apiUpdateUser(
+          {
+            statusName: nextStatusName,
+          },
+          user._id
+        );
         dispatch(showModal({ isShowModal: false }));
 
         if (res?.success) {
@@ -219,54 +214,107 @@ export const UserManage = ({ sortKey, sortDir }) => {
       {/* HEADER BAR */}
       <div className="bg-app-bg/60 backdrop-blur-sm rounded-3xl px-3 py-2 md:px-4 sticky top-[50px] z-10 flex justify-between items-center mb-2 md:mb-4">
         <h1 className="font-bold mb-1">{count} tài khoản</h1>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsShowSort((v) => !v)}
-            className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl text-description flex items-center gap-1"
-            aria-haspopup="listbox"
-            aria-expanded={isShowSort}
-          >
-            Sắp xếp: <span className="font-bold">{currentSort.label}</span>
-            {isShowSort ? (
-              <MdKeyboardArrowUp size={18} className="ml-1" />
-            ) : (
-              <MdKeyboardArrowDown size={18} className="ml-1" />
-            )}
-          </button>
-          {isShowSort && (
-            <div
-              role="listbox"
-              className="absolute right-0 mt-2 w-52 bg-white/90 backdrop-blur-md border rounded-xl shadow-lg p-1 z-20"
-            >
-              {sortOptions.map((opt) => {
-                const isActive =
-                  opt.sortKey === sortKeyParam && opt.sortDir === sortDirParam;
+        <div className="flex items-center justify-end gap-2 ">
+          {!status && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsShowStatus((v) => !v)}
+                className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl text-description flex items-center gap-1 text-sm bg-white"
+                aria-haspopup="listbox"
+                aria-expanded={isShowStatus}
+              >
+                Trạng thái:{" "}
+                <span className="font-bold">{currentStatus.label}</span>
+                {isShowStatus ? (
+                  <MdKeyboardArrowUp size={18} className="ml-1" />
+                ) : (
+                  <MdKeyboardArrowDown size={18} className="ml-1" />
+                )}
+              </button>
 
-                return (
-                  <button
-                    key={`${opt.sortKey}:${opt.sortDir}`}
-                    role="option"
-                    aria-selected={isActive}
-                    onClick={() => {
-                      setSearchParams((prev) => {
-                        const params = new URLSearchParams(prev);
-                        params.set("sortKey", opt.sortKey);
-                        params.set("sortDir", opt.sortDir);
-                        return params;
-                      });
-                      setIsShowSort(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-action ${
-                      isActive ? "bg-gray-100 font-bold" : ""
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
+              {isShowStatus && (
+                <div
+                  role="listbox"
+                  className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-md border rounded-xl shadow-lg p-1 z-20"
+                >
+                  {statusOptions.map((opt) => {
+                    const isActive = opt.value === statusParam;
+                    return (
+                      <button
+                        key={opt.value || "all"}
+                        onClick={() => {
+                          setSearchParams((prev) => {
+                            const params = new URLSearchParams(prev);
+                            if (opt.value) params.set("status", opt.value);
+                            else params.delete("status");
+                            return params;
+                          });
+                          setIsShowStatus(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-action ${
+                          isActive ? "bg-white/20 font-bold" : ""
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsShowSort((v) => !v)}
+              className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl text-description flex items-center gap-1"
+              aria-haspopup="listbox"
+              aria-expanded={isShowSort}
+            >
+              Sắp xếp: <span className="font-bold">{currentSort.label}</span>
+              {isShowSort ? (
+                <MdKeyboardArrowUp size={18} className="ml-1" />
+              ) : (
+                <MdKeyboardArrowDown size={18} className="ml-1" />
+              )}
+            </button>
+            {isShowSort && (
+              <div
+                role="listbox"
+                className="absolute right-0 mt-2 w-52 bg-white/90 backdrop-blur-md border rounded-xl shadow-lg p-1 z-20"
+              >
+                {sortOptions.map((opt) => {
+                  const isActive =
+                    opt.sortKey === sortKeyParam &&
+                    opt.sortDir === sortDirParam;
+
+                  return (
+                    <button
+                      key={`${opt.sortKey}:${opt.sortDir}`}
+                      role="option"
+                      aria-selected={isActive}
+                      onClick={() => {
+                        setSearchParams((prev) => {
+                          const params = new URLSearchParams(prev);
+                          params.set("sortKey", opt.sortKey);
+                          params.set("sortDir", opt.sortDir);
+                          return params;
+                        });
+                        setIsShowSort(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-action ${
+                        isActive ? "bg-gray-100 font-bold" : ""
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

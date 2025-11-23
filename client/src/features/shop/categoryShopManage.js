@@ -160,7 +160,7 @@ export const CategoryShopManage = () => {
         <button
           disabled={isBlock}
           onClick={handleCreateCategoryShop}
-          className={`px-3 py-1 whitespace-nowrap rounded-3xl text-white shadow-md  ${
+          className={`px-3 py-1 whitespace-nowrap rounded-3xl text-white shadow-md text-sm  ${
             isBlock
               ? "bg-gray-400 cursor-not-allowed opacity-50"
               : "bg-button-bg-ac hover:bg-button-bg-hv cursor-pointer"

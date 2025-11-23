@@ -45,7 +45,11 @@ exports.deleteCategory = async (req, res, next) => {
 //Brand controller
 exports.createBrand = async (req, res, next) => {
   try {
-    const result = await productService.createBrand(req.body, req.file);
+    const result = await productService.createBrand(
+      req.body,
+      req.file,
+      req.app
+    );
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -61,12 +65,22 @@ exports.getBrand = async (req, res, next) => {
   }
 };
 
+exports.getBrandStats = async (req, res, next) => {
+  try {
+    const result = await productService.getBrandStats();
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.updateBrand = async (req, res, next) => {
   try {
     const result = await productService.updateBrand(
       req.params,
       req.body,
-      req.file
+      req.file,
+      req.app
     );
     res.status(200).json(result);
   } catch (err) {
@@ -129,7 +143,8 @@ exports.updateProduct = async (req, res, next) => {
     const result = await productService.updateProduct(
       req.params,
       req.body,
-      req.files
+      req.files,
+      req.app
     );
     res.status(200).json(result);
   } catch (err) {

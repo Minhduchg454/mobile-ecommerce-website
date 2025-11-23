@@ -1,8 +1,8 @@
 const service = require("./order.service");
+
 exports.createOrder = async (req, res, next) => {
   try {
-    //service chi nhan du lieu thuan
-    const result = await service.createOrder(req.body);
+    const result = await service.createOrder(req.body, req.app);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -27,7 +27,7 @@ exports.getOrdersByUserId = async (req, res, next) => {
 exports.updateOrders = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const result = await service.updateOrders(orderId, req.body);
+    const result = await service.updateOrders(orderId, req.body, req.app);
     res
       .status(result?.success ? 200 : 400)
       .json(result || { success: false, message: "No response from service" });

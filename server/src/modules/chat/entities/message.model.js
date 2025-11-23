@@ -1,33 +1,44 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const { Schema, model } = mongoose;
 
-// Message Schema
-const messageSchema = new Schema({
-  messageNumber: {
-    type: Number,
-    required: true,
+const messageSchema = new Schema(
+  {
+    conver_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+      index: true,
+    },
+    // senderInfo: {
+    //   id: Schema.Types.ObjectId,
+    //   model: { type: String, enum: ["User", "Shop", "Admin"] },
+    //   name: String,
+    //   avatar: String,
+    // },
+    message_senderId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    message_content: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    message_type: {
+      type: String,
+      enum: ["text", "image", "file", "order", "system"],
+      default: "text",
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
-  messageSender: {
-    type: String,
-    required: true,
-  },
-  messageContent: {
-    type: String,
-    required: true,
-  },
-  // You might want to add a timestamp for messages
-  messageCreatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-  chatId: {
-    // KHÓA NGOẠI: Thêm chatId để liên kết với Chat
-    type: Schema.Types.ObjectId, // Loại ObjectId cho khóa ngoại
-    ref: "Chat", // Tham chiếu đến model 'Chat'
-    required: true, // Bắt buộc mỗi tin nhắn phải thuộc về một chat
-  },
-});
+  { timestamps: true }
+);
 
-const Message = mongoose.model("Message", messageSchema);
+messageSchema.index({ conver_id: 1, createdAt: -1 });
+messageSchema.index({ conver_id: 1, _id: 1 }); // để so sánh đã đọc
 
-module.exports = Message;
+module.exports = model("Message", messageSchema);

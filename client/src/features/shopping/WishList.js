@@ -4,7 +4,7 @@ import { ImBin } from "react-icons/im";
 import { useNavigate } from "react-router-dom";
 
 import { apiGetProductVariation } from "../../services/catalog.api";
-import { formatMoney } from "ultils/helpers";
+import { formatMoney, calculateFinalPrice } from "ultils/helpers";
 import { toast } from "react-toastify";
 import path from "ultils/path";
 import { SelectQuantity } from "../../components";
@@ -70,11 +70,18 @@ export const WishList = () => {
           customerId: current._id,
         });
         if (res.success) {
-          toast.success("Đã xóa toàn bộ danh sách yêu thích");
           dispatch(fetchWishlist());
         } else {
           const err = res.message;
-          toast.error(err);
+          dispatch(
+            showAlert({
+              title: `Lỗi`,
+              variant: "danger",
+              message: err || "Vui lòng thử lại",
+              showConfirmButton: false,
+              duration: 1500,
+            })
+          );
         }
       },
       onCancel: () => {},
@@ -93,24 +100,38 @@ export const WishList = () => {
     );
   };
 
-  const handleAddToCart = (productVariation) => {
+  const handleAddToCart = (productVariation, finalPrice) => {
     if (
       !productVariation?.pvStockQuantity ||
       productVariation.pvStockQuantity < 1
     ) {
-      toast.warning("Sản phẩm hiện đã hết hàng!");
+      dispatch(
+        showAlert({
+          title: `Sản phẩm hiện hết hàng`,
+          variant: "danger",
+          showConfirmButton: false,
+          duration: 1500,
+        })
+      );
       return;
     }
     dispatch(
       updateCartItem({
         pvId: productVariation._id,
         cartItemQuantity: 1,
-        priceAtTime: productVariation.pvPrice,
+        priceAtTime: finalPrice,
         add: true,
         maxItemQuantity: productVariation.pvStockQuantity,
       })
     );
-    toast.success("Đã thêm sản phẩm vào giỏ hàng");
+    dispatch(
+      showAlert({
+        title: `Đã thêm sản phẩm vào giỏ hàng`,
+        variant: "success",
+        showConfirmButton: false,
+        duration: 1500,
+      })
+    );
   };
 
   const isOut = (item) => {
@@ -151,8 +172,14 @@ export const WishList = () => {
           const isOutStock = productVariation?.pvStockQuantity < 1;
           const productName =
             productVariation?.productId.productName || "Sản phẩm không còn";
+          const finalPrice = calculateFinalPrice(
+            productVariation?.pvPrice,
+            productVariation?.productId?.productDiscountPercent
+          );
+          const isOnSale =
+            productVariation?.productId.productDiscountPercent > 0;
           const pvPrice = !isOutStock
-            ? `${formatMoney(productVariation?.pvPrice)}đ`
+            ? `${formatMoney(finalPrice)}đ`
             : productVariation
             ? "Sản phẩm tạm hết hàng"
             : "";
@@ -183,6 +210,12 @@ export const WishList = () => {
                       isOutStock ? "text-gray-300" : "text-black"
                     }`}
                   >
+                    {isOnSale && (
+                      <span className="mr-1 rounded-3xl border bg-red-500 text-white text-[8px] px-1 py-1 align-middle">
+                        Sale{" "}
+                        {productVariation?.productId.productDiscountPercent}%
+                      </span>
+                    )}
                     {productName}
                   </div>
                   <div
@@ -209,6 +242,11 @@ export const WishList = () => {
                         (Không xác định giá)
                       </span>
                     )}
+                    {isOnSale && (
+                      <span className="ml-2 text-xs text-gray-500 line-through">
+                        {formatMoney(productVariation?.pvPrice)}đ
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>
@@ -217,7 +255,9 @@ export const WishList = () => {
               <div className="flex flex-col md:flex-row gap-2 justify-center items-end">
                 {productVariation ? (
                   <button
-                    onClick={() => handleAddToCart(productVariation)}
+                    onClick={() =>
+                      handleAddToCart(productVariation, finalPrice)
+                    }
                     className={`${buttonAction} `}
                   >
                     <MdAddShoppingCart size={16} />

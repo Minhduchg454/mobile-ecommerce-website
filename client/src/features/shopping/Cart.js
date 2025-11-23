@@ -1,16 +1,14 @@
 import React, { memo, useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { ImBin } from "react-icons/im";
 import { useNavigate } from "react-router-dom";
 import { removeCartItem, updateCartItem } from "../../store/user/asyncActions";
 import { apiGetProductVariation } from "../../services/catalog.api";
-import { formatMoney } from "ultils/helpers";
+import { formatMoney, calculateFinalPrice } from "ultils/helpers";
 import { toast } from "react-toastify";
 import path from "ultils/path";
-import { SelectQuantity } from "../../components";
 import { showAlert } from "store/app/appSlice";
-import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import emptyCart from "../../assets/empty-cartwebp.png";
+import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 
 const groupByShop = (items = []) => {
   const byShop = new Map();
@@ -38,10 +36,14 @@ const groupByShop = (items = []) => {
   const result = [];
   for (const { shopId, items } of byShop.values()) {
     const flat = Array.from(items.values());
-    const shopSubtotal = flat.reduce(
-      (s, x) => s + (x.productVariation?.pvPrice ?? 0) * (x.quantity ?? 0),
-      0
-    );
+    const shopSubtotal = flat.reduce((s, x) => {
+      // [CẬP NHẬT] Tính toán giá cuối cùng cho tổng phụ của shop
+      const basePrice = x.productVariation?.pvPrice ?? 0;
+      const discountPercent = x.product?.productDiscountPercent ?? 0;
+      const finalPrice = calculateFinalPrice(basePrice, discountPercent);
+
+      return s + finalPrice * (x.quantity ?? 0);
+    }, 0);
     result.push({ shopId, items: flat, shopSubtotal });
   }
   return result;
@@ -60,7 +62,8 @@ const CartCols = () => (
 );
 
 export const Carts = () => {
-  const { currentCart } = useSelector((state) => state.user);
+  const { currentCart, isLoggedIn } = useSelector((state) => state.user);
+
   const [cartDetails, setCartDetails] = useState([]);
   const [selectedPvIds, setSelectedPvIds] = useState(new Set()); // lưu pvId đã chọn
   const dispatch = useDispatch();
@@ -125,8 +128,13 @@ export const Carts = () => {
       for (const it of g.items) {
         const pvId = it.productVariation?._id;
         if (pvId && selectedPvIds.has(pvId)) {
-          const price = it?.priceAtTime ?? it?.productVariation?.pvPrice ?? 0;
-          sum += price * (it?.quantity ?? 0);
+          // [CẬP NHẬT] Tính toán giá cuối cùng để tính tổng
+          const basePrice =
+            it?.priceAtTime ?? it?.productVariation?.pvPrice ?? 0;
+          const discountPercent = it.product?.productDiscountPercent ?? 0;
+          const finalPrice = calculateFinalPrice(basePrice, discountPercent);
+
+          sum += finalPrice * (it?.quantity ?? 0);
         }
       }
     }
@@ -254,6 +262,29 @@ export const Carts = () => {
 
   // Checkout: gửi mảng {product, productVariation, quantity} đã chọn (nếu chưa chọn thì gửi tất)
   const handleBuyNow = () => {
+    if (!isLoggedIn) {
+      const id = nextAlertId();
+      registerHandlers(id, {
+        onConfirm: () => {
+          navigate(`/${path.LOGIN}`);
+        },
+        onCancel: () => {},
+        onClose: () => {},
+      });
+      dispatch(
+        showAlert({
+          id,
+          title: "Bạn chưa đăng nhập",
+          message: "Vui lòng đăng nhập để thực hiện thao tác này",
+          variant: "danger",
+          showCancelButton: true,
+          confirmText: "Đăng nhập",
+          cancelText: "Huỷ",
+        })
+      );
+      return;
+    }
+
     const selected =
       selectedPvIds.size > 0
         ? cartDetails.filter((it) => selectedPvIds.has(it.productVariation._id))
@@ -332,19 +363,21 @@ export const Carts = () => {
                 </label>
 
                 {g.shopId.shopLogo && (
-                  <img
-                    src={g.shopId.shopLogo}
-                    alt={g.shopId.shopName}
-                    className="w-8 h-8 md:w-11 md:h-11 rounded-full object-cover border"
-                  />
+                  <div className="relative">
+                    <img
+                      src={g.shopId.shopLogo}
+                      alt={g.shopId.shopName}
+                      className="w-8 h-8 md:w-11 md:h-11 rounded-full object-cover border"
+                    />
+                    {g.shopId.shopIsOfficial && (
+                      <div className="w-fit  px-1 py-0.5 absolute -bottom-2 right-1/2 translate-x-1/2 border rounded-md bg-red-600 text-white text-[4px] md:text-[10px] text-center whitespace-nowrap">
+                        Mall
+                      </div>
+                    )}
+                  </div>
                 )}
                 <div className="font-semibold text-base">
                   {g.shopId.shopName || "Cửa hàng"}
-                  {g.shopId.shopOfficial && (
-                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-red-600 text-white">
-                      shop mall
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -365,13 +398,27 @@ export const Carts = () => {
                   {g.items.map((it) => {
                     const pv = it.productVariation || {};
                     const p = it.product || {};
-                    const currentPrice = it.priceAtTime ?? pv.pvPrice ?? 0;
+
+                    // [CẬP NHẬT] Lấy giá bán cơ bản và phần trăm giảm giá của sản phẩm cha
+                    const basePrice = it?.priceAtTime ?? pv.pvPrice ?? 0;
+                    const productDiscountPercent =
+                      p.productDiscountPercent ?? 0;
+
+                    // [CẬP NHẬT] Tính toán giá cuối cùng để hiển thị
+                    const finalPrice = calculateFinalPrice(
+                      basePrice,
+                      productDiscountPercent
+                    );
+
                     const isDeleted = pv === null;
                     const isOutOfStock = pv.pvStockQuantity < 1;
                     const maxItemQuantity = pv.pvStockQuantity;
                     const isDisabled = isDeleted || isOutOfStock;
                     const pvId = pv._id;
                     const itemChecked = pvId && selectedPvIds.has(pvId);
+
+                    // Kiểm tra nếu có giảm giá để hiển thị giá gốc gạch ngang
+                    const isOnSale = productDiscountPercent > 0;
 
                     return (
                       <tr className="border-b-2" key={pvId}>
@@ -400,6 +447,11 @@ export const Carts = () => {
                               />
                               <div className="text-left">
                                 <p className="font-medium line-clamp-1">
+                                  {isOnSale && (
+                                    <span className="mr-1 rounded-3xl border bg-red-500 text-white text-[8px] px-1 py-1 align-middle">
+                                      Sale {p.productDiscountPercent}%
+                                    </span>
+                                  )}
                                   {p.productName}
                                 </p>
                                 <p className="text-xs text-gray-500">
@@ -410,8 +462,18 @@ export const Carts = () => {
                           </div>
                         </td>
                         <td className="text-center">{pv.pvName}</td>
+                        {/* [CẬP NHẬT] Hiển thị đơn giá sau khi tính toán */}
                         <td className="text-center">
-                          {formatMoney(currentPrice)}đ
+                          <div className="flex flex-col items-center">
+                            {isOnSale && (
+                              <span className="text-xs text-gray-500 line-through">
+                                {formatMoney(basePrice)}đ
+                              </span>
+                            )}
+                            <span className="font-medium text-red-500">
+                              {formatMoney(finalPrice)}đ
+                            </span>
+                          </div>
                         </td>
                         <td className="text-center relative">
                           <div className="flex justify-center items-center">
@@ -452,8 +514,9 @@ export const Carts = () => {
                             </p>
                           )}
                         </td>
+
                         <td className="text-center ">
-                          {formatMoney(currentPrice * it.quantity)}đ
+                          {formatMoney(finalPrice * it.quantity)}đ
                         </td>
                         <td className="text-right">
                           <button
@@ -472,7 +535,9 @@ export const Carts = () => {
           );
         })
       ) : (
-        <div className="bg-white rounded-3xl p-2 md:p-4 flex flex-col items-center justify-center w-full h-[500px]">
+        <div
+          className={`bg-white rounded-3xl  p-2 md:p-4 flex flex-col items-center justify-center w-full h-[500px] mb-4`}
+        >
           <img src={emptyCart} alt="" className="w-36 h-36 mb-2" />
           <p className="text-center italic text-gray-400 mb-2">
             Giỏ hàng của bạn còn trống.
@@ -487,7 +552,7 @@ export const Carts = () => {
       )}
 
       {outOfStockItems.length > 0 && (
-        <div className={`${card} mb-4`}>
+        <div className={`${card}`}>
           <div className="mb-2 font-semibold">Sản phẩm đã hết hàng</div>
           <table className="min-w-full table-fixed text-sm md:text-base">
             <CartCols />
@@ -506,7 +571,15 @@ export const Carts = () => {
                 const pv = it.productVariation || {};
                 const p = it.product || {};
                 const pvId = pv?._id;
-                const currentPrice = it?.priceAtTime ?? pv?.pvPrice ?? 0;
+
+                // [CẬP NHẬT] Áp dụng logic tính giá cho mục Hết hàng (chỉ để hiển thị)
+                const basePrice = it?.priceAtTime ?? pv?.pvPrice ?? 0;
+                const productDiscountPercent = p.productDiscountPercent ?? 0;
+                const finalPrice = calculateFinalPrice(
+                  basePrice,
+                  productDiscountPercent
+                );
+                const isOnSale = productDiscountPercent > 0;
 
                 return (
                   <tr key={pvId} className="opacity-60">
@@ -547,8 +620,18 @@ export const Carts = () => {
 
                     <td className="text-center">{pv?.pvName}</td>
 
+                    {/* [CẬP NHẬT] Hiển thị Đơn giá */}
                     <td className="text-center">
-                      {formatMoney(currentPrice)}đ
+                      <div className="flex flex-col items-center">
+                        {isOnSale && (
+                          <span className="text-xs text-gray-500 line-through">
+                            {formatMoney(basePrice)}đ
+                          </span>
+                        )}
+                        <span className="font-medium text-red-500">
+                          {formatMoney(finalPrice)}đ
+                        </span>
+                      </div>
                     </td>
 
                     {/* Số lượng: hiển thị badge 'Hết hàng' */}
@@ -558,8 +641,9 @@ export const Carts = () => {
                       </span>
                     </td>
 
+                    {/* [CẬP NHẬT] Hiển thị Thành tiền */}
                     <td className="text-center">
-                      {formatMoney(currentPrice * (it?.quantity ?? 0))}đ
+                      {formatMoney(finalPrice * (it?.quantity ?? 0))}đ
                     </td>
 
                     {/* Vẫn cho phép xóa */}

@@ -12,12 +12,11 @@ import path from "ultils/path";
 import { AiOutlineExclamationCircle, AiOutlineCopy } from "react-icons/ai";
 
 export const OrderDetailCustomer = () => {
-  const { orderId, customerId } = useParams(); // customerId nếu cần dùng để xác thực
+  const { orderId, customerId } = useParams();
   const navigate = useNavigate();
 
   const [payment, setPayment] = useState(null);
   const [order, setOrder] = useState(null);
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -117,20 +116,10 @@ export const OrderDetailCustomer = () => {
         .join(", ")
     : "";
 
-  const handleCopyOrderId = async () => {
-    try {
-      await navigator.clipboard.writeText(order._id);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (e) {
-      console.error("Copy failed", e);
-    }
-  };
-
   return (
     <div className="w-full bg-white rounded-3xl md:p-4 p-2  animate-fadeIn">
       {/* Header */}
-      <div className="flex justify-end items-center gap-2">
+      <div className="flex justify-end items-center gap-2 mb-1">
         <div className="flex items-center gap-1">
           <p className="text-sm md:text-base">
             Mã đơn hàng: <span className="font-mono">{order._id}</span>
@@ -180,14 +169,14 @@ export const OrderDetailCustomer = () => {
       {/* Shop */}
       {order.shopId && (
         <div className="flex items-center justify-start gap-2 mb-3">
-          <div className="w-7 h-7 overflow-hidden rounded-full border">
+          <div className="relative">
             <img
               src={order.shopId.shopLogo || "/no-image.png"}
               alt=""
-              className="w-full h-full"
+              className="w-10 h-10 rounded-full object-cover border cursor-pointer border-gray-300"
             />
             {order.shopId.shopIsOfficial && (
-              <span className="w-fit border rounded-lg bg-red-600 text-white py-0.5 px-1 text-[10px]">
+              <span className="border rounded-lg line-clamp-1 absolute -bottom-2 right-1/2 translate-x-1/2 bg-red-600 text-white py-0.5 px-1 text-[8px]">
                 Mall
               </span>
             )}
@@ -208,6 +197,7 @@ export const OrderDetailCustomer = () => {
           const pv = it.productVariation || it.pvId;
           const product = pv?.productId;
           const thumb = pv?.pvImages?.[0];
+          const isOnSale = product?.productDiscountPercent > 0;
           const name = product?.productName || "Sản phẩm";
           const pvName = pv?.pvName || "Phân loại";
           const qty = it.odQuantity ?? 1;
@@ -217,12 +207,13 @@ export const OrderDetailCustomer = () => {
           return (
             <div
               key={it._id}
-              className="flex items-center gap-3 border rounded-2xl p-3"
+              className="flex justify-between items-center gap-3 border rounded-2xl p-3"
             >
               <button
                 onClick={() => {
                   navigate(`/${path.PRODUCTS}/${it.pvId}`);
                 }}
+                className="flex gap-2"
               >
                 <img
                   src={thumb}
@@ -230,14 +221,24 @@ export const OrderDetailCustomer = () => {
                   className="w-20 h-20 object-cover rounded-lg border"
                   alt=""
                 />
-              </button>
 
-              <div className="flex-1">
-                <div className="font-medium">{name}</div>
-                <div className="text-xs text-gray-500">Phân loại: {pvName}</div>
-                <div className="text-xs text-gray-500">x{qty}</div>
-              </div>
-              <div className="flex flex-col md:flex-row gap-2 text-right min-w-[120px]">
+                <div className="flex flex-col justify-center items-start flex-1">
+                  <div className="font-medium">
+                    {" "}
+                    {isOnSale && (
+                      <span className="mr-1 rounded-3xl border bg-red-500 text-white text-[8px] px-1 py-1 align-middle">
+                        Sale {product?.productDiscountPercent}%
+                      </span>
+                    )}
+                    {name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Phân loại: {pvName}
+                  </div>
+                  <div className="text-xs text-gray-500">x{qty}</div>
+                </div>
+              </button>
+              <div className="flex flex-col  gap-2 text-right min-w-[120px]">
                 {originalPrice ? (
                   <span className="text-gray-400 line-through text-xs md:text-sm">
                     {formatMoney(originalPrice)}đ

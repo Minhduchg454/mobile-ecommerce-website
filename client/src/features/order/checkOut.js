@@ -1,34 +1,35 @@
-import { useEffect, useState, useMemo } from "react";
-import {
-  useSearchParams,
-  useNavigate,
-  useParams,
-  useLocation,
-  Link,
-} from "react-router-dom";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { CloseButton } from "../../components";
 import { VoucherSelectModal } from "../../features";
 import { AddressFormModal } from "../../features";
-import { apiGetAddresses } from "../../services/user.api";
+import {
+  apiGetAddresses,
+  apiGetPaymentAccounts,
+} from "../../services/user.api";
 import { apiCreateVNPayPayment } from "../../services/payment.api";
 import { apiCreateOrder } from "../../services/order.api";
 import path from "ultils/path";
 import { useSelector, useDispatch } from "react-redux";
 import { showAlert } from "store/app/appSlice";
-import { formatMoney } from "ultils/helpers";
-import { APP_INFO } from "../../ultils/contants";
+import {
+  formatMoney,
+  calculateFinalPrice,
+  calculateShippingCost,
+} from "ultils/helpers";
+import { APP_INFO, bankInfo } from "../../ultils/contants";
 import { MdLocationOn } from "react-icons/md";
 import { FaTicketAlt, FaMoneyCheckAlt } from "react-icons/fa";
 import { showModal } from "store/app/appSlice";
-import { Discount } from "@mui/icons-material";
+import { FaCheck } from "react-icons/fa";
 
 /**
  * Mẫu test vnpay
- * ngan hang:  NCB
- * so the: 	9704198526191432198
- * ten chu the:  NGUYEN VAN A
- * ngay phat hanh:  07/15
+ * ngan hang: NCB
+ * so the: 9704198526191432198
+ * ten chu the: NGUYEN VAN A
+ * ngay phat hanh: 07/15
  * opt: 123456
  */
 
@@ -41,13 +42,13 @@ const groupByShop = (items = []) => {
     const shopKey = shopObj?._id || String(shopObj);
     if (!byShop.has(shopKey)) {
       byShop.set(shopKey, {
-        shopId: shopObj, // giữ nguyên object để hiển thị tên/logo
-        items: new Map(), // key theo productVariationId để gộp
+        shopId: shopObj,
+        items: new Map(),
       });
     }
 
     const group = byShop.get(shopKey);
-    //console.log("2. Group", group);
+
     const varKey = it.productVariation._id; // gộp theo biến thể
     if (!group.items.has(varKey)) {
       group.items.set(varKey, { ...it });
@@ -58,17 +59,21 @@ const groupByShop = (items = []) => {
         quantity: exist.quantity + (it.quantity || 0),
       });
     }
-    //console.log("3. Group varkey", group.items.get(varKey));
   }
 
   // Xuất ra mảng dễ render + tính subtotal
   const result = [];
   for (const { shopId, items } of byShop.values()) {
     const flat = Array.from(items.values());
-    const shopSubtotal = flat.reduce(
-      (s, x) => s + (x.productVariation.pvPrice || 0) * (x.quantity || 0),
-      0
-    );
+    const shopSubtotal = flat.reduce((s, x) => {
+      // Tính toán giá cuối cùng (đã giảm) cho Tổng phụ của shop
+      const basePrice = x.productVariation?.pvPrice ?? 0;
+      const discountPercent = x.product?.productDiscountPercent ?? 0;
+      const finalPrice = calculateFinalPrice(basePrice, discountPercent);
+      // shopSubtotal là tổng tiền hàng sau khi đã áp dụng giảm giá sản phẩm
+      return s + finalPrice * (x.quantity ?? 0);
+    }, 0);
+
     result.push({ shopId, items: flat, shopSubtotal });
   }
 
@@ -77,58 +82,118 @@ const groupByShop = (items = []) => {
 
 export const CheckOut1 = ({ items }) => {
   const { current } = useSelector((s) => s.user);
-  const { isShowModal } = useSelector((s) => s.app);
   const userId = current?._id || current?.userId;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [addresses, setAddresses] = useState([]);
+  const [addressesUser, setAddressesUser] = useState([]);
+  // State lưu địa chỉ Shop: Map<shopId, addressObject>
+  const [addressesShop, setAddressesShop] = useState({});
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isShowAddrreses, setIsShowAddrreses] = useState(false);
+  const [paymentAccountMethods, setPaymentAccountMethods] = useState([]);
   const [shopVouchers, setShopVouchers] = useState({});
   const [shopShippingFees, setShopShippingFees] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedBank, setSelectedBank] = useState("");
+  const topRef = useRef(null);
 
-  const getShipFee = (sid) => {
-    // Nếu đã có sẵn phí trong state thì dùng, không thì tạo ngẫu nhiên
-    if (shopShippingFees[sid] !== undefined) {
-      return Math.max(0, Number(shopShippingFees[sid]));
+  const groups = groupByShop(items);
+
+  // HÀM GET SHIP FEE
+  const getShipFee = (shopId) => {
+    // 1. Lấy phí đã cache (nếu có)
+    if (shopShippingFees[shopId] !== undefined) {
+      return Math.max(0, Number(shopShippingFees[shopId]));
     }
 
-    // Sinh ngẫu nhiên trong khoảng 20.000 - 90.000
-    const randomFee = Math.floor(Math.random() * (90000 - 20000 + 1)) + 20000;
+    // 2. Kiểm tra địa chỉ Khách hàng
+    if (!selectedAddress) {
+      return 0;
+    }
 
-    // Lưu lại để lần sau không thay đổi (tránh render lại đổi giá)
+    // 3. Lấy địa chỉ Shop từ state đã fetch
+    const shopAddressFrom = addressesShop[shopId];
+
+    if (!shopAddressFrom) {
+      return 0;
+    }
+
+    // 4. Tính toán phí vận chuyển thực tế
+    const calculatedFee = calculateShippingCost(
+      shopAddressFrom,
+      selectedAddress
+    );
+
+    // 5. Cache kết quả (dùng setState để cache, việc này sẽ kích hoạt useMemo)
     setShopShippingFees((prev) => ({
       ...prev,
-      [sid]: randomFee,
+      [shopId]: calculatedFee,
     }));
 
-    return randomFee;
+    return calculatedFee;
   };
 
+  //Fetch phuong thuc thanh toan
+  const fetchPaymentAccount = async () => {
+    if (!userId) return;
+    try {
+      const res = await apiGetPaymentAccounts({ userId, paFor: "customer" });
+      if (res?.success) setPaymentAccountMethods(res.accounts || []);
+    } catch (err) {
+      dispatch(
+        showAlert({
+          title: "Lỗi",
+          message: "Không tải được dữ liệu",
+          variant: "danger",
+        })
+      );
+    }
+  };
+
+  // HÀM FETCH ĐỊA CHỈ
   const fetchAddresses = async () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const res = await apiGetAddresses({
+      // --- 1. Fetch địa chỉ Khách hàng ---
+      const resUser = await apiGetAddresses({
         userId,
         sort: "default_first",
         addressFor: "customer",
       });
-      const list = res?.addresses || [];
-      setAddresses(list);
-      const defaultAddress = list.find((a) => a.addressIsDefault);
+      const listUser = resUser?.addresses || [];
+      setAddressesUser(listUser);
+
+      const defaultAddress = listUser.find((a) => a.addressIsDefault);
       if (defaultAddress) {
         setSelectedAddress(defaultAddress);
-      } else if (list.length > 0) {
-        setSelectedAddress(list[0]);
+      } else if (listUser.length > 0) {
+        setSelectedAddress(listUser[0]);
       }
+
+      // --- 2. Fetch địa chỉ Shop ---
+      const shopAddressesMap = {};
+      const shopIds = groups.map((g) => g.shopId._id);
+
+      for (const sId of shopIds) {
+        const resShop = await apiGetAddresses({
+          userId: sId,
+          addressFor: "shop",
+          limit: 1,
+        });
+
+        const shopAddrList = resShop?.addresses || [];
+        if (shopAddrList.length > 0) {
+          shopAddressesMap[sId] = shopAddrList[0];
+        }
+      }
+      setAddressesShop(shopAddressesMap);
     } catch (e) {
       dispatch(
         showAlert({
           title: "Lỗi",
-          message: "Không tải được danh sách địa chỉ",
+          message: "Không tải được dữ liệu địa chỉ",
           variant: "danger",
         })
       );
@@ -138,10 +203,16 @@ export const CheckOut1 = ({ items }) => {
   };
 
   useEffect(() => {
-    if (userId) fetchAddresses();
-  }, [userId]);
+    if (userId && groups.length > 0) {
+      fetchPaymentAccount();
+      fetchAddresses();
+    }
+  }, [userId, items.length]);
 
-  const groups = groupByShop(items);
+  useEffect(() => {
+    setShopShippingFees({});
+  }, [selectedAddress]);
+
   const isFreeShip = (cp) => {
     const code = String(cp?.couponCode || "").toUpperCase();
     return code.startsWith("FREESHIP");
@@ -167,16 +238,18 @@ export const CheckOut1 = ({ items }) => {
     return groups.map((g) => {
       const sid = g.shopId._id;
       const shopSubtotal = Number(g.shopSubtotal || 0);
+
+      // Lấy phí vận chuyển. Nếu chưa có trong cache, hàm này sẽ tính và cache
       const shipFee = getShipFee(sid);
 
-      // Voucher SHOP
+      // Voucher SHOP (áp dụng trên shopSubtotal đã giảm)
       const shopVs = shopVouchers[sid] || [];
       const shopItemDiscount = shopVs.reduce(
         (s, v) => s + withAppliedAmount(v, shopSubtotal),
         0
       );
 
-      // Voucher HỆ THỐNG
+      // Voucher HỆ THỐNG (áp dụng trên shopSubtotal đã giảm)
       const sysVs = shopVouchers["Admin"] || [];
       const sysNormal = sysVs.filter((v) => !isFreeShip(v)); // giảm hàng
       const sysFreeShip = sysVs.filter(isFreeShip); // freeship
@@ -231,24 +304,29 @@ export const CheckOut1 = ({ items }) => {
 
       return {
         sid,
-        shopSubtotal, //tong tien hang
-        shipFee, //chi phi van chuyen
-        shopItemDiscount, //giam gia cua shop
-        sysItemDiscount, // giam gia he thong
-        shipDiscountPerShop, //giam gia ship
-        lineTotal, //tong thanh toan cua shop
-        items: g.items.map((it) => ({
-          productVariationId: it.productVariation?._id,
-          quantity: Number(it.quantity || 0),
-          unitPrice: Number(it.productVariation?.pvPrice ?? 0),
-        })),
+        shopSubtotal,
+        shipFee,
+        shopItemDiscount,
+        sysItemDiscount,
+        shipDiscountPerShop,
+        lineTotal,
+        items: g.items.map((it) => {
+          const basePrice = it.productVariation?.pvPrice ?? 0;
+          const discountPercent = it.product?.productDiscountPercent ?? 0;
+          const finalPrice = calculateFinalPrice(basePrice, discountPercent);
+
+          return {
+            productVariationId: it.productVariation?._id,
+            quantity: Number(it.quantity || 0),
+            unitPrice: finalPrice,
+          };
+        }),
         shopVouchersApplied,
         systemProductVouchersApplied,
         systemFreeShipVoucherApplied,
       };
     });
-  }, [groups, shopVouchers, shopShippingFees]);
-
+  }, [groups, shopVouchers, selectedAddress, addressesShop, shopShippingFees]);
   const summary = useMemo(() => {
     const totalBefore = perShop.reduce((s, x) => s + x.shopSubtotal, 0);
     const shipAmount = perShop.reduce((s, x) => s + x.shipFee, 0);
@@ -275,14 +353,9 @@ export const CheckOut1 = ({ items }) => {
     { name: "COD", description: "Thanh toán khi nhận hàng" },
     { name: "QR", description: "Thanh toán quét mã Qr" },
     { name: "VNpay", description: "Thanh toán qua VNpay" },
+    { name: "BANK", description: "Thẻ ngân hàng" },
   ];
 
-  const bankInfo = {
-    bankName: "Vietinbank",
-    accountName: "NGUYEN HUU DUC",
-    accountNumber: "103874068274",
-    notePrefix: "Thanh toan don hang",
-  };
   const notePrefix = `${APP_INFO.NAME}`;
   const userName = `${current?.userFirstName}`;
   const amount = formatMoney(summary.finalTotal);
@@ -332,11 +405,19 @@ export const CheckOut1 = ({ items }) => {
       group.items
         .map((item) => {
           const pv = item.productVariation || {};
+          const p = item.product || {};
           const pvId = pv._id;
           const quantity = Number(item.quantity || 0);
           if (!pvId || quantity < 1) return null;
-          const basePrice = item.priceAtTime ?? pv.pvPrice ?? pv.price ?? 0;
-          const parsedPrice = Number(basePrice);
+
+          // Tính toán giá cuối cùng (đã giảm) để gửi đi
+          const basePrice = item.priceAtTime ?? pv.pvPrice ?? 0;
+          const productDiscountPercent = p.productDiscountPercent ?? 0;
+          const finalPrice = calculateFinalPrice(
+            basePrice,
+            productDiscountPercent
+          );
+          const parsedPrice = Number(finalPrice);
           return {
             productVariationId: pvId,
             quantity,
@@ -391,11 +472,28 @@ export const CheckOut1 = ({ items }) => {
       groups: groupsWithVouchers,
     };
 
-    if (paymentMethod === "QR" || paymentMethod === "COD") {
+    if (
+      paymentMethod === "QR" ||
+      paymentMethod === "COD" ||
+      paymentMethod === "BANK"
+    ) {
+      if (paymentMethod === "BANK") {
+        if (selectedBank === "") {
+          dispatch(
+            showAlert({
+              title: "Lỗi",
+              message: "Chọn ngân hàng để thanh toán",
+              variant: "danger",
+              duration: 1500,
+            })
+          );
+          return;
+        }
+      }
+
       try {
         setLoading(true);
         const response = await apiCreateOrder(payload);
-        console.log("Ket qua phan hoi", response);
         if (!response?.success) {
           dispatch(
             showAlert({
@@ -406,6 +504,7 @@ export const CheckOut1 = ({ items }) => {
           );
           return;
         }
+
         sessionStorage.removeItem("checkoutPayload");
         navigate({
           pathname: `/${path.CHECKOUT}/result`,
@@ -431,7 +530,7 @@ export const CheckOut1 = ({ items }) => {
       try {
         setLoading(true);
         const response = await apiCreateOrder(payload);
-        console.log("Ket qua phan hoi", response);
+
         if (!response?.success) {
           dispatch(
             showAlert({
@@ -444,11 +543,13 @@ export const CheckOut1 = ({ items }) => {
           );
           return;
         }
+
         sessionStorage.removeItem("checkoutPayload");
         const res = await apiCreateVNPayPayment({
           amount: Math.round(Number(summary.finalTotal || 0)),
           bankCode: "NCB",
-          orderInfo: `Thanh toan don hang #${Date.now()}`,
+          orderInfo: `Thanh toan don hang #${APP_INFO.NAME}`,
+          returnPath: "/checkout/result",
         });
         const url = res?.paymentUrl;
         if (!url) throw new Error("Không nhận được paymentUrl");
@@ -476,11 +577,20 @@ export const CheckOut1 = ({ items }) => {
       })
     );
   };
+  useEffect(() => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ ehavior: "smooth", block: "start" });
+    }
+  }, [items]);
 
   return (
     <div className="relative xl:mx-auto xl:w-main  p-2 md:p-4">
       {/*header */}
-      <div className={`mb-4 px-2 md:px-4`}>
+      <div
+        style={{ scrollMarginTop: "120px" }}
+        ref={topRef}
+        className={`mb-4 px-2 md:px-4`}
+      >
         <h2 className="text-lg md:text-xl font-bold">Thanh toán đơn hàng</h2>
       </div>
       {/* Địa chỉ nhận hàng */}
@@ -496,7 +606,7 @@ export const CheckOut1 = ({ items }) => {
           </div>
           <div className="px-2">
             <div className="flex gap-2 text-sm md:text-base ">
-              <div className="">
+              <div className="font-bold">
                 {selectedAddress?.addressUserName}{" "}
                 <span className="font-normal">
                   {"| "}
@@ -544,7 +654,7 @@ export const CheckOut1 = ({ items }) => {
               className="top-3 right-3"
             />
             <div className="overflow-auto h-full mb-2">
-              {addresses.map((addresses, idx) => (
+              {addressesUser.map((addresses, idx) => (
                 <div
                   key={idx}
                   className={[
@@ -655,7 +765,16 @@ export const CheckOut1 = ({ items }) => {
               {g.items.map((it) => {
                 const pv = it.productVariation || {};
                 const p = it.product || {};
-                const currentPrice = it.priceAtTime || pv.pvPrice;
+
+                // Tính toán giá cho hiển thị
+                const basePrice = it.priceAtTime || pv.pvPrice || 0;
+                const productDiscountPercent = p.productDiscountPercent ?? 0;
+                const finalPrice = calculateFinalPrice(
+                  basePrice,
+                  productDiscountPercent
+                );
+                const isOnSale = productDiscountPercent > 0;
+
                 return (
                   <tr className="border-b-2" key={pv._id}>
                     {/* Ảnh sản phẩm */}
@@ -666,16 +785,34 @@ export const CheckOut1 = ({ items }) => {
                           alt={pv.pvName}
                           className="w-16 h-16 rounded-lg object-cover border"
                         />
-                        <p className="">{p.productName}</p>
+                        <p className="">
+                          {isOnSale && (
+                            <span className="mr-1 rounded-3xl border bg-red-500 text-white text-[8px] px-1 py-1 align-middle">
+                              Sale {p.productDiscountPercent}%
+                            </span>
+                          )}
+                          {p.productName}
+                        </p>
                       </div>
                     </td>
                     <td className="text-center">{pv.pvName}</td>
+                    {/* Hiển thị Đơn giá */}
                     <td className="text-center">
-                      {formatMoney(currentPrice)}đ
+                      <div className="flex flex-col items-center">
+                        {isOnSale && (
+                          <span className="text-xs text-gray-500 line-through">
+                            {formatMoney(basePrice)}đ
+                          </span>
+                        )}
+                        <span className="font-medium text-red-500">
+                          {formatMoney(finalPrice)}đ
+                        </span>
+                      </div>
                     </td>
                     <td className="text-center">{it.quantity}</td>
+                    {/* Hiển thị Thành tiền */}
                     <td className="text-right">
-                      {formatMoney(currentPrice * it.quantity)}đ
+                      {formatMoney(finalPrice * it.quantity)}đ
                     </td>
                   </tr>
                 );
@@ -708,7 +845,7 @@ export const CheckOut1 = ({ items }) => {
                           onSelectVoucher={(selectedArr) => {
                             setShopVouchers((prev) => ({
                               ...prev,
-                              [g.shopId._id]: selectedArr, // ghi lại voucher đã chọn của shop đó
+                              [g.shopId._id]: selectedArr,
                             }));
                           }}
                         />
@@ -729,7 +866,7 @@ export const CheckOut1 = ({ items }) => {
           </div>
           {/* Tổng tiền sản phẩm */}
           <div className="mt-3 flex items-center justify-between gap-2">
-            <span className="">Tổng số tiền:</span>
+            <span className="">Tổng tiền hàng:</span>
             <span className="font-bold text-main">
               {formatMoney(g.shopSubtotal)}đ
             </span>
@@ -794,7 +931,7 @@ export const CheckOut1 = ({ items }) => {
           <div className="flex gap-2">
             {paymethods.map((pm) => (
               <button
-                key={pm.id}
+                key={pm.name}
                 onClick={() => setPaymentMethod(pm.name)}
                 className={`w-full text-center mb-2 px-2 py-1 border rounded-2xl hover:bg-options-bg transition ${
                   paymentMethod === pm.name
@@ -851,6 +988,69 @@ export const CheckOut1 = ({ items }) => {
             <p className="text-black text-sm md:text-base pt-2">
               Thanh toán qua VNpay. Bạn sẽ được chuyển hướng đến trang VNpay để
             </p>
+          )}
+          {paymentMethod === "BANK" && (
+            <div className="text-black text-sm md:text-base pt-2">
+              <p className="mb-1">Chọn ngân hàng:</p>
+              {paymentAccountMethods.length === 0 ? (
+                <p className="text-gray-500 text-center my-2 md:py-4">
+                  Bạn chưa thêm thẻ ngân hàng nào
+                </p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {paymentAccountMethods.map((acc) => (
+                    <div
+                      onClick={() => setSelectedBank(acc._id)}
+                      key={acc._id}
+                      className={`flex flex-row items-center justify-between gap-3 p-1 md:p-2 rounded-2xl border hover:bg-button-bg "border-gray-200 bg-gray-50`}
+                    >
+                      <div className="flex items-center gap-4 flex-1">
+                        {acc.bankId?.bankLogo ? (
+                          <img
+                            src={acc.bankId.bankLogo}
+                            alt={acc.bankId.bankName}
+                            className="w-10 h-10 rounded-lg object-contain bg-white shadow"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center text-white font-bold">
+                            {acc.paType === "VNpay"
+                              ? "VNpay"
+                              : acc.paType === "ZALOPAY"
+                              ? "Z"
+                              : "B"}
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="font-semibold flex justify-start items-center">
+                            {acc.paBeneficiaryName}
+                            {acc.paIsDefault && (
+                              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                Mặc định
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs md:text-sm text-gray-600">
+                            {acc.paType === "BANK"
+                              ? `${acc.bankId?.bankName || "Ngân hàng"} • ${
+                                  acc.paAccountNumber
+                                }`
+                              : `${acc.paType} • ${acc.paAccountNumber}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="relative h-5 w-5 border border-black rounded-full">
+                        <FaCheck
+                          className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 text-black  w-3 h-3
+                       ${selectedBank === acc._id ? "opacity-100" : "opacity-0"}
+                       `}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
         {/* Tổng tiền */}

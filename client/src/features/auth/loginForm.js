@@ -10,10 +10,11 @@ import {
 } from "store/user/asyncActions";
 import { fetchSellerCurrent } from "store/seller/asynsActions";
 import { GoogleLogin } from "@react-oauth/google";
-import { apiLogin } from "../../services/auth.api";
+import { apiLogin, apiGoogleLogin } from "../../services/auth.api";
 import path from "ultils/path";
 import axios from "axios";
 import { FaLock, FaPhone, FaEye, FaEyeSlash } from "react-icons/fa";
+import { connectSocket } from "../../ultils/socket";
 
 export const LoginForm = () => {
   const [payload, setPayload] = useState({ password: "", accountName: "" });
@@ -36,70 +37,125 @@ export const LoginForm = () => {
     return Object.keys(err).length === 0;
   };
 
+  const handleInput = (e) => {
+    setPayload({ ...payload, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
+  };
+
+  const navigatePath = (roles, userId) => {
+    if (roles.includes("admin")) {
+      navigate(`/${path.ADMIN}/${userId}/${path.A_DASHBOARD}`);
+    } else if (roles.includes("shop")) {
+      navigate(`/${path.SELLER}/${userId}/${path.S_DASHBOARD}`);
+    } else {
+      navigate(redirectPath);
+    }
+  };
+
+  const handleLoginSuccess = async (loginResponse) => {
+    const { token, user: initialUser } = loginResponse;
+
+    // 1. Lưu Token và đăng nhập cơ bản (Optimistic update)
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    localStorage.setItem("accessToken", token);
+    dispatch(
+      login({
+        isLoggedIn: true,
+        token: String(token),
+        userData: initialUser,
+      })
+    );
+
+    // 2. Đợi getCurrent để lấy user object đầy đủ (bao gồm trạng thái block)
+    const getCurrentResult = await dispatch(getCurrent());
+
+    if (getCurrentResult.meta.requestStatus === "fulfilled") {
+      const user = getCurrentResult.payload;
+      const roles = user?.roles || [];
+
+      // 3. === KIỂM TRA KHÓA TÀI KHOẢN (LOGIC CHUẨN) ===
+      if (
+        !user ||
+        user?.userStatusId?.userStatusName?.toLowerCase() === "block"
+      ) {
+        // Logic trong userSlice (extraReducer) sẽ tự động xóa state
+        dispatch(
+          showAlert({
+            title: "Tài khoản bị khóa",
+            message: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.",
+            variant: "danger",
+            confirmText: "Đóng",
+          })
+        );
+        return; // Dừng luồng xử lý
+      }
+
+      // 4. === HIỆN THÔNG BÁO CHÀO MỪNG (CHỈ KHI ĐÃ XÁC NHẬN KHÔNG BỊ KHÓA) ===
+      dispatch(
+        showAlert({
+          title: "Chào mừng",
+          message: `${user?.userFistName || user?.userEmail} quay lại`,
+          variant: "success",
+          duration: 1500,
+          showConfirmButton: false,
+        })
+      );
+
+      // 5. Kết nối Socket
+      //connectSocket(user._id);
+
+      // 6. Xử lý logic tải dữ liệu và điều hướng
+      if (roles.includes("shop")) {
+        dispatch(fetchSellerCurrent(user._id, { includeSubscription: true }));
+      }
+      if (roles.includes("customer") && !roles.includes("admin")) {
+        dispatch(syncCartFromServer(user._id));
+        dispatch(fetchWishlist());
+      }
+
+      // 7. Điều hướng cuối cùng
+      navigatePath(roles, user._id);
+    } else {
+      // Xử lý khi gọi getCurrent thất bại
+      dispatch(
+        showAlert({
+          title: "Lỗi",
+          message:
+            "Lỗi tải thông tin tài khoản sau đăng nhập. Vui lòng thử lại.",
+          variant: "danger",
+        })
+      );
+    }
+  };
+
+  /**
+   * Xử lý đăng nhập Google (đã cập nhật)
+   */
   const handleGoogleLogin = async (credentialResponse) => {
     const token = credentialResponse?.credential;
     if (!token) return;
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URI}/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+      // 1. Gọi API
+      const res = await apiGoogleLogin({ token });
 
-      if (!res.ok) throw new Error("Google Auth response not OK");
-      const data = await res.json();
-
-      if (data.success && data.token && data.user) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-        localStorage.setItem("accessToken", data.token);
-        dispatch(
-          login({
-            isLoggedIn: true,
-            token: String(data.token),
-            userData: data.user,
-          })
-        );
-
-        // Alert thành công (không chặn điều hướng)
-        dispatch(
-          showAlert({
-            title: "Thành công",
-            message: `Chào mừng ${
-              data.user?.userLastName || data.user?.userEmail
-            } quay lại`,
-            variant: "success",
-            showCancelButton: false,
-            confirmText: "OK",
-          })
-        );
-
-        dispatch(getCurrent()).then((res2) => {
-          if (res2.meta.requestStatus === "fulfilled") {
-            const user = res2.payload;
-            if (user.roleId?.roleName === "customer") {
-              dispatch(syncCartFromServer(user._id));
-              dispatch(fetchWishlist());
-            }
-            navigate("/");
-          }
-        });
-
-        navigate(redirectPath);
-      } else {
-        dispatch(
-          showAlert({
-            title: "Lỗi",
-            message: data.message || "Đăng nhập Google thất bại",
-            variant: "danger",
-          })
-        );
+      // 2. Kiểm tra lỗi
+      if (!res.success || !res.token || !res.user) {
+        throw new Error(res.message || "Đăng nhập Google thất bại");
       }
+
+      // 3. Gọi logic xử lý thành công dùng chung
+      await handleLoginSuccess(res);
     } catch (err) {
+      // 4. Xử lý lỗi
+      const errorMessage =
+        err?.response?.data?.message ||
+        err.message ||
+        "Đăng nhập Google thất bại";
       dispatch(
         showAlert({
           title: "Lỗi",
-          message: "Đăng nhập Google thất bại",
+          message: errorMessage,
           variant: "danger",
         })
       );
@@ -107,51 +163,27 @@ export const LoginForm = () => {
     }
   };
 
-  const handleInput = (e) => {
-    setPayload({ ...payload, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateInput()) return;
 
-    const res = await apiLogin({
-      accountName: payload.accountName,
-      password: payload.password,
-    });
+    try {
+      // 1. Gọi API
+      const res = await apiLogin({
+        accountName: payload.accountName,
+        password: payload.password,
+      });
 
-    if (res.success && res.token && res.user) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${res.token}`;
-      localStorage.setItem("accessToken", res.token);
-      dispatch(
-        login({
-          isLoggedIn: true,
-          token: String(res.token),
-          userData: res.user,
-        })
-      );
-
-      dispatch(
-        showAlert({
-          title: "Chào mừng",
-          message: `${res.user?.userFistName || res.user?.userEmail} quay lại`,
-          variant: "success",
-          duration: 1500,
-          showConfirmButton: false,
-        })
-      );
-      let roles = res?.user?.roles || [];
-
-      if (roles.includes("shop")) {
-        dispatch(fetchSellerCurrent(res?.user._id));
+      // 2. Kiểm tra lỗi
+      if (!res.success || !res.token || !res.user) {
+        throw new Error(res.message || "Đăng nhập thất bại");
       }
-      dispatch(syncCartFromServer(res?.user._id));
-      dispatch(fetchWishlist());
-      navigatePath(roles, res?.user._id);
-      //navigate(redirectPath);
-    } else {
-      const msg = res.message || res.err || "Đăng nhập thất bại";
+
+      // 3. Gọi logic xử lý thành công dùng chung
+      await handleLoginSuccess(res);
+    } catch (err) {
+      // 4. Xử lý lỗi
+      const msg = err.message || "Đăng nhập thất bại";
       dispatch(
         showAlert({
           title: "Lỗi",
@@ -163,15 +195,6 @@ export const LoginForm = () => {
     }
   };
 
-  const navigatePath = (roles, userId) => {
-    if (roles.includes("admin")) {
-      navigate(`/${path.ADMIN}/${userId}/${path.A_DASHBOARD}`);
-    } else if (roles.includes("shop")) {
-      navigate(`/${path.SELLER}/${userId}/${path.S_DASHBOARD}`);
-    } else {
-      navigate(`/${path.HOME}`);
-    }
-  };
   const renderError = (field) =>
     errors[field] && (
       <span className="text-red-500 text-xs">{errors[field]}</span>
@@ -201,13 +224,12 @@ export const LoginForm = () => {
         <div className="relative">
           <FaLock className="absolute left-3 top-3 text-gray-400" />
           <input
-            mb-2
             type={showPassword ? "text" : "password"}
             name="password"
             value={payload.password}
             onChange={handleInput}
             placeholder="Nhập mật khẩu"
-            className="pl-10 pr-10 py-2 border rounded-xl w-full"
+            className="pl-10 pr-10 py-2 border rounded-xl w-full mb-2" // Đã di chuyển mb-2 vào className
           />
           <span
             className="absolute right-3 top-3 text-gray-400 cursor-pointer "

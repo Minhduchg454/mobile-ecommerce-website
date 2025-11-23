@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit"; //Tao mot slice, phan state rieng biet: trang thai (state), ham cap nhat state (reducers), tu dong dong sinh cac action: creators
 import * as actions from "./asyncActions";
-
+import { disconnectSocket } from "../../ultils/socket";
 export const userSlice = createSlice({
   name: "user",
   initialState: {
@@ -29,6 +29,7 @@ export const userSlice = createSlice({
       state.currentCart = [];
       state.wishList = [];
       localStorage.removeItem("accessToken");
+      disconnectSocket();
     },
     setCart: (state, action) => {
       try {
@@ -89,14 +90,11 @@ export const userSlice = createSlice({
     builder.addCase(actions.fetchWishlist.fulfilled, (state, action) => {
       state.wishList = action.payload || [];
     });
-    builder.addCase(actions.fetchAddresses.fulfilled, (state, action) => {
-      state.address = action.payload;
-    });
+
     //Khi getCurrent dang chay, bat loading
     builder.addCase(actions.getCurrent.pending, (state) => {
       state.isLoading = true;
     });
-    //Khi thanh cong => lay du lieu nguoi dung luu vao
     builder.addCase(actions.getCurrent.fulfilled, (state, action) => {
       state.isLoading = false;
       // Lấy user từ action.payload.user nếu có, fallback về action.payload nếu không
@@ -104,14 +102,16 @@ export const userSlice = createSlice({
         action.payload && action.payload.user
           ? action.payload.user
           : action.payload;
-      const statusName = userObj?.statusUserId?.statusUserName?.toLowerCase();
-      if (statusName === "blocked") {
+      const statusName = userObj?.userStatusId?.userStatusName;
+
+      if (statusName && statusName.toLowerCase() === "block") {
         state.current = null;
         state.isLoggedIn = false;
         state.token = null;
         state.mes =
           "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.";
-        return; // Dừng xử lý tiếp
+        localStorage.removeItem("accessToken");
+        return;
       }
       state.current = userObj;
       state.isLoggedIn = true;

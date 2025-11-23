@@ -1,6 +1,6 @@
 // components/ProductExplorer.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ProductCard1 } from "./ProductCard1";
+import { ProductCard } from "./ProductCard";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 
 export function ProductExplorer({
@@ -163,7 +163,7 @@ export function ProductExplorer({
             <>
               <div className="flex flex-wrap gap-3 md:gap-5 px-2 md:px-6">
                 {products.map((p) => (
-                  <ProductCard1
+                  <ProductCard
                     key={p._id}
                     productName={p.productName}
                     thumb={p.productThumb}

@@ -1,4 +1,5 @@
 // createCategoryForm.jsx
+
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
@@ -29,9 +30,13 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
     category?.categoryThumb || ""
   );
 
+  // ⚠️ TRẠNG THÁI MỚI: Theo dõi xem người dùng có cố tình xóa ảnh hay không
+  const [isThumbCleared, setIsThumbCleared] = useState(false);
+
   useEffect(() => {
     reset({ categoryName: category?.categoryName || "" });
     setThumbFile(null);
+    setIsThumbCleared(false); // Reset cờ
     setThumbPreview((prev) => {
       if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
       return category?.categoryThumb || "";
@@ -63,14 +68,28 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
     const fd = new FormData();
     fd.append("categoryName", name);
 
-    if (thumbFile) {
-      fd.append("categoryThumb", thumbFile);
-    } else {
+    // =======================================================
+    // 🎯 LOGIC XỬ LÝ ẢNH (BẮT BUỘC CHO TẠO MỚI, TÙY CHỌN CHO CẬP NHẬT)
+    // =======================================================
+
+    // 1. Nếu là TẠO MỚI VÀ KHÔNG CÓ FILE -> Dùng ảnh mặc định
+    if (!category?._id && !thumbFile) {
       const response = await fetch(noPhoto);
       const blob = await response.blob();
       const file = new File([blob], "no-photo.jpg", { type: blob.type });
       fd.append("categoryThumb", file);
     }
+    // 2. Nếu CÓ FILE MỚI (Cả tạo và sửa đều gửi file mới này)
+    else if (thumbFile) {
+      fd.append("categoryThumb", thumbFile);
+    }
+    // 3. Nếu KHÔNG CÓ FILE và KHÔNG CÓ PREVIEW (Cập nhật và xóa ảnh)
+    else if (category?._id && !thumbPreview) {
+      // Đây là trường hợp người dùng xóa ảnh trong chế độ sửa (đã set thumbPreview="")
+      // Gửi chuỗi rỗng để server xóa ảnh (hoặc update URL thành rỗng)
+      fd.append("categoryThumb", "");
+    }
+    // 4. Nếu KHÔNG CÓ FILE và CÓ PREVIEW (Cập nhật và giữ nguyên ảnh cũ) -> KHÔNG APPEND GÌ
 
     dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
 
@@ -118,6 +137,24 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
     }
   };
 
+  const handleImageChange = (file) => {
+    if (thumbPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(thumbPreview);
+    }
+
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setThumbFile(file);
+      setThumbPreview(url);
+      setIsThumbCleared(false);
+    } else {
+      setThumbFile(null);
+      // Nếu đã từng có ảnh gốc (category?._id), việc xóa này sẽ gửi "" lên server
+      setThumbPreview("");
+      setIsThumbCleared(true);
+    }
+  };
+
   return (
     <form
       onClick={(e) => {
@@ -154,20 +191,7 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
           value={thumbFile}
           previews={thumbPreview}
           label="ảnh danh mục"
-          onChange={(file) => {
-            if (thumbPreview?.startsWith("blob:")) {
-              URL.revokeObjectURL(thumbPreview);
-            }
-
-            if (file) {
-              const url = URL.createObjectURL(file);
-              setThumbFile(file);
-              setThumbPreview(url);
-            } else {
-              setThumbFile(null);
-              setThumbPreview("");
-            }
-          }}
+          onChange={handleImageChange}
         />
       </div>
 
@@ -181,11 +205,7 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
             } else {
               // create: reset form + xóa ảnh
               reset({ categoryName: "" });
-              if (thumbPreview?.startsWith("blob:")) {
-                URL.revokeObjectURL(thumbPreview);
-              }
-              setThumbFile(null);
-              setThumbPreview("");
+              handleImageChange(null); // Reset ảnh
             }
           }}
           className="px-3 py-1.5 bg-gray-200 rounded-3xl hover:bg-gray-300 text-sm"

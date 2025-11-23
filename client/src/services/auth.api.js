@@ -28,6 +28,7 @@ export const apiGoogleLogin = (data) =>
     url: "auths/google-login",
     method: "post",
     data,
+    headers: { "Content-Type": "application/json" },
   });
 
 export const apiGetCurrent = () =>

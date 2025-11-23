@@ -107,8 +107,6 @@ export const OrderDetailShop = () => {
     text: "text-gray-600",
   };
 
-  console.log("Thông tin nhận được", order);
-
   const addr = order?.addressId;
   const addressUserName = addr?.addressUserName;
   const addressNumberPhone = addr?.addressNumberPhone;
@@ -186,6 +184,7 @@ export const OrderDetailShop = () => {
           {(order.items || []).map((it) => {
             const pv = it.productVariation || it.pvId;
             const product = pv?.productId;
+            const isOnSale = product?.productDiscountPercent > 0;
             const thumb = pv?.pvImages?.[0];
             const name = product?.productName || "Sản phẩm";
             const pvName = pv?.pvName || "Phân loại";
@@ -205,7 +204,15 @@ export const OrderDetailShop = () => {
                   alt=""
                 />
                 <div className="flex-1">
-                  <div className="font-medium">{name}</div>
+                  <div className="font-medium">
+                    {" "}
+                    {isOnSale && (
+                      <span className="mr-1 rounded-3xl border bg-red-500 text-white text-[8px] px-1 py-1 align-middle">
+                        Sale {product?.productDiscountPercent}%
+                      </span>
+                    )}
+                    {name}
+                  </div>
                   <div className="text-xs text-gray-500">
                     Phân loại: {pvName}
                   </div>

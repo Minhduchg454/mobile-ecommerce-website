@@ -35,3 +35,7 @@ export { BrandsManage } from "./product/brandsManage";
 export { ServicePlansManage } from "./shop/servicePlansManage";
 export { ShopManage } from "./shop/shopManage";
 export { DashBoardAdmin } from "./admin/dashboardAdmin";
+export { ProductApproval } from "./product/productApproval";
+export { Notification } from "./notification/notification";
+export { UserBalance } from "./user/userBalance";
+export { Chat } from "./chat/chat";

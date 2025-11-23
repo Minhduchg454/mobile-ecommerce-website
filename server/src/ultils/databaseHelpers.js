@@ -22,7 +22,6 @@ const deleteValuesByVariation = async (variationId) => {
   return response.deletedCount;
 };
 
-// Hàm API handler cho router (khác hoàn toàn)
 const deleteValuesByVariationHandler = asyncHandler(async (req, res) => {
   const { variationId } = req.params;
 

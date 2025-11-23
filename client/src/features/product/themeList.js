@@ -1,10 +1,7 @@
 // src/features/theme/ThemeList.jsx
 import React, { useEffect, useState } from "react";
 import { ThemeCard, HorizontalScroller } from "../../components";
-import {
-  apiGetThemesWithProducts,
-  apiGetThemes,
-} from "../../services/catalog.api";
+import { apiGetThemes } from "../../services/catalog.api";
 
 export const ThemeList = () => {
   const [themes, setThemes] = useState([]);
@@ -41,7 +38,7 @@ export const ThemeList = () => {
       ) : (
         <HorizontalScroller
           items={themes}
-          keyExtractor={(t) => t.themeId}
+          keyExtractor={(t) => t._id}
           renderItem={(t) => (
             <ThemeCard
               name={t.themeName}

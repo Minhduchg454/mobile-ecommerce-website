@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiGetProducts } from "../../services/catalog.api";
-import { ProductCard1, HorizontalScroller } from "../../components";
+import { ProductCard, HorizontalScroller } from "../../components";
 
 export const SaleHomePage = () => {
   const [products, setProducts] = useState([]);
@@ -48,7 +48,7 @@ export const SaleHomePage = () => {
           items={products}
           keyExtractor={(p) => p._id}
           renderItem={(p) => (
-            <ProductCard1
+            <ProductCard
               totalSold={p.productSoldCount}
               productMinOriginalPrice={p.productMinOriginalPrice}
               productMinPrice={p.productMinPrice}
@@ -62,7 +62,7 @@ export const SaleHomePage = () => {
               shopName={p.shopId?.shopName}
               shopSlug={p.shopId?.shopSlug}
               shopLogo={p.shopId?.shopLogo}
-              shopOfficial={p.shopId?.shopOfficial}
+              shopOfficial={p.shopId?.shopIsOfficial}
               productIsOnSale={p.productIsOnSale}
               productDiscountPercent={p.productDiscountPercent}
             />

@@ -5,11 +5,15 @@ const ServicePlan = require("./entitties/service-plan.model");
 const ShopSubscribe = require("./entitties/shop-subscribe.model");
 const CategoryShop = require("./entitties/category-shop.model");
 const slugify = require("slugify");
+const UserService = require("../user/user.service");
+const NotificationService = require("../notification/notification.service");
+const { getSystemOwnerId } = require("../../ultils/systemOwner");
+const mongoose = require("mongoose");
 
 //Shop
 // shop.service.js
 
-exports.createShop = async (body, files) => {
+exports.createShop = async (body, files, io) => {
   // 1. Validate
   const required = ["userId", "shopName"];
   const missing = required.filter((k) => !body[k]);
@@ -48,6 +52,23 @@ exports.createShop = async (body, files) => {
     ...body,
   });
 
+  const notiData = {
+    recipientId: userId,
+    recipientRole: "shop",
+    title: "Tạo cửa hàng thành công!",
+    message: `Cửa hàng "${shop.shopName}" đã được tạo. Bắt đầu kinh doanh ngay!`,
+    link: `/shop/${shop.shopSlug}`,
+    type: "SHOP_CREATED",
+    sourceId: shop._id,
+    sourceModel: "Shop",
+  };
+
+  try {
+    await NotificationService.createNotificationAndEmit(notiData, io);
+  } catch (err) {
+    console.error("[Thông báo] Lỗi khi gửi tạo shop:", err.message);
+  }
+
   return {
     success: true,
     message: "Tạo shop thành công",
@@ -75,6 +96,14 @@ exports.getShopByUser = async (userId) => {
     shop,
   };
 };
+function getStatusText(status) {
+  const map = {
+    approved: "Đã được duyệt",
+    blocked: "Đã bị khóa",
+    pending: "Đang chờ duyệt",
+  };
+  return map[status] || status;
+}
 
 exports.getShops = async (query) => {
   const {
@@ -85,6 +114,7 @@ exports.getShops = async (query) => {
     isMall, // Lọc shop mall
     sort = "-createdAt", // Thứ tự sắp xếp
     limit, // Giới hạn kết quả
+    includeSubscription,
   } = query;
 
   const filter = {};
@@ -145,6 +175,52 @@ exports.getShops = async (query) => {
     .limit(limit ? Number(limit) : 0)
     .lean();
 
+  if (shops.length === 0) {
+    return {
+      success: true,
+      message: "Lấy danh sách shop thành công",
+      shops: [],
+    };
+  }
+
+  const shopIds = shops.map((shop) => shop._id);
+
+  // === BƯỚC 1: ĐỒNG BỘ GÓI HẾT HẠN CỦA TẤT CẢ SHOPS TÌM ĐƯỢC ===
+  // Đảm bảo dữ liệu gói là chính xác nhất trước khi đọc
+  await syncExpiredActiveSubscriptions(shopIds);
+
+  // === BƯỚC 2: GẮN SUBSCRIPTION NẾU CÓ FLAG ===
+  if (includeSubscription === "true" || includeSubscription === true) {
+    // 1. Tìm tất cả các gói đăng ký active cho các shops này
+    // (Chỉ tìm ACTIVE vì những gói hết hạn đã được sync và chuyển sang EXPIRED)
+    const activeSubs = await ShopSubscribe.find({
+      shopId: { $in: shopIds },
+      subStatus: "active",
+    })
+      .populate(
+        "serviceId",
+        "serviceName servicePrice serviceBillingCycle serviceFeatures serviceDescription serviceColor"
+      )
+      .lean();
+
+    // 2. Map subs theo shopId để dễ tra cứu
+    const subsMap = activeSubs.reduce((acc, sub) => {
+      acc[sub.shopId] = sub;
+      return acc;
+    }, {});
+
+    // 3. Gắn subscription vào từng shop
+    shops.forEach((shop) => {
+      shop.activeSubscription = subsMap[shop._id] || null;
+
+      if (shop.activeSubscription) {
+        shop.currentService = shop.activeSubscription.serviceId || null;
+      } else {
+        shop.currentService = null;
+      }
+    });
+  }
+
   return {
     success: true,
     message: "Lấy danh sách shop thành công",
@@ -152,7 +228,7 @@ exports.getShops = async (query) => {
   };
 };
 
-exports.updateShop = async (userId, body, files) => {
+exports.updateShop = async (userId, body, files, io) => {
   if (!userId) {
     const err = new Error("Thiếu userId");
     err.status = 400;
@@ -177,7 +253,6 @@ exports.updateShop = async (userId, body, files) => {
     payload.shopBackground = files.shopBackground[0].path;
   } else {
     if (Object.prototype.hasOwnProperty.call(payload, "shopBackground")) {
-      // giữ nguyên giá trị FE gửi (có thể là "")
     }
   }
 
@@ -208,6 +283,26 @@ exports.updateShop = async (userId, body, files) => {
     throw err;
   }
 
+  if (payload.shopStatus) {
+    const notiData = {
+      recipientId: userId,
+      recipientRole: "shop",
+      title: `Cập nhật trạng thái cửa hàng`,
+      message: `Trạng thái cửa hàng đã được thay đổi thành: "${getStatusText(
+        payload.shopStatus
+      )}"`,
+      type: "SHOP_STATUS_UPDATE",
+      sourceId: updated._id,
+      sourceModel: "Shop",
+    };
+
+    try {
+      await NotificationService.createNotificationAndEmit(notiData, io);
+    } catch (err) {
+      console.error("[Lỗi] Gửi thông báo thất bại:", err.message);
+    }
+  }
+
   return {
     success: true,
     message: "Cập nhật shop thành công",
@@ -215,14 +310,13 @@ exports.updateShop = async (userId, body, files) => {
   };
 };
 
-exports.deleteShop = async (userId) => {
+exports.deleteShop = async (userId, io) => {
   if (!userId) {
     const err = new Error("Thiếu userId");
     err.status = 400;
     throw err;
   }
 
-  // Xoá mềm: đánh dấu isDeleted + deletedAt
   const deleted = await Shop.findByIdAndUpdate(
     userId,
     {
@@ -238,6 +332,45 @@ exports.deleteShop = async (userId) => {
     const err = new Error("Không tìm thấy shop để xoá");
     err.status = 404;
     throw err;
+  }
+
+  // XÓA VAI TRÒ "SHOP" CỦA NGƯỜI DÙNG
+  try {
+    const SHOP_ROLE_NAME = "shop";
+
+    const roleResult = await UserService.getRole({ roleName: SHOP_ROLE_NAME });
+    const shopRole = roleResult.role;
+
+    if (shopRole) {
+      if (UserService.removeUserRole) {
+        await UserService.removeUserRole({
+          userId: userId,
+          roleId: shopRole._id,
+        });
+      }
+    }
+  } catch (error) {
+    console.error(
+      `[Role Sync] Lỗi khi xóa vai trò 'shop' cho user ${userId}:`,
+      error.message
+    );
+  }
+
+  const notiData = {
+    recipientId: userId,
+    recipientRole: "shop",
+    title: "Cửa hàng đã bị xóa",
+    message: `Cửa hàng "${deleted.shopName}" của bạn đã xoá`,
+    link: `/shop/${deleted.shopSlug}/settings`,
+    type: "SHOP_DELETED",
+    sourceId: deleted._id,
+    sourceModel: "Shop",
+  };
+
+  try {
+    await NotificationService.createNotificationAndEmit(notiData, io);
+  } catch (err) {
+    console.error("[Thông báo] Lỗi khi gửi xóa shop:", err.message);
   }
 
   return {
@@ -432,7 +565,6 @@ exports.updateServicePlan = async (sid, body) => {
     serviceColor,
     serviceFeatures,
   } = body;
-  console.log("Duoc goi", body, sid);
 
   // lấy gói hiện tại để tính newName / newCycle
   const current = await ServicePlan.findOne({ _id: sid, isDeleted: false });
@@ -543,28 +675,74 @@ exports.deleteServicePlan = async (sid) => {
 
 //Shop subcrile
 exports.createSubscription = async (body) => {
-  const { shopId, serviceId, subExpirationDate, subAutoRenew, subPrice } = body;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!shopId || !serviceId || !subExpirationDate || !subPrice) {
-    const err = new Error("Thiếu thông tin đăng ký gói dịch vụ");
-    err.status = 400;
-    throw err;
+  try {
+    const { shopId, serviceId, subExpirationDate, subAutoRenew, subPrice } =
+      body;
+    const systemId = await getSystemOwnerId();
+
+    if (!shopId || !serviceId || !subExpirationDate || subPrice == null) {
+      const err = new Error("Thiếu thông tin đăng ký gói dịch vụ");
+      err.status = 400;
+      throw err;
+    }
+
+    const subscription = await ShopSubscribe.create(
+      [
+        {
+          shopId,
+          serviceId,
+          subExpirationDate: new Date(subExpirationDate),
+          subAutoRenew: subAutoRenew ?? false,
+          subPrice,
+          subStatus: "active",
+        },
+      ],
+      { session }
+    ).then((res) => res[0]);
+
+    await UserService.updateBalance(
+      systemId,
+      "admin",
+      subPrice,
+      {
+        tranType: "service_payment",
+        tranDescriptions: `Thu phí gói dịch vụ từ shop ${shopId}`,
+        tranRelatedId: subscription._id,
+        tranRelatedModel: "ShopSubscribe",
+      },
+      session
+    );
+
+    // 3. Tăng subscriber count (hàm cũ KHÔNG hỗ trợ session)
+
+    await exports.incrementSubscriberCount(serviceId, 1);
+
+    await session.commitTransaction();
+
+    return {
+      success: true,
+      message: "Đăng ký dịch vụ thành công",
+      subscription,
+    };
+  } catch (error) {
+    await session.abortTransaction();
+
+    if (subscription?._id) {
+      try {
+        await exports.incrementSubscriberCount(serviceId, -1);
+      } catch (e) {
+        console.error("Không thể rollback subscriber count:", e);
+        // Ghi log để admin xử lý thủ công sau (rất hiếm xảy ra)
+      }
+    }
+
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  const subscription = await ShopSubscribe.create({
-    shopId,
-    serviceId,
-    subExpirationDate,
-    subAutoRenew: subAutoRenew ?? false,
-    subPrice,
-    subStatus: "active",
-  });
-
-  return {
-    success: true,
-    message: "Đăng ký dịch vụ thành công",
-    subscription,
-  };
 };
 
 exports.getSubscriptionsByShop = async (shopId) => {
@@ -579,18 +757,196 @@ exports.getSubscriptionsByShop = async (shopId) => {
   };
 };
 
-// shop.service.js
-exports.getActiveSubscription = async (shopId) => {
-  const now = new Date();
-  const sub = await ShopSubscribe.findOne({
-    shopId,
-    subStatus: "active",
-    subExpirationDate: { $gte: now },
-  })
-    .sort({ subExpirationDate: -1 }) // gần nhất
-    .populate("serviceId", "serviceName servicePrice serviceBillingCycle");
+/**
+ */
+// === HÀM PHỤ TRỢ ===
+const syncExpiredActiveSubscriptions = async (shopIds) => {
+  if (!shopIds || shopIds.length === 0) return;
 
-  return { success: true, subscription: sub };
+  const now = new Date();
+
+  // 1. Tìm các gói active có thời hạn hết trong quá khứ
+  const subscriptions = await ShopSubscribe.find({
+    shopId: { $in: shopIds },
+    subStatus: "active",
+    subExpirationDate: { $lt: now }, // Chỉ cần tìm các gói đã quá hạn
+  }).select("_id"); // Chỉ cần ID để thực hiện bulkWrite
+
+  if (subscriptions.length === 0) return;
+
+  const toUpdateIds = subscriptions.map((sub) => sub._id);
+
+  // 2. Thực hiện cập nhật trạng thái trong DB
+  const bulkOps = toUpdateIds.map((id) => ({
+    updateOne: {
+      filter: { _id: id },
+      update: { $set: { subStatus: "expired" } },
+    },
+  }));
+
+  try {
+    await ShopSubscribe.bulkWrite(bulkOps, { ordered: false });
+  } catch (error) {
+    console.error(
+      "[Sync] Lỗi khi cập nhật trạng thái expired trong getShops:",
+      error
+    );
+  }
+};
+
+const syncExpiredSubscriptionsInList = async (
+  subscriptions,
+  now = new Date()
+) => {
+  if (!subscriptions || subscriptions.length === 0) return;
+
+  const toUpdate = subscriptions
+    .filter(
+      (sub) =>
+        sub._id && sub.subExpirationDate < now && sub.subStatus !== "expired"
+    )
+    .map((sub) => sub._id);
+
+  if (toUpdate.length === 0) return;
+
+  const bulkOps = toUpdate.map((id) => ({
+    updateOne: {
+      filter: { _id: id },
+      update: { $set: { subStatus: "expired" } },
+    },
+  }));
+
+  try {
+    await ShopSubscribe.bulkWrite(bulkOps, { ordered: false });
+  } catch (error) {
+    console.error("[Sync] Lỗi khi cập nhật trạng thái expired:", error);
+  }
+};
+
+// === HÀM CHÍNH ===
+exports.getSubscriptions = async (query = {}) => {
+  const { shopId, serviceId, subStatus, s, sort, page = 1, limit } = query;
+
+  // === 1. LỌC (TRỪ subStatus) ===
+  const filter = {};
+
+  if (shopId) {
+    filter.shopId = Array.isArray(shopId) ? { $in: shopId } : shopId;
+  }
+
+  if (serviceId) {
+    filter.serviceId = Array.isArray(serviceId)
+      ? { $in: serviceId }
+      : serviceId;
+  }
+
+  const now = new Date(); // DÙNG CHUNG
+
+  // === TÌM KIẾM SERVICE ===
+  if (s) {
+    const keyword = String(s).trim();
+    const regex = new RegExp(keyword, "i");
+    const matchedPlans = await ServicePlan.find({
+      $or: [{ serviceName: regex }, { serviceDescription: regex }],
+    }).select("_id");
+
+    const serviceIdsFromSearch = matchedPlans.map((p) => p._id);
+    if (!serviceIdsFromSearch.length) {
+      return {
+        success: true,
+        message: "Không tìm thấy kết quả.",
+        subscriptions: [],
+        meta: { total: 0, page: 1, limit: null, totalPages: 0 },
+      };
+    }
+
+    if (filter.serviceId) {
+      const existing = Array.isArray(filter.serviceId.$in)
+        ? filter.serviceId.$in
+        : [filter.serviceId];
+      const intersect = existing.filter((id) =>
+        serviceIdsFromSearch.some((sId) => String(sId) === String(id))
+      );
+      if (!intersect.length) {
+        return {
+          success: true,
+          message: "Không tìm thấy kết quả.",
+          subscriptions: [],
+          meta: { total: 0, page: 1, limit: null, totalPages: 0 },
+        };
+      }
+      filter.serviceId = { $in: intersect };
+    } else {
+      filter.serviceId = { $in: serviceIdsFromSearch };
+    }
+  }
+
+  // === SORT ===
+  let sortOption = { createdAt: -1 };
+  switch (sort) {
+    case "oldest":
+      sortOption = { createdAt: 1 };
+      break;
+    case "newest":
+      sortOption = { createdAt: -1 };
+      break;
+    case "exp_asc":
+      sortOption = { subExpirationDate: 1 };
+      break;
+    case "exp_desc":
+      sortOption = { subExpirationDate: -1 };
+      break;
+  }
+
+  // === PHÂN TRANG ===
+  const p = Math.max(1, parseInt(page, 10) || 1);
+  let lim = parseInt(limit, 10);
+  if (!limit || lim <= 0) lim = 0;
+  else lim = Math.max(1, lim);
+  const skip = lim === 0 ? 0 : (p - 1) * lim;
+
+  // === LẤY DANH SÁCH ===
+  let queryBuilder = ShopSubscribe.find(filter).sort(sortOption);
+  if (lim > 0) queryBuilder = queryBuilder.skip(skip).limit(lim);
+
+  let subs = await queryBuilder
+    .populate(
+      "serviceId",
+      "serviceName servicePrice serviceBillingCycle serviceFeatures serviceDescription serviceColor"
+    )
+    .populate("shopId", "shopName shopLogo shopOfficial");
+
+  // === 2. CẬP NHẬT EXPIRED ===
+  await syncExpiredSubscriptionsInList(subs, now); // TRUYỀN now
+
+  // Cập nhật memory
+  subs.forEach((sub) => {
+    if (sub.subExpirationDate < now && sub.subStatus !== "expired") {
+      sub.subStatus = "expired";
+    }
+  });
+
+  // === 3. LỌC subStatus (SAU KHI CẬP NHẬT) ===
+  let finalSubs = subs;
+  if (subStatus) {
+    finalSubs = subs.filter((sub) => sub.subStatus === subStatus);
+  }
+
+  // === META ===
+  const totalAfterStatusFilter = finalSubs.length;
+  const meta = {
+    total: totalAfterStatusFilter,
+    page: p,
+    limit: lim === 0 ? null : lim,
+    totalPages: lim === 0 ? 1 : Math.ceil(totalAfterStatusFilter / lim),
+  };
+
+  return {
+    success: true,
+    message: "Lấy danh sách đăng ký thành công",
+    subscriptions: finalSubs,
+    meta,
+  };
 };
 
 exports.cancelSubscription = async (subId) => {
@@ -600,11 +956,56 @@ exports.cancelSubscription = async (subId) => {
     { new: true }
   );
 
+  // Thêm kiểm tra
+  if (!updated) {
+    const err = new Error("Không tìm thấy đăng ký gói dịch vụ để hủy");
+    err.status = 404;
+    throw err;
+  }
+
+  // LẤY serviceId TỪ BẢN GHI VỪA CẬP NHẬT
+  const serviceIdToUpdate = updated.serviceId;
+
+  // Truyền serviceId chính xác vào hàm cập nhật số lượng
+  await exports.incrementSubscriberCount(serviceIdToUpdate, -1);
+
   return {
     success: true,
     message: "Hủy đăng ký thành công",
     subscription: updated,
   };
+};
+
+// servicePlan.service.js
+exports.incrementSubscriberCount = async (serviceId, amount = 1) => {
+  if (!serviceId) return;
+
+  try {
+    const plan = await ServicePlan.findById(serviceId).select(
+      "serviceSubscriberCount"
+    );
+    if (!plan) return;
+    const current = plan.serviceSubscriberCount || 0;
+    const newCount = current + amount;
+
+    if (newCount < 0) {
+      await ServicePlan.findByIdAndUpdate(serviceId, {
+        serviceSubscriberCount: 0,
+      });
+    } else {
+      await ServicePlan.findByIdAndUpdate(serviceId, {
+        $inc: { serviceSubscriberCount: amount },
+      });
+    }
+  } catch (error) {
+    if (
+      error.name === "ValidationError" &&
+      error.errors?.serviceSubscriberCount
+    ) {
+      return;
+    }
+    throw error;
+  }
 };
 
 //Category-Shop
@@ -692,7 +1093,6 @@ exports.getCategoryShops = async (query) => {
 
 // Cập nhật (csId từ params, shopId từ body)
 exports.updateCategoryShop = async (csId, shopId, body, file) => {
-  //console.log("Duoc goi cap nhat", body);
   if (!csId || !shopId) {
     const e = new Error("Thiếu csId hoặc shopId");
     e.status = 400;

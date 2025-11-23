@@ -13,10 +13,12 @@ import { Breadcrumb, CloseButton } from "../../components";
 import { useSelector } from "react-redux";
 import defaultAvatar from "assets/avatarDefault.png";
 import { CiBadgeDollar } from "react-icons/ci";
+import { FiBox } from "react-icons/fi";
 import {
   MdOutlineCategory,
   MdOutlineMenu,
   MdOutlineDashboard,
+  MdOutlineAccountBalanceWallet,
 } from "react-icons/md";
 import {
   HiOutlineUserCircle,
@@ -231,6 +233,11 @@ export const AdminLayout = () => {
       to: `/${path.ADMIN}/${adminId}/${path.A_DASHBOARD}`,
     },
     {
+      icon: <MdOutlineAccountBalanceWallet size={20} />,
+      label: "Tài chính",
+      to: `/${path.ADMIN}/${adminId}/${path.A_BALANCE}`,
+    },
+    {
       icon: <HiOutlineUserCircle size={20} />,
       label: "Quản lý tài khoản",
       children: [
@@ -257,6 +264,11 @@ export const AdminLayout = () => {
           to: `/${path.ADMIN}/${adminId}/${path.A_MANAGE_BLOCK_SHOPS}`,
         },
       ],
+    },
+    {
+      icon: <FiBox size={20} />,
+      label: "Phê duyệt sản phẩm",
+      to: `/${path.ADMIN}/${adminId}/${path.A_PRODUCT_APPROVAL}`,
     },
     {
       icon: <PiTicket size={20} />,

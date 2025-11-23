@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  useSearchParams,
-  useNavigate,
-  useParams,
-  useLocation,
-} from "react-router-dom";
+import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import {
   apiGetProductVariation,
   apiGetProductVariations,
@@ -14,6 +9,7 @@ import {
   apiCreateWishlist,
   apiDeleteWishlistByCondition,
 } from "../../services/shopping.api";
+import { apiGetPreviews } from "../../services/preview.api";
 import { apiGetShops } from "../../services/shop.api";
 import {
   Breadcrumb,
@@ -24,21 +20,24 @@ import {
 import { RecommentList } from "../../features";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
+import { apiStartConversation } from "../../services/chat.api";
 import { toast } from "react-toastify";
-import { formatMoney } from "../../ultils/helpers";
+import { formatMoney, renderStarFromNumber } from "../../ultils/helpers";
 import path from "../../ultils/path";
 import "react-image-gallery/styles/css/image-gallery.css";
 import clsx from "clsx";
-import { AiFillStar, AiOutlineStar } from "react-icons/ai";
-
+import { AiFillStar } from "react-icons/ai";
+import { calculateFinalPrice } from "../../ultils/helpers";
 import { MdAccessTimeFilled, MdShoppingCart } from "react-icons/md";
 import { FaBoxOpen } from "react-icons/fa";
+import { HiOutlineBuildingStorefront } from "react-icons/hi2";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { updateCartItem, fetchWishlist } from "../../store/user/asyncActions";
 import { showAlert } from "store/app/appSlice";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import { persistor } from "store/redux";
-import { duration } from "moment";
 import { BsFillSuitHeartFill, BsSuitHeart } from "react-icons/bs";
+import { openChatBox } from "../../store/chat/chatSlice";
 
 export const renderProductDescription = (blocks = []) => {
   if (!blocks?.length) {
@@ -171,14 +170,18 @@ export const DetailProductPage = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [brandId, setBrandId] = useState("");
   const { pvId } = useParams();
-  const scrollRef = useRef(null);
-  const { pathname, search } = useLocation();
+  const topRef = useRef(null);
   const [isWished, setIsWished] = useState(false);
   const isAdmin = Boolean(current?.roles?.includes("admin"));
 
-  const isLogin = isLoggedIn || false;
+  // THÊM STATE CHO PHÂN TRANG VÀ DATA ĐÁNH GIÁ ĐÃ PHÂN TRANG
+  const [allReviews, setAllReviews] = useState([]);
+  const [reviewPage, setReviewPage] = useState(1);
+  const reviewLimit = 1; // Có thể tùy chỉnh số lượng đánh giá trên mỗi trang
+  const [reviewTotalCount, setReviewTotalCount] = useState(0);
+  const [reviewSort, setReviewSort] = useState({});
 
-  //Lay thong tin bien the duoc truyen tu url và lay thong tin cua cac bien the cung productId
+  const isLogin = isLoggedIn || false;
   useEffect(() => {
     if (pvId) {
       apiGetProductVariation(pvId).then((res) => {
@@ -192,28 +195,73 @@ export const DetailProductPage = () => {
     }
   }, [pvId]);
 
-  //Lay thong tin product va cac bien the cua product
+  // Lay thong tin product va cac bien the cua product
   const fetchProductAndVariations = async (productId) => {
     try {
       const [resProduct, resVariations] = await Promise.all([
-        //Truy van qua params
         apiGetProduct(productId),
-        //truy van qua query ?productId
         apiGetProductVariations({ pId: productId }),
       ]);
+      let allVariations = [];
       if (resProduct.success) {
-        fetchShop(resProduct.product.shopId._id);
-        setProduct(resProduct.product);
-        setBrandId(resProduct.product.brandId._id);
+        fetchShop(resProduct?.product?.shopId?._id);
+        setProduct(resProduct?.product);
+        setBrandId(resProduct?.product?.brandId?._id);
       }
       if (resVariations.success) {
-        //console.log("Danh sach cac bien the", resVariations.productVariations);
-        setVariations(resVariations.productVariations);
+        allVariations = resVariations.productVariations;
+        setVariations(allVariations);
       }
     } catch (err) {
       console.error("Lỗi khi lấy sản phẩm và biến thể:", err);
     }
   };
+
+  // HÀM MỚI: Chỉ lấy đánh giá cho TẤT CẢ biến thể trong một lần gọi và có phân trang
+  const fetchAllReviews = async () => {
+    if (!product?._id || !variations.length) return;
+
+    // 1. Lấy mảng pvId từ tất cả biến thể
+    const allPvIds = variations.map((v) => v._id);
+
+    try {
+      // 2. Gọi API một lần duy nhất với mảng pvId và tham số phân trang
+      const res = await apiGetPreviews({
+        pvId: allPvIds,
+        isDeleted: false,
+        page: reviewPage,
+        limit: reviewLimit,
+        ...reviewSort,
+      });
+
+      if (res.success && res.previews) {
+        const reviewsWithPvName = res.previews.map((review) => {
+          // Tìm biến thể tương ứng để lấy tên pvName
+          const relatedVariant = variations.find((v) => v._id === review.pvId);
+          return {
+            ...review,
+            pvName: relatedVariant
+              ? relatedVariant.pvName
+              : "[Chưa xác minh] Không xác định",
+          };
+        });
+        setAllReviews(reviewsWithPvName);
+        setReviewTotalCount(res.totalCount);
+      } else {
+        setAllReviews([]);
+        setReviewTotalCount(0);
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy đánh giá:", err);
+    }
+  };
+
+  // TÁCH EFFECT để gọi fetchAllReviews khi variations hoặc reviewPage thay đổi
+  useEffect(() => {
+    if (product?._id && variations.length > 0) {
+      fetchAllReviews();
+    }
+  }, [product, variations, reviewPage, reviewSort]); // THÊM reviewSort
 
   const fetchShop = async (shopId) => {
     try {
@@ -231,6 +279,7 @@ export const DetailProductPage = () => {
     const currentParams = new URLSearchParams(searchParams.toString());
     currentParams.set("pvId", variantId);
     setSearchParams(currentParams);
+    setReviewPage(1);
   };
 
   const handleChangeQuantity = (type) => {
@@ -271,12 +320,6 @@ export const DetailProductPage = () => {
     return;
   };
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: 0, behavior: "smooth" }); // Cuộn div lên đầu
-    }
-  }, [pathname, search]);
-
   const handleBuyNow = () => {
     if (!isLogin) {
       return redirectToLogin();
@@ -292,8 +335,6 @@ export const DetailProductPage = () => {
         },
       ],
     };
-    // Lưu vào sessionStorage
-    //console.log("Gui thong tin den checkout", payload);
     sessionStorage.setItem("checkoutPayload", JSON.stringify(payload));
     navigate(`/${path.CHECKOUT}`);
   };
@@ -304,7 +345,10 @@ export const DetailProductPage = () => {
     const payload = {
       pvId: selectedVariantId,
       cartItemQuantity: quantity,
-      priceAtTime: currentProduct.pvPrice,
+      priceAtTime: calculateFinalPrice(
+        currentProduct?.pvPrice,
+        product?.productDiscountPercent
+      ),
       add: true,
       maxItemQuantity: currentProduct.pvStockQuantity,
     };
@@ -399,14 +443,70 @@ export const DetailProductPage = () => {
   const isInStock = currentProduct?.pvStockQuantity >= 1;
   const maxQuantity = quantity > currentProduct?.pvStockQuantity;
   const disableAction = !isInStock || maxQuantity || isAdmin;
+  const isSale =
+    product?.productIsOnSale && product?.productDiscountPercent > 0;
+
+  const finalPrice = calculateFinalPrice(
+    currentProduct?.pvPrice,
+    product?.productDiscountPercent || 0
+  );
 
   //css
   const textTitle = "text-sm md:text-lg";
+  useEffect(() => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ ehavior: "smooth", block: "start" });
+    }
+  }, [pvId, selectedVariantId]);
+
+  const handleStartConversation = async (shopId, userId) => {
+    if (!userId) {
+      redirectToLogin();
+      return;
+    }
+
+    try {
+      const senderId = userId;
+      const senderModel = "User";
+      const receiverId = shopId;
+      const receiverModel = "Shop";
+
+      const res = await apiStartConversation({
+        senderId,
+        senderModel,
+        receiverId,
+        receiverModel,
+      });
+      if (!res?.success) {
+        dispatch(
+          showAlert({
+            title: "Lỗi",
+            message: res?.message || "Vui lòng thử lại",
+            variant: "danger",
+            showCancelButton: false,
+            duration: 2500,
+          })
+        );
+        return;
+      }
+      const conversationId = res.conversation?._id;
+      dispatch(openChatBox(conversationId));
+    } catch (err) {
+      console.error("Lỗi khi tạo hội thoại:", err);
+      dispatch(
+        showAlert({
+          title: "Lỗi",
+          message: err || "Vui lòng thử lại",
+          variant: "danger",
+          showCancelButton: false,
+          duration: 2500,
+        })
+      );
+    }
+  };
+
   return (
-    <div
-      key={pathname + search}
-      className="w-full xl:w-main mx-auto px-2 pt-1 md:pt-2 animate-fadeIn"
-    >
+    <div className="w-full xl:w-main mx-auto px-2 pt-1 md:pt-2 animate-fadeIn">
       {/* Cụm điều khiển */}
       <div className="sticky top-[58px] flex flex-col justify-start items-start mb-4 z-10">
         <div className="md:px-2 py-1 px-1 rounded-2xl glass shadow-md border">
@@ -419,7 +519,11 @@ export const DetailProductPage = () => {
       </div>
 
       {/* Ảnh và mua sắm */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-[60%_40%]  mb-6">
+      <div
+        style={{ scrollMarginTop: "120px" }}
+        ref={topRef}
+        className="w-full grid grid-cols-1 lg:grid-cols-[60%_40%]  mb-6"
+      >
         {/* Bên trái */}
         <div className="w-full h-[400px] lg:h-[500px]">
           <ImageBrowser
@@ -436,13 +540,30 @@ export const DetailProductPage = () => {
           <div>
             {" "}
             <div className="mb-4 ">
-              <h2 className="text-lg md:text-xl mb-1 font-bold">
-                {product?.productName || "Không có tiêu đề"}
+              <h2 className="text-lg md:text-xl font-bold">
+                {isSale && (
+                  <span className="mr-1 rounded-3xl bg-red-500 text-white text-xs px-2 py-1 align-middle">
+                    Sale {product?.productDiscountPercent}%
+                  </span>
+                )}
+                <span className="align-middle">
+                  {product?.productName || "Không có tiêu đề"}
+                </span>
               </h2>
-              <div className="flex justify-start items-center gap-4">
+              {product?.brandId && (
+                <p>Thương hiệu: {product?.brandId?.brandName}</p>
+              )}
+
+              <div className="flex justify-start items-center gap-4 mt-1">
                 <p className="flex gap-1 items-center text-sm">
-                  <AiOutlineStar size={18} />
-                  {product?.productRateAvg}
+                  {currentProduct?.pvRateAvg !== undefined &&
+                  currentProduct?.pvRateAvg !== null
+                    ? Number(currentProduct.pvRateAvg).toFixed(1)
+                    : ""}
+                  {renderStarFromNumber(
+                    currentProduct?.pvRateAvg || 0,
+                    "black"
+                  )}
                 </p>
                 <p className="text-sm">
                   Kho: {currentProduct?.pvStockQuantity}
@@ -451,11 +572,18 @@ export const DetailProductPage = () => {
               </div>
             </div>
             {/* Giá */}
-            <p className="text-lg md:text-xl text-red-600 font-bold mb-5">
-              {currentProduct?.pvPrice
-                ? `${formatMoney(currentProduct.pvPrice)}đ`
-                : "Đang cập nhật"}
-            </p>
+            <div className="mb-5">
+              <span className="text-lg md:text-xl text-red-600 font-bold">
+                {currentProduct?.pvPrice
+                  ? `${formatMoney(finalPrice)}đ`
+                  : "Đang cập nhật"}
+              </span>
+              {currentProduct?.pvOriginalPrice && (
+                <span className="pl-2 text-gray-400 line-through text-xs md:text-sm">
+                  {formatMoney(currentProduct.pvOriginalPrice)} đ
+                </span>
+              )}
+            </div>
             {/* Chọn loại */}
             <div className="mb-4">
               <p className={`${textTitle} mb-2`}>
@@ -576,7 +704,7 @@ export const DetailProductPage = () => {
                 }}
                 src={shop.shopLogo}
                 alt={shop.shopName}
-                className="h-[40px] w-[40px] md:h-[60px] md:w-[60px] rounded-full object-cover border cursor-pointer border-gray-300"
+                className="h-[40px] w-[40px] md:h-[60px] md:w-[60px] rounded-full object-contain border cursor-pointer border-gray-300"
               />
             ) : (
               <div className="text-sm md:text-lg h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-semibold">
@@ -596,11 +724,19 @@ export const DetailProductPage = () => {
                 {shop?.shopName}
               </span>
             </div>
-            <div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleStartConversation(shop?._id, current?._id)}
+                className="text-description rounded-2xl px-2 py-1 border button-action flex gap-1"
+              >
+                <IoChatbubbleEllipsesOutline size={20} />
+                Chat ngay
+              </button>
               <button
                 onClick={() => navigate(`/${path.SHOP}/${shop?._id}`)}
-                className="text-description rounded-2xl px-2 py-1 border button-action"
+                className="text-description rounded-2xl px-2 py-1 border button-action flex gap-1"
               >
+                <HiOutlineBuildingStorefront size={20} />
                 Xem shop
               </button>
             </div>
@@ -638,14 +774,16 @@ export const DetailProductPage = () => {
       </div>
       {/* Thong tin san pham */}
       <div className="bg-white w-full flex flex-col justify-between mx-auto rounded-3xl p-2 md:p-4 mb-6 shadow-md">
-        <div className="mb-3">
-          <p className="w-full rounded-2xl border-none bg-button-bg/60 text-sm md:text-lg  py-0.5 px-3 mb-2">
-            Điểm nổi bật
-          </p>
-          <p className="text-description px-1 md:px-4">
-            {product?.productDescription}
-          </p>
-        </div>
+        {product?.productDescription && (
+          <div className="mb-3">
+            <p className="w-full rounded-2xl border-none bg-button-bg/60 text-sm md:text-lg  py-0.5 px-3 mb-2">
+              Điểm nổi bật
+            </p>
+            <p className="text-description px-1 md:px-4">
+              {product?.productDescription}
+            </p>
+          </div>
+        )}
 
         <div className="mb-3">
           <p className="w-full rounded-2xl border-none bg-button-bg/60 text-sm md:text-lg  py-0.5 px-3 mb-2">
@@ -657,20 +795,33 @@ export const DetailProductPage = () => {
       {/* Đánh giá sản phẩm */}
       <div className="mb-5">
         {product && (
-          <div className="mt-4 bg-[#FFF] rounded-3xl">
+          <div className="">
             <ProductInfomation
-              totalRatings={[]}
-              ratings={[]}
-              nameProduct={product.productName}
-              pid={currentProduct._id}
-              rerender={() => {}}
+              previews={allReviews}
+              productRateAvg={product?.productRateAvg}
+              productRateCount={product?.productRateCount}
+              reviewPage={reviewPage}
+              reviewLimit={reviewLimit}
+              reviewTotalCount={reviewTotalCount}
+              onPageChange={setReviewPage}
+              nameProduct={product?.productName}
+              reviewSort={reviewSort}
+              setReviewSort={setReviewSort}
             />
           </div>
         )}
       </div>
+      {/* Gợi ý */}
       <p className="text-title">Dành cho bạn</p>
       {brandId && product?._id && (
         <RecommentList brandId={brandId} excludeProductId={product._id} />
+      )}
+      {!brandId && product?._id && product?.categoryId?._id && (
+        <RecommentList
+          brandId={brandId}
+          categoryId={product?.categoryId?._id}
+          excludeProductId={product._id}
+        />
       )}
     </div>
   );

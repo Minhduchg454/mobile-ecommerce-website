@@ -1,8 +1,6 @@
 import React, { memo, useRef, useEffect, useState } from "react";
-import logo from "assets/logo.jpg";
 import { voteOptions } from "ultils/contants";
 import { AiFillStar } from "react-icons/ai";
-import { Button } from "components";
 import { useDispatch } from "react-redux";
 import { showModal } from "store/app/appSlice";
 import moment from "moment";

@@ -79,7 +79,7 @@ const FilterPanel = ({
                   key={c._id || c.categorySlug}
                   className={`${filterLi} ${
                     selectedCategoryIds.includes(c._id)
-                      ? "text-sidebar-t-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -93,30 +93,38 @@ const FilterPanel = ({
           </div>
         )}
 
-        {showCategoryShop && categoriesShop.length > 0 && (
+        {showCategoryShop && (
           <div>
-            <H1 icon={MdCategory}>Danh mục cửa hàng</H1>
-            <ul>
-              {categoriesShop.map((cs) => (
-                <li
-                  key={cs._id || cs.categorySlug}
-                  className={`${filterLi} ${
-                    selectedCategoryShopIds.includes(cs._id)
-                      ? "text-sidebar-t-select"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    toggle(
-                      cs._id,
-                      selectedCategoryShopIds,
-                      setSelectedCategoryShopIds
-                    )
-                  }
-                >
-                  {cs.csName}
+            <H1 icon={MdStorefront}>Danh mục cửa hàng</H1>
+            {categoriesShop.length > 0 ? (
+              <ul>
+                {categoriesShop.map((cs) => (
+                  <li
+                    key={cs._id || cs.categorySlug}
+                    className={`${filterLi} ${
+                      selectedCategoryShopIds.includes(cs._id)
+                        ? "text-sidebar-t-select font-bold"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      toggle(
+                        cs._id,
+                        selectedCategoryShopIds,
+                        setSelectedCategoryShopIds
+                      )
+                    }
+                  >
+                    {cs.csName}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul>
+                <li className={`${filterLi} font-bold text-gray-500`}>
+                  Tất cả
                 </li>
-              ))}
-            </ul>
+              </ul>
+            )}
           </div>
         )}
 
@@ -140,7 +148,7 @@ const FilterPanel = ({
                   key={b._id || b.brandSlug}
                   className={`${filterLi} ${
                     selectedBrandIds.includes(b._id)
-                      ? "text-sidebar-t-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -159,7 +167,7 @@ const FilterPanel = ({
             <H1 icon={MdLocalOffer}>Khuyến mãi, ưu đãi</H1>
             <label
               className={`${filterLi} ${
-                hasSale ? "text-sidebar-t-select " : ""
+                hasSale ? "text-sidebar-t-select font-bold" : ""
               }`}
             >
               <input
@@ -178,7 +186,7 @@ const FilterPanel = ({
             <H1 icon={RiVipCrown2Line}>Loại cửa hàng</H1>
             <label
               className={`${filterLi} ${
-                hasMall ? "text-sidebar-t-select" : ""
+                hasMall ? "text-sidebar-t-select font-bold" : ""
               }`}
             >
               <input
@@ -201,7 +209,7 @@ const FilterPanel = ({
                   key={s._id || s.shopSlug}
                   className={`${filterLi} ${
                     selectedShopIds.includes(s._id)
-                      ? "text-sidebar-t-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -224,7 +232,7 @@ const FilterPanel = ({
                   key={t._id || t.themeSlug}
                   className={`${filterLi} ${
                     selectedThemeIds.includes(t._id)
-                      ? "text-sidebar-t-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -241,7 +249,7 @@ const FilterPanel = ({
 
       <div className="sticky bottom-0 z-10 rounded-br-sm  rounded-bl-sm pb-4 bg-white/90 ">
         <button
-          className="w-full px-3 py-1 font-bold border shadow-md rounded-3xl bg-gray-action hover:text-text-ac hover:scale-103 transition"
+          className="w-full px-3 py-1 font-bold border shadow-md rounded-3xl bg-gray-action hover:text-red-600 hover:scale-103 transition"
           onClick={onClearAll}
         >
           Xóa tất cả
@@ -384,6 +392,7 @@ export const ListPage = ({
     showShop,
     showTheme,
   ]);
+  const topRef = useRef(null);
 
   useEffect(() => {
     if (!dataLoaded || hydrated) return;
@@ -533,7 +542,7 @@ export const ListPage = ({
     const q = {
       sortKey: sortKeyRaw || "createdAt",
       sortDir: sortDirRaw || "desc",
-      limit: 8,
+      limit: 15,
     };
 
     if (showSale && hasSale) q.hasSale = true;
@@ -622,8 +631,6 @@ export const ListPage = ({
     }
   };
 
-  console.log("Danh sach san pham", items);
-
   const clearAllFilter = () => {
     setSelectedCategoryIds([]);
     setSelectedCategoryShopIds([]);
@@ -638,7 +645,7 @@ export const ListPage = ({
 
   return (
     <div className="h-full m-2 md:m-4 grid grid-cols-12 gap-4">
-      <div className="relative h-full hidden md:block md:col-span-4 lg:col-span-3   overflow-y-auto scroll-hidden">
+      <div className="relative h-full hidden md:block md:col-span-4 lg:col-span-3  overflow-y-auto scroll-hidden">
         <FilterPanel
           categories={categories}
           categoriesShop={categoriesShop}
@@ -673,7 +680,8 @@ export const ListPage = ({
       {/* Bên phải kết quả */}
       <div
         className="col-span-12 md:col-span-8 lg:col-span-9 min-h-0 h-full overflow-y-auto scroll-hidden"
-        style={{ scrollbarGutter: "stable" }}
+        style={{ scrollbarGutter: "stable", scrollMarginTop: "120px" }}
+        ref={topRef}
       >
         <div className="sticky top-0 z-10 mb-4 flex justify-between items-center bg-white/10 backdrop-blur-sm">
           <div className="flex justify-start items-center gap-2 md:gap-3">
@@ -743,9 +751,15 @@ export const ListPage = ({
           )}
           {!loading && !err && (
             <>
-              <div className="flex flex-wrap justify-start items-start gap-3 md:gap-5 px-2 md:px-6 animate-fadeIn">
+              <div className="animate-fadeIn">
                 {items.length > 0 ? (
-                  items.map((item) => renderItem(item))
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 auto-rows-fr">
+                    {items.map((item, index) => (
+                      <div key={index} className="flex justify-center">
+                        {renderItem(item)}
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="w-full flex flex-col items-center justify-center p-6 h-[500px] bg-white rounded-3xl">
                     <img

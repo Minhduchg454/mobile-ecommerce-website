@@ -5,24 +5,38 @@ import {
   apiDeleteProduct,
 } from "../../services/catalog.api";
 import { showAlert } from "store/app/appSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
 import path from "ultils/path";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import noData from "../../assets/data-No.png";
 import React from "react";
-import { formatMoney } from "ultils/helpers";
-import { useSearchParams } from "react-router-dom";
+import {
+  formatMoney,
+  getServiceFeatureValue,
+  calculateFinalPrice,
+} from "ultils/helpers";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { STATUS_LABELS } from "../../ultils/contants";
 import moment from "moment";
+import { AiOutlineExclamationCircle } from "react-icons/ai";
 
 export const ProductManage = () => {
   const { current } = useSelector((s) => s.seller);
-  const isBlock = current?.shopStatus === "blocked";
+  const servicePlan = current?.activeSubscription; // Lấy gói đang hoạt động
+  const isShopBlocked = current?.shopStatus === "blocked";
+
+  const MAX_PRODUCTS = getServiceFeatureValue(servicePlan, "MAX_PRODUCTS", 0);
+
+  const isOperationDisabled =
+    isShopBlocked || !servicePlan || servicePlan.subStatus !== "active";
+
   const [shopProducts, setShopProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [count, setCount] = useState(0);
+
+  const isCreateProductDisabled = isOperationDisabled || count >= MAX_PRODUCTS;
+
+  const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -69,7 +83,7 @@ export const ProductManage = () => {
       setLoading(true);
       const resShopProducts = await apiGetShopProductsWithVariations({
         shopId,
-        ...query, // thêm toàn bộ query vào
+        ...query,
       });
 
       if (resShopProducts?.success) {
@@ -110,10 +124,9 @@ export const ProductManage = () => {
     }
   }, [current?._id, searchParams]);
 
-  const titleCls = "font-bold mb-1";
+  const titleCls = "font-bold mb-1 text-sm md:text-base";
   const buttonAction =
     "text-xs md:text-sm whitespace-nowrap border px-2 py-1 rounded-3xl flex items-center gap-1 text-black bg-button-bg hover:bg-button-hv";
-  const textRow = "text-sm";
 
   if (loading) {
     return <div className="text-center py-8">Đang tải dữ liệu...</div>;
@@ -121,21 +134,39 @@ export const ProductManage = () => {
 
   return (
     <div className="relative flex flex-col gap-4">
+      {count >= MAX_PRODUCTS && (
+        <div className="flex gap-2 justify-center items-center border border-orange-400 bg-orange-50 text-xs md:text-sm rounded-3xl px-3 py-2">
+          <AiOutlineExclamationCircle size={16} className="text-orange-500" />
+          <span className="font-medium">
+            Đã đạt giới hạn {MAX_PRODUCTS} sản phẩm theo gói hiện tại. Vui lòng
+            nâng cấp gói hoặc xóa bớt sản phẩm để tạo mới.
+          </span>
+        </div>
+      )}
       {/* Thanh tiêu đề / thêm mới */}
       <div className="bg-app-bg/60 backdrop-blur-sm rounded-3xl px-3 py-2 md:px-4 sticky top-[50px] z-10 flex justify-between items-center">
-        <h1 className={titleCls}>{count} sản phẩm</h1>
+        <h1 className={titleCls}>
+          {count} sản phẩm{" "}
+          {servicePlan && (
+            <span className="hidden md:inline-block text-sm font-normal text-gray-500">
+              (Giới hạn: {MAX_PRODUCTS})
+            </span>
+          )}
+        </h1>
 
         <div className="flex gap-2">
           <div className="relative">
             <button
               type="button"
               onClick={() => setIsShowStatus((v) => !v)}
-              className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl text-description flex items-center gap-1 text-sm bg-white"
+              className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl md:text-sm text-xs flex items-center gap-1  bg-white"
               aria-haspopup="listbox"
               aria-expanded={isShowStatus}
             >
               Trạng thái:{" "}
-              <span className="font-bold">{currentStatus.label}</span>
+              <span className="hidden md:block font-bold text-xs md:text-sm">
+                {currentStatus.label}
+              </span>
               {isShowStatus ? (
                 <MdKeyboardArrowUp size={18} className="ml-1" />
               ) : (
@@ -177,11 +208,14 @@ export const ProductManage = () => {
             <button
               type="button"
               onClick={() => setIsShowSort((v) => !v)}
-              className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl text-description flex items-center gap-1"
+              className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl md:text-sm text-xs flex items-center gap-1"
               aria-haspopup="listbox"
               aria-expanded={isShowSort}
             >
-              Sắp xếp: <span className="font-bold">{currentSort.label}</span>
+              Sắp xếp:{" "}
+              <span className="hidden md:block font-bold text-xs md:text-sm">
+                {currentSort.label}
+              </span>
               {isShowSort ? (
                 <MdKeyboardArrowUp size={18} className="ml-1" />
               ) : (
@@ -224,14 +258,24 @@ export const ProductManage = () => {
               </div>
             )}
           </div>
+          {/* NÚT THÊM SẢN PHẨM MỚI (ÁP DỤNG LOGIC KHÓA/GIỚI HẠN) */}
           <button
-            disabled={isBlock}
+            disabled={isCreateProductDisabled}
             onClick={handleCreateProduct}
-            className={`px-3 py-1 whitespace-nowrap rounded-3xl text-white shadow-md  ${
-              isBlock
+            className={`px-3 py-1 whitespace-nowrap md:text-sm text-xs rounded-3xl text-white shadow-md  ${
+              isCreateProductDisabled
                 ? "bg-gray-400 cursor-not-allowed opacity-50"
                 : "bg-button-bg-ac hover:bg-button-bg-hv cursor-pointer"
             }`}
+            title={
+              isShopBlocked
+                ? "Shop đang bị khóa"
+                : !servicePlan || servicePlan.subStatus !== "active"
+                ? "Shop chưa có gói dịch vụ hoặc gói đã hết hạn"
+                : count >= MAX_PRODUCTS
+                ? `Đã đạt giới hạn ${MAX_PRODUCTS} sản phẩm`
+                : "Thêm sản phẩm mới"
+            }
           >
             Thêm sản phẩm mới
           </button>
@@ -244,6 +288,7 @@ export const ProductManage = () => {
           {shopProducts.map((p) => {
             const rawVariations = p.variations || [];
             const statusInfo = STATUS_LABELS[p.productStatus];
+            const isOnSale = p?.productDiscountPercent > 0;
 
             // Nếu không có biến thể thì chế ra 1 biến thể "ảo"
             const displayVariations =
@@ -253,10 +298,10 @@ export const ProductManage = () => {
                     {
                       _id: p._id,
                       pvName: "Chưa có biến thể",
-                      pvOriginalPrice: p.productMinOriginalPrice,
-                      pvPrice: p.productMinPrice,
-                      pvStockQuantity: p.productStockQuantity,
-                      pvSoldCount: p.productSoldCount,
+                      pvOriginalPrice: 0,
+                      pvPrice: 0,
+                      pvStockQuantity: 0,
+                      pvSoldCount: 0,
                     },
                   ];
 
@@ -280,7 +325,7 @@ export const ProductManage = () => {
 
                   {/* Thông tin sản phẩm */}
                   <div className="flex-1 flex flex-col gap-1">
-                    <div className="text-base md:text-lg font-bold text-black leading-snug line-clamp-2">
+                    <div className="text-sm md:text-lg font-bold text-black leading-snug line-clamp-2">
                       {p.productName}{" "}
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
@@ -305,7 +350,7 @@ export const ProductManage = () => {
                       <span className="text-gray-600">Danh mục shop: </span>
                       {p.categoryShopId?.csName || "Không có"}
                     </div>
-                    {p.productDiscountPercent > 0 && (
+                    {isOnSale && (
                       <div className="text-xs text-gray-500">
                         <p>
                           Sale:{" "}
@@ -322,11 +367,15 @@ export const ProductManage = () => {
                     </div>
                   </div>
 
-                  {/* Nút thao tác */}
+                  {/* Nút thao tác (Sửa/Xóa) */}
                   <div className="flex flex-col items-start md:items-end gap-2">
                     <button
-                      disabled={isBlock}
-                      className={`${buttonAction}`}
+                      disabled={isOperationDisabled} // ÁP DỤNG LOGIC KHÓA/GÓI
+                      className={`${buttonAction} ${
+                        isOperationDisabled
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
                       onClick={() =>
                         navigate(
                           `/${path.SELLER}/${current._id}/${path.S_CREATE_PRODUCT}`,
@@ -335,14 +384,23 @@ export const ProductManage = () => {
                           }
                         )
                       }
+                      title={
+                        isOperationDisabled
+                          ? "Shop đang bị khóa hoặc gói dịch vụ không hợp lệ"
+                          : "Sửa"
+                      }
                     >
                       <AiOutlineEdit size={18} />
                       <span>Sửa</span>
                     </button>
 
                     <button
-                      disabled={isBlock}
-                      className={`${buttonAction}`}
+                      disabled={isOperationDisabled} // ÁP DỤNG LOGIC KHÓA/GÓI
+                      className={`${buttonAction} ${
+                        isOperationDisabled
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
                       onClick={() => {
                         const id = nextAlertId();
                         registerHandlers(id, {
@@ -377,14 +435,21 @@ export const ProductManage = () => {
                           })
                         );
                       }}
+                      title={
+                        isOperationDisabled
+                          ? "Shop đang bị khóa hoặc gói dịch vụ không hợp lệ"
+                          : "Xóa"
+                      }
                     >
                       <AiOutlineDelete size={18} />
                       <span>Xóa</span>
                     </button>
                   </div>
                 </div>
-                {/* Danh sách sản phẩm */}
-                <div>
+
+                {/* KẺ NGANG PHÂN CÁCH VÀ DANH SÁCH BIẾN THỂ */}
+                <div className="border-t md:border-none pt-2 md:pt-4 mt-2 md:mt-0">
+                  {/* Tiêu đề cột biến thể (Desktop) */}
                   <div className="hidden md:grid grid-cols-[1.2fr,0.8fr,0.8fr,0.6fr,0.6fr] text-xs md:text-sm font-semibold text-gray-700 bg-gray-50 border rounded-3xl px-3 py-2">
                     <div className="">Biến thể</div>
                     <div>Giá gốc</div>
@@ -395,64 +460,102 @@ export const ProductManage = () => {
 
                   {/* DANH SÁCH BIẾN THỂ */}
                   <div className="flex flex-col divide-y">
-                    {displayVariations.map((v) => (
-                      <div
-                        key={v._id}
-                        className="
-                        grid grid-cols-1 md:grid-cols-[1.2fr,0.8fr,0.8fr,0.6fr,0.6fr]
-                        gap-2 md:gap-3
+                    {displayVariations.map((v) => {
+                      const finalPrice = calculateFinalPrice(
+                        v?.pvPrice,
+                        p?.productDiscountPercent
+                      );
+                      const displayPrice = formatMoney(v?.pvPrice);
+                      const finalPriceFormatted = formatMoney(finalPrice);
+
+                      return (
+                        <div
+                          key={v._id}
+                          className="
+                        grid grid-cols-1 
+                        md:grid-cols-[1.2fr,0.8fr,0.8fr,0.6fr,0.6fr]
+                        gap-y-2 md:gap-3
                         px-0 md:px-3 py-3
                         text-sm
                       "
-                      >
-                        {/* cột: tên biến thể */}
-                        <div className="flex flex-col">
-                          <span className="font-medium text-black truncate max-w-[220px]">
-                            {v.pvName}
-                          </span>
-
-                          {/* Với mobile: show thêm giá bán / sale inline cho dễ đọc */}
-                          <div className="md:hidden text-x mt-1">
-                            <span className="font-semibold text-black">
-                              {formatMoney(v?.pvPrice)}đ
+                        >
+                          {/* cột 1: tên biến thể */}
+                          <div className="flex flex-col">
+                            <span className="font-medium text-black truncate max-w-[220px]">
+                              {v.pvName}
                             </span>
+
+                            {/* Mobile: Hiển thị giá bán */}
+                            <div className="md:hidden text-xs mt-1 flex flex-col">
+                              {/* Hiển thị giá cuối cùng (đỏ) và giá gốc bị gạch ngang (xám) */}
+                              {isOnSale && v.pvPrice > 0 ? (
+                                <>
+                                  <span className="font-bold text-red-600">
+                                    {finalPriceFormatted}đ
+                                  </span>
+                                  <span className="text-gray-500 line-through text-xs">
+                                    {displayPrice}đ
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="font-bold text-black">
+                                  {displayPrice}đ
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* cột 2: giá gốc */}
+                          <div className="hidden md:block text-gray-500">
+                            {v.pvOriginalPrice != null
+                              ? `${formatMoney(v.pvOriginalPrice)}đ`
+                              : "—"}
+                          </div>
+
+                          {/* cột 3: giá bán (Desktop) */}
+                          <div className="hidden md:flex flex-col font-medium">
+                            {/* Hiển thị giá cuối cùng (đỏ) và giá gốc bị gạch ngang (xám) */}
+                            {isOnSale && v.pvPrice > 0 ? (
+                              <>
+                                <span className="text-black">
+                                  {finalPriceFormatted}đ
+                                </span>
+                                <span className="text-gray-500 line-through text-xs">
+                                  {displayPrice}đ
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-black">
+                                {displayPrice}đ
+                              </span>
+                            )}
+                          </div>
+
+                          {/* cột 4: kho (Desktop) */}
+                          <div className="hidden md:block text-center">
+                            {v.pvStockQuantity ?? 0}
+                          </div>
+
+                          {/* cột 5: đã bán (Desktop) */}
+                          <div className="hidden md:block text-center">
+                            {v.pvSoldCount ?? 0}
+                          </div>
+
+                          {/* Mobile: Gộp thông tin phụ */}
+                          <div className="md:hidden flex flex-row flex-wrap text-xs text-gray-500 gap-x-4 gap-y-1">
+                            <span>Kho: {v.pvStockQuantity ?? 0}</span>
+                            <span>Đã bán: {v.pvSoldCount ?? 0}</span>
+                            {/* Mobile: Giá gốc (hiển thị pvOriginalPrice nếu nó lớn hơn giá bán/giá cuối cùng) */}
+                            {(v.pvOriginalPrice > v.pvPrice ||
+                              v.pvOriginalPrice > finalPrice) && (
+                              <span className="text-gray-400">
+                                Giá gốc: {formatMoney(v.pvOriginalPrice)}đ
+                              </span>
+                            )}
                           </div>
                         </div>
-
-                        {/* cột: giá gốc */}
-                        <div className="hidden md:block text-gray-500">
-                          {v.pvOriginalPrice != null
-                            ? `${formatMoney(v.pvOriginalPrice)}đ`
-                            : "—"}
-                        </div>
-
-                        {/* cột: giá bán */}
-                        <div className="hidden md:block font-medium">
-                          {formatMoney(v?.pvPrice)}đ
-                        </div>
-
-                        {/* cột: kho */}
-                        <div className="hidden md:block text-center">
-                          {v.pvStockQuantity ?? 0}
-                        </div>
-
-                        {/* cột: đã bán */}
-                        <div className="hidden md:block text-center">
-                          {v.pvSoldCount ?? 0}
-                        </div>
-
-                        {/* Với mobile, thêm kho / sold gộp phía dưới */}
-                        <div className="md:hidden flex flex-row flex-wrap text-[12px] text-gray-500 gap-x-4 gap-y-1">
-                          <span>Kho: {v.pvStockQuantity ?? 0}</span>
-                          <span>Đã bán: {v.pvSoldCount ?? 0}</span>
-                          {v.pvOriginalPrice != null && (
-                            <span className="line-through text-gray-400">
-                              {formatMoney(v.pvOriginalPrice)}đ
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

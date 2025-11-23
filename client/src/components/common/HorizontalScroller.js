@@ -70,16 +70,26 @@ export function HorizontalScroller({
                     scrollbar-thin  scroll-hidden py-2 md:py-4
                     ${contentClassName}`}
       >
-        {items.map((item, idx) => (
-          <div
-            key={keyExtractor ? keyExtractor(item, idx) : idx}
-            className={`flex-shrink-0 ${
-              isLeft ? "first:ml-2 first:md:ml-28" : ""
-            }`}
-          >
-            {renderItem(item, idx)}
-          </div>
-        ))}
+        {items.map((item, idx) => {
+          let itemKey;
+          if (keyExtractor) {
+            itemKey = keyExtractor(item, idx);
+          } else if (item && item._id) {
+            itemKey = item._id;
+          } else {
+            itemKey = idx;
+          }
+          return (
+            <div
+              key={itemKey}
+              className={`flex-shrink-0 ${
+                isLeft ? "first:ml-2 first:md:ml-28" : ""
+              }`}
+            >
+              {renderItem(item, idx)}
+            </div>
+          );
+        })}
       </div>
 
       {/* Arrows: ẩn hoàn toàn khi không overflow để tránh “đẩy cảm giác layout” */}

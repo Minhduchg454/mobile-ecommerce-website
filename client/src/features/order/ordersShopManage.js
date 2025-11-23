@@ -335,6 +335,7 @@ export const OrdersShopManage = ({ statusOrder }) => {
                   {(o.items || []).map((it) => {
                     const pv = it.productVariation || it.pvId;
                     const product = pv?.productId;
+                    const isOnSale = product?.productDiscountPercent > 0;
                     const thumb = pv?.pvImages?.[0];
                     const pvName = pv?.pvName || "Phân loại";
                     const productName = product?.productName || "Sản phẩm";
@@ -354,6 +355,11 @@ export const OrdersShopManage = ({ statusOrder }) => {
                         />
                         <div className="flex-1">
                           <div className="font-semibold text-gray-900 text-sm md:text-base">
+                            {isOnSale && (
+                              <span className="mr-1 rounded-3xl border bg-red-500 text-white text-[8px] px-1 py-1 align-middle">
+                                Sale {product?.productDiscountPercent}%
+                              </span>
+                            )}
                             {productName}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">

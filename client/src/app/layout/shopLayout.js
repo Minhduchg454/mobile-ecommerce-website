@@ -19,7 +19,9 @@ import {
   MdOutlineDashboard,
   MdOutlineLocationOn,
   MdOutlineMenu,
+  MdOutlineAccountBalanceWallet,
 } from "react-icons/md";
+
 import { HiOutlineBuildingStorefront } from "react-icons/hi2";
 import { FiChevronRight, FiChevronDown } from "react-icons/fi";
 import { PiTicket } from "react-icons/pi";
@@ -228,6 +230,11 @@ export const ShopLayout = () => {
       icon: <MdOutlineDashboard size={20} />,
       label: "Tổng quan",
       to: `/${path.SELLER}/${shopId}/${path.S_DASHBOARD}`,
+    },
+    {
+      icon: <MdOutlineAccountBalanceWallet size={20} />,
+      label: "Tài chính",
+      to: `/${path.SELLER}/${shopId}/${path.S_BALANCE}`,
     },
     {
       icon: <HiOutlineClipboardList size={20} />,

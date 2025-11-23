@@ -1,43 +1,35 @@
-import React, { useEffect } from "react";
-import Chatbot from "chatbot/Chatbot";
-
-import { useDispatch, useSelector } from "react-redux";
-import { ToastContainer, Bounce } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { Modal, GlobalGlassAlert } from "components";
+// App.js
+import React from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/routes";
+import "react-toastify/dist/ReactToastify.css";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { connectSocket, disconnectSocket } from "./ultils/socket";
+import { fetchMyConversations } from "./store/chat/asynsAction";
+import { useDispatch } from "react-redux";
 
 function App() {
-  const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-  const { isShowModal, modalChildren } = useSelector((state) => state.app);
+  const { current: user } = useSelector((s) => s.user);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (user?._id) {
+      connectSocket(user._id);
+      dispatch(fetchMyConversations());
+    }
 
+    return () => {
+      if (!user?._id) {
+        disconnectSocket();
+      }
+    };
+  }, [user?._id]);
+  const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
   return (
     <GoogleOAuthProvider clientId={clientId}>
-      <div className="font-jp bg-[#F5F5F7]">
-        {isShowModal && <Modal>{modalChildren}</Modal>}
-        <GlobalGlassAlert />
-        <RouterProvider router={router} />
-        <ToastContainer
-          position="top-center"
-          autoClose={2000}
-          hideProgressBar={true}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          transition={Bounce}
-          toastClassName={() =>
-            "flex items-center justify-between backdrop-blur-lg bg-white/70 text-black rounded-xl shadow-md p-2"
-          }
-        />
-        <Chatbot />
-      </div>
+      <RouterProvider router={router} />
     </GoogleOAuthProvider>
   );
 }
-
 export default App;

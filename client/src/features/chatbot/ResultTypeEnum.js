@@ -1,0 +1,9 @@
+export const ResultTypeEnum = Object.freeze({
+  DISPLAY: "DISPLAY",
+  TEXT: "TEXT",
+  JSON: "JSON",
+  ERROR: "Result.Error",
+  DISPLAY_PRODUCT: "DISPLAY_PRODUCT",
+  DISPLAY_ORDER_DETAIL: "DISPLAY_ORDER_DETAIL",
+  DISPLAY_REVENUE: "DISPLAY_REVENUE",
+});

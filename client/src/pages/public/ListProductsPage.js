@@ -1,4 +1,4 @@
-import { ProductCard1, Breadcrumb, ListPage } from "../../components";
+import { ProductCard, Breadcrumb, ListPage } from "../../components";
 import {
   apiGetProductCategories,
   apiGetProducts,
@@ -11,24 +11,20 @@ export const ListProductsPage = () => {
   return (
     <div className="h-[calc(100vh-82px)] animate-fadeIn">
       <ListPage
-        // fetchers
         fetchItems={apiGetProducts}
         fetchCategories={apiGetProductCategories}
         fetchBrands={apiGetBrands}
         fetchShops={apiGetShops}
         fetchThemes={apiGetThemes}
-        // hiển thị/bật tắt các filter
         showCategory
         showBrand
         showShop
         showTheme
         showSale
         showMall
-        // breadcrumb
         BreadcrumbComponent={Breadcrumb}
-        // render từng item
         renderItem={(p) => (
-          <ProductCard1
+          <ProductCard
             key={p._id}
             productName={p.productName}
             thumb={p.productThumb}
@@ -41,7 +37,7 @@ export const ListProductsPage = () => {
             shopName={p.shopId?.shopName}
             shopLogo={p.shopId?.shopLogo}
             shopId={p.shopId?._id}
-            shopOfficial={p.shopId?.shopOfficial}
+            shopOfficial={p.shopId?.shopIsOfficial}
             productMinOriginalPrice={p.productMinOriginalPrice}
             productMinPrice={p.productMinPrice}
             productDiscountPercent={p.productDiscountPercent}

@@ -1,8 +1,6 @@
 import path from "./path";
 import icons from "./icons";
 import {
-  MdLocalOffer,
-  MdLocationOn,
   MdVerifiedUser,
   MdLocalShipping,
   MdPayment,
@@ -12,79 +10,18 @@ import {
   MdSecurity,
   MdShoppingCartCheckout,
   MdStarRate,
-  MdCategory,
-  MdInventory,
-  MdOutlineLocalShipping,
-  MdGroups,
-  MdPendingActions,
+  MdOutlineCancel,
 } from "react-icons/md";
-import {
-  AiOutlineUser,
-  AiOutlineDashboard,
-  AiOutlineHistory,
-} from "react-icons/ai";
+
 import { IoMdCheckmark } from "react-icons/io";
 import { IoLockClosedOutline } from "react-icons/io5";
 import { LuFileClock } from "react-icons/lu";
 
-import { FaTrademark } from "react-icons/fa"; // cho thương hiệu
-
-export const navigation = [
-  {
-    id: 1,
-    value: "TRANG CHỦ",
-    path: `/${path.HOME}`,
-  },
-  {
-    id: 2,
-    value: "SẢN PHẨM",
-    path: `/${path.PRODUCTS}`,
-  },
-  {
-    id: 3,
-    value: "DỊCH VỤ",
-    path: `/${path.OUR_SERVICES}`,
-  },
-  {
-    id: 4,
-    value: "HỖ TRỢ",
-    path: `/${path.FAQ}`,
-  },
-];
-
-const { RiTruckFill, BsShieldShaded, BsReplyFill, FaTty, AiFillGift } = icons;
-export const productExtraInfomation = [
-  {
-    id: "1",
-    title: "Guarantee",
-    sub: "Quality Checked",
-    icon: <BsShieldShaded />,
-  },
-  {
-    id: "2",
-    title: "Free Shipping",
-    sub: "Free On All Products",
-    icon: <RiTruckFill />,
-  },
-  {
-    id: "3",
-    title: "Special Gift Cards",
-    sub: "Special Gift Cards",
-    icon: <AiFillGift />,
-  },
-  {
-    id: "4",
-    title: "Free Return",
-    sub: "Within 7 Days",
-    icon: <BsReplyFill />,
-  },
-  {
-    id: "5",
-    title: "Consultancy",
-    sub: "Lifetime 24/7/356",
-    icon: <FaTty />,
-  },
-];
+export const bankInfo = {
+  bankName: "Vietinbank",
+  accountName: "NGUYEN HUU DUC",
+  accountNumber: "103874068274",
+};
 
 export const sorts = [
   { value: "-minPrice", text: "Giá cao → thấp" },
@@ -115,95 +52,9 @@ export const voteOptions = [
     id: 4,
     text: "Tốt",
   },
-
   {
     id: 5,
     text: "Rất tốt",
-  },
-];
-export const adminSidebar = [
-  {
-    id: 1,
-    type: "SINGLE",
-    text: "Thống kê",
-    path: `/${path.ADMIN}/${path.DASHBOARD}`,
-    icon: <AiOutlineDashboard size={20} />,
-  },
-  {
-    id: 2,
-    type: "SINGLE",
-    text: "Quản lý đơn hàng",
-    path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
-    icon: <MdOutlineLocalShipping size={20} />,
-  },
-  {
-    id: 3,
-    type: "SINGLE",
-    text: "Quản lý tài khoản",
-    path: `/${path.ADMIN}/${path.MANAGE_USER}`,
-    icon: <MdGroups size={20} />,
-  },
-  {
-    id: 4,
-    type: "SINGLE",
-    text: "Quản lý thương hiệu",
-    icon: <FaTrademark size={20} />,
-    path: `/${path.ADMIN}/${path.MANAGE_BRANDS}`,
-  },
-  {
-    id: 5,
-    type: "SINGLE",
-    text: "Quản lý danh mục",
-    path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS_CATEGORIES}`,
-    icon: <MdCategory size={20} />,
-  },
-  {
-    id: 6,
-    type: "SINGLE",
-    text: "Quản lý khuyến mãi",
-    path: `/${path.ADMIN}/${path.MANAGE_COUPONS}`,
-    icon: <MdLocalOffer size={20} />,
-  },
-
-  {
-    id: 7,
-    type: "PARENT",
-    text: "Quản lý sản phẩm",
-    icon: <MdInventory size={20} />,
-    submenu: [
-      {
-        text: "Thêm sản phẩm",
-        path: `/${path.ADMIN}/${path.CREATE_PRODUCTS}`,
-      },
-      {
-        text: "Quản lý kho hàng",
-        path: `/${path.ADMIN}/${path.MANAGE_PRODUCTS}`,
-      },
-    ],
-  },
-];
-
-export const memberSidebar = [
-  {
-    id: 1,
-    type: "SINGLE",
-    text: "Hồ sơ",
-    path: `/${path.MEMBER}/${path.PERSONAL}`,
-    icon: <AiOutlineUser size={20} />,
-  },
-  {
-    id: 2,
-    type: "SINGLE",
-    text: "Địa chỉ",
-    path: `/${path.MEMBER}/${path.ADDRESS}`,
-    icon: <MdLocationOn size={20} />,
-  },
-  {
-    id: 3,
-    type: "SINGLE",
-    text: "Đơn hàng",
-    path: `/${path.MEMBER}/${path.HISTORY}`,
-    icon: <AiOutlineHistory size={20} />,
   },
 ];
 
@@ -431,6 +282,33 @@ export const STATUS_LABELS = {
     textColor: "text-red-700",
     note: "Cửa hàng đã bị tạm khóa. Không thể đăng hoặc chỉnh sửa sản phẩm, sản phẩm cũng không hiển thị cho khách hàng. Có thể hoàn tất các đơn đã giao",
     icon: IoLockClosedOutline,
+  },
+};
+
+export const BRAND_STATUS_LABELS = {
+  pending: {
+    label: "Đang chờ duyệt",
+    bgColor: "bg-yellow-100",
+    textColor: "text-yellow-700",
+    icon: LuFileClock,
+  },
+  approved: {
+    label: "Đã được duyệt",
+    bgColor: "bg-green-100",
+    textColor: "text-green-700",
+    icon: IoMdCheckmark,
+  },
+  blocked: {
+    label: "Đã bị khóa",
+    bgColor: "bg-gray-100",
+    textColor: "text-gray-700",
+    icon: IoLockClosedOutline,
+  },
+  rejected: {
+    label: "Không được duyệt",
+    bgColor: "bg-red-100",
+    textColor: "text-red-700",
+    icon: MdOutlineCancel,
   },
 };
 

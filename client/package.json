@@ -59,6 +59,7 @@
     "redux-persist": "^6.0.0",
     "simplemde": "^1.11.2",
     "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.22.2",
     "sweetalert2-react-content": "^5.1.0",
     "swiper": "^11.2.10",

@@ -30,6 +30,7 @@ export const sellerSlice = createSlice({
       .addCase(fetchSellerCurrent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Không thể tải dữ liệu shop";
+        state.current = null;
       });
   },
 });

@@ -18,6 +18,7 @@ export const HomePage = () => {
       <div className="animate-fadeIn ">
         <BannerHomePage />
       </div>
+
       <div className={`${card}`}>
         <p className={`${title}`}>Khám phá danh mục nổi bật</p>
         <CategoryList />

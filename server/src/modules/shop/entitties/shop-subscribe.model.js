@@ -20,7 +20,7 @@ const shopSubscribeSchema = new mongoose.Schema(
     },
     subAutoRenew: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     subPrice: {
       type: Number,

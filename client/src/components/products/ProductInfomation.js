@@ -1,166 +1,139 @@
 import React, { memo, useState, useMemo } from "react";
-import { Votebar, Button, VoteOption, Comment } from "..";
+import { Votebar, Comment, Pagination } from "../../components"; // Đảm bảo đã import Pagination
 import { renderStarFromNumber } from "../../ultils/helpers";
-import { apiRatings, apiCreatePreview } from "../../apis";
-import { useDispatch, useSelector } from "react-redux";
-import { showModal } from "../../store/app/appSlice";
-import Swal from "sweetalert2";
-import path from "../../ultils/path";
-import { useNavigate } from "react-router-dom";
 import defaultAvatar from "../../assets/avatarDefault.png";
+import clsx from "clsx"; // Cần import clsx
 
-const ProductInfomation = ({ ratings, nameProduct, pid, rerender }) => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { isLoggedIn, current } = useSelector((state) => state.user);
+const ProductInfomation = ({
+  previews,
+  productRateAvg,
+  productRateCount,
+  reviewPage,
+  reviewLimit,
+  reviewTotalCount,
+  onPageChange,
+  reviewSort,
+  setReviewSort,
+}) => {
+  // Tính toán tổng số trang
+  const totalPages = Math.ceil(reviewTotalCount / reviewLimit);
 
-  // Tính toán tổng số đánh giá & trung bình sao
-  const { totalRatings, averageRating } = useMemo(() => {
-    const total = ratings?.length || 0;
-    const totalStars = ratings?.reduce((sum, r) => sum + r.previewRating, 0);
-    const average = total > 0 ? (totalStars / total).toFixed(1) : 0;
-    return {
-      totalRatings: total,
-      averageRating: average,
-    };
-  }, [ratings]);
+  const sortOption = [
+    { label: "Tất cả", filterKey: "sort", filterValue: "newest" },
+    { label: "5 sao", filterKey: "previewRate", filterValue: 5 },
+    { label: "4 sao", filterKey: "previewRate", filterValue: 4 },
+    { label: "3 sao", filterKey: "previewRate", filterValue: 3 },
+    { label: "2 sao", filterKey: "previewRate", filterValue: 2 },
+    { label: "1 sao", filterKey: "previewRate", filterValue: 1 },
+    { label: "Có hình ảnh/video", filterKey: "isMedia", filterValue: true },
+  ];
 
-  //Gửi đánh giá
-  const handleSubmitVoteOption = async ({ comment, score }) => {
-    if (!comment || !pid || !score) {
-      alert("Vui lòng chọn sao và nhập nhận xét!");
-      return;
+  // HÀM XỬ LÝ KHI CHỌN LỌC/SẮP XẾP
+  const handleSort = (option) => {
+    let newSort = {};
+
+    if (option.filterKey === "sort" && option.filterValue === "newest") {
+      newSort = { sort: "newest" };
+    } else if (option.filterKey === "sort") {
+      newSort = { sort: option.filterValue };
+    } else {
+      newSort = {
+        sort: "newest",
+        [option.filterKey]: option.filterValue,
+      };
     }
-    await apiCreatePreview({
-      userId: current._id,
-      productVariationId: pid,
-      previewComment: comment,
-      previewRating: score,
-    });
-    dispatch(showModal({ isShowModal: false, modalChildren: null }));
-    rerender();
+
+    setReviewSort(newSort);
+    onPageChange(1);
   };
 
-  const canVoteOrUpdate = useMemo(() => {
-    //Nếu chưa đăng nhập
-    if (!current) return false;
-
-    //Danh sách không có ai, hoặc danh sách rỗng
-    if (!ratings || ratings.length === 0) return true;
-
-    //Neu khong tim thay nguoi dung trong danh sach => cho phep danh gia true
-    const myRating = ratings.find((r) => r.userId?._id === current._id);
-    if (!myRating) return true;
-
-    const votedAt = new Date(myRating.createdAt).getTime();
-    const now = Date.now();
-    const diffInDays = (now - votedAt) / (1000 * 60 * 60 * 24);
-
-    return diffInDays < 7;
-  }, [ratings, current]);
-
-  const daysLeftToEdit = useMemo(() => {
-    if (!current || !ratings || ratings.length === 0) return null;
-
-    const myRating = ratings.find((r) => r.userId?._id === current._id);
-    if (!myRating) return null;
-
-    const votedAt = new Date(myRating.createdAt).getTime();
-    const now = Date.now();
-    const diffInDays = (now - votedAt) / (1000 * 60 * 60 * 24);
-
-    if (diffInDays < 7) return Math.ceil(7 - diffInDays);
-    return null;
-  }, [ratings, current]);
-
-  //Mở form đánh giá nếu đã đăng nhập
-  const handleVoteNow = () => {
-    if (!isLoggedIn) {
-      Swal.fire({
-        text: "Vui lòng đăng nhập để đánh giá",
-        cancelButtonText: "Hủy",
-        confirmButtonText: "Đăng nhập",
-        title: "Oops!",
-        showCancelButton: true,
-      }).then((rs) => {
-        if (rs.isConfirmed) navigate(`/${path.LOGIN}`);
-      });
-      return;
+  // HÀM KIỂM TRA NÚT NÀO ĐANG ĐƯỢC CHỌN (để gắn class active)
+  const isOptionActive = (option) => {
+    if (option.filterKey === "sort" && option.filterValue === "newest") {
+      const hasFilter = reviewSort.previewRate || reviewSort.isMedia;
+      return !hasFilter;
     }
-
-    if (!canVoteOrUpdate) {
-      Swal.fire({
-        icon: "info",
-        title: "Hết hạn chỉnh sửa",
-        text: "Bạn đã đánh giá sản phẩm này hơn 7 ngày trước và không thể thay đổi.",
-      });
-      return;
-    }
-
-    dispatch(
-      showModal({
-        isShowModal: true,
-        modalChildren: (
-          <VoteOption
-            nameProduct={nameProduct}
-            handleSubmitVoteOption={handleSubmitVoteOption}
-          />
-        ),
-      })
-    );
+    return reviewSort[option.filterKey] === option.filterValue;
   };
-
   return (
     <div>
-      <div className="w-full flex rounded-2xl flex-col shadow-md">
-        <div className="flex border rounded-2xl">
-          <div className="flex-4 flex-col flex items-center justify-center ">
-            <span className="font-semibold text-3xl">{averageRating}/5</span>
+      <div className="w-full flex flex-col gap-2 bg-white rounded-3xl p-2 md:p-4 shadow-md">
+        {/* PHẦN VOTER BAR/THÔNG TIN TỔNG QUAN */}
+        <div className="p-2 md:p-4 flex items-center justify-around border rounded-3xl bg-white mb-2 md:mb-4">
+          <div className="flex-col flex items-center justify-center ">
+            <span className="font-semibold text-xl md:text-2xl">
+              {Number(productRateAvg).toFixed(1)} trên 5.0
+            </span>
             <span className="flex items-center gap-1">
-              {(renderStarFromNumber(averageRating) || []).map((el, index) => (
+              {(renderStarFromNumber(productRateAvg) || []).map((el, index) => (
                 <span key={index}>{el}</span>
               ))}
             </span>
-            <span className="text-sm">
-              {totalRatings} lượt đánh giá và nhận xét
+            <span className="text-xs md:text-sm">
+              {productRateCount} lượt đánh giá và nhận xét
             </span>
           </div>
 
-          <div className="flex-6 flex gap-2 flex-col p-4">
-            {[5, 4, 3, 2, 1].map((star) => {
-              const count = ratings?.filter(
-                (r) => r.previewRating === star
-              ).length;
-              return (
-                <Votebar
-                  key={star}
-                  number={star}
-                  ratingTotal={totalRatings}
-                  ratingCount={count}
-                />
-              );
-            })}
+          <div className="flex flex-wrap gap-2 justify-start items-center p-4">
+            {sortOption.map((it, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSort(it)}
+                className={clsx(
+                  "border rounded-3xl px-3 py-1 text-sm md:text-base cursor-pointer transition-colors",
+                  isOptionActive(it)
+                    ? "border-[2px] text-button-bg-ac border-button-bg-ac shadow-md"
+                    : ""
+                )}
+              >
+                {it.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
-          {Array.isArray(ratings) &&
-            ratings.map((el) => (
+        {/* PHẦN DANH SÁCH BÌNH LUẬN VÀ PHÂN TRANG */}
+        <div className="flex flex-col gap-2 px-2">
+          {/* 1. HIỂN THỊ DANH SÁCH BÌNH LUẬN (đã được phân trang) */}
+          {Array.isArray(previews) &&
+            previews.map((el) => (
               <Comment
                 key={el._id}
-                star={el.previewRating}
+                star={el.previewRate}
                 updatedAt={el.updatedAt}
+                images={el.previewImages}
+                videos={el.previewVideos}
                 comment={el.previewComment}
-                image={el.userId?._id.avatar || defaultAvatar}
+                variantName={el.pvName || ""}
+                avatar={el.customerId?._id?.userAvatar || defaultAvatar}
                 name={
-                  el.userId
-                    ? `${el.userId?._id.lastName || ""} ${
-                        el.userId?._id.firstName || ""
+                  el.customerId
+                    ? `${el.customerId?._id?.userLastName || ""} ${
+                        el.customerId?._id?.userFirstName || ""
                       }`
                     : "Tài khoản đã xoá"
                 }
               />
             ))}
+
+          {/* Hiển thị thông báo nếu không có đánh giá */}
+          {reviewTotalCount === 0 && (
+            <p className="text-gray-500 italic text-center py-4">
+              Chưa có đánh giá nào được tìm thấy.
+            </p>
+          )}
+
+          {/* 2. HIỂN THỊ PHÂN TRANG */}
+          {reviewTotalCount > 0 && totalPages > 1 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                currentPage={reviewPage}
+                totalCount={reviewTotalCount}
+                onPageChange={onPageChange}
+                limit={reviewLimit}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

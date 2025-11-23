@@ -1,4 +1,3 @@
-// ShopManage.jsx
 import { useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import {
@@ -7,11 +6,11 @@ import {
   apiDeleteShop,
 } from "../../services/shop.api";
 import { showAlert, showModal } from "store/app/appSlice";
-import { AiOutlineDelete } from "react-icons/ai";
+import { AiOutlineDelete, AiOutlineExclamationCircle } from "react-icons/ai";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import noData from "../../assets/data-No.png";
-import { Loading } from "../../components";
+import { Loading, ReasonModal } from "../../components";
 import { useSearchParams } from "react-router-dom";
 import moment from "moment";
 import { IoMdCheckmark } from "react-icons/io";
@@ -27,17 +26,17 @@ export const ShopManage = ({ status }) => {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const searchKeyword = searchParams.get("s") || "";
-  const statusParam = searchParams.get("status") || ""; // pending / approved / blocked / ""
+  const statusParam = searchParams.get("status") || "";
   const sortParam = searchParams.get("sort") || "newest";
 
   const [isShowSort, setIsShowSort] = useState(false);
   const [isShowStatus, setIsShowStatus] = useState(false);
 
-  // options sort
+  // options sort (Giữ nguyên)
   const sortOptions = [
-    { label: "Mới nhất", sort: "newest" }, // -createdAt
-    { label: "Cũ nhất", sort: "oldest" }, // createdAt
-    { label: "Bán nhiều nhất", sort: "sold_desc" }, // -shopSoldCount
+    { label: "Mới nhất", sort: "newest" },
+    { label: "Cũ nhất", sort: "oldest" },
+    { label: "Bán nhiều nhất", sort: "sold_desc" },
     { label: "Bán ít nhất", sort: "sold_asc" },
     { label: "Đánh giá cao nhất", sort: "rate_desc" },
     { label: "Đánh giá thấp nhất", sort: "product_asc" },
@@ -76,14 +75,17 @@ export const ShopManage = ({ status }) => {
 
       if (searchKeyword) query.s = searchKeyword;
       if (statusParam) query.status = statusParam;
+      if (status) {
+        query.status = status;
+      }
 
-      // mapping sort
+      // mapping sort (Giữ nguyên)
       switch (sortParam) {
         case "newest":
-          query.sort = "-createdAt";
+          query.sort = "-shopCreateAt";
           break;
         case "oldest":
-          query.sort = "createdAt";
+          query.sort = "shopCreateAt";
           break;
         case "sold_desc":
           query.sort = "-shopSoldCount";
@@ -109,6 +111,8 @@ export const ShopManage = ({ status }) => {
         default:
           query.sort = "-createdAt";
       }
+
+      query.includeSubscription = true;
 
       const res = await apiGetShops(query);
       if (res?.success) {
@@ -147,15 +151,21 @@ export const ShopManage = ({ status }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchKeyword, sortParam, statusParam]);
 
-  // ===== HANDLERS =====
-
-  const handleChangeStatus = async (shop, newStatus) => {
+  const executeStatusChange = async (shop, newStatus, reason = null) => {
     try {
-      dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
+      const updateData = { shopStatus: newStatus };
 
-      const res = await apiUpdateShop({ shopStatus: newStatus }, shop._id);
+      if (newStatus === "blocked" || newStatus === "pending") {
+        // BẮT BUỘC: phải gửi lý do khi khóa hoặc chuyển về pending
+        updateData.shopReviewReason = reason;
+      } else if (shop.shopReviewReason) {
+        // Nếu là phê duyệt/mở khóa, hãy xóa lý do cũ
+        updateData.shopReviewReason = null;
+      }
 
-      dispatch(showModal({ isShowModal: false }));
+      const res = await apiUpdateShop(updateData, shop._id);
+
+      dispatch(showModal({ isShowModal: false })); // Đóng modal loading/lý do
 
       if (res?.success) {
         dispatch(
@@ -178,18 +188,40 @@ export const ShopManage = ({ status }) => {
             duration: 1500,
           })
         );
+        throw new Error(res?.message || "Lỗi API");
       }
     } catch (err) {
-      console.error("handleChangeStatus error:", err);
-      dispatch(showModal({ isShowModal: false }));
+      throw err;
+    }
+  };
+
+  const handleChangeStatus = (shop, newStatus) => {
+    const shouldAskReason = newStatus === "blocked" || newStatus === "pending";
+    const actionLabel = newStatus === "blocked" ? "Khóa" : "Từ chối";
+
+    // Đóng modal cũ (nếu có) trước khi mở modal mới
+    dispatch(showModal({ isShowModal: false }));
+
+    if (shouldAskReason) {
       dispatch(
-        showAlert({
-          title: "Lỗi",
-          message: err?.message || "Không thể cập nhật trạng thái shop",
-          variant: "danger",
-          duration: 1500,
+        showModal({
+          isShowModal: true,
+          modalChildren: (
+            <ReasonModal
+              title={`${actionLabel} shop: ${shop.shopName}`}
+              itemName={shop.shopName}
+              actionName={actionLabel}
+              onCancel={() => dispatch(showModal({ isShowModal: false }))}
+              onSubmit={(reason) =>
+                executeStatusChange(shop, newStatus, reason)
+              }
+            />
+          ),
         })
       );
+    } else {
+      dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
+      executeStatusChange(shop, newStatus, null);
     }
   };
 
@@ -305,6 +337,17 @@ export const ShopManage = ({ status }) => {
               )}
             </p>
 
+            {shop.shopReviewReason && (
+              <div className="text-xs text-red-500 italic mt-1 flex items-center gap-1">
+                <AiOutlineExclamationCircle size={14} />
+                Lý do: {shop.shopReviewReason}
+              </div>
+            )}
+
+            <p className="text-xs md:text-sm ">
+              Gói: {shop?.activeSubscription?.serviceId?.serviceName}
+            </p>
+
             <p className="text-xs md:text-sm ">
               Đánh giá: {shop.shopRateAvg}/5 sao
             </p>
@@ -338,10 +381,10 @@ export const ShopManage = ({ status }) => {
               </button>
               <button
                 className={buttonAction}
-                onClick={() => handleDeleteShop(shop)}
+                onClick={() => handleChangeStatus(shop, "blocked")}
               >
-                <AiOutlineDelete size={16} />
-                Xoá
+                <IoLockClosedOutline size={16} />
+                Khoá
               </button>
             </>
           )}
@@ -384,6 +427,7 @@ export const ShopManage = ({ status }) => {
             </>
           )}
 
+          {/* Fallback cho trạng thái khác */}
           {!["pending", "approved", "blocked"].includes(status) && (
             <button
               className={buttonAction}
@@ -408,59 +452,61 @@ export const ShopManage = ({ status }) => {
 
   return (
     <div className="relative flex flex-col gap-4">
-      {/* HEADER */}
+      {/* HEADER (Giữ nguyên) */}
       <div className="bg-app-bg/60 backdrop-blur-sm rounded-3xl px-3 py-2 md:px-4 sticky top-[50px] z-10 flex justify-between items-center gap-2">
         <h1 className={titleCls}>{count} shop</h1>
 
         <div className="flex items-center justify-end gap-2 ">
           {/* FILTER STATUS - giống style sort */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsShowStatus((v) => !v)}
-              className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl text-description flex items-center gap-1 text-sm bg-white"
-              aria-haspopup="listbox"
-              aria-expanded={isShowStatus}
-            >
-              Trạng thái:{" "}
-              <span className="font-bold">{currentStatus.label}</span>
-              {isShowStatus ? (
-                <MdKeyboardArrowUp size={18} className="ml-1" />
-              ) : (
-                <MdKeyboardArrowDown size={18} className="ml-1" />
-              )}
-            </button>
-
-            {isShowStatus && (
-              <div
-                role="listbox"
-                className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-md border rounded-xl shadow-lg p-1 z-20"
+          {!status && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsShowStatus((v) => !v)}
+                className="glass shadow-md md:px-2 py-1 px-1 border rounded-2xl text-description flex items-center gap-1 text-sm bg-white"
+                aria-haspopup="listbox"
+                aria-expanded={isShowStatus}
               >
-                {statusOptions.map((opt) => {
-                  const isActive = opt.value === statusParam;
-                  return (
-                    <button
-                      key={opt.value || "all"}
-                      onClick={() => {
-                        setSearchParams((prev) => {
-                          const params = new URLSearchParams(prev);
-                          if (opt.value) params.set("status", opt.value);
-                          else params.delete("status");
-                          return params;
-                        });
-                        setIsShowStatus(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-action ${
-                        isActive ? "bg-white/20 font-bold" : ""
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                Trạng thái:{" "}
+                <span className="font-bold">{currentStatus.label}</span>
+                {isShowStatus ? (
+                  <MdKeyboardArrowUp size={18} className="ml-1" />
+                ) : (
+                  <MdKeyboardArrowDown size={18} className="ml-1" />
+                )}
+              </button>
+
+              {isShowStatus && (
+                <div
+                  role="listbox"
+                  className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-md border rounded-xl shadow-lg p-1 z-20"
+                >
+                  {statusOptions.map((opt) => {
+                    const isActive = opt.value === statusParam;
+                    return (
+                      <button
+                        key={opt.value || "all"}
+                        onClick={() => {
+                          setSearchParams((prev) => {
+                            const params = new URLSearchParams(prev);
+                            if (opt.value) params.set("status", opt.value);
+                            else params.delete("status");
+                            return params;
+                          });
+                          setIsShowStatus(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-action ${
+                          isActive ? "bg-white/20 font-bold" : ""
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* SORT */}
           <div className="relative">
@@ -471,7 +517,8 @@ export const ShopManage = ({ status }) => {
               aria-haspopup="listbox"
               aria-expanded={isShowSort}
             >
-              Sắp xếp: <span className="font-bold">{currentSort.label}</span>
+              Sắp xếp:{" "}
+              <span className="font-bold text-sm">{currentSort.label}</span>
               {isShowSort ? (
                 <MdKeyboardArrowUp size={18} className="ml-1" />
               ) : (

@@ -6,6 +6,8 @@ const OrderStatus = require("./entities/order-status.model");
 const paymentService = require("../payment/payment.service");
 const productService = require("../product/product.service");
 const couponService = require("../coupon/coupon.service");
+const previewService = require("../preview/preview.service");
+const notificationServer = require("../notification/notification.service");
 
 /**
  * Helper: đảm bảo có OrderStatus theo tên, trả về _id (KHÔNG dùng session)
@@ -116,28 +118,64 @@ async function buildCommonFilter(q = {}) {
   return filter;
 }
 
-//Gắn đơn hàng với chi tiết đơn hàng
+// Gắn đơn hàng với chi tiết đơn hàng
 async function attachOrderDetails(orders) {
   if (!orders.length) return orders;
-  const orderIds = orders.map((o) => o._id);
 
+  const orderIds = orders.map((o) => o._id);
+  const customerId = orders[0]?.addressId?.userId || null;
+
+  // 1. Lấy OrderDetail + populate pvId + productId
   const details = await OrderDetail.find({ orderId: { $in: orderIds } })
     .populate({
       path: "pvId",
       select: "pvName pvImages pvPrice productId pvOriginalPrice",
       populate: {
         path: "productId",
-        select: "productName",
+        select: "productName productDiscountPercent",
       },
     })
     .lean();
 
-  // group theo orderId
-  const map = new Map(); // key: orderId(string) -> details[]
+  // 2. Thu thập tất cả pvId duy nhất từ OrderDetail
+  const pvIds = [
+    ...new Set(details.map((d) => d.pvId?._id || d.pvId).filter(Boolean)),
+  ];
+
+  // 3. Gọi getPreview MỘT LẦN với mảng orderId + pvId + customerId
+  let previewsMap = new Map(); // key: `${orderId}|${pvId}` → preview
+  if (customerId && orderIds.length > 0 && pvIds.length > 0) {
+    const previewRes = await previewService.getPreview({
+      customerId: customerId,
+      orderId: orderIds.map(String),
+      pvId: pvIds.map(String),
+      isDeleted: false,
+      limit: 1000,
+      page: 1,
+    });
+
+    if (previewRes.success && previewRes.previews.length > 0) {
+      for (const p of previewRes.previews) {
+        const key = `${String(p.orderId)}|${String(p.pvId)}`;
+        previewsMap.set(key, p);
+      }
+    }
+  }
+
+  // 4. Group OrderDetail theo orderId
+  const orderDetailMap = new Map();
+
   for (const d of details) {
-    const k = String(d.orderId);
-    if (!map.has(k)) map.set(k, []);
-    map.get(k).push({
+    const orderIdStr = String(d.orderId);
+    if (!orderDetailMap.has(orderIdStr)) {
+      orderDetailMap.set(orderIdStr, []);
+    }
+
+    const pvIdStr = String(d.pvId?._id || d.pvId);
+    const previewKey = `${orderIdStr}|${pvIdStr}`;
+    const previewInfo = previewsMap.get(previewKey) || null;
+
+    const item = {
       _id: d._id,
       orderId: d.orderId,
       pvId: d.pvId?._id || d.pvId,
@@ -146,20 +184,65 @@ async function attachOrderDetails(orders) {
       odPrice: d.odPrice,
       createdAt: d.createdAt,
       updatedAt: d.updatedAt,
-    });
+    };
+
+    // Chỉ gắn nếu có đánh giá
+    if (previewInfo) {
+      item.previewInfo = previewInfo;
+    }
+
+    orderDetailMap.get(orderIdStr).push(item);
   }
 
-  return orders.map((o) => {
-    const items = map.get(String(o._id)) || [];
-    return { ...o, items };
-  });
+  // 5. Gắn items vào orders
+  return orders.map((o) => ({
+    ...o,
+    items: orderDetailMap.get(String(o._id)) || [],
+  }));
+}
+
+function getNotificationTemplate(status, orderId) {
+  const idStr = orderId.toString().slice(-6).toUpperCase();
+  const templates = {
+    Pending: {
+      title: "Đặt hàng thành công",
+      message: `Đơn hàng #${idStr} đang chờ người bán xác nhận. Vui lòng chờ nhé!`,
+    },
+    Confirmed: {
+      title: "Đơn hàng đã được xác nhận",
+      message: `Người bán đang chuẩn bị hàng cho đơn #${idStr}. Đơn hàng sẽ sớm được giao đi.`,
+    },
+    Shipping: {
+      title: "Đơn hàng đang được vận chuyển",
+      message: `Đơn hàng #${idStr} đã được giao cho đơn vị vận chuyển. Vui lòng chú ý điện thoại bạn nhé.`,
+    },
+    Delivered: {
+      title: "Đơn hàng đã đến nơi",
+      message: `Shipper đang đợi bạn nhận đơn hàng #${idStr}. Ra nhận hàng ngay nhé!`,
+    },
+    Succeeded: {
+      title: "Giao hàng thành công",
+      message: `Đơn hàng #${idStr} đã được giao thành công. Hãy đánh giá sản phẩm để nhận ưu đãi nhé!`,
+    },
+    Cancelled: {
+      title: "Đơn hàng đã bị hủy",
+      message: `Đơn hàng #${idStr} đã bị hủy. Nhấn vào đây để xem chi tiết.`,
+    },
+  };
+
+  return (
+    templates[status] || {
+      title: "Cập nhật đơn hàng",
+      message: `Đơn hàng #${idStr} vừa cập nhật trạng thái mới: ${status}`,
+    }
+  );
 }
 
 /**
  * Service: TẠO ĐƠN HÀNG THEO TỪNG SHOP (KHÔNG transaction)
  * - Nếu tạo OrderDetail thất bại cho 1 shop => xóa Order của shop đó và ném lỗi để dừng toàn bộ (hoặc tùy bạn đổi hành vi).
  */
-exports.createOrder = async (payload = {}) => {
+exports.createOrder = async (payload = {}, io) => {
   const {
     customerId,
     addressId,
@@ -197,6 +280,8 @@ exports.createOrder = async (payload = {}) => {
       case "QR":
         return "Completed";
       case "VNpay":
+        return "Completed";
+      case "BANK":
         return "Completed";
       default:
         return "Pending";
@@ -314,13 +399,13 @@ exports.createOrder = async (payload = {}) => {
 
     serverGrandTotal += orderTotalPrice;
 
-    // 3) Tạo Payment cho đơn này (KHÔNG rollback order nếu lỗi)
     try {
       const payRes = await paymentService.createPayment({
         orderId: orderDoc._id,
         paymentMethod,
         paymentAmount: orderTotalPrice,
         paymentStatus: defaultPaymentStatus,
+        shopId,
       });
 
       if (payRes?.success) {
@@ -339,6 +424,53 @@ exports.createOrder = async (payload = {}) => {
         orderId: orderDoc._id,
         error: e?.message || "Tạo payment thất bại (exception)",
       });
+    }
+
+    // --- [MỚI] 4) GỬI THÔNG BÁO (NOTIFICATION) ---
+    try {
+      const idStr = orderDoc._id.toString().slice(-6).toUpperCase();
+
+      // A. Gửi cho KHÁCH HÀNG (Báo đặt thành công)
+      const notiTemplate = getNotificationTemplate(orderStatus, orderDoc._id);
+
+      const customerNotiData = {
+        recipientId: customerId.toString(),
+        recipientRole: "customer",
+        title: notiTemplate.title,
+        message: notiTemplate.message,
+        type: "ORDER_CREATED",
+        sourceId: orderDoc._id,
+        sourceModel: "Order",
+        metaData: { status: orderStatus },
+      };
+
+      notificationServer
+        .createNotificationAndEmit(customerNotiData, io)
+        .catch((err) => {
+          console.error(`[Noti Error] Gửi khách thất bại: ${err.message}`);
+        });
+
+      // B. Gửi cho SHOP (Báo có đơn hàng mới)
+      const shopNotiData = {
+        recipientId: shopId.toString(),
+        recipientRole: "shop",
+        title: "Bạn có đơn hàng mới!",
+        message: `Đơn hàng #${idStr} với giá trị ${orderTotalPrice.toLocaleString(
+          "vi-VN"
+        )}đ đang chờ xác nhận. Chuẩn bị hàng ngay nhé!`,
+        type: "ORDER_CREATED",
+        sourceId: orderDoc._id,
+        sourceModel: "Order",
+        metaData: { status: "Pending" },
+      };
+
+      notificationServer
+        .createNotificationAndEmit(shopNotiData, io)
+        .catch((err) => {
+          console.error(`[Noti Error] Gửi shop thất bại: ${err.message}`);
+        });
+    } catch (notiErr) {
+      console.error("Lỗi logic gửi thông báo:", notiErr);
     }
 
     createdOrders.push({
@@ -449,7 +581,7 @@ exports.getOrderById = async (orderId) => {
       select: "pvName pvImages pvPrice productId pvOriginalPrice",
       populate: {
         path: "productId",
-        select: "productName",
+        select: "productName productDiscountPercent",
       },
     })
     .lean();
@@ -519,6 +651,7 @@ exports.getOrdersByUserId = async (params, q = {}) => {
   }
 
   const orders = await query;
+
   const ordersWithItems = await attachOrderDetails(
     orders.map((o) => o.toObject())
   );
@@ -526,7 +659,46 @@ exports.getOrdersByUserId = async (params, q = {}) => {
   return { success: true, data: ordersWithItems };
 };
 
-exports.updateOrders = async (orderId, patch = {}) => {
+exports.getOrderById = async (orderId) => {
+  // 1. Kiểm tra ID hợp lệ
+  if (!orderId || !mongoose.isValidObjectId(orderId)) {
+    return { success: false, message: "Mã đơn hàng không hợp lệ" };
+  }
+
+  try {
+    // 2. Thực hiện Query (Giữ nguyên cấu trúc populate như hàm getOrdersByUserId)
+    const order = await Order.findById(orderId)
+      .populate("orderStatusId", "orderStatusName")
+      .populate("shopId")
+      .populate("addressId")
+      .populate({
+        path: "customerId",
+        populate: {
+          path: "_id",
+          model: "User",
+          select: "userAvatar userFirstName userLastName",
+        },
+      });
+
+    if (!order) {
+      return { success: false, message: "Không tìm thấy đơn hàng" };
+    }
+
+    // 3. Gắn thêm chi tiết (Order Details / Items)
+    // Hàm attachOrderDetails thường nhận vào một mảng object thuần (JSON)
+    const ordersWithItems = await attachOrderDetails([order.toObject()]);
+
+    return { success: true, data: ordersWithItems };
+  } catch (error) {
+    console.error("getOrderById error:", error);
+    return {
+      success: false,
+      message: "Lỗi hệ thống khi lấy chi tiết đơn hàng",
+    };
+  }
+};
+
+exports.updateOrders = async (orderId, patch = {}, io) => {
   try {
     // 1. Validate orderId
     if (!mongoose.isValidObjectId(orderId)) {
@@ -572,7 +744,6 @@ exports.updateOrders = async (orderId, patch = {}) => {
         };
       }
 
-      // Lấy chi tiết để hoàn kho
       const details = await OrderDetail.find({ orderId: order._id })
         .select("pvId odQuantity")
         .lean();
@@ -582,7 +753,6 @@ exports.updateOrders = async (orderId, patch = {}) => {
       }
     }
 
-    // 5. Nếu patch có orderStatusName -> convert sang orderStatusId
     if (patch.orderStatusName) {
       const statusId = await ensureOrderStatusByName(patch.orderStatusName);
       patch.orderStatusId = statusId;
@@ -593,7 +763,7 @@ exports.updateOrders = async (orderId, patch = {}) => {
       order.orderStatusId = patch.orderStatusId;
     }
 
-    // 7. Các trường giá -> nếu thay đổi thì tính lại orderTotalPrice
+    // 7. Các trường giá
     const priceFields = [
       "orderSubtotalPrice",
       "orderShippingFee",
@@ -650,7 +820,71 @@ exports.updateOrders = async (orderId, patch = {}) => {
       };
     }
 
-    // 10. Trả về JSON rõ ràng
+    if (patch.orderStatusName) {
+      const newStatusName =
+        updatedOrder.orderStatusId?.orderStatusName || patch.orderStatusName;
+      if (newStatusName) {
+        const notiContent = getNotificationTemplate(
+          newStatusName,
+          updatedOrder._id
+        );
+
+        const notiData = {
+          recipientId: updatedOrder.customerId.toString(),
+          recipientRole: "customer",
+          title: notiContent.title,
+          message: notiContent.message,
+          type:
+            newStatusName !== "Cancelled"
+              ? "ORDER_STATUS_UPDATE"
+              : "ORDER_CANCELLED",
+          sourceId: updatedOrder._id,
+          sourceModel: "Order",
+          metaData: { status: newStatusName },
+        };
+
+        try {
+          await notificationServer.createNotificationAndEmit(notiData, io);
+        } catch (err) {
+          console.error(
+            "[Thông báo] Lỗi khi gửi cập nhật trạng thái đơn hàng:",
+            err.message
+          );
+        }
+      }
+    }
+
+    const targetStatusName =
+      patch.orderStatusName || updatedOrder.orderStatusId?.orderStatusName;
+    const shopId = updatedOrder.shopId ? updatedOrder.shopId.toString() : null;
+    const customerId = updatedOrder.customerId
+      ? updatedOrder.customerId.toString()
+      : null;
+
+    if (targetStatusName === "Succeeded") {
+      await paymentService.updatePayment(
+        { orderId },
+        {
+          paymentStatus: "Completed",
+          paymentDate: new Date(),
+          shopId,
+        }
+      );
+    }
+
+    if (isCancelling) {
+      //Xu ly  cho shopId
+      await paymentService.updatePayment(
+        { orderId },
+        {
+          paymentStatus: "Failed",
+          paymentDate: new Date(),
+          shopId,
+          customerId,
+        }
+      );
+    }
+
     return {
       success: true,
       message: isCancelling
@@ -798,8 +1032,6 @@ exports.getOrderDashboardStats = async (query = {}) => {
           },
           { $sort: { _id: 1 } },
         ],
-
-        // 3) Theo ngày (dùng để vẽ biểu đồ)
         // 3) Theo ngày (dùng để vẽ biểu đồ) — chỉ lấy đơn Succeeded
         daily: [
           {

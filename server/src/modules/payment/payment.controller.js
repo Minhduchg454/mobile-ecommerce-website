@@ -18,22 +18,31 @@ exports.createPaymentVNpay = async (req, res, next) => {
 exports.vnpayReturn = async (req, res) => {
   const { isValid, data } = await service.verifyVNPayChecksum(req.query);
 
+  const frontBase = process.env.CLIENT_URL;
+  const purpose = req.query.purpose || "";
+  const returnPath = req.query.returnPath || "/checkout/result";
+
+  const qs = new URLSearchParams();
+
   if (!isValid) {
-    return res.redirect(
-      `http://localhost:3001/checkout/result?status=fail&reason=invalid-signature`
-    );
+    qs.set("status", "fail");
+    qs.set("reason", "invalid-signature");
+    qs.set("paymentMethod", "VNPay");
+    if (purpose) qs.set("purpose", purpose);
+
+    return res.redirect(`${frontBase}${returnPath}?${qs.toString()}`);
   }
 
   const isSuccess = data.vnp_ResponseCode === "00";
-  if (isSuccess) {
-    return res.redirect(
-      `http://localhost:3001/checkout/result?status=success&orderId=${data.vnp_TxnRef}&amount=${data.vnp_Amount}&paymentMethod="VNPay"`
-    );
-  } else {
-    return res.redirect(
-      `http://localhost:3001/checkout/result?status=fail&code=${data.vnp_ResponseCode}&paymentMethod="VNPay"`
-    );
-  }
+
+  qs.set("status", isSuccess ? "success" : "fail");
+  qs.set("paymentMethod", "VNPay");
+  qs.set("orderId", data.vnp_TxnRef);
+  qs.set("amount", Number(data.vnp_Amount) / 100);
+  qs.set("code", data.vnp_ResponseCode);
+  if (purpose) qs.set("purpose", purpose);
+
+  return res.redirect(`${frontBase}${returnPath}?${qs.toString()}`);
 };
 
 // ===== IPN callback (VNPay gọi ngược lại để xác nhận server-to-server) =====

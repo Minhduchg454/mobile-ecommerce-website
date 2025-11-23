@@ -2,53 +2,63 @@ const mongoose = require("mongoose");
 
 const addressSchema = new mongoose.Schema({
   addressUserName: {
-    type: String, // tên người nhận
+    type: String,
     required: true,
     trim: true,
   },
   addressNumberPhone: {
-    type: String, // số điện thoại người nhận
+    type: String,
     required: true,
     trim: true,
   },
   addressStreet: {
-    type: String, // Địa chỉ đường/phố
+    type: String,
     required: true,
     trim: true,
   },
   addressWard: {
-    type: String, // Phường/xã
+    type: String,
     required: true,
     trim: true,
   },
   addressDistrict: {
-    type: String, // Quận/huyện
+    type: String,
     required: true,
     trim: true,
   },
-
   addressCity: {
-    type: String, // Thành phố/tỉnh
+    type: String,
     required: true,
     trim: true,
   },
-
   addressCountry: {
-    type: String, // Quốc gia
+    type: String,
     required: true,
     trim: true,
+  },
+  addressLatitude: {
+    type: Number,
+    required: true,
+    min: -90,
+    max: 90,
+  },
+  addressLongitude: {
+    type: Number,
+    required: true,
+    min: -180,
+    max: 180,
   },
   addressIsDefault: {
-    type: Boolean, // Đánh dấu địa chỉ mặc định
+    type: Boolean,
     default: false,
   },
   addressFor: {
     type: String,
-    enum: ["customer", "shop"],
+    enum: ["customer", "shop", "admin"],
     default: "customer",
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến _id của User
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },

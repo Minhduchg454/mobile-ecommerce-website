@@ -1,12 +1,22 @@
+// components/ScrollToTop.jsx
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 export const ScrollToTop = () => {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   useEffect(() => {
-    window.scrollTo(0, 0); // Cuộn lên đầu trang
-  }, [pathname]); // Mỗi khi pathname thay đổi (tức là route thay đổi)
+    // Cách 1: Ép cuộn ngay lập tức
+    window.scrollTo(0, 0);
+
+    // Cách 2: Dùng requestAnimationFrame để đảm bảo sau khi render
+    const scroll = () => {
+      window.scrollTo(0, 0);
+    };
+    const raf = requestAnimationFrame(scroll);
+
+    return () => cancelAnimationFrame(raf);
+  }, [pathname, search]);
 
   return null;
 };

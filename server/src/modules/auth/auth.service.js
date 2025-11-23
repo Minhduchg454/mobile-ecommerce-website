@@ -25,6 +25,7 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES || "7d";
 const slugify = require("slugify");
 
 //Dang ky tai khoan khach hang
+//Dang ky tai khoan khach hang
 exports.registerCustomer = async (body) => {
   const {
     firstName,
@@ -56,6 +57,7 @@ exports.registerCustomer = async (body) => {
     account: null,
     cart: null,
     userRole: null,
+    balance: null,
   };
 
   try {
@@ -105,7 +107,14 @@ exports.registerCustomer = async (body) => {
     });
     createdDocs.customer = customer;
 
-    // 8) Tạo Account (hash password)
+    // 8) TẠO BALANCE loại 'customer'
+    const balanceRes = await userService.createBalance(
+      userRes.user._id,
+      "customer"
+    );
+    createdDocs.balance = balanceRes.balance;
+
+    // 9) Tạo Account (hash password)
     const hash = await bcrypt.hash(password, 10);
     const account = await Account.create({
       accountName,
@@ -122,9 +131,10 @@ exports.registerCustomer = async (body) => {
     };
   } catch (err) {
     console.error("Đăng ký bị lỗi:", err);
-    // rollback thủ công (đảo ngược thứ tự)
     if (createdDocs.account)
       await Account.findByIdAndDelete(createdDocs.account._id);
+    if (createdDocs.balance)
+      await Balance.findByIdAndDelete(createdDocs.balance._id);
     if (createdDocs.customer)
       await Customer.findByIdAndDelete(createdDocs.customer._id);
     if (createdDocs.userRole)
@@ -169,6 +179,7 @@ exports.registerAdmin = async (body) => {
     userRole: null,
     account: null,
     admin: null,
+    balance: null,
   };
 
   try {
@@ -180,13 +191,29 @@ exports.registerAdmin = async (body) => {
       throw err;
     }
 
-    // 3) Lấy / tạo trạng thái 'active'
+    // 3) KIỂM TRA TÍNH DUY NHẤT CỦA ADMIN
+    const adminRole = await userService.getRole({ roleName: "admin" });
+    if (adminRole.role) {
+      const existingAdmin = await UserRole.findOne({
+        roleId: adminRole.role._id,
+      });
+
+      if (existingAdmin) {
+        const err = new Error(
+          "Chỉ được phép có MỘT tài khoản admin duy nhất trong hệ thống."
+        );
+        err.status = 403;
+        throw err;
+      }
+    }
+
+    // 4) Lấy / tạo trạng thái 'active'
     const activeStatus = await userService.getUserStatus({
       userStatusName: "active",
     });
     const activeStatusId = activeStatus.userStatus._id;
 
-    // 4) Tạo User (KHÔNG có cartId)
+    // 5) Tạo User (KHÔNG có cartId)
     const userRes = await userService.createUser({
       userFirstName: firstName,
       userLastName: lastName,
@@ -196,9 +223,6 @@ exports.registerAdmin = async (body) => {
       userStatusId: activeStatusId,
     });
     createdDocs.user = userRes.user;
-
-    // 5) Lấy / tạo role 'admin'
-    const adminRole = await userService.getRole({ roleName: "admin" });
 
     // 6) Gán vai trò admin cho user
     const userRole = await UserRole.create({
@@ -211,7 +235,14 @@ exports.registerAdmin = async (body) => {
     const admin = await Admin.create({ _id: userRes.user._id });
     createdDocs.admin = admin;
 
-    // 8) Tạo Account (hash password)
+    // 8) TẠO BALANCE loại 'admin'
+    const balanceRes = await userService.createBalance(
+      userRes.user._id,
+      "admin"
+    );
+    createdDocs.balance = balanceRes.balance;
+
+    // 9) Tạo Account (hash password)
     const hash = await bcrypt.hash(password, 10);
     const account = await Account.create({
       accountName,
@@ -234,6 +265,15 @@ exports.registerAdmin = async (body) => {
         await Account.findByIdAndDelete(createdDocs.account._id);
     } catch (_) {}
     try {
+      if (createdDocs.balance)
+        // <-- ROLLBACK BALANCE
+        await Balance.findByIdAndDelete(createdDocs.balance._id);
+    } catch (_) {}
+    try {
+      if (createdDocs.admin)
+        await Admin.findByIdAndDelete(createdDocs.admin._id);
+    } catch (_) {}
+    try {
       if (createdDocs.userRole)
         await UserRole.findByIdAndDelete(createdDocs.userRole._id);
     } catch (_) {}
@@ -248,22 +288,24 @@ exports.registerAdmin = async (body) => {
 //Dang ky tai khoan shop
 
 exports.registerShop = async (body, files) => {
-  const { userId, shopName, shopDescription, shopIsOffical } = body;
+  const { userId, shopName } = body;
 
-  if (shopIsOffical) {
-    body.shopIsOffical = true;
-  }
-
+  // 1. Validate
   if (!userId || !shopName) {
     const err = new Error("Thiếu userId hoặc shopName");
     err.status = 400;
     throw err;
   }
 
-  const createdDocs = { shop: null, userRole: null };
+  // Theo dõi để rollback nếu tạo shop thành công nhưng tạo balance/role thất bại
+  const createdDocs = {
+    shop: null,
+    userRole: null,
+    balance: null,
+  };
 
   try {
-    // 1️Kiểm tra user tồn tại
+    // 2. Kiểm tra user tồn tại
     const userRes = await userService.getCurrent({ id: userId });
     if (!userRes.user) {
       const err = new Error("Người dùng không tồn tại");
@@ -271,22 +313,22 @@ exports.registerShop = async (body, files) => {
       throw err;
     }
 
-    // 2️⃣ Kiểm tra user đã có shop chưa
-    const existedShop = await Shop.findById(userId);
-    if (existedShop) {
-      const err = new Error("Người dùng đã có shop");
+    // 3. TÌM SHOP THEO userId (BẤT KỂ ĐÃ XÓA MỀM HAY CHƯA)
+    const existingShop = await Shop.findOne({ _id: userId });
+
+    if (existingShop) {
+      const err = new Error(
+        "Người dùng đã đăng ký shop trước đó. Không thể tạo lại."
+      );
       err.status = 409;
       throw err;
     }
 
-    // tạo slug từ tên shop
-    const shopSlug = slugify(shopName, {
-      lower: true, // chuyển về chữ thường
-    });
-
-    // Kiểm tra trùng tên hoặc slug
+    // 4. TẠO MỚI: KIỂM TRA TRÙNG TÊN/SLUG
+    const shopSlug = slugify(shopName.trim(), { lower: true });
     const duplicate = await Shop.findOne({
       $or: [{ shopName: shopName.trim() }, { shopSlug }],
+      isDeleted: { $ne: true },
     });
 
     if (duplicate) {
@@ -295,40 +337,48 @@ exports.registerShop = async (body, files) => {
       throw err;
     }
 
-    // 5️⃣ Đảm bảo role "shop" tồn tại
-    const shopRole = await userService.getRole({ roleName: "shop" });
+    // 5. Tạo shop mới
+    const shopRes = await shopService.createShop(body, files);
+    createdDocs.shop = shopRes.shop;
+    // 6. TẠO BALANCE
+    try {
+      const balanceRes = await userService.createBalance(userId, "shop");
+      createdDocs.balance = balanceRes.balance;
+    } catch (balanceErr) {
+      throw balanceErr;
+    }
 
-    // 6️⃣ Nếu user chưa có role "shop" thì gán
+    // 7. Gán role "shop" nếu chưa có
+    const shopRole = await userService.getRole({ roleName: "shop" });
     const existedUserRole = await UserRole.findOne({
       userId,
       roleId: shopRole.role._id,
     });
-    if (!existedUserRole) {
-      const ur = await UserRole.create({ userId, roleId: shopRole.role._id });
-      createdDocs.userRole = ur;
-    }
 
-    // 7️⃣ Tạo shop
-    const shopRes = await shopService.createShop(body, files);
-    createdDocs.shop = shopRes.shop;
+    if (!existedUserRole) {
+      const newUserRole = await UserRole.create({
+        userId,
+        roleId: shopRole.role._id,
+      });
+      createdDocs.userRole = newUserRole;
+    }
 
     return {
       success: true,
       message: "Đăng ký shop thành công",
-      shop: createdDocs.shop,
+      shop: shopRes.shop,
     };
   } catch (err) {
     console.error("Đăng ký shop bị lỗi:", err);
-
-    // rollback
     try {
       if (createdDocs.shop) await Shop.findByIdAndDelete(createdDocs.shop._id);
-    } catch (_) {}
-    try {
+      if (createdDocs.balance)
+        await Balance.findByIdAndDelete(createdDocs.balance._id); // <-- ROLLBACK BALANCE
       if (createdDocs.userRole)
         await UserRole.findByIdAndDelete(createdDocs.userRole._id);
-    } catch (_) {}
-
+    } catch (rollbackErr) {
+      console.error("Lỗi khi rollback shop:", rollbackErr);
+    }
     throw err;
   }
 };
@@ -447,6 +497,7 @@ exports.login = async (body) => {
   };
 };
 
+//-------Google Login---------------
 exports.googleLogin = async (body) => {
   const { token } = body;
   if (!token) {
@@ -464,6 +515,7 @@ exports.googleLogin = async (body) => {
     userRole: null,
     user: null,
     cart: null,
+    balance: null, // <-- THÊM BALANCE VÀO ĐÂY
   };
 
   try {
@@ -491,21 +543,24 @@ exports.googleLogin = async (body) => {
     );
 
     if (!user) {
-      // 3) Tạo mới full flow như registerCustomer (accountType = 'google')
+      // 3) TH: TẠO MỚI (Flow tương tự registerCustomer)
+
+      // Lấy tên
+      const parts = name.split(" ").filter(Boolean);
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || "";
+
+      // 3.1) Lấy/ tạo status 'active'
       const activeStatus = await userService.getUserStatus({
         userStatusName: "active",
       });
       const activeStatusId = activeStatus.userStatus._id;
 
-      const parts = name.split(" ").filter(Boolean);
-      const firstName = parts[0] || "";
-      const lastName = parts.slice(1).join(" ") || "";
-
-      // tạo cart
+      // 3.2) Tạo giỏ hàng
       const cartRes = await cartService.createCart();
       createdDocs.cart = cartRes.cart;
 
-      // tạo user
+      // 3.3) Tạo User
       const userRes = await userService.createUser({
         userFirstName: firstName,
         userLastName: lastName,
@@ -514,24 +569,33 @@ exports.googleLogin = async (body) => {
         userStatusId: activeStatusId,
       });
       createdDocs.user = userRes.user;
-      user = userRes.user;
+      user = userRes.user; // Gán user mới để sử dụng ở bước 4
 
-      // gán role 'customer'
+      // 3.4) Lấy / tạo role 'customer'
       const customerRole = await userService.getRole({ roleName: "customer" });
+
+      // 3.5) Gán vai trò cho user
       const ur = await UserRole.create({
         roleId: customerRole.role._id,
         userId: user._id,
       });
       createdDocs.userRole = ur;
 
-      // tạo customer + gắn cart
+      // 3.6) Tạo Customer profile (1–1)
       const customer = await Customer.create({
         _id: user._id,
         cartId: cartRes.cart._id,
       });
       createdDocs.customer = customer;
 
-      // tạo Account Google (không cần password)
+      // 3.7) TẠO BALANCE loại 'customer' <-- BƯỚC MỚI
+      const balanceRes = await userService.createBalance(
+        user._id,
+        "customer" // Mặc định là customer
+      );
+      createdDocs.balance = balanceRes.balance;
+
+      // 3.8) Tạo Account Google (không cần password)
       const acc = await Account.create({
         accountName: email,
         accountType: "google",
@@ -540,7 +604,8 @@ exports.googleLogin = async (body) => {
       });
       createdDocs.account = acc;
     } else {
-      // (Tuỳ chọn) đảm bảo có Account 'google' cho user này
+      // TH: ĐÃ TỒN TẠI
+      // (Tuỳ chọn) đảm bảo có Account 'google' cho user này (nếu user đăng ký bằng pass trước đó)
       const existedAcc = await Account.findOne({
         userId: user._id,
         accountType: "google",
@@ -567,8 +632,11 @@ exports.googleLogin = async (body) => {
     });
 
     // 6) Chuẩn hoá user trả về
-    const userObj = user.toObject ? user.toObject() : user;
-    userObj.roles = roles;
+    // Tận dụng userService.getCurrent để lấy user object đầy đủ
+    const current = await userService.getCurrent({ id: user._id });
+    const userObj = current.user.toObject
+      ? current.user.toObject()
+      : { ...current.user };
 
     return {
       success: true,
@@ -577,10 +645,15 @@ exports.googleLogin = async (body) => {
       user: userObj,
     };
   } catch (error) {
-    // rollback nếu có tạo mới ở giữa chừng
+    // rollback nếu có tạo mới ở giữa chừng (đảo ngược thứ tự)
     try {
       if (createdDocs.account)
         await Account.findByIdAndDelete(createdDocs.account._id);
+    } catch (_) {}
+    try {
+      if (createdDocs.balance)
+        // <-- ROLLBACK BALANCE
+        await Balance.findByIdAndDelete(createdDocs.balance._id);
     } catch (_) {}
     try {
       if (createdDocs.customer)
@@ -599,6 +672,8 @@ exports.googleLogin = async (body) => {
     } catch (_) {}
 
     console.error("Google login error:", error);
+    if (!error.status) error.status = 401;
+    error.message = error.message || "Xác minh Google token thất bại.";
     throw error;
   }
 };

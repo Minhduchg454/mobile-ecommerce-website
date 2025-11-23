@@ -1,7 +1,5 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect } from "react";
 import { apiGetAllProductCategories } from "apis";
-import withBaseComponent from "hocs/withBaseComponent";
-import { IoIosArrowForward } from "react-icons/io";
 
 const CategoryList = ({ navigate }) => {
   const [categories, setCategories] = useState(null);
@@ -42,4 +40,4 @@ const CategoryList = ({ navigate }) => {
   );
 };
 
-export default withBaseComponent(memo(CategoryList));
+export default CategoryList;

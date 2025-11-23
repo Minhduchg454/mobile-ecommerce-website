@@ -7,6 +7,7 @@ import path from "ultils/path";
 import { CustomerLayout } from "../layout/customerLayout";
 import { ShopLayout } from "../layout/shopLayout";
 import { AdminLayout } from "../layout/adminLayout";
+import { AuthLayout } from "../layout/authLayout";
 
 const isTrue = (v) => v === true || v === "true";
 
@@ -18,6 +19,14 @@ const useAuth = () => {
 };
 
 // ========== PUBLIC GUARD ==========
+export const AuthGuard = () => {
+  const { authed, current } = useAuth();
+  const location = useLocation();
+  if (authed) {
+    return <Navigate to={`/`} state={{ from: location }} replace />;
+  }
+  return <AuthLayout />;
+};
 
 // ========== CUSTOMER GUARD ==========
 export const CustomerGuard = () => {
@@ -33,8 +42,6 @@ export const CustomerGuard = () => {
   if (current?.roles?.includes("admin")) {
     return <Navigate to="/" replace />;
   }
-
-  // Không khớp id user -> không cho vào
   if (!current?._id || current._id !== customerId) {
     return <Navigate to="/" replace />;
   }

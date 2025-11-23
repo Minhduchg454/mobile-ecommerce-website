@@ -1,6 +1,5 @@
-const mongoose = require("mongoose"); // Erase if already required
+const mongoose = require("mongoose");
 
-// Declare the Schema of the Mongo model
 var categorySchema = new mongoose.Schema(
   {
     categoryName: {
@@ -50,5 +49,4 @@ categorySchema.index(
   }
 );
 
-//Export the model
 module.exports = mongoose.model("Category", categorySchema);

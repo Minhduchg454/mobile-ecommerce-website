@@ -1,20 +1,25 @@
 // src/pages/shop/RegisterShopForm.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { apiRegisterShop } from "../../services/auth.api";
-import {
-  apiGetServicePlans,
-  apiCreateSubscription,
-} from "../../services/shop.api";
+import { apiGetServicePlans } from "../../services/shop.api";
+import { apiCreateVNPayPayment } from "../../services/payment.api";
 import { AddressFormModal } from "../../features/user/AddressFormModal";
 import { FaCheck } from "react-icons/fa";
+import { IoMdCheckmark } from "react-icons/io";
 import { showAlert, showModal } from "store/app/appSlice";
-import { fetchSellerCurrent } from "store/seller/asynsActions";
-import { getCurrent } from "store/user/asyncActions";
 import { useNavigate } from "react-router-dom";
 import path from "ultils/path";
 import { formatMoney } from "../../ultils/helpers";
-import { IoMdCheckmark } from "react-icons/io";
+import { APP_INFO } from "../../ultils/contants";
+
+/**
+ * Mẫu test vnpay
+ * ngan hang:  NCB
+ * so the: 	9704198526191432198
+ * ten chu the:  NGUYEN VAN A
+ * ngay phat hanh:  07/15
+ * opt: 123456
+ */
 
 export const RegisterShopForm = () => {
   const { current } = useSelector((s) => s.user);
@@ -22,11 +27,12 @@ export const RegisterShopForm = () => {
   const navigate = useNavigate();
 
   const [plans, setPlans] = useState([]);
-  const [selectedServicePlan, setSelectedServicePlan] = useState(""); // id gói được chọn
-  const [pickupAddress, setPickupAddress] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null); // Đổi: lưu toàn bộ object plan
+  const [pickupAddress, setPickupAddress] = useState(null); // Vẫn giữ UI, nhưng không gửi đi
 
   const [step, setStep] = useState("info");
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
 
   const [formData, setFormData] = useState({
     userId: current?._id,
@@ -35,6 +41,17 @@ export const RegisterShopForm = () => {
     shopIsOffical: false,
   });
 
+  const paymethods = [
+    { name: "QR", description: "Thanh toán quét mã QR" },
+    { name: "VNpay", description: "Thanh toán qua VNPay" },
+  ];
+
+  const bankInfo = {
+    bankName: "Vietinbank",
+    accountName: "NGUYEN HUU DUC",
+    accountNumber: "103874068274",
+  };
+
   // ================== FETCH PLANS ==================
   const fetchPlans = async () => {
     setLoading(true);
@@ -42,6 +59,11 @@ export const RegisterShopForm = () => {
       const res = await apiGetServicePlans({ sort: "oldest" });
       if (res?.success) {
         setPlans(res.plans || []);
+        // Cache plans để dùng ở ResultPage
+        sessionStorage.setItem(
+          "servicePlansCache",
+          JSON.stringify(res.plans || [])
+        );
       } else {
         setPlans([]);
         dispatch(
@@ -79,65 +101,52 @@ export const RegisterShopForm = () => {
       { key: "info", label: "Thông tin shop" },
       { key: "servicePlan", label: "Phí dịch vụ" },
       { key: "payment", label: "Thanh toán" },
-      { key: "success", label: "Hoàn tất" },
     ],
     []
   );
 
   const currentIndex = steps.findIndex((s) => s.key === step);
 
-  // Gói đang chọn (object)
-  const selectedPlan = useMemo(
-    () => plans.find((p) => p._id === selectedServicePlan),
-    [plans, selectedServicePlan]
-  );
+  // ================== Payment helper (QR) ==================
+  const notePrefix = `${APP_INFO.NAME}`;
+  const userName =
+    current?.userFirstName ||
+    current?.userLastName ||
+    current?.userEmail ||
+    "Khách hàng";
+
+  const qrAmount = selectedPlan ? Number(selectedPlan.servicePrice || 0) : 0;
+  const transferContent = selectedPlan
+    ? `${userName} thanh toan goi ${selectedPlan.serviceName} cho ${notePrefix}`
+    : `${userName} thanh toan phi dich vu ${notePrefix}`;
 
   // ================== RULE: Step có được Next không ==================
   const canGoNext = useMemo(() => {
     if (step === "info") {
-      const hasName = formData.shopName?.trim().length > 0;
-      //const hasAddress = !!pickupAddress;
-      const hasAddress = true;
-      return hasName && hasAddress;
+      return formData.shopName?.trim().length > 0;
     }
-
     if (step === "servicePlan") {
-      return !!selectedServicePlan;
+      return !!selectedPlan;
     }
-
     if (step === "payment") {
-      // Cho phép bấm "Thanh toán" (chặn ở validateStep / handleSubmit nếu thiếu)
-      return true;
+      return !!paymentMethod && !!selectedPlan;
     }
-
     return false;
-  }, [step, formData.shopName, pickupAddress, selectedServicePlan]);
+  }, [step, formData.shopName, selectedPlan, paymentMethod]);
 
   const validateStep = () => {
-    if (step === "info") {
-      if (!formData.shopName?.trim()) {
-        dispatch(
-          showAlert({
-            title: "Thiếu thông tin",
-            message: "Vui lòng nhập Tên cửa hàng.",
-            variant: "danger",
-          })
-        );
-        return false;
-      }
-      // if (!pickupAddress) {
-      //   dispatch(
-      //     showAlert({
-      //       title: "Thiếu thông tin",
-      //       message: "Vui lòng thêm Địa chỉ lấy hàng cho shop.",
-      //       variant: "danger",
-      //     })
-      //   );
-      //   return false;
-      // }
+    if (step === "info" && !formData.shopName?.trim()) {
+      dispatch(
+        showAlert({
+          title: "Thiếu thông tin",
+          message: "Vui lòng nhập Tên cửa hàng.",
+          variant: "danger",
+        })
+      );
+      return false;
     }
 
-    if (step === "servicePlan" && !selectedServicePlan) {
+    if (step === "servicePlan" && !selectedPlan) {
       dispatch(
         showAlert({
           title: "Chưa chọn gói",
@@ -148,19 +157,35 @@ export const RegisterShopForm = () => {
       return false;
     }
 
+    if (step === "payment") {
+      if (!paymentMethod) {
+        dispatch(
+          showAlert({
+            title: "Chưa chọn phương thức",
+            message: "Vui lòng chọn phương thức thanh toán.",
+            variant: "warning",
+          })
+        );
+        return false;
+      }
+      if (!selectedPlan) {
+        dispatch(
+          showAlert({
+            title: "Lỗi",
+            message: "Không tìm thấy gói dịch vụ đã chọn.",
+            variant: "danger",
+          })
+        );
+        return false;
+      }
+    }
+
     return true;
   };
 
   const nextStep = async () => {
     if (!validateStep()) return;
 
-    // Từ servicePlan → sang payment
-    if (step === "servicePlan") {
-      setStep("payment");
-      return;
-    }
-
-    // Ở bước payment, bấm "Thanh toán" → submit (tạo shop + subscription)
     if (step === "payment") {
       return handleSubmit();
     }
@@ -171,7 +196,7 @@ export const RegisterShopForm = () => {
   };
 
   const prevStep = () => {
-    if (currentIndex > 0 && step !== "success") {
+    if (currentIndex > 0) {
       setStep(steps[currentIndex - 1].key);
     }
   };
@@ -210,20 +235,7 @@ export const RegisterShopForm = () => {
     );
   };
 
-  // Helper tính ngày hết hạn subscription
-  const calcExpirationDate = (plan) => {
-    const now = new Date();
-    const exp = new Date(now);
-    if (plan.serviceBillingCycle === "yearly") {
-      exp.setFullYear(exp.getFullYear() + 1);
-    } else {
-      // mặc định monthly
-      exp.setMonth(exp.getMonth() + 1);
-    }
-    return exp.toISOString();
-  };
-
-  // ================== SUBMIT (Tạo shop + đăng ký gói) ==================
+  // ================== SUBMIT (Tạo shop + subscription + payment) ==================
   const handleSubmit = async () => {
     if (!selectedPlan) {
       dispatch(
@@ -236,80 +248,61 @@ export const RegisterShopForm = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      // 1. Tạo shop
-      const shopPayload = {
-        ...formData,
-        userId: current?._id,
-        pickupAddressId: pickupAddress?._id || null,
-      };
+    if (!paymentMethod) {
+      dispatch(
+        showAlert({
+          title: "Chưa chọn phương thức",
+          message: "Vui lòng chọn phương thức thanh toán.",
+          variant: "warning",
+        })
+      );
+      return;
+    }
 
-      const resShop = await apiRegisterShop(shopPayload);
+    // Lưu payload: gửi toàn bộ plan + formData, KHÔNG gửi pickupAddress
+    const payloadForResult = {
+      formData,
+      selectedPlan, // Gửi nguyên object plan
+      paymentMethod,
+      type: "shop_register",
+    };
 
-      if (!resShop?.success || !resShop.shop) {
+    sessionStorage.setItem(
+      "registerShopPayload",
+      JSON.stringify(payloadForResult)
+    );
+
+    if (paymentMethod === "QR") {
+      navigate(`/${path.REGISTER_SHOP}/result?status=pending&paymentMethod=QR`);
+      return;
+    }
+
+    if (paymentMethod === "VNpay") {
+      try {
+        setLoading(true);
+
+        const resPayment = await apiCreateVNPayPayment({
+          amount: Math.round(Number(selectedPlan.servicePrice || 0)),
+          bankCode: "NCB",
+          orderInfo: `Thanh toan goi dich vu shop`,
+          returnPath: `/${path.REGISTER_SHOP}/result`,
+        });
+
+        const url = resPayment?.paymentUrl;
+        if (!url) throw new Error("Không nhận được paymentUrl");
+        window.location.href = url;
+      } catch (e) {
+        console.error(e);
         dispatch(
           showAlert({
             title: "Lỗi",
-            message: resShop?.message || "Không thể đăng ký shop",
+            message: "Không tạo được thanh toán VNPay",
             variant: "danger",
           })
         );
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      const shop = resShop.shop;
-
-      // 2. Tạo subscription cho shop vừa tạo (mặc định thanh toán OK)
-      try {
-        const subPayload = {
-          shopId: shop._id,
-          serviceId: selectedPlan._id,
-          subPrice: selectedPlan.servicePrice,
-          subExpirationDate: calcExpirationDate(selectedPlan),
-          subAutoRenew: true,
-        };
-
-        const resSub = await apiCreateSubscription(subPayload);
-
-        if (!resSub?.success) {
-          dispatch(
-            showAlert({
-              title: "Cảnh báo",
-              message:
-                resSub?.message ||
-                "Shop đã tạo nhưng đăng ký gói dịch vụ bị lỗi. Vui lòng liên hệ hỗ trợ.",
-              variant: "warning",
-            })
-          );
-        }
-      } catch (subErr) {
-        console.error("Create subscription error:", subErr);
-        dispatch(
-          showAlert({
-            title: "Cảnh báo",
-            message:
-              "Shop đã tạo nhưng đăng ký gói dịch vụ bị lỗi. Vui lòng liên hệ hỗ trợ.",
-            variant: "warning",
-          })
-        );
-      }
-
-      // 3. Refresh redux & chuyển step success
-      setStep("success");
-      dispatch(fetchSellerCurrent(current._id));
-      dispatch(getCurrent());
-    } catch (err) {
-      console.error(err);
-      dispatch(
-        showAlert({
-          title: "Lỗi",
-          message: err?.message || "Đăng ký thất bại",
-          variant: "danger",
-        })
-      );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -319,7 +312,7 @@ export const RegisterShopForm = () => {
   return (
     <div className="h-[calc(100vh-100px)] m-2 md:m-4 flex flex-col justify-center items-center animate-fadeIn">
       <div className="relative w-full h-[600px] md:w-[800px] bg-white rounded-3xl p-4 flex flex-col items-center justify-between shadow-md">
-        {/* === Thanh tiến trình === */}
+        {/* Thanh tiến trình */}
         <div className="w-full flex flex-col items-center justify-center px-4 border-b py-2 h-[100px] my-auto">
           <div
             className="grid gap-0"
@@ -366,8 +359,8 @@ export const RegisterShopForm = () => {
           </div>
         </div>
 
-        {/* === Nội dung chính === */}
-        <div className="w-full h-[400px] flex flex-col items-center justify-start py-2 md:py-4">
+        {/* Nội dung chính */}
+        <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-start py-2 md:py-4">
           {/* STEP 1: Info */}
           {step === "info" && (
             <form className="flex flex-col w-full md:w-[500px] gap-4">
@@ -398,12 +391,10 @@ export const RegisterShopForm = () => {
                 />
               </label>
 
-              {/* Địa chỉ lấy hàng */}
+              {/* Địa chỉ lấy hàng - chỉ để UI, không bắt buộc, không gửi đi */}
               <div>
                 <div className="flex gap-2 items-center justify-start">
-                  <p className="text-sm px-2">
-                    Địa chỉ lấy hàng <span className="text-red-500">*</span>
-                  </p>
+                  <p className="text-sm px-2">Địa chỉ lấy hàng</p>
                   <button
                     type="button"
                     onClick={() => openAddressModal(pickupAddress || null)}
@@ -433,7 +424,7 @@ export const RegisterShopForm = () => {
                   </div>
                 ) : (
                   <p className="px-2 mt-1 text-xs text-gray-400">
-                    Bạn chưa thêm địa chỉ lấy hàng cho shop.
+                    (Tùy chọn) Bạn có thể thêm địa chỉ lấy hàng.
                   </p>
                 )}
               </div>
@@ -450,7 +441,7 @@ export const RegisterShopForm = () => {
                     name="shopIsOffical"
                     checked={formData.shopIsOffical}
                     onChange={handleChange}
-                    className="peer appearance-none w-4 h-4 border border-black rounded-sm "
+                    className="peer appearance-none w-4 h-4 border border-black rounded-sm"
                   />
                   <FaCheck className="absolute text-black opacity-0 peer-checked:opacity-100 w-3 h-3" />
                 </span>
@@ -459,11 +450,11 @@ export const RegisterShopForm = () => {
             </form>
           )}
 
-          {/* STEP 3: Service Plan */}
+          {/* STEP 2: Service Plan */}
           {step === "servicePlan" && (
             <div className="overflow-y-auto flex flex-col items-center gap-4 text-black w-full md:w-[600px]">
               {plans.map((plan) => {
-                const isActive = selectedServicePlan === plan._id;
+                const isActive = selectedPlan?._id === plan._id;
 
                 return (
                   <label
@@ -479,18 +470,49 @@ export const RegisterShopForm = () => {
                     `}
                   >
                     <div className="flex-1 pr-4">
-                      <h1 className="text-base font-semibold">
-                        {plan.serviceName}
-                      </h1>
-                      <p className="text-sm font-medium">
+                      <div className="flex gap-1 items-center">
+                        <span
+                          className="w-3 h-3 rounded-full border"
+                          style={{
+                            backgroundColor: plan.serviceColor || "#ffffff",
+                          }}
+                        ></span>
+                        <h1 className="text-base font-semibold">
+                          {plan.serviceName}
+                        </h1>
+                      </div>
+                      <p className="text-sm font-medium mb-1">
                         {formatMoney(plan.servicePrice)}đ/
                         {plan.serviceBillingCycle === "monthly"
                           ? "tháng"
                           : "năm"}
                       </p>
-                      <p className="text-xs text-gray-700 mt-1">
+                      <p className="text-xs text-gray-700 mb-1">
                         {plan.serviceDescription}
                       </p>
+                      <div className="text-xs text-gray-700">
+                        {Array.isArray(plan.serviceFeatures) &&
+                          plan.serviceFeatures.length > 0 && (
+                            <ul className="list-disc pl-3 text-xs">
+                              {plan.serviceFeatures.map((f) => (
+                                <li key={f.key}>
+                                  <span className="">{f.label}: </span>
+                                  <span>
+                                    {f.type === "boolean"
+                                      ? String(f.value).toLowerCase() ===
+                                          "true" || String(f.value) === "1"
+                                        ? "Có"
+                                        : "Không"
+                                      : f.unit
+                                      ? `${f.value} ${f.unit}`
+                                      : f.value}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                      </div>
+                      {/* Quyền lợi */}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -513,9 +535,8 @@ export const RegisterShopForm = () => {
                         id={`plan-${plan._id}`}
                         type="radio"
                         name="servicePlan"
-                        value={plan._id}
                         checked={isActive}
-                        onChange={() => setSelectedServicePlan(plan._id)}
+                        onChange={() => setSelectedPlan(plan)}
                         className="sr-only"
                       />
                     </div>
@@ -531,13 +552,9 @@ export const RegisterShopForm = () => {
             </div>
           )}
 
-          {/* STEP 4: Payment */}
+          {/* STEP 3: Payment */}
           {step === "payment" && (
             <div className="flex flex-col items-center gap-4 text-center w-full md:w-[500px]">
-              <h2 className="text-base md:text-lg font-semibold">
-                Thanh toán phí dịch vụ
-              </h2>
-
               {selectedPlan ? (
                 <div className="border rounded-3xl px-4 py-3 w-full text-left bg-gray-50">
                   <p className="text-sm font-semibold">
@@ -565,78 +582,97 @@ export const RegisterShopForm = () => {
                 </p>
               )}
 
-              <p className="text-xs md:text-sm text-gray-600">
-                Hệ thống sẽ xử lý thanh toán cho gói bạn đã chọn. (Hiện tại đang
-                ở chế độ thử nghiệm, thanh toán được coi như
-                <span className="font-semibold"> thành công</span> sau khi bạn
-                bấm <span className="font-semibold">“Thanh toán”</span>.)
-              </p>
-
-              <div className="w-32 h-32 border-2 border-dashed rounded-2xl flex items-center justify-center text-[10px] text-gray-400">
-                Đang xử lý thanh toán...
+              <div className="w-full text-left">
+                <p className="text-sm font-medium mb-2">
+                  Chọn phương thức thanh toán:
+                </p>
+                <div className="flex gap-2">
+                  {paymethods.map((pm) => (
+                    <button
+                      key={pm.name}
+                      type="button"
+                      onClick={() => setPaymentMethod(pm.name)}
+                      className={`flex-1 text-center mb-2 px-2 py-1 border rounded-2xl hover:bg-gray-50 transition text-sm
+                        ${
+                          paymentMethod === pm.name
+                            ? "border-2 border-button-bg-ac"
+                            : ""
+                        }`}
+                    >
+                      {pm.description}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* STEP 5: Success */}
-          {step === "success" && (
-            <div className="flex flex-col items-center gap-2 text-center">
-              <h2 className="text-green-600 font-bold text-lg">
-                Đăng ký thành công!
-              </h2>
-              {selectedPlan && (
-                <p className="text-gray-600 text-sm">
-                  Bạn đã đăng ký gói{" "}
-                  <span className="font-semibold">
-                    {selectedPlan.serviceName}
-                  </span>
-                  . Hạn dùng sẽ được tính theo chu kỳ{" "}
-                  {selectedPlan.serviceBillingCycle === "monthly"
-                    ? "tháng"
-                    : "năm"}
-                  .
+              {paymentMethod === "QR" && (
+                <div className="flex flex-col items-center gap-2  p-4 border rounded-xl bg-gray-50 w-full">
+                  <p className="text-gray-700 text-sm font-medium">
+                    Quét mã để chuyển khoản ngân hàng:
+                  </p>
+
+                  <img
+                    src={`https://img.vietqr.io/image/ICB-${
+                      bankInfo.accountNumber
+                    }-compact2.jpg?amount=${qrAmount}&addInfo=${encodeURIComponent(
+                      transferContent
+                    )}`}
+                    alt="QR VietQR"
+                    className="w-40 h-40 md:w-52 md:h-52 object-contain"
+                  />
+
+                  <div className="text-xs md:text-sm text-center text-gray-600">
+                    <p>
+                      <strong>Ngân hàng:</strong> {bankInfo.bankName}
+                    </p>
+                    <p>
+                      <strong>Chủ tài khoản:</strong> {bankInfo.accountName}
+                    </p>
+                    <p>
+                      <strong>Số tài khoản:</strong> {bankInfo.accountNumber}
+                    </p>
+                    <p>
+                      <strong>Nội dung chuyển khoản:</strong> {transferContent}
+                    </p>
+                    <p className="text-orange-600 italic text-xs mt-1">
+                      Sau khi chuyển khoản, nhấn{" "}
+                      <span className="font-semibold">"Thanh toán"</span> để
+                      hoàn tất.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === "VNpay" && (
+                <p className="text-xs md:text-sm text-gray-600 mt-2">
+                  Bạn sẽ được chuyển hướng đến cổng VNPay để thanh toán.
                 </p>
               )}
-              <p className="text-gray-500 text-sm">
-                Shop của bạn đã được tạo. Bạn có thể bắt đầu thêm sản phẩm.
-              </p>
-              <button
-                onClick={() =>
-                  navigate(
-                    `/${path.SELLER}/${current?._id}/${path.S_DASHBOARD}`
-                  )
-                }
-                className="rounded-full px-3 py-1 bg-button-bg-ac hover:bg-button-bg-hv text-white text-sm"
-              >
-                Quản lý shop
-              </button>
             </div>
           )}
         </div>
 
-        {/* === Nút điều hướng === */}
-        {step !== "success" && (
-          <div className="sticky bottom-0 w-full flex justify-end gap-2 text-sm bg-white pt-3">
-            <button
-              onClick={prevStep}
-              disabled={currentIndex === 0 || loading}
-              className="px-4 py-1 rounded-3xl border hover:bg-gray-100 disabled:opacity-50"
-            >
-              Quay lại
-            </button>
-            <button
-              onClick={nextStep}
-              disabled={loading || !canGoNext}
-              className="px-4 py-1 rounded-3xl bg-button-bg-ac text-white hover:bg-button-bg-hv disabled:opacity-50"
-            >
-              {loading
-                ? "Đang xử lý..."
-                : step === "payment"
-                ? "Thanh toán"
-                : "Tiếp theo"}
-            </button>
-          </div>
-        )}
+        {/* Nút điều hướng */}
+        <div className="sticky bottom-0 w-full flex justify-end gap-2 text-sm bg-white pt-3">
+          <button
+            onClick={prevStep}
+            disabled={currentIndex === 0 || loading}
+            className="px-4 py-1 rounded-3xl border hover:bg-gray-100 disabled:opacity-50"
+          >
+            Quay lại
+          </button>
+          <button
+            onClick={nextStep}
+            disabled={loading || !canGoNext}
+            className="px-4 py-1 rounded-3xl bg-button-bg-ac text-white hover:bg-button-bg-hv disabled:opacity-50"
+          >
+            {loading
+              ? "Đang xử lý..."
+              : step === "payment"
+              ? "Thanh toán"
+              : "Tiếp theo"}
+          </button>
+        </div>
       </div>
     </div>
   );

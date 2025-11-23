@@ -5,7 +5,7 @@ const shopService = require("./shop.service");
 
 exports.createShop = async (req, res, next) => {
   try {
-    const result = await shopService.createShop(req.body, req.files);
+    const result = await shopService.createShop(req.body, req.files, req.app);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -51,7 +51,13 @@ exports.getShopDashboardStats = async (req, res, next) => {
 exports.updateShop = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const result = await shopService.updateShop(userId, req.body, req.files);
+    const io = req.app;
+    const result = await shopService.updateShop(
+      userId,
+      req.body,
+      req.files,
+      io
+    );
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -61,7 +67,8 @@ exports.updateShop = async (req, res, next) => {
 exports.deleteShop = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const result = await shopService.deleteShop(userId);
+    const io = req.app;
+    const result = await shopService.deleteShop(userId, io);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -119,10 +126,9 @@ exports.createSubscription = async (req, res, next) => {
   }
 };
 
-exports.getSubscriptionsByShop = async (req, res, next) => {
+exports.getSubscriptions = async (req, res, next) => {
   try {
-    const { shopId } = req.params;
-    const result = await shopService.getSubscriptionsByShop(shopId);
+    const result = await shopService.getSubscriptions(req.query);
     res.status(200).json(result);
   } catch (err) {
     next(err);

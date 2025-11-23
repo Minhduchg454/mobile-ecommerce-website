@@ -3,6 +3,7 @@ const qs = require("qs");
 const moment = require("moment");
 const Payment = require("./entities/payment.model");
 const mongoose = require("mongoose");
+const UserService = require("../user/user.service");
 
 // Giữ nguyên y hệt sample
 function sortObject(obj) {
@@ -22,7 +23,7 @@ function sortObject(obj) {
 }
 
 const ALLOWED_STATUS = ["Pending", "Completed", "Failed", "Refunded"];
-const ALLOWED_METHOD = ["VNpay", "COD", "QR"];
+const ALLOWED_METHOD = ["VNpay", "COD", "QR", "BANK"];
 
 // -------- helpers ----------
 function buildSort(sortStr) {
@@ -81,6 +82,7 @@ exports.createPayment = async (body = {}) => {
     paymentAmount,
     orderId,
     paymentDate,
+    shopId,
   } = body;
 
   // validate bắt buộc
@@ -113,6 +115,21 @@ exports.createPayment = async (body = {}) => {
     ...(paymentDate ? { paymentDate: new Date(paymentDate) } : {}),
   });
 
+  if (paymentStatus === "Completed" && shopId) {
+    try {
+      await UserService.updateBalance(shopId, "shop", Number(paymentAmount), {
+        tranType: "payment_income",
+        tranDescriptions: `Nhận tiền thanh toán đơn hàng #${orderId}`,
+        tranRelatedId: orderId,
+        tranRelatedModel: "Order",
+      });
+    } catch (error) {
+      console.error(
+        `[Finance Error] Lỗi cộng tiền khi tạo payment: ${error.message}`
+      );
+    }
+  }
+
   return {
     success: true,
     message: "Tạo payment thành công",
@@ -121,57 +138,124 @@ exports.createPayment = async (body = {}) => {
 };
 
 // ============== UPDATE ==============
-exports.updatePayment = async (paymentId, patch = {}) => {
-  if (!mongoose.isValidObjectId(paymentId)) {
-    const err = new Error("paymentId không hợp lệ");
+exports.updatePayment = async (identity, patch = {}) => {
+  let filter = {};
+
+  // 1. Xác định Payment cần update
+  if (mongoose.isValidObjectId(identity)) {
+    filter._id = identity;
+  } else if (identity && typeof identity === "object" && identity.orderId) {
+    if (!mongoose.isValidObjectId(identity.orderId)) {
+      const err = new Error("orderId không hợp lệ");
+      err.status = 400;
+      throw err;
+    }
+    filter.orderId = identity.orderId;
+  } else {
+    const err = new Error("Tham số định danh không hợp lệ");
     err.status = 400;
     throw err;
   }
 
-  const update = {};
-
-  if ("paymentStatus" in patch) {
-    if (!ALLOWED_STATUS.includes(patch.paymentStatus)) {
-      const err = new Error("paymentStatus không hợp lệ");
-      err.status = 400;
-      throw err;
-    }
-    update.paymentStatus = patch.paymentStatus;
+  const currentPayment = await Payment.findOne(filter);
+  if (!currentPayment) {
+    const err = new Error("Không tìm thấy payment");
+    err.status = 404;
+    throw err;
   }
+
+  const oldStatus = currentPayment.paymentStatus;
+
+  // 2. [LOGIC REFUND TỰ ĐỘNG]
+  if (patch.paymentStatus === "Failed") {
+    if (["VNpay", "QR", "BANK"].includes(currentPayment.paymentMethod)) {
+      patch.paymentStatus = "Refunded";
+    }
+  }
+
+  // 3. Chuẩn bị dữ liệu update
   if ("paymentMethod" in patch) {
     if (!ALLOWED_METHOD.includes(patch.paymentMethod)) {
       const err = new Error("paymentMethod không hợp lệ");
       err.status = 400;
       throw err;
     }
-    update.paymentMethod = patch.paymentMethod;
+    currentPayment.paymentMethod = patch.paymentMethod;
   }
+
+  let newStatus = oldStatus;
+  if ("paymentStatus" in patch) {
+    if (!ALLOWED_STATUS.includes(patch.paymentStatus)) {
+      const err = new Error("paymentStatus không hợp lệ");
+      err.status = 400;
+      throw err;
+    }
+    newStatus = patch.paymentStatus;
+    currentPayment.paymentStatus = newStatus;
+  }
+
   if ("paymentDate" in patch) {
-    update.paymentDate = patch.paymentDate
+    currentPayment.paymentDate = patch.paymentDate
       ? new Date(patch.paymentDate)
       : new Date();
   }
   if ("paymentAmount" in patch) {
-    update.paymentAmount = Number(patch.paymentAmount) || 0;
+    currentPayment.paymentAmount = Number(patch.paymentAmount) || 0;
   }
-  if ("orderId" in patch) {
-    if (!mongoose.isValidObjectId(patch.orderId)) {
-      const err = new Error("orderId không hợp lệ");
-      err.status = 400;
-      throw err;
+
+  // 4. [LOGIC TIỀN] Xử lý số dư Shop & Transaction
+  const targetShopId = patch.shopId;
+  const targetCustomerId = patch.customerId;
+  const amount = currentPayment.paymentAmount;
+  const orderIdRef = currentPayment.orderId;
+  if (oldStatus !== newStatus) {
+    try {
+      // --- PHÍA SHOP ---
+      if (targetShopId) {
+        // CASE A: Tiền vào Shop (Completed) -> Cộng tiền Shop
+        if (newStatus === "Completed" && oldStatus !== "Completed") {
+          await UserService.updateBalance(targetShopId, "shop", amount, {
+            tranType: "payment_income",
+            tranDescriptions: `Nhận tiền thanh toán đơn hàng #${orderIdRef}`,
+            tranRelatedId: orderIdRef,
+            tranRelatedModel: "Order",
+          });
+        }
+        // CASE B: Shop bị trừ tiền (Refunded) -> Trừ tiền Shop (Nếu trước đó Shop đã nhận)
+        else if (newStatus === "Refunded" && oldStatus === "Completed") {
+          await UserService.updateBalance(targetShopId, "shop", -amount, {
+            tranType: "refund_deduct", // Đổi tên cho rõ nghĩa: trừ hoàn tiền
+            tranDescriptions: `Trừ tiền hoàn đơn hàng #${orderIdRef}`,
+            tranRelatedId: orderIdRef,
+            tranRelatedModel: "Order",
+          });
+        }
+      }
+
+      if (targetCustomerId) {
+        if (newStatus === "Refunded" && oldStatus === "Completed") {
+          await UserService.updateBalance(
+            targetCustomerId,
+            "customer",
+            amount,
+            {
+              tranType: "refund_receive",
+              tranDescriptions: `Hoàn tiền do hủy đơn hàng #${orderIdRef}`,
+              tranRelatedId: orderIdRef,
+              tranRelatedModel: "Order",
+            }
+          );
+        }
+      }
+    } catch (balanceErr) {
+      console.error(
+        `[Finance Error] Lỗi cập nhật số dư: ${balanceErr.message}`
+      );
     }
-    update.orderId = patch.orderId;
   }
 
-  const updated = await Payment.findByIdAndUpdate(paymentId, update, {
-    new: true,
-  });
-
-  if (!updated) {
-    const err = new Error("Không tìm thấy payment");
-    err.status = 404;
-    throw err;
-  }
+  // 5. Lưu Payment
+  const updated = await currentPayment.save();
 
   return {
     success: true,
@@ -180,7 +264,6 @@ exports.updatePayment = async (paymentId, patch = {}) => {
   };
 };
 
-// ============== DELETE ==============
 exports.deletePayment = async (paymentId) => {
   if (!mongoose.isValidObjectId(paymentId)) {
     const err = new Error("paymentId không hợp lệ");
@@ -232,7 +315,7 @@ exports.getPayments = async (q = {}) => {
  * VNpay
  */
 exports.createPaymentVNpay = async (body, ipAddr) => {
-  const { amount, bankCode, orderInfo } = body;
+  const { amount, bankCode, orderInfo, returnPath, shopId } = body;
   if (!amount || isNaN(amount)) {
     const err = new Error("Thiếu hoặc sai định dạng amount");
     err.status = 400;
@@ -242,10 +325,13 @@ exports.createPaymentVNpay = async (body, ipAddr) => {
   const vnp_TmnCode = process.env.VNP_TMN_CODE;
   const vnp_HashSecret = process.env.VNP_HASH_SECRET;
   const vnp_Url = process.env.VNP_URL;
-  const vnp_ReturnUrl = process.env.VNP_RETURN_URL;
+  const vnp_ReturnUrlBase = process.env.VNP_RETURN_URL;
 
   const createDate = moment().format("YYYYMMDDHHmmss");
   const orderId = moment().format("DDHHmmss");
+
+  const urlObj = new URL(vnp_ReturnUrlBase);
+  if (returnPath) urlObj.searchParams.set("returnPath", returnPath);
 
   const info = orderInfo || `Thanh toan cho ma GD:${orderId}`;
 
@@ -259,7 +345,7 @@ exports.createPaymentVNpay = async (body, ipAddr) => {
     vnp_OrderInfo: info,
     vnp_OrderType: "other",
     vnp_Amount: Math.round(Number(amount) * 100),
-    vnp_ReturnUrl: vnp_ReturnUrl,
+    vnp_ReturnUrl: urlObj.toString(),
     vnp_IpAddr: ipAddr || "127.0.0.1",
     vnp_CreateDate: createDate,
   };
@@ -284,12 +370,20 @@ exports.createPaymentVNpay = async (body, ipAddr) => {
 };
 
 exports.verifyVNPayChecksum = async (query) => {
-  const secureHash = query["vnp_SecureHash"];
+  const vnp_Params = {};
 
-  delete query["vnp_SecureHash"];
-  delete query["vnp_SecureHashType"];
+  Object.keys(query).forEach((key) => {
+    if (key.startsWith("vnp_")) {
+      vnp_Params[key] = query[key];
+    }
+  });
 
-  const sorted = sortObject(query);
+  const secureHash = vnp_Params["vnp_SecureHash"];
+
+  delete vnp_Params["vnp_SecureHash"];
+  delete vnp_Params["vnp_SecureHashType"];
+
+  const sorted = sortObject(vnp_Params);
 
   const signData = require("qs").stringify(sorted, { encode: false });
   const signed = crypto

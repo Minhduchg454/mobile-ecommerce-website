@@ -12,7 +12,11 @@ import {
   AiOutlineClose,
   AiOutlineShop,
 } from "react-icons/ai";
-import { MdOutlineLocationOn, MdOutlineMenu } from "react-icons/md";
+import {
+  MdOutlineLocationOn,
+  MdOutlineMenu,
+  MdOutlineAccountBalanceWallet,
+} from "react-icons/md";
 import React, { useState, useRef, useEffect } from "react";
 import clsx from "clsx";
 import { Breadcrumb, CloseButton } from "../../components";
@@ -213,6 +217,11 @@ export const CustomerLayout = () => {
       to: `/${path.CUSTOMER}/${customerId}/${path.C_PROFILE}`,
     },
     {
+      icon: <MdOutlineAccountBalanceWallet size={20} />,
+      label: "Tài chính",
+      to: `/${path.CUSTOMER}/${customerId}/${path.C_BALANCE}`,
+    },
+    {
       icon: <MdOutlineLocationOn size={20} />,
       label: "Địa chỉ giao hàng",
       to: `/${path.CUSTOMER}/${customerId}/${path.C_ADDRESS}`,
@@ -233,7 +242,7 @@ export const CustomerLayout = () => {
     },
     {
       icon: <AiOutlineShop size={20} />,
-      label: "Kênh người bán",
+      label: "Kênh bán hàng",
       to: `/${path.CUSTOMER}/${customerId}/${path.C_MANAGESELLER}`,
     },
   ];
@@ -330,7 +339,6 @@ export const CustomerLayout = () => {
             </div>
           )}
         </div>
-
         <Outlet />
       </div>
     </div>

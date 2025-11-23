@@ -17,6 +17,6 @@ router.post(
   authController.registerShop
 );
 router.post("/login", authController.login);
-router.post("/google-login", authController.login);
+router.post("/google-login", authController.loginGoogle);
 
 module.exports = router;

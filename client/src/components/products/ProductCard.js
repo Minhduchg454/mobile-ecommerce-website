@@ -1,5 +1,5 @@
-import React, { memo, useState, useEffect } from "react";
-import withBaseComponent from "hocs/withBaseComponent";
+import React, { useState, useEffect } from "react";
+
 import { renderStarFromNumber, formatMoney } from "ultils/helpers";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
@@ -25,8 +25,6 @@ const ProductCard = ({
   pvid,
   slugCategory,
   slug,
-  onAddToCart,
-  onToggleWishlist,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -197,4 +195,4 @@ const ProductCard = ({
   );
 };
 
-export default withBaseComponent(memo(ProductCard));
+export default ProductCard;

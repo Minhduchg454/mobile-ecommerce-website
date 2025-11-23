@@ -41,6 +41,12 @@ export const apiGetBrands = (query) =>
     params: query,
   });
 
+export const apiGetBrandStats = () =>
+  axios({
+    url: "catalogs/brand-stats",
+    method: "get",
+  });
+
 export const apiCreateBrand = (data) =>
   axios({
     url: "catalogs/brands",

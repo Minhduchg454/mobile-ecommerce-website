@@ -93,14 +93,15 @@ export const apiCreateSubscription = (data) =>
     data,
   });
 
-export const apigetSubscriptionsByShop = (shopId) =>
+export const apiGetSubscriptions = (query) =>
   axios({
-    url: "shops/subscribles/" + shopId,
+    url: "shops/subscribles/",
     method: "get",
+    params: query,
   });
 
 export const apiCancelSubscription = (subId) =>
   axios({
-    url: "shops/subscribles/cancel" + subId,
-    method: "post",
+    url: "shops/subscribles/cancel/" + subId,
+    method: "put",
   });

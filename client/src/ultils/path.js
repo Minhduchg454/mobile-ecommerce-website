@@ -1,6 +1,5 @@
-import { REGISTER } from "redux-persist";
-
 const path = {
+  //Public
   PUBLIC: "/",
   HOME: "",
   ALL: "*",
@@ -19,8 +18,12 @@ const path = {
   PRODUCTS: "products",
   SEARCH_HOME: "tat-ca-san-pham",
   SHOP: "shops",
+  WISHLIST: "wish-list",
   CART: "carts",
   ORDER: "orders",
+  REGISTER_SERVICE_PLAN: "register-service-plan",
+  NOTIFICATION: "notification",
+  CHAT: "chats",
 
   // Admin
   ADMIN: "admin",
@@ -33,18 +36,8 @@ const path = {
   A_MANAGE_SERVICE_PLAN: "manage-service_plans",
   A_MANAGE_CATEGORY: "manage-categorys",
   A_MANAGE_BRANDS: "manage-brands",
-
-  DASHBOARD: "dashboard",
-  MANAGE_USER: "manage-user",
-  MANAGE_PRODUCTS: "manage-products",
-  MANAGE_ORDER: "manage-order",
-  CREATE_PRODUCTS: "create-products",
-  CREATE_BLOG: "create-blog",
-  MANAGE_BLOGS: "manage-blogs",
-  CREATE_VARIATION: "/admin/create-variation/:productId",
-  MANAGE_PRODUCTS_CATEGORIES: "manage-products-categories",
-  MANAGE_BRANDS: "manage-brands",
-  MANAGE_COUPONS: "manage-coupons",
+  A_PRODUCT_APPROVAL: "product_approval",
+  A_BALANCE: "balance",
 
   //Customer
   CUSTOMER: "customer",
@@ -53,6 +46,7 @@ const path = {
   C_ORDER: "orders",
   C_SUCCEEDED_ORDER: "succeeded-orders",
   C_MANAGESELLER: "manage-seller",
+  C_BALANCE: "balance",
 
   //Shop
   SELLER: "seller",
@@ -66,6 +60,7 @@ const path = {
   S_MANAGE_CATEGORIES: "manage-categories",
   S_CREATE_CATEGORIES: "create-category",
   S_DASHBOARD: "dashboard",
+  S_BALANCE: "balance",
 };
 
 export default path;

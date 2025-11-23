@@ -1,19 +1,14 @@
 import { showModal, showAlert } from "store/app/appSlice";
-import { apiGetCoupons } from "../../services/coupon.api";
+import { apiGetCoupons, apiDeleteCoupon } from "../../services/coupon.api";
 import noData from "../../assets/data-No.png";
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CopyText } from "../../components";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
-import {
-  AiOutlineEdit,
-  AiOutlineDelete,
-  AiOutlineSearch,
-} from "react-icons/ai";
+import { AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
 import { formatMoney } from "ultils/helpers";
 import moment from "moment";
-import { apiDeleteCoupon } from "apis";
 import { VoucherForm } from "./voucherForm";
 import { useSelector, useDispatch } from "react-redux";
 
@@ -284,7 +279,8 @@ export const CouponManage = ({ createdById }) => {
               aria-haspopup="listbox"
               aria-expanded={isShowSort}
             >
-              Sắp xếp: <span className="font-bold">{currentSort.label}</span>
+              Sắp xếp:{" "}
+              <span className="font-bold text-sm">{currentSort.label}</span>
               {isShowSort ? (
                 <MdKeyboardArrowUp size={18} className="ml-1" />
               ) : (
@@ -331,7 +327,7 @@ export const CouponManage = ({ createdById }) => {
           <button
             disabled={isBlock}
             onClick={handleCreateCoupon}
-            className={`px-3 py-1 whitespace-nowrap rounded-3xl text-white shadow-md  ${
+            className={`px-3 py-1 whitespace-nowrap rounded-3xl text-white shadow-md text-sm  ${
               isBlock
                 ? "bg-gray-400 cursor-not-allowed opacity-50"
                 : "bg-button-bg-ac hover:bg-button-bg-hv cursor-pointer"

@@ -35,6 +35,8 @@ export const AddressFormModal = ({
       addressDistrict: "",
       addressCity: "",
       addressCountry: "Việt Nam",
+      addressLatitude: 0,
+      addressLongitude: 0,
       addressIsDefault: false,
     },
     values: initialAddress
@@ -46,6 +48,8 @@ export const AddressFormModal = ({
           addressDistrict: initialAddress.addressDistrict || "",
           addressCity: initialAddress.addressCity || "",
           addressCountry: initialAddress.addressCountry || "Việt Nam",
+          addressLatitude: initialAddress.addressLatitude || 0,
+          addressLongitude: initialAddress.addressLongitude || 0,
           addressIsDefault: !!initialAddress.addressIsDefault,
         }
       : undefined,
@@ -63,6 +67,23 @@ export const AddressFormModal = ({
   const provinces = Object.keys(locations);
   const districts = vCity && locations[vCity] ? locations[vCity].districts : [];
 
+  // Lắng nghe thay đổi Thành phố để gán tọa độ
+  React.useEffect(() => {
+    if (vCity && locations[vCity]) {
+      const cityData = locations[vCity];
+
+      const lat = cityData.center?.lat || 0;
+      const lng = cityData.center?.lng || 0;
+
+      setValue("addressLatitude", lat, { shouldValidate: true });
+      setValue("addressLongitude", lng, { shouldValidate: true });
+    } else {
+      setValue("addressLatitude", 0, { shouldValidate: true });
+      setValue("addressLongitude", 0, { shouldValidate: true });
+    }
+  }, [vCity, setValue]);
+
+  // Logic xử lý Quận/Huyện khi Thành phố thay đổi (từ initialAddress)
   React.useEffect(() => {
     if (vCity && initialAddress?.addressDistrict) {
       if (districts.includes(initialAddress.addressDistrict)) {
@@ -73,6 +94,7 @@ export const AddressFormModal = ({
     }
   }, [vCity, initialAddress, districts, setValue]);
 
+  // Logic reset Quận/Huyện nếu không hợp lệ
   React.useEffect(() => {
     if (vCity && !districts.includes(vDistrict)) {
       setValue("addressDistrict", "");
@@ -84,6 +106,17 @@ export const AddressFormModal = ({
   };
 
   const onSubmit = async (vals) => {
+    // Kiểm tra tọa độ với tên trường mới: addressLatitude và addressLongitude
+    if (!vals.addressLatitude || !vals.addressLongitude) {
+      return dispatch(
+        showAlert({
+          title: "Thiếu thông tin",
+          message: "Vui lòng chọn Tỉnh/Thành phố để xác định tọa độ",
+          variant: "danger",
+        })
+      );
+    }
+
     if (!userId) {
       return dispatch(
         showAlert({
@@ -251,7 +284,7 @@ export const AddressFormModal = ({
           </div>
         </div>
 
-        {/* Phường/Xã & Địa chỉ chi tiết */}
+        {/* Phường/Xã & Quốc gia */}
         <div className="flex flex-col md:flex-row gap-2">
           <div className="flex-1">
             <label className={labelInput}>Phường/Xã *</label>
@@ -286,16 +319,17 @@ export const AddressFormModal = ({
           </div>
         </div>
 
-        {/* Quốc gia & Mặc định */}
+        {/* Địa chỉ chi tiết */}
         <div className="flex-1">
           <label className={labelInput}>Địa chỉ chi tiết *</label>
-          <input
+          <textarea
             {...register("addressStreet", {
               required: "Vui lòng nhập địa chỉ chi tiết",
               validate: (v) => v.trim().length > 0 || "Không được để trống",
             })}
             className="border rounded-xl w-full p-2 mt-1"
             placeholder="Nhà trọ An Khang, phòng số 1"
+            rows={3}
           />
           {errors.addressStreet && (
             <p className="text-red-500 text-xs">
@@ -304,20 +338,32 @@ export const AddressFormModal = ({
           )}
         </div>
 
+        {/* Trường ẩn lưu trữ tọa độ */}
+        <input
+          type="hidden"
+          {...register("addressLatitude", { valueAsNumber: true })}
+        />
+        <input
+          type="hidden"
+          {...register("addressLongitude", { valueAsNumber: true })}
+        />
+
         {/* Đặt làm mặc định */}
-        <div className="flex-1 flex items-end px-2">
-          <label className="flex items-center gap-2 cursor-pointer text-sm">
-            <span className="relative inline-flex items-center justify-center">
-              <input
-                type="checkbox"
-                {...register("addressIsDefault")}
-                className="peer appearance-none w-4 h-4 border border-black rounded-sm"
-              />
-              <FaCheck className="absolute text-black opacity-0 peer-checked:opacity-100 w-3 h-3" />
-            </span>
-            Đặt làm mặc định
-          </label>
-        </div>
+        {addressFor === "customer" && (
+          <div className="flex-1 flex items-end px-2">
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <span className="relative inline-flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  {...register("addressIsDefault")}
+                  className="peer appearance-none w-4 h-4 border border-black rounded-sm"
+                />
+                <FaCheck className="absolute text-black opacity-0 peer-checked:opacity-100 w-3 h-3" />
+              </span>
+              Đặt làm mặc định
+            </label>
+          </div>
+        )}
 
         {/* Nút hành động */}
         <div className="flex justify-end mt-3 gap-2">

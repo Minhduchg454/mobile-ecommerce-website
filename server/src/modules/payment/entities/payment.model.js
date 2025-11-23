@@ -11,7 +11,7 @@ const paymentSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    enum: ["VNpay", "COD", "QR"],
+    enum: ["VNpay", "COD", "QR", "BANK"],
   },
   paymentDate: {
     type: Date,

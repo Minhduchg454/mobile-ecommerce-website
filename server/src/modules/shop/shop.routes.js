@@ -44,7 +44,7 @@ router.delete("/service-plans/:sId", controller.deleteServicePlan);
 
 //ShopSubscrible
 router.post("/subscribles", controller.createSubscription);
-router.get("/subscribles/:shopId", controller.getSubscriptionsByShop);
+router.get("/subscribles", controller.getSubscriptions);
 router.put("/subscribles/cancel/:subId", controller.cancelSubscription); //dung patch do chi cap nhat mot phan tai nguyen
 
 //Category-Shop

@@ -11,8 +11,10 @@ export const ShopList = () => {
     (async () => {
       try {
         const res = await apiGetShops({
+          includeSubscription: true,
+          status: "approved",
           sort: "-shopProductCount",
-          limit: 10,
+          limit: 6,
         });
         if (res?.success) setShops(res.shops || []);
         else setErr(res?.message || "Không thể tải dữ liệu");
@@ -70,6 +72,7 @@ export const ShopList = () => {
               shopSoldCount={s.shopSoldCount}
               shopProductCount={s.shopProductCount}
               shopBackground={s.shopBackground}
+              shopIsOfficial={s.shopIsOfficial || false}
               shopId={s._id}
             />
           )}

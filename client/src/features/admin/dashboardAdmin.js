@@ -1,10 +1,7 @@
+import { apiGetOrderDashboardStats } from "../../services/order.api";
 import {
-  apiGetOrderCountsByStatus,
-  apiGetOrderDashboardStats,
-} from "../../services/order.api";
-import {
-  apiGetProductStats,
   apiGetProductDashboardReport,
+  apiGetBrandStats,
 } from "../../services/catalog.api";
 import { apigetShopDashboardStats } from "../../services/shop.api";
 import { useEffect, useState, useMemo } from "react";
@@ -56,12 +53,10 @@ export const DashBoardAdmin = () => {
   const { adminId: adminIdParams } = useParams();
   const { current } = useSelector((s) => s.user);
   const adminId = adminIdParams || current._id;
-
-  const [countsByStatus, setCountsByStatus] = useState({});
-  const [productsStats, setProductsStats] = useState({});
-  const [dashboardStats, setDashboardStats] = useState(null);
-  const [productReport, setProductReport] = useState(null);
-  const [shopDashboard, setShopDashboard] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null); //Thong ke hoa don
+  const [productReport, setProductReport] = useState(null); // thong ke san pham
+  const [shopDashboard, setShopDashboard] = useState(null); //Thong ke shop
+  const [brandStats, setBrandStats] = useState(null);
   const [dateFilter, setDateFilter] = useState({
     from: "",
     to: "",
@@ -79,33 +74,10 @@ export const DashBoardAdmin = () => {
     const from = lastMonth.toISOString().slice(0, 10);
 
     setDateFilter({ from, to });
+    fetchProductDashboard();
+    fetchShopDashboard();
+    fetchBrandStats();
   }, []);
-
-  //--------FetchApi ĐƠN HÀNG + THỐNG KÊ SẢN PHẨM CƠ BẢN-----------
-  const fetchCountsByStatus = async () => {
-    try {
-      const [resOrderStatus, resProductStats] = await Promise.all([
-        apiGetOrderCountsByStatus(),
-        apiGetProductStats(),
-      ]);
-
-      if (resOrderStatus?.success) {
-        setCountsByStatus(resOrderStatus.counts || {});
-        console.log("Đếm trạng thái đơn hàng:", resOrderStatus);
-      }
-
-      if (resProductStats?.success) {
-        setProductsStats(resProductStats.stats || {});
-        console.log(
-          "Thống kê sản phẩm:",
-          resProductStats.stats,
-          resProductStats.scope
-        );
-      }
-    } catch (err) {
-      console.error("Lỗi khi gọi API:", err);
-    }
-  };
 
   const fetchDashBoardStats = async (filter) => {
     try {
@@ -115,8 +87,7 @@ export const DashBoardAdmin = () => {
       });
 
       if (res?.success) {
-        setDashboardStats(res.data || null); // { summary, byStatus, daily }
-        console.log("Thống kê dashboard:", res);
+        setDashboardStats(res.data || null);
       }
     } catch (err) {
       console.error("Lỗi khi gọi API dashboard:", err);
@@ -134,11 +105,21 @@ export const DashBoardAdmin = () => {
       const res = await apiGetProductDashboardReport(params);
 
       if (res?.success) {
-        setProductReport(res.data?.data || res.data || null);
-        console.log("Báo cáo sản phẩm:", res);
+        setProductReport(res?.data || null);
       }
     } catch (err) {
       console.error("Lỗi khi gọi API báo cáo sản phẩm:", err);
+    }
+  };
+
+  const fetchBrandStats = async () => {
+    try {
+      const res = await apiGetBrandStats();
+      if (res?.success) {
+        setBrandStats(res?.data || null);
+      }
+    } catch (err) {
+      console.error("Lỗi khi gọi API báo cáo thương hiệu:", err);
     }
   };
 
@@ -147,26 +128,20 @@ export const DashBoardAdmin = () => {
       const res = await apigetShopDashboardStats({ limit: 10 });
       if (res?.success) {
         setShopDashboard(res.data?.data || res.data || null);
-        console.log("Báo cáo shop:", res);
       }
     } catch (err) {
       console.error("Lỗi khi gọi API báo cáo shop:", err);
     }
   };
 
+  // Tự động fetch dashboard stats khi dateFilter thay đổi
   useEffect(() => {
     if (!dateFilter.from || !dateFilter.to) return;
-
-    fetchCountsByStatus();
     fetchDashBoardStats(dateFilter);
   }, [dateFilter.from, dateFilter.to]);
 
-  useEffect(() => {
-    fetchProductDashboard();
-    fetchShopDashboard();
-  }, []);
-
   const shopSummary = shopDashboard?.summary || null;
+  const productSummary = productReport?.summary || null;
 
   // Dùng useMemo cho gọn
   const countRemindData = useMemo(
@@ -178,21 +153,21 @@ export const DashBoardAdmin = () => {
       },
       {
         label: "Sản phẩm chờ phê duyệt",
-        count: countsByStatus.Confirmed ?? 0,
-        to: ``,
+        count: productSummary?.pendingCount ?? 0,
+        to: `/${path.ADMIN}/${adminId}/${path.A_PRODUCT_APPROVAL}?status=pending`,
       },
       {
-        label: "Yêu cầu mới",
-        count: productsStats?.outOfStock ?? 0,
-        to: ``,
+        label: "Thương hiệu chờ phê đuyệt",
+        count: brandStats?.pending ?? 0,
+        to: `/${path.ADMIN}/${adminId}/${path.A_MANAGE_BRANDS}?sort=newest&status=pending`,
       },
       {
         label: "Sản phẩm bị tạm khóa",
-        count: 0,
-        to: ``,
+        count: productSummary?.blockedCount ?? 0,
+        to: `/${path.ADMIN}/${adminId}/${path.A_PRODUCT_APPROVAL}?status=blocked`,
       },
     ],
-    [countsByStatus, productsStats]
+    [shopSummary, productSummary, adminId]
   );
 
   const titleCls = "px-3 md:px-4 font-bold mb-1";
@@ -237,11 +212,10 @@ export const DashBoardAdmin = () => {
 
   // Data biểu đồ tròn: Sản phẩm đang khuyến mãi / không khuyến mãi
   const productSalePieData = useMemo(() => {
-    if (!productReport?.summary) return [];
+    if (!productSummary) return [];
 
-    const summary = productReport.summary;
-    const totalProducts = summary.totalProducts ?? 0;
-    const onSale = summary.onSaleCount ?? 0;
+    const totalProducts = productSummary.totalProducts ?? 0;
+    const onSale = productSummary.onSaleCount ?? 0;
     const nonSale = Math.max(totalProducts - onSale, 0);
 
     return [
@@ -254,22 +228,28 @@ export const DashBoardAdmin = () => {
         value: nonSale,
       },
     ];
-  }, [productReport]);
+  }, [productSummary]);
 
   // Data biểu đồ tròn: Cơ cấu tồn kho (còn hàng / hết hàng)
   const productInventoryPieData = useMemo(() => {
-    if (!productsStats) return [];
+    if (!productSummary) return [];
+
+    // Cơ cấu sản phẩm (đang bán) bị chia ra Còn hàng / Hết hàng
+    const totalProducts = productSummary.totalProducts ?? 0;
+    const outOfStock = productSummary.outOfStockCount ?? 0;
+    const inStock = Math.max(totalProducts - outOfStock, 0);
+
     return [
       {
         name: "Còn hàng",
-        value: productsStats.inStock ?? 0,
+        value: inStock,
       },
       {
         name: "Hết hàng",
-        value: productsStats.outOfStock ?? 0,
+        value: outOfStock,
       },
     ];
-  }, [productsStats]);
+  }, [productSummary]);
 
   const PIE_SALE_COLORS = ["#3b82f6", "#9ca3af"]; // xanh: đang sale, xám: không sale
   const PIE_COLORS = ["#22c55e", "#ef4444"]; // xanh: còn hàng, đỏ: hết hàng

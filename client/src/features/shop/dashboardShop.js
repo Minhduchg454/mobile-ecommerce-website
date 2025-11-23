@@ -87,12 +87,10 @@ export const DashBoardShop = () => {
 
       if (resOrderStatus?.success) {
         setCountsByStatus(resOrderStatus.counts || {});
-        console.log("Đếm trạng thái đơn hàng:", resOrderStatus.counts);
       }
 
       if (resProductStats?.success) {
         setProductsStats(resProductStats.stats || {});
-        console.log("Thống kê sản phẩm:", resProductStats.stats);
       }
     } catch (err) {
       console.error("Lỗi khi gọi API:", err);
@@ -109,7 +107,6 @@ export const DashBoardShop = () => {
 
       if (res?.success) {
         setDashboardStats(res.data || null); // { summary, byStatus, daily }
-        console.log("Thống kê dashboard:", res);
       }
     } catch (err) {
       console.error("Lỗi khi gọi API dashboard:", err);
@@ -130,8 +127,7 @@ export const DashBoardShop = () => {
 
       if (res?.success) {
         // Tùy response thực tế, chỉnh ở đây nếu cần
-        setProductReport(res.data?.data || res.data || null);
-        console.log("Báo cáo sản phẩm:", res);
+        setProductReport(res?.data || null);
       }
     } catch (err) {
       console.error("Lỗi khi gọi API báo cáo sản phẩm:", err);
@@ -173,7 +169,7 @@ export const DashBoardShop = () => {
       {
         label: "Sản phẩm bị tạm khóa",
         count: 0,
-        to: `/${path.SELLER}/${shopId}/${path.S_MANAGE_PRODUCTS}?filter=blocked`,
+        to: `/${path.SELLER}/${shopId}/${path.S_MANAGE_PRODUCTS}?filter=blocked&status=blocked`,
       },
     ],
     [countsByStatus, shopId, productsStats]

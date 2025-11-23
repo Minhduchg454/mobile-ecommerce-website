@@ -15,8 +15,37 @@ const brandSchema = new Schema(
       lowercase: true,
     },
     brandLogo: {
-      type: String, // lưu URL hoặc đường dẫn ảnh logo
+      type: String,
       default: "",
+    },
+    brandStatus: {
+      type: String,
+      enum: ["pending", "approved", "blocked", "rejected"],
+      default: "pending",
+    },
+    brandWebsite: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    brandDescription: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    brandRequestedById: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+      default: null,
+    },
+    brandReviewReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    brandReviewedAt: {
+      type: Date,
+      default: null,
     },
     isDeleted: {
       type: Boolean,

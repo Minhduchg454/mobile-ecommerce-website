@@ -186,7 +186,8 @@ export const CategoryManage = () => {
               aria-haspopup="listbox"
               aria-expanded={isShowSort}
             >
-              Sắp xếp: <span className="font-bold">{currentSort.label}</span>
+              Sắp xếp:{" "}
+              <span className="font-bold text-sm">{currentSort.label}</span>
               {isShowSort ? (
                 <MdKeyboardArrowUp size={18} className="ml-1" />
               ) : (
@@ -226,7 +227,7 @@ export const CategoryManage = () => {
 
           <button
             onClick={handleCreateCategory}
-            className="bg-button-bg-ac hover:bg-button-bg-hv px-4 py-1 whitespace-nowrap rounded-3xl text-white shadow-md text-sm"
+            className="bg-button-bg-ac hover:bg-button-bg-hv px-3 py-1 whitespace-nowrap rounded-3xl text-white shadow-md text-sm"
           >
             Thêm danh mục mới
           </button>

@@ -8,19 +8,21 @@ import {
   useParams,
 } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import moment, { duration } from "moment";
-
+import moment from "moment";
+import { CreatePreviewProductForm } from "../preview/createPreviewProductForm"; // Đã import
 import {
   apiGetOrdersByCustomer,
   apiUpdateOrders,
   apiGetOrderCountsByStatus,
 } from "../../services/order.api";
+import { apiGetPreviews } from "../../services/preview.api";
 import { showAlert } from "store/app/appSlice";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
-import { showModal } from "store/app/appSlice";
+import { showModal } from "store/app/appSlice"; // Đã import
 import path from "ultils/path";
 import { formatMoney } from "ultils/helpers";
 import emptyOrder from "../../assets/order-empty.png";
+import noPhoto from "../../assets/image-not-found.png";
 import { STATUS_BADGE } from "../../ultils/contants";
 
 // ================== UI helpers ==================
@@ -98,6 +100,12 @@ export const OrderListCustomer = ({ statusOrder }) => {
     }
   };
 
+  const checkIsExpired = (deliveryDate, expireDays = 3) => {
+    if (!deliveryDate) return true;
+    const diffDays = moment().diff(moment(deliveryDate), "days");
+    return diffDays > expireDays;
+  };
+
   const fetchCountsByStatus = async () => {
     try {
       const res = await apiGetOrderCountsByStatus({ customerId: current._id });
@@ -122,14 +130,63 @@ export const OrderListCustomer = ({ statusOrder }) => {
   }, [userId, statusParam, searchKeyword, idParam]);
 
   // ================== Handlers ==================
-  const handleSearchId = (value) => {
-    navigate({
-      pathname: location.pathname,
-      search: createSearchParams({
-        orderStatusName: "", // khi search id thì bỏ lọc trạng thái
-        _id: value.trim(),
-      }).toString(),
-    });
+
+  // Hàm mới: Mở modal đánh giá
+  const handleOpenPreviewModal = async (item, order) => {
+    const previewId = item.previewInfo?._id;
+    const edited = item?.previewInfo?.isEdited || false;
+    let oldPreview = item.previewInfo; // Giữ lại thông tin cơ bản
+
+    // Tải dữ liệu chi tiết nếu đã có ID đánh giá (Lazy loading)
+    if (previewId) {
+      try {
+        // [Chưa xác minh] Giả định API getPreviews hỗ trợ lấy chi tiết theo ID
+        const res = await apiGetPreviews({ _id: previewId });
+        if (res?.success && res.previews?.length > 0) {
+          oldPreview = res.previews[0]; // Cập nhật với dữ liệu chi tiết
+        }
+      } catch (e) {
+        console.error("Lỗi khi tải chi tiết đánh giá:", e);
+        dispatch(
+          showAlert({
+            title: "Lỗi",
+            message: "Không thể tải chi tiết đánh giá.",
+            variant: "danger",
+          })
+        );
+        // dispatch(showModal({ isShowModal: false, modalChildren: null })); // Đóng modal nếu lỗi
+        return;
+      } finally {
+        // [Suy luận] Nếu có hiển thị Loading, cần ẩn nó đi ở đây
+      }
+    }
+
+    dispatch(
+      showModal({
+        isShowModal: true,
+        modalChildren: (
+          <CreatePreviewProductForm
+            onClose={() => {
+              dispatch(showModal({ isShowModal: false, modalChildren: null }));
+              fetchOrders();
+              fetchCountsByStatus();
+            }}
+            customerId={userId}
+            orderId={order._id}
+            pvId={item.productVariation?._id}
+            deliveryDate={order.orderDeliveryDate}
+            isEdited={edited}
+            oldPreview={oldPreview}
+          />
+        ),
+      })
+    );
+  };
+
+  // Hàm mới: Kiểm tra sản phẩm đã được đánh giá chưa
+  const checkIfPreviewed = (item) => {
+    // [Chưa xác minh] Giả định server trả về item.previewInfo khi đã đánh giá
+    return !!item.previewInfo?._id;
   };
 
   const handleClickTab = (tabValue) => {
@@ -202,7 +259,6 @@ export const OrderListCustomer = ({ statusOrder }) => {
 
     registerHandlers(id, {
       onConfirm: async () => {
-        console.log("[CancelOrder] Gửi yêu cầu hủy:", orderId);
         const res = await apiUpdateOrders(orderId, {
           orderStatusName: "Cancelled",
         });
@@ -247,7 +303,6 @@ export const OrderListCustomer = ({ statusOrder }) => {
   const tabCss =
     "flex-1 py-1 px-2 transition-all duration-200 rounded-2xl hover:bg-gray-200 whitespace-nowrap text-sm lg:text-base";
 
-  console.log("Thong tin don hang", orders);
   // ================== Render ==================
   return (
     <div className="w-full relative px-4">
@@ -297,6 +352,7 @@ export const OrderListCustomer = ({ statusOrder }) => {
         ) : orders?.length > 0 ? (
           orders.map((o) => {
             const statusName = o?.orderStatusId?.orderStatusName;
+            const isSucceeded = statusName === "Succeeded"; // Trạng thái Hoàn thành
             const badge = STATUS_BADGE[statusName] || {
               label: "Không xác định",
               bg: "bg-gray-100",
@@ -309,7 +365,6 @@ export const OrderListCustomer = ({ statusOrder }) => {
                 className="bg-white rounded-3xl  border p-5 space-y-4"
               >
                 {/* Header */}
-
                 <div className="flex justify-between items-center border-b pb-3">
                   <div className="flex items-center justify-start gap-2">
                     <div className="relative">
@@ -352,53 +407,103 @@ export const OrderListCustomer = ({ statusOrder }) => {
                 {/* Items */}
                 <div className="flex flex-col gap-3">
                   {(o.items || []).map((it) => {
-                    const pv = it.productVariation || it.pvId;
+                    const pv = it.productVariation;
                     const product = pv?.productId;
-                    const thumb = pv?.pvImages?.[0];
+                    const thumb = pv?.pvImages?.[0] || noPhoto;
                     const pvName = pv?.pvName || "Phân loại";
                     const productName = product?.productName || "Sản phẩm";
+                    const isOnSale = product?.productDiscountPercent > 0;
                     const qty = it.odQuantity ?? 1;
                     const unitPrice = it.odPrice ?? 0;
                     const originalPrice = pv?.pvOriginalPrice || pv?.pvPrice;
+                    const isPreviewed = checkIfPreviewed(it);
+                    const isExpired = checkIsExpired(o.orderDeliveryDate);
+                    const isAlreadyEdited = it.previewInfo?.isEdited || false;
+
+                    let buttonText = "";
+                    let buttonClass = "";
+
+                    if (isSucceeded) {
+                      if (isExpired || isAlreadyEdited) {
+                        buttonText = isPreviewed
+                          ? "Xem đánh giá"
+                          : "Hết hạn đánh giá";
+                        buttonClass =
+                          "text-gray-500 bg-transparent border-0 hover:text-button-bg-ac hover:underline";
+                      } else {
+                        buttonText = isPreviewed ? "Sửa đánh giá" : "Đánh giá";
+                        buttonClass = isPreviewed
+                          ? " text-black hover:bg-green-600 border"
+                          : " text-black hover:bg-yellow-600 border";
+                      }
+                    }
                     return (
                       <div
                         key={it._id}
-                        className="flex items-center gap-4 border rounded-3xl p-3 bg-white shadow-sm"
+                        className="flex justify-between items-center gap-4 border rounded-3xl p-3 bg-white shadow-sm "
                       >
-                        <img
-                          src={thumb}
-                          alt="thumb"
-                          className="w-20 h-20 object-cover rounded-xl border"
-                          onError={(e) => {
-                            e.currentTarget.src = "/no-image.png";
+                        <button
+                          onClick={() => {
+                            navigate(`/${path.PRODUCTS}/${it.pvId}`);
                           }}
-                        />
-                        <div className="flex flex-col flex-1">
-                          <span className="font-semibold text-sm md:text-base text-gray-900">
-                            {productName}
-                          </span>
-                          <span className="text-xs md:text-sm text-gray-500 mt-1">
-                            Phân loại: {pvName}
-                          </span>
-                          <span className="text-xs md:text-sm text-gray-500 mt-1">
-                            x{qty}
-                          </span>
-                        </div>
-                        <div className="flex flex-col md:flex-row gap-2 text-right min-w-[120px]">
-                          <span className="text-gray-400 line-through text-xs md:text-sm">
-                            {formatMoney(originalPrice)}đ
-                          </span>
-                          <span className="text-red-500 text-xs md:text-sm">
-                            {formatMoney(unitPrice)}đ
-                          </span>
-                          {/* TODO: Nút đánh giá nếu cần bổ sung logic như code cũ */}
+                          className="flex gap-2"
+                        >
+                          <img
+                            src={thumb}
+                            alt="thumb"
+                            className="w-20 h-20 object-cover rounded-xl border"
+                            onError={(e) => {
+                              e.currentTarget.src = "/no-image.png";
+                            }}
+                          />
+
+                          <div className="flex flex-col justify-center items-start flex-1">
+                            <span className="text-left font-semibold text-sm md:text-base text-gray-900">
+                              {isOnSale && (
+                                <span className="mr-1 rounded-3xl border bg-red-500 text-white text-[8px] px-1 py-1 align-middle">
+                                  Sale {product?.productDiscountPercent}%
+                                </span>
+                              )}
+
+                              {productName}
+                            </span>
+                            <span className="text-xs md:text-sm text-gray-500 mt-1">
+                              Phân loại: {pvName}
+                            </span>
+                            <span className="text-xs md:text-sm text-gray-500 mt-1">
+                              x{qty}
+                            </span>
+                          </div>
+                        </button>
+                        <div className="flex flex-col justify-center items-end gap-2 text-right min-w-[120px]">
+                          <div className="flex flex-col">
+                            <span className="text-gray-400 line-through text-xs md:text-sm">
+                              {formatMoney(originalPrice)}đ
+                            </span>
+                            <span className="text-red-500 text-xs md:text-sm">
+                              {formatMoney(unitPrice)}đ
+                            </span>
+                          </div>
+
+                          {/* Nút đánh giá/Xem chi tiết */}
+                          {isSucceeded && (
+                            <button
+                              onClick={() => {
+                                handleOpenPreviewModal(it, o);
+                              }}
+                              className={`w-fit text-xs px-2 py-1 rounded-3xl whitespace-nowrap transition-all duration-150 border
+                                ${buttonClass}
+                              `}
+                            >
+                              {buttonText}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Footer */}
                 <div className="flex flex-col  text-sm">
                   <div className="flex justify-between items-center pt-2 gap-4">
                     <div className="text-xs md:text-sm">
@@ -426,7 +531,6 @@ export const OrderListCustomer = ({ statusOrder }) => {
                     </div>
                   </div>
 
-                  {/* Hành động */}
                   {/* Hành động */}
                   <div className="flex justify-end items-center gap-2 pt-2 text-sm md:text-base">
                     <button

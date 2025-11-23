@@ -15,7 +15,6 @@ export const InformationUserPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current, updating } = useSelector((state) => state.user);
-  const { isShowModal } = useSelector((s) => s.app);
   const [isShow, setIsShow] = useState(false);
 
   const GENDER_OPTIONS = [
@@ -24,7 +23,6 @@ export const InformationUserPage = () => {
     { value: "other", label: "Khác" },
   ];
 
-  // ===================== useForm chính (Thông tin chung)
   const {
     register,
     handleSubmit,
@@ -32,7 +30,7 @@ export const InformationUserPage = () => {
     setValue,
     watch,
     clearErrors,
-    formState: { errors, isDirty, isValid, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm({
     mode: "onChange",
     defaultValues: {
@@ -515,7 +513,7 @@ export const InformationUserPage = () => {
           {/* khối đổi mật khẩu */}
           <h1 className={title}>Bảo mật</h1>
           <div className="bg-white p-3 md:p-4 rounded-3xl">
-            <div className={inputRow}>
+            <div className={`${inputRow} border-none`}>
               <label className={labelCls}>Mật khẩu</label>
               <button
                 type="button"
@@ -535,8 +533,8 @@ export const InformationUserPage = () => {
 
       {/* ===================== MODAL ĐỔI MẬT KHẨU (useForm riêng) */}
       {isShow && (
-        <div className="fixed inset-0 z-[20] bg-black/40 backdrop-blur-sm flex items-center justify-center p-3">
-          <div className="bg-white backdrop-blur rounded-3xl shadow-xl w-full max-w-md p-5">
+        <div className="fixed inset-0 z-[20] bg-white/60 backdrop-blur-sm flex items-center justify-center p-3">
+          <div className="bg-white backdrop-blur rounded-3xl shadow-xl w-full max-w-md p-5 border">
             <h3 className="text-lg font-semibold text-center mb-3 ">
               Đổi mật khẩu
             </h3>
@@ -589,7 +587,7 @@ export const InformationUserPage = () => {
                 />
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 text-sm">
                 <button
                   type="button"
                   onClick={() => {
@@ -597,17 +595,17 @@ export const InformationUserPage = () => {
                     resetPw();
                     setShowPw({ old: false, next: false, confirm: false });
                   }}
-                  className="w-1/2 px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300"
+                  className="px-4 py-1 rounded-3xl bg-button-bg hover:bg-button-hv"
                 >
                   Huỷ
                 </button>
                 <button
                   type="submit"
                   disabled={pwDisabled}
-                  className={`w-1/2 px-4 py-2 rounded-2xl text-white ${
+                  className={`px-4 py-1 rounded-3xl text-white ${
                     pwDisabled
                       ? "bg-blue-400/50 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
+                      : "bg-button-bg-ac hover:bg-button-bg-hv"
                   }`}
                 >
                   {pwIsSubmitting ? "Đang xử lý..." : "Xác nhận"}
@@ -621,7 +619,6 @@ export const InformationUserPage = () => {
   );
 };
 
-/** Trường mật khẩu dùng RHF (có ẩn/hiện) */
 const PasswordFieldRHF = ({
   name,
   label,

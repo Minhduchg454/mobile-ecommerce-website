@@ -32,6 +32,15 @@ const shopSchema = new Schema(
       default: "pending",
     },
     shopIsOfficial: { type: Boolean, default: false },
+    shopReviewReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    shopReviewedAt: {
+      type: Date,
+      default: null,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -40,7 +49,6 @@ const shopSchema = new Schema(
     deletedAt: {
       type: Date,
     },
-    default: false,
   },
   { _id: false },
   { timestamps: true }

@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { apiGetAddresses, apiDeleteAddress } from "../../services/user.api";
-import { FaEdit, FaTrash } from "react-icons/fa";
 import { showAlert } from "store/app/appSlice";
 import { AddressFormModal } from "./AddressFormModal";
 import { showModal } from "store/app/appSlice";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
+import { AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
 
 export const AddressManage = ({ role }) => {
   const dispatch = useDispatch();
@@ -15,11 +15,22 @@ export const AddressManage = ({ role }) => {
   const addressFor = role || "customer";
   const title = "font-bold mb-1";
   const addressRow =
-    "pb-2 mt-2 border-b border-gray-200 flex flex-col gap-1 md:gap-0 md:flex-row md:items-center md:justify-between";
+    "pb-2 mt-2  flex flex-col gap-1 md:gap-0 md:flex-row md:items-center md:justify-between";
 
   // =============== STATE ===============
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // =============== LOGIC KIỂM SOÁT BUTTON THÊM ĐỊA CHỈ ===============
+  // Xác định xem nút "Thêm địa chỉ" có nên được hiển thị hay không
+  const shouldShowAddButton = useMemo(() => {
+    // Nếu là customer (addressFor !== 'shop'), luôn cho phép thêm
+    if (addressFor !== "shop") {
+      return true;
+    }
+
+    return count === 0;
+  }, [addressFor, count]);
 
   // =============== DATA ===============
   const fetchAddresses = async () => {
@@ -122,15 +133,18 @@ export const AddressManage = ({ role }) => {
           {count}{" "}
           {addressFor === "customer" ? "địa chỉ nhận hàng" : "địa chỉ lấy hàng"}
         </h1>
-        <button
-          onClick={() => openAddressModal(null)}
-          className="px-3 py-1 bg-button-bg-ac hover:bg-button-bg-hv border rounded-3xl text-white"
-        >
-          Thêm địa chỉ
-        </button>
+
+        {shouldShowAddButton && (
+          <button
+            onClick={() => openAddressModal(null)}
+            className="px-3 py-1 bg-button-bg-ac hover:bg-button-bg-hv border rounded-3xl text-white text-sm"
+          >
+            Thêm địa chỉ
+          </button>
+        )}
       </div>
 
-      <div className="bg-white p-3 md:p-4 rounded-3xl mb-4">
+      <div className="bg-white p-3 md:p-4 rounded-3xl mb-4 border">
         {loading ? (
           <p className="text-gray-600">Đang tải địa chỉ…</p>
         ) : addresses.length === 0 ? (
@@ -164,18 +178,19 @@ export const AddressManage = ({ role }) => {
                   </div>
                 </div>
 
+                {/* Chức năng Sửa và Xoá giữ nguyên */}
                 <div className="flex items-center gap-2 mt-2 md:mt-0 text-sm md:text-base">
                   <button
                     onClick={() => openAddressModal(addr)}
                     className="px-3 py-1 rounded-2xl border bg-button-bg hover:bg-gray-200 inline-flex items-center gap-2"
                   >
-                    <FaEdit /> Sửa
+                    <AiOutlineEdit /> Sửa
                   </button>
                   <button
                     onClick={() => handleDelete(addr)}
                     className="px-3 py-1 rounded-2xl border bg-button-bg hover:bg-gray-200 inline-flex items-center gap-2"
                   >
-                    <FaTrash /> Xoá
+                    <AiOutlineDelete /> Xoá
                   </button>
                 </div>
               </li>

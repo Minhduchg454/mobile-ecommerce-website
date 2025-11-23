@@ -29,13 +29,11 @@ export const VoucherSelectModal = ({
         : await apiGetCoupons({ createdByType: "Admin" });
 
       const data = res?.coupons;
-      console.log("Dữ liệu nhận voucher:", res);
+
       if (!res?.success) return setCoupons([]);
 
       // ======== CHUẨN HÓA THỜI GIAN ========
-      // nowVN là thời điểm hiện tại theo giờ Việt Nam
       const nowVN = new Date(Date.now() + 7 * 60 * 60 * 1000);
-      // Bỏ phần giờ, chỉ giữ ngày để tránh lệch múi giờ
       const todayVN = new Date(
         nowVN.getFullYear(),
         nowVN.getMonth(),
@@ -43,6 +41,8 @@ export const VoucherSelectModal = ({
       );
 
       const total = Number(orderTotal || 0);
+
+      const up = (s) => (s || "").toUpperCase();
 
       const actives = (data || [])
         .filter((cp) => {
@@ -56,7 +56,6 @@ export const VoucherSelectModal = ({
           const limit = Number(cp.couponUsageLimit ?? -1);
           const used = Number(cp.couponUsedCount || 0);
 
-          // Làm phẳng start và end về đầu ngày VN
           const startDay = start
             ? new Date(start.getFullYear(), start.getMonth(), start.getDate())
             : null;
@@ -75,32 +74,20 @@ export const VoucherSelectModal = ({
 
           const ok = reasons.length === 0;
 
-          console.log("[COUPON CHECK]", cp.couponCode, {
-            ok,
-            nowVN,
-            startDay,
-            endDay,
-            total,
-            minOrder,
-            limit,
-            used,
-            reasons,
-          });
-
           return ok;
         })
         .map((cp) => {
           let color = "bg-purple-100";
-          if (
-            String(cp.couponCode || "")
-              .toUpperCase()
-              .startsWith("FREESHIP")
-          ) {
+          if (up(cp.couponCode).startsWith("FREESHIP")) {
             color = "bg-green-100";
           } else if (cp.couponDiscountType === "percentage") {
             color = "bg-blue-100";
           }
-          return { ...cp, color };
+          return {
+            ...cp,
+            color,
+            isFreeShip: up(cp.couponCode).startsWith("FREESHIP"),
+          }; // Gắn cờ loại
         });
 
       setCoupons(actives);
@@ -146,35 +133,46 @@ export const VoucherSelectModal = ({
     const isFS = String(cp.couponCode || "")
       .toUpperCase()
       .startsWith("FREESHIP");
-    const color = isFS ? "bg-green-100" : cp.color;
-    cp.color = color;
-    cp.appliedAmount = discount;
-    return { ...cp };
+
+    // Đảm bảo các trường bổ sung được gán vào object mới
+    return {
+      ...cp,
+      color: isFS ? "bg-green-100" : cp.color,
+      appliedAmount: discount,
+      isFreeShip: isFS, // Gán lại cờ để sử dụng trong handleToggle
+    };
   };
 
+  // 💡 LOGIC ĐÃ SỬA: Chỉ cho phép chọn 1 voucher trong cùng 1 loại (FreeShip hoặc Giảm giá)
   const handleToggle = (cp) => {
     setSelected((prev) => {
       const exists = prev.find((x) => x._id === cp._id);
-      let next;
+      const isFreeShipVoucher = cp.isFreeShip;
+      let next = [...prev];
+
       if (exists) {
-        next = prev.filter((x) => x._id !== cp._id);
+        // Nếu đã tồn tại, loại bỏ nó (Hủy chọn)
+        next = next.filter((x) => x._id !== cp._id);
       } else {
-        next = [...prev, withAppliedAmount(cp)];
+        // Nếu chưa tồn tại, thêm nó vào, đồng thời loại bỏ các voucher cùng loại khác
+
+        // 1. Loại bỏ tất cả voucher cùng loại đang được chọn (chỉ giữ lại voucher khác loại)
+        next = next.filter((x) => x.isFreeShip !== isFreeShipVoucher);
+
+        // 2. Thêm voucher mới được chọn vào
+        next.push(withAppliedAmount(cp));
       }
+
       onSelectVoucher(next);
       return next;
     });
   };
 
   const { freeshipList, otherList } = useMemo(() => {
-    const up = (s) => (s || "").toUpperCase();
+    // Chúng ta dựa vào cờ isFreeShip đã thêm trong fetchCoupons
     return {
-      freeshipList: coupons.filter((cp) =>
-        up(cp.couponCode).startsWith("FREESHIP")
-      ),
-      otherList: coupons.filter(
-        (cp) => !up(cp.couponCode).startsWith("FREESHIP")
-      ),
+      freeshipList: coupons.filter((cp) => cp.isFreeShip),
+      otherList: coupons.filter((cp) => !cp.isFreeShip),
     };
   }, [coupons]);
 

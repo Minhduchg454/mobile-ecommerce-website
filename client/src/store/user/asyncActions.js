@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"; //giup tao cac hanh dong bat dong bo, thuong goi la api
-import * as apis from "../../apis";
+
 import { apiGetCustomerCart } from "../../services/customer.api";
 import {
   apiCreateCartItem,
@@ -99,9 +99,6 @@ export const updateCartItem = createAsyncThunk(
           );
         }
       } else {
-        // Chưa có trong DB -> tạo mới
-        // Từ ProductDetail: tạo với inc (số vừa thêm), không phải finalQtyLocal (vì server chưa có)
-        // Từ Cart (ghi đè): tạo với inc
         const createQty = Math.max(0, inc);
 
         // Nếu createQty = 0 thì không tạo
@@ -155,24 +152,6 @@ export const removeCartItem = createAsyncThunk(
       }
     } catch (err) {
       console.error("❌ Không thể xóa sản phẩm khỏi giỏ hàng:", err);
-    }
-  }
-);
-
-export const fetchAddresses = createAsyncThunk(
-  "user/fetchAddresses",
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const userId = getState().user.current?._id;
-      const res = await apis.apiGetAddressesByUser({ userId });
-
-      if (res.success) {
-        return res.data;
-      } else {
-        return rejectWithValue("Không thể lấy địa chỉ.");
-      }
-    } catch (err) {
-      return rejectWithValue("Lỗi khi lấy địa chỉ.");
     }
   }
 );

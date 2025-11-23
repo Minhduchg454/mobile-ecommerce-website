@@ -1,7 +1,15 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
+import { calculateFinalPrice } from "../../ultils/helpers";
+import { CreateBrandForm } from "./createBrandForm";
 
 import {
   apiCreateProduct,
@@ -11,22 +19,26 @@ import {
   apiDeleteProductVariation,
   apiGetProductCategories,
   apiGetBrands,
+  apiGetThemes,
 } from "../../services/catalog.api";
 
 import { apiGetShopCategories } from "../../services/shop.api";
-import { Loading, CloseButton } from "../../components";
+import { Loading, CloseButton, ImageUploader } from "../../components";
 import { showAlert, showModal } from "store/app/appSlice";
 import path from "ultils/path";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import { AiOutlineExclamationCircle } from "react-icons/ai";
-import { formatMoney, handleMoneyChange } from "../../ultils/helpers";
+import {
+  formatMoney,
+  handleMoneyChange,
+  getServiceFeatureValue,
+} from "../../ultils/helpers";
 
 // ===========================
 // Helpers
 // ===========================
 const toNumberOrEmpty = (v) => (typeof v === "number" ? v : "");
 
-// Giống fetchUrlAsFile trong ShopInformation:
 // biến URL ảnh từ server thành File + blob preview
 const useFetchUrlAsFile = () => {
   const fetchUrlAsFile = useCallback(async (url, indexHint = 0) => {
@@ -66,14 +78,236 @@ const getYouTubeEmbed = (url) => {
   }
 };
 
+const ProductBlockCreator = ({
+  blocksCount,
+  onAddBlock,
+  onClose,
+  isSubmitDisabled,
+}) => {
+  const [newBlockType, setNewBlockType] = useState("text"); // "text" | "image" | "video" | "videoUrl"
+  const [draftText, setDraftText] = useState(""); // cho text.content
+  const [draftImageCaption, setDraftImageCaption] = useState(""); // cho image/video .content
+  const [draftImageAlt, setDraftImageAlt] = useState(""); // cho image/video .alt
+  const [draftMediaFile, setDraftMediaFile] = useState(null); // cho image/video file
+  const [draftVideoUrl, setDraftVideoUrl] = useState(""); // cho videoUrl.url
+  const [draftVideoUrlDesc, setDraftVideoUrlDesc] = useState(""); // cho videoUrl.content
+
+  const handleAddBlock = () => {
+    const order = blocksCount;
+    let newBlock = null;
+    let newBlockFile = null;
+
+    if (newBlockType === "text") {
+      if (!draftText.trim()) return;
+      newBlock = { type: "text", content: draftText.trim(), order };
+    } else if (newBlockType === "image" || newBlockType === "video") {
+      if (!draftMediaFile) return;
+
+      const objectUrl = URL.createObjectURL(draftMediaFile);
+
+      newBlock = {
+        type: newBlockType,
+        content: draftImageCaption.trim(),
+        alt: draftImageAlt.trim(),
+        order,
+        previewUrl: objectUrl,
+      };
+      newBlockFile = draftMediaFile;
+    } else if (newBlockType === "videoUrl") {
+      if (!draftVideoUrl.trim()) return;
+      newBlock = {
+        type: "videoUrl",
+        url: draftVideoUrl.trim(),
+        content: draftVideoUrlDesc.trim(),
+        alt: "",
+        order,
+      };
+    } else {
+      return;
+    }
+
+    // Gửi data và file về component cha
+    onAddBlock(newBlock, newBlockFile);
+  };
+
+  // Logic kiểm tra nút Thêm có bị disable không
+  const isAddButtonDisabled =
+    isSubmitDisabled ||
+    (newBlockType === "text" && !draftText.trim()) ||
+    ((newBlockType === "image" || newBlockType === "video") &&
+      !draftMediaFile) ||
+    (newBlockType === "videoUrl" && !draftVideoUrl.trim());
+
+  return (
+    <div
+      className=" bg-white border rounded-2xl shadow-lg p-4 w-[90vw] max-w-[700px] text-sm relative"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Chọn loại block */}
+      <div className="mb-3">
+        <label className="block text-xs font-medium text-gray-700 mb-1">
+          Loại khối
+        </label>
+        <select
+          className="border rounded-xl px-3 py-2 w-full text-xs md:text-sm"
+          value={newBlockType}
+          onChange={(e) => {
+            const v = e.target.value;
+            setNewBlockType(v);
+            // reset drafts
+            setDraftText("");
+            setDraftImageCaption("");
+            setDraftImageAlt("");
+            setDraftMediaFile(null);
+            setDraftVideoUrl("");
+            setDraftVideoUrlDesc("");
+          }}
+        >
+          <option value="text">Đoạn văn bản</option>
+          <option value="image">Hình ảnh (upload file)</option>
+          <option value="video">Video (upload file)</option>
+          <option value="videoUrl">Video link (YouTube,...)</option>
+        </select>
+      </div>
+      <CloseButton onClick={onClose} className="absolute top-2 right-2" />
+
+      {/* Form theo loại */}
+      {newBlockType === "text" && (
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Nội dung văn bản
+          </label>
+          <textarea
+            className="border rounded-xl px-3 py-2 w-full text-sm"
+            rows={4}
+            placeholder="Nhập mô tả..."
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+          />
+        </div>
+      )}
+
+      {(newBlockType === "image" || newBlockType === "video") && (
+        <>
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Chú thích / mô tả hiển thị
+            </label>
+            <input
+              className="border rounded-xl px-3 py-2 w-full text-sm"
+              placeholder="Ví dụ: Mặt trước sản phẩm"
+              value={draftImageCaption}
+              onChange={(e) => setDraftImageCaption(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Alt (mô tả ảnh cho SEO / hỗ trợ truy cập)
+            </label>
+            <input
+              className="border rounded-xl px-3 py-2 w-full text-sm"
+              placeholder="Ví dụ: Ảnh chụp iPhone màu xanh"
+              value={draftImageAlt}
+              onChange={(e) => setDraftImageAlt(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              File {newBlockType === "image" ? "ảnh" : "video"}
+            </label>
+            <ImageUploader
+              multiple={false}
+              value={draftMediaFile}
+              previews={
+                draftMediaFile ? URL.createObjectURL(draftMediaFile) : null
+              }
+              onChange={(file) => {
+                if (draftMediaFile?.previewUrl?.startsWith("blob:")) {
+                  URL.revokeObjectURL(draftMediaFile.previewUrl);
+                }
+                setDraftMediaFile(file);
+              }}
+              label="ảnh"
+            />
+          </div>
+        </>
+      )}
+
+      {newBlockType === "videoUrl" && (
+        <>
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              URL video
+            </label>
+            <input
+              className="border rounded-xl px-3 py-2 w-full text-sm"
+              placeholder="https://youtu.be/..."
+              value={draftVideoUrl}
+              onChange={(e) => setDraftVideoUrl(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Mô tả / ghi chú
+            </label>
+            <input
+              className="border rounded-xl px-3 py-2 w-full text-sm"
+              placeholder="Giới thiệu tổng quan..."
+              value={draftVideoUrlDesc}
+              onChange={(e) => setDraftVideoUrlDesc(e.target.value)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Actions */}
+      <div className="flex justify-end gap-2 mt-4">
+        <button
+          type="button"
+          className="px-4 py-1 bg-gray-200 rounded-3xl hover:bg-gray-300 text-sm"
+          onClick={onClose}
+        >
+          Hủy
+        </button>
+
+        <button
+          type="button"
+          className="px-4 py-1 bg-button-bg-ac hover:bg-button-bg-hv text-white rounded-3xl text-sm"
+          onClick={handleAddBlock}
+          disabled={isAddButtonDisabled}
+        >
+          Thêm
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const CreateProduct = () => {
   const { state } = useLocation();
   const initialProduct = state?.product || null;
-
+  const initialThemes = initialProduct?.productThemes?.map((t) => t._id) || [];
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current } = useSelector((s) => s.seller);
-  const isBlock = current?.shopStatus === "blocked";
+
+  // LẤY THÔNG TIN GÓI DỊCH VỤ VÀ SỐ LƯỢNG SẢN PHẨM HIỆN TẠI
+  const servicePlan = current?.activeSubscription;
+  const isShopBlocked = current?.shopStatus === "blocked";
+  const productCount = current?.shopProductCount || 0;
+  const isEditing = !!initialProduct; // Đang ở chế độ chỉnh sửa
+
+  // 1. Lấy giới hạn sản phẩm (mặc định là 0 nếu không có gói)
+  // Chỉ áp dụng giới hạn khi tạo mới, không giới hạn khi chỉnh sửa
+  const MAX_PRODUCTS = getServiceFeatureValue(servicePlan, "MAX_PRODUCTS", 0);
+  const isOperationDisabled =
+    isShopBlocked || !servicePlan || servicePlan.subStatus !== "active";
+  const isCreateLimited = !isEditing && productCount >= MAX_PRODUCTS;
+  const isProductSubmitDisabled = isOperationDisabled || isCreateLimited;
+  // ----------------------------------------------------------------------
 
   const fetchUrlAsFile = useFetchUrlAsFile();
 
@@ -83,21 +317,25 @@ export const CreateProduct = () => {
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoryShops, setCategoryShops] = useState([]);
-
+  const [themes, setThemes] = useState([]);
+  const [selectedThemeIds, setSelectedThemeIds] = useState([]);
   useEffect(() => {
     const fetchOptions = async (shopId) => {
       try {
-        const [resBrands, resCategories, resCategoryShops] = await Promise.all([
-          apiGetBrands(),
-          apiGetProductCategories(),
-          apiGetShopCategories({ shopId }),
-        ]);
+        const [resBrands, resCategories, resCategoryShops, resThemes] =
+          await Promise.all([
+            apiGetBrands(),
+            apiGetProductCategories(),
+            apiGetShopCategories({ shopId }),
+            apiGetThemes(),
+          ]);
 
         if (resBrands?.success) setBrands(resBrands.brands || []);
         if (resCategories?.success)
           setCategories(resCategories.categories || []);
         if (resCategoryShops?.success)
           setCategoryShops(resCategoryShops.categoryShops || []);
+        if (resThemes?.success) setThemes(resThemes?.themes || []);
       } catch (err) {
         dispatch(
           showAlert({
@@ -113,6 +351,20 @@ export const CreateProduct = () => {
     if (current?._id) fetchOptions(current._id);
   }, [current?._id, dispatch]);
 
+  const handleSelectTheme = (themeId) => {
+    if (isProductSubmitDisabled) return;
+
+    setSelectedThemeIds((prevIds) => {
+      const idString = String(themeId);
+      if (prevIds.includes(idString)) {
+        // Đã chọn -> Bỏ chọn (Lọc ra khỏi mảng)
+        return prevIds.filter((id) => id !== idString);
+      } else {
+        // Chưa chọn -> Thêm vào mảng
+        return [...prevIds, idString];
+      }
+    });
+  };
   // =========================================================
   // STATE / FORM SẢN PHẨM
   // =========================================================
@@ -126,7 +378,6 @@ export const CreateProduct = () => {
     initialProduct?.productThumb || ""
   );
   const thumbOriginalRef = useRef(initialProduct?.productThumb || "");
-  const productThumbInputRef = useRef(null);
 
   // FORM sản phẩm (text fields / số / select)
   const {
@@ -152,6 +403,11 @@ export const CreateProduct = () => {
     },
   });
 
+  // Theo dõi giá trị giảm giá sản phẩm cha
+  const productDiscountPercent = watchProduct("productDiscountPercent");
+
+  // [ĐÃ XÓA] Logic useMemo productFinalPriceEstimate đã được loại bỏ theo yêu cầu
+
   // Nếu initialProduct đổi thì sync lại form + thumbnail states
   useEffect(() => {
     resetProductForm({
@@ -173,6 +429,12 @@ export const CreateProduct = () => {
     thumbOriginalRef.current = initialProduct?.productThumb || "";
     setThumbLocal(null);
     setThumbPreview(initialProduct?.productThumb || "");
+    if (initialProduct?.productThemes?.length > 0) {
+      const initialThemeIds = initialProduct.productThemes.map((t) => t._id);
+      setSelectedThemeIds(initialThemeIds);
+    } else {
+      setSelectedThemeIds([]);
+    }
   }, [initialProduct, resetProductForm]);
 
   // Khi options load xong thì set lại select nếu có dữ liệu server
@@ -193,28 +455,14 @@ export const CreateProduct = () => {
         shouldDirty: false,
       });
     }
-  }, [brands, categories, categoryShops, initialProduct, setValueProduct]);
-
-  const pickProductThumb = (file) => {
-    if (!file || !file.type.startsWith("image/")) return;
-
-    // clear blob cũ nếu có
-    if (thumbPreview?.startsWith("blob:")) {
-      URL.revokeObjectURL(thumbPreview);
-    }
-
-    const blobUrl = URL.createObjectURL(file);
-    setThumbLocal(file);
-    setThumbPreview(blobUrl);
-  };
-
-  const clearProductThumb = () => {
-    if (thumbPreview?.startsWith("blob:")) {
-      URL.revokeObjectURL(thumbPreview);
-    }
-    setThumbLocal(null);
-    setThumbPreview(""); // nghĩa là muốn xoá thumbnail
-  };
+  }, [
+    brands,
+    categories,
+    categoryShops,
+    themes,
+    initialProduct,
+    setValueProduct,
+  ]);
 
   const undoProductThumb = () => {
     if (thumbPreview?.startsWith("blob:")) {
@@ -236,8 +484,6 @@ export const CreateProduct = () => {
   // Khối mô tả chi tiết sản phẩm
   const [blocks, setBlocks] = useState(
     initialProduct?.productContentBlocks?.map((b, idx) => {
-      // Map từ format server -> format FE dùng để gửi lại
-      // (ở create mới thường sẽ rỗng nên branch này chủ yếu dùng cho edit)
       if (b.type === "text") {
         return {
           type: "text",
@@ -276,68 +522,40 @@ export const CreateProduct = () => {
   // thứ tự TRÙNG với thứ tự xuất hiện của các block có type image/video trong `blocks`
   const [blockFiles, setBlockFiles] = useState([]);
 
-  // popup thêm block
-  const [showBlockCreator, setShowBlockCreator] = useState(false);
+  // 1. Hàm xử lý dữ liệu trả về từ Modal và cập nhật state
+  const handleBlockAdd = useCallback(
+    (newBlock, newBlockFile) => {
+      setBlocks((prevBlocks) => {
+        // Khi tạo block media mới, URL blob đã được tạo trong modal
+        return [...prevBlocks, newBlock];
+      });
 
-  // form tạm để tạo block mới
-  const [newBlockType, setNewBlockType] = useState("text"); // "text" | "image" | "video" | "videoUrl"
-  const [draftText, setDraftText] = useState(""); // cho text.content
-  const [draftImageCaption, setDraftImageCaption] = useState(""); // cho image/video .content
-  const [draftImageAlt, setDraftImageAlt] = useState(""); // cho image/video .alt
-  const [draftMediaFile, setDraftMediaFile] = useState(null); // cho image/video file
-  const [draftVideoUrl, setDraftVideoUrl] = useState(""); // cho videoUrl.url
-  const [draftVideoUrlDesc, setDraftVideoUrlDesc] = useState(""); // cho videoUrl.content
+      if (newBlockFile) {
+        setBlockFiles((prevFiles) => [...prevFiles, newBlockFile]);
+      }
+      dispatch(showModal({ isShowModal: false })); // Đóng modal sau khi thêm
+    },
+    [setBlocks, setBlockFiles, dispatch]
+  );
 
-  const handleAddBlock = () => {
-    const order = blocks.length; // block mới sẽ đứng cuối
-    let newBlock = null;
-    let newBlockFiles = [...blockFiles];
-
-    if (newBlockType === "text") {
-      newBlock = {
-        type: "text",
-        content: draftText.trim(),
-        order,
-      };
-    } else if (newBlockType === "image" || newBlockType === "video") {
-      if (!draftMediaFile) return;
-
-      const objectUrl = URL.createObjectURL(draftMediaFile);
-
-      newBlock = {
-        type: newBlockType,
-        content: draftImageCaption.trim(),
-        alt: draftImageAlt.trim(),
-        order,
-        previewUrl: objectUrl,
-      };
-
-      newBlockFiles.push(draftMediaFile);
-    } else if (newBlockType === "videoUrl") {
-      newBlock = {
-        type: "videoUrl",
-        url: draftVideoUrl.trim(),
-        content: draftVideoUrlDesc.trim(),
-        order,
-      };
-    } else {
-      // fallback
-      return;
-    }
-
-    setBlocks((prev) => [...prev, newBlock]);
-    setBlockFiles(newBlockFiles);
-
-    // clear draft, đóng popup
-    setDraftText("");
-    setDraftImageCaption("");
-    setDraftImageAlt("");
-    setDraftMediaFile(null);
-    setDraftVideoUrl("");
-    setDraftVideoUrlDesc("");
-    setNewBlockType("text");
-    setShowBlockCreator(false);
-  };
+  // 2. Hàm mở Modal
+  const openBlockCreatorModal = useCallback(() => {
+    dispatch(
+      showModal({
+        isShowModal: true,
+        modalChildren: (
+          // Component mới
+          <ProductBlockCreator
+            blocksCount={blocks.length}
+            onAddBlock={handleBlockAdd}
+            onClose={() => dispatch(showModal({ isShowModal: false }))}
+            isSubmitDisabled={isProductSubmitDisabled}
+          />
+        ),
+        // Cho phép hiển thị toàn màn hình nếu cần, hoặc mặc định sẽ căn giữa
+      })
+    );
+  }, [blocks.length, handleBlockAdd, isProductSubmitDisabled, dispatch]);
 
   // Reset form sản phẩm về productForVar + undo thumbnail
   const handleResetProductForm = () => {
@@ -356,7 +574,13 @@ export const CreateProduct = () => {
       categoryShopId: productForVar?.categoryShopId?._id || "",
       productContentBlocks: productForVar?.productContentBlocks || [],
     });
-
+    setProductForVar(initialProduct || null);
+    if (initialProduct?.productThemes?.length > 0) {
+      const initialThemeIds = initialProduct.productThemes.map((t) => t._id);
+      setSelectedThemeIds(initialThemeIds);
+    } else {
+      setSelectedThemeIds([]);
+    }
     // undo thumbnail
     undoProductThumb();
   };
@@ -405,6 +629,7 @@ export const CreateProduct = () => {
           pvName: "",
           pvOriginalPrice: "",
           pvPrice: "",
+          pvStockQuantity: "",
           pvImagesList: [],
         },
       ],
@@ -458,7 +683,7 @@ export const CreateProduct = () => {
       setInitialVariationsLoaded(true);
     };
 
-    // gọi async ngay lập tức
+    // gọi async ngay lập lập tức
     loadVariations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialProduct]);
@@ -471,58 +696,25 @@ export const CreateProduct = () => {
     }
   }, [fields.length]);
 
-  // thêm ảnh mới vào pvImagesList ở index idx
-  const addImagesToVariation = (idx, fileList) => {
-    if (!fileList || !fileList.length) return;
-    const imgs = Array.from(fileList).filter((f) =>
-      f.type.startsWith("image/")
-    );
-    if (!imgs.length) return;
-
-    const curr = watchVarList(`variations.${idx}.pvImagesList`) || [];
-    const newEntries = imgs.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-
-    setValueVarList(
-      `variations.${idx}.pvImagesList`,
-      [...curr, ...newEntries],
-      {
-        shouldDirty: true,
-      }
-    );
-  };
-
-  // xóa 1 ảnh trong pvImagesList ở index idx
-  const removeImageFromVariation = (idx, imgIdx) => {
-    const curr = watchVarList(`variations.${idx}.pvImagesList`) || [];
-    const target = curr[imgIdx];
-    if (target?.preview?.startsWith("blob:")) {
-      URL.revokeObjectURL(target.preview);
-    }
-    const filtered = curr.filter((_, i) => i !== imgIdx);
-    setValueVarList(`variations.${idx}.pvImagesList`, filtered, {
-      shouldDirty: true,
-    });
-  };
-
-  const handleDropImagesAtIndex = (e, idx) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addImagesToVariation(idx, e.dataTransfer.files);
-  };
-
-  const handleDragOverVar = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   // =========================
   // SUBMIT MỘT BIẾN THỂ
   // Gửi toàn bộ state biến thể đó
   // =========================
   const submitOneVariation = async (idx) => {
+    // Check nếu bị khóa (áp dụng cho cả tạo và sửa biến thể)
+    if (isOperationDisabled) {
+      dispatch(
+        showAlert({
+          title: "Thao tác bị chặn",
+          message: isShopBlocked
+            ? "Shop đang bị khóa"
+            : "Vui lòng đăng ký gói dịch vụ để tiếp tục.",
+          variant: "danger",
+        })
+      );
+      return;
+    }
+
     // validate các trường required của biến thể idx
     const isValid = await trigger(`variations.${idx}`);
     if (!isValid) {
@@ -553,7 +745,6 @@ export const CreateProduct = () => {
     // Tạo FormData cho toàn bộ biến thể
     const fd = new FormData();
     fd.append("productId", productForVar._id);
-
     if (v.pvName) fd.append("pvName", v.pvName);
     if (v.pvOriginalPrice) fd.append("pvOriginalPrice", v.pvOriginalPrice);
     if (v.pvPrice) fd.append("pvPrice", v.pvPrice);
@@ -589,10 +780,24 @@ export const CreateProduct = () => {
             showConfirmButton: false,
           })
         );
-
-        // backend trả variation mới -> đồng bộ lại form (bao gồm danh sách ảnh từ server)
         if (res.variation) {
-          // rebuild lại từ server (giống load lần đầu)
+          // Cần cập nhật lại productForVar để đảm bảo dữ liệu biến thể mới nhất được phản ánh trong productFinalPriceEstimate
+          if (productForVar) {
+            setProductForVar((prev) => {
+              const newVars = (prev?.variations || []).filter(
+                (v) => v._id !== res.variation._id
+              );
+              return {
+                ...prev,
+                variations: v._id
+                  ? newVars.map((v) =>
+                      v._id === res.variation._id ? res.variation : v
+                    )
+                  : [...newVars, res.variation],
+              };
+            });
+          }
+
           const reloadVar = await buildVariationFromServer(res.variation, idx);
           setValueVarList(`variations.${idx}`, reloadVar, {
             shouldDirty: false,
@@ -623,6 +828,26 @@ export const CreateProduct = () => {
   // Gửi full form sản phẩm + trạng thái thumbnail hiện tại
   // =========================
   const onSubmitProduct = async (data) => {
+    if (isProductSubmitDisabled) {
+      // Check lại giới hạn khi submit
+      const reason = isShopBlocked
+        ? "Shop đang bị khóa"
+        : !servicePlan || servicePlan.subStatus !== "active"
+        ? "Vui lòng đăng ký gói dịch vụ để tiếp tục."
+        : isCreateLimited
+        ? `Đã đạt giới hạn ${MAX_PRODUCTS} sản phẩm theo gói hiện tại.`
+        : "Lỗi không xác định.";
+
+      dispatch(
+        showAlert({
+          title: isEditing ? "Thao tác bị chặn" : "Không thể tạo sản phẩm",
+          message: reason,
+          variant: "danger",
+        })
+      );
+      return;
+    }
+
     try {
       const fd = new FormData();
       if (current?._id) fd.append("shopId", current._id);
@@ -652,6 +877,15 @@ export const CreateProduct = () => {
       if (data.brandId) fd.append("brandId", data.brandId);
       if (data.categoryId) fd.append("categoryId", data.categoryId);
       if (data.categoryShopId) fd.append("categoryShopId", data.categoryShopId);
+      const themesToSubmit = selectedThemeIds;
+      if (themesToSubmit.length > 0) {
+        themesToSubmit.forEach((id) => {
+          if (id) fd.append("themeId", id); // Backend sẽ nhận một mảng các themeId
+        });
+      } else if (isEditing) {
+        // Nếu sửa: người dùng bỏ chọn hết -> gửi rỗng để xóa liên kết cũ
+        fd.append("themeId", "");
+      }
 
       // Product Thumbnail:
       // - Nếu có thumbLocal => append file
@@ -727,6 +961,24 @@ export const CreateProduct = () => {
     }
   };
 
+  const handleRequestCreateBrand = () => {
+    dispatch(
+      showModal({
+        isShowModal: true,
+        modalChildren: (
+          <CreateBrandForm
+            shopId={current._id}
+            brand={null}
+            onCancel={() => dispatch(showModal({ isShowModal: false }))}
+            onSuccess={() => {
+              dispatch(showModal({ isShowModal: false }));
+            }}
+          />
+        ),
+      })
+    );
+  };
+
   // =========================================================
   // RENDER
   // =========================================================
@@ -739,6 +991,35 @@ export const CreateProduct = () => {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* CẢNH BÁO TRẠNG THÁI */}
+      {isShopBlocked && (
+        <div className="flex gap-2 justify-center items-center border border-red-400 bg-red-50 text-xs md:text-sm rounded-3xl px-3 py-2">
+          <AiOutlineExclamationCircle size={16} className="text-red-500" />
+          <span className="font-medium">
+            Shop đang bị khóa. Mọi thao tác đều bị chặn.
+          </span>
+        </div>
+      )}
+      {!isShopBlocked &&
+        (!servicePlan || servicePlan.subStatus !== "active") && (
+          <div className="flex gap-2 justify-center items-center border border-yellow-400 bg-yellow-50 text-xs md:text-sm rounded-3xl px-3 py-2">
+            <AiOutlineExclamationCircle size={16} className="text-yellow-500" />
+            <span className="font-medium">
+              Shop chưa có gói dịch vụ hoặc gói đã hết hạn/bị hủy. Mọi thao tác
+              đều bị chặn.
+            </span>
+          </div>
+        )}
+      {isCreateLimited && (
+        <div className="flex gap-2 justify-center items-center border border-orange-400 bg-orange-50 text-xs md:text-sm rounded-3xl px-3 py-2">
+          <AiOutlineExclamationCircle size={16} className="text-orange-500" />
+          <span className="font-medium">
+            Đã đạt giới hạn {MAX_PRODUCTS} sản phẩm theo gói hiện tại. Vui lòng
+            nâng cấp gói hoặc xóa bớt sản phẩm để tạo mới.
+          </span>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="bg-button-hv text-black rounded-3xl p-1 border flex overflow-hidden">
         <button
@@ -758,6 +1039,7 @@ export const CreateProduct = () => {
               : ""
           }`}
           onClick={() => setActiveTab("variation")}
+          disabled={!productForVar?._id}
         >
           2. Biến thể
         </button>
@@ -768,7 +1050,7 @@ export const CreateProduct = () => {
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <h2 className="font-bold px-2 text-black">
-              {productForVar?._id ? "Chỉnh sửa sản phẩm" : "Tạo sản phẩm mới"}
+              {isEditing ? "Chỉnh sửa sản phẩm" : `Tạo sản phẩm mới `}
             </h2>
           </div>
 
@@ -778,7 +1060,16 @@ export const CreateProduct = () => {
           >
             {/* Tên sản phẩm */}
             <div className="flex flex-col gap-1 col-span-2">
-              <label className={labelInput}>Nhập tên sản phẩm</label>
+              <div>
+                <label className={labelInput}>
+                  Nhập tên sản phẩm <span className="text-red-500">*</span>
+                </label>
+                <div className="px-2 text-[11px] text-gray-500 p-1">
+                  Cấu trúc tối ưu: **[Loại Sản Phẩm Chính] [Thương Hiệu] [Tên
+                  Model/Series] [Thông số Phụ]**
+                </div>
+              </div>
+
               <input
                 className={`${InputCss} ${
                   productErrors.productName ? "border-red-500" : ""
@@ -786,7 +1077,8 @@ export const CreateProduct = () => {
                 {...registerProduct("productName", {
                   required: "Bạn phải nhập tên sản phẩm",
                 })}
-                placeholder="vd. iPhone 17 Pro Max 256GB"
+                placeholder="VD: Điện thoại iPhone 16 Pro Max 256GB Titan Đen"
+                disabled={isProductSubmitDisabled}
               />
               {productErrors.productName && (
                 <p className="px-2 text-[11px] text-red-500">
@@ -798,29 +1090,52 @@ export const CreateProduct = () => {
             {/* Mô tả nhanh */}
             <div className="flex flex-col gap-1 md:col-span-2">
               <label className={labelInput}>Mô tả nhanh</label>
-              <input
+              <textarea
                 className={`${InputCss}`}
                 {...registerProduct("productDescription")}
                 placeholder="vd. Pro tối thượng"
+                disabled={isProductSubmitDisabled}
+                rows={3}
               />
             </div>
 
             {/* Thương hiệu */}
             <div className="flex flex-col gap-1">
               <label className={labelInput}>Thương hiệu</label>
-              <select className={`${InputCss}`} {...registerProduct("brandId")}>
+              <select
+                className={`${InputCss}`}
+                {...registerProduct("brandId")}
+                disabled={isProductSubmitDisabled}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "ADD_NEW_BRAND") {
+                    e.target.value = "";
+                    handleRequestCreateBrand();
+                  }
+                }}
+              >
                 <option value="">Chọn thương hiệu</option>
+
+                {/* Danh sách thương hiệu thật */}
                 {brands.map((b) => (
                   <option key={b._id} value={b._id}>
                     {b.brandName}
                   </option>
                 ))}
+                <option
+                  value="ADD_NEW_BRAND"
+                  className="font-medium text-blue-600 bg-blue-50"
+                >
+                  Thêm thương hiệu mới
+                </option>
               </select>
             </div>
 
             {/* Danh mục sản phẩm */}
             <div className="flex flex-col gap-1">
-              <label className={labelInput}>Danh mục sản phẩm</label>
+              <label className={labelInput}>
+                Danh mục sản phẩm <span className="text-red-500">*</span>
+              </label>
               <select
                 className={`${InputCss} ${
                   productErrors.categoryId ? "border-red-500" : ""
@@ -828,6 +1143,7 @@ export const CreateProduct = () => {
                 {...registerProduct("categoryId", {
                   required: "Bạn phải chọn danh mục sản phẩm",
                 })}
+                disabled={isProductSubmitDisabled}
               >
                 <option value="">Chọn danh mục chung</option>
                 {categories.map((c) => (
@@ -846,9 +1162,21 @@ export const CreateProduct = () => {
             {/* Danh mục shop */}
             <div className="flex flex-col gap-1">
               <label className={labelInput}>Danh mục shop</label>
+
               <select
                 className={`${InputCss}`}
                 {...registerProduct("categoryShopId")}
+                disabled={isProductSubmitDisabled}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Khi người dùng chọn dòng "Thêm danh mục mới"
+                  if (value === "ADD_NEW_CATEGORY_SHOP") {
+                    e.target.value = "";
+                    navigate(
+                      `/${path.SELLER}/${current._id}/${path.S_MANAGE_CATEGORIES}`
+                    );
+                  }
+                }}
               >
                 <option value="">Chọn danh mục shop</option>
                 {categoryShops.map((cs) => (
@@ -856,95 +1184,106 @@ export const CreateProduct = () => {
                     {cs.csName || cs.categoryShopName}
                   </option>
                 ))}
+
+                {/* Dòng đặc biệt: Thêm danh mục mới */}
+                <option
+                  value="ADD_NEW_CATEGORY_SHOP"
+                  className="font-medium text-blue-600 bg-blue-50"
+                >
+                  Thêm danh mục shop mới
+                </option>
               </select>
             </div>
 
             {/* Giảm giá */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col  gap-1">
               <label className={labelInput}>Giảm giá | sale % (nếu có)</label>
               <input
                 type="number"
                 className={`${InputCss}`}
                 {...registerProduct("productDiscountPercent")}
                 placeholder="vd. 10"
+                disabled={isProductSubmitDisabled}
               />
+            </div>
+
+            {/* Chủ đề sản phẩm */}
+            <div className="flex flex-col gap-2 col-span-2">
+              <label className={labelInput}>Chủ đề sản phẩm (chọn nhiều)</label>
+              <div
+                className={`flex flex-wrap gap-2 p-3 border rounded-xl ${
+                  isProductSubmitDisabled ? "bg-gray-100" : "bg-white"
+                }`}
+              >
+                {themes.length > 0 ? (
+                  themes.map((t) => {
+                    const isSelected = selectedThemeIds.includes(String(t._id));
+                    return (
+                      <button
+                        key={t._id}
+                        type="button"
+                        onClick={() => handleSelectTheme(t._id)}
+                        disabled={isProductSubmitDisabled}
+                        className={`
+                        
+                                          px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 text-black
+                                          ${
+                                            isSelected
+                                              ? "  border-button-bg-ac shadow-md scale-105 text-button-bg-ac"
+                                              : " hover:bg-blue-50 hover:border-blue-300"
+                                          }
+                                          ${
+                                            isProductSubmitDisabled
+                                              ? "opacity-70 cursor-not-allowed"
+                                              : ""
+                                          }
+                                      `}
+                      >
+                        {t.themeName}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-gray-500 text-sm">Không có chủ đề nào.</p>
+                )}
+              </div>
             </div>
 
             {/* Thumbnail sản phẩm kiểu background */}
             <div className="flex flex-col gap-1 col-span-2">
               <label className={labelInput}>Ảnh Thumbnail sản phẩm</label>
               <div className="bg-white rounded-3xl border p-2 md:p-4">
-                <div
-                  onClick={() => productThumbInputRef.current?.click()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files?.[0];
-                    if (file?.type.startsWith("image/")) {
-                      pickProductThumb(file);
+                <ImageUploader
+                  multiple={false}
+                  value={thumbLocal} // File | null
+                  previews={thumbPreview} // string | null
+                  onChange={(file) => {
+                    // Xử lý khi người dùng chọn ảnh mới
+                    if (file) {
+                      if (thumbPreview?.startsWith("blob:")) {
+                        URL.revokeObjectURL(thumbPreview);
+                      }
+                      const blobUrl = URL.createObjectURL(file);
+                      setThumbLocal(file);
+                      setThumbPreview(blobUrl);
+                    } else {
+                      // Xóa ảnh
+                      if (thumbPreview?.startsWith("blob:")) {
+                        URL.revokeObjectURL(thumbPreview);
+                      }
+                      setThumbLocal(null);
+                      setThumbPreview("");
                     }
                   }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  className="flex flex-col border-2 border-dashed rounded-xl p-4 text-center transition cursor-pointer hover:bg-gray-50 relative"
-                >
-                  {thumbPreview ? (
-                    <div className="mx-auto relative w-[300px] h-full text-sm flex items-center justify-center">
-                      <img
-                        src={thumbPreview}
-                        alt="preview-thumb"
-                        className="border rounded-xl w-full h-full object-cover"
-                      />
-                      <CloseButton
-                        className="absolute top-2 right-2 z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          clearProductThumb();
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="mx-auto w-[120px] h-[120px] border rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 text-xs">
-                      Ảnh sản phẩm
-                    </div>
-                  )}
-
-                  <p className="text-center text-sm text-blue-600 mt-1">
-                    Kéo thả ảnh vào đây hoặc
-                    <span
-                      className="underline cursor-pointer ml-1 text-blue-600"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        productThumbInputRef.current?.click();
-                      }}
-                    >
-                      chọn file
-                    </span>
-                  </p>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={productThumbInputRef}
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file && file.type.startsWith("image/")) {
-                        pickProductThumb(file);
-                      }
-                      e.target.value = "";
-                    }}
-                  />
-                </div>
-
-                {/* nút hoàn tác thumbnail */}
+                  label="thumbnail"
+                  // Không có disabled → vẫn hoạt động bình thường
+                />
                 <div className="flex justify-end gap-2 mt-3">
                   <button
                     type="button"
                     className="px-4 py-1 rounded-3xl bg-gray-200 hover:bg-gray-300 text-sm"
                     onClick={undoProductThumb}
-                    disabled={!thumbDirty}
+                    disabled={!thumbDirty || isProductSubmitDisabled}
                   >
                     Hoàn tác ảnh
                   </button>
@@ -952,19 +1291,10 @@ export const CreateProduct = () => {
               </div>
             </div>
 
+            {/* Render block items */}
             <div className="col-span-2 flex flex-col gap-1">
               <label className={labelInput}>Thông tin sản phẩm</label>
               <div className=" bg-white rounded-3xl border p-2 md:p-4 flex flex-col gap-2">
-                <div className="flex justify-end items-center">
-                  <button
-                    type="button"
-                    className="align-end px-4 py-1  rounded-3xl bg-button-bg hover:bg-button-hv text-black text-xs md:text-sm"
-                    onClick={() => setShowBlockCreator(true)}
-                  >
-                    Thêm khối nội dung
-                  </button>
-                </div>
-
                 {blocks.length === 0 ? (
                   <div className="text-center text-xs text-gray-500 italic">
                     Chưa có nội dung mô tả chi tiết
@@ -1057,44 +1387,71 @@ export const CreateProduct = () => {
                           {/* nút xoá block */}
                           <button
                             type="button"
-                            className="self-end text-xs text-red-600 hover:text-red-800 underline"
+                            className="self-end text-xs text-red-600 hover:text-red-800 underline disabled:opacity-50"
                             onClick={() => {
-                              // Khi xoá block, ta phải:
-                              // - xoá block khỏi `blocks`
-                              // - nếu block đó là image/video, xoá file tương ứng khỏi blockFiles
                               const blockToDelete = blocks[idx];
+
+                              if (
+                                (blockToDelete.type === "image" ||
+                                  blockToDelete.type === "video") &&
+                                blockToDelete.previewUrl?.startsWith("blob:")
+                              ) {
+                                URL.revokeObjectURL(blockToDelete.previewUrl);
+                              } // 2. XÓA BLOCK VÀ SẮP XẾP LẠI ORDER
+
+                              setBlocks((oldBlocks) => {
+                                const nextBlocks = oldBlocks.filter(
+                                  (_, i) => i !== idx
+                                ); // Sắp xếp lại order cho các block còn lại
+
+                                return nextBlocks.map((nb, newOrder) => ({
+                                  ...nb,
+                                  order: newOrder,
+                                }));
+                              }); // 3. ĐỒNG BỘ XÓA FILE KHỎI blockFiles
 
                               if (
                                 blockToDelete.type === "image" ||
                                 blockToDelete.type === "video"
                               ) {
-                                setBlocks((old) => {
-                                  const next = old.filter((_, i) => i !== idx);
-
-                                  next.forEach((blk, i2) => {
-                                    if (
-                                      blk.type === "image" ||
-                                      blk.type === "video"
-                                    ) {
+                                // Chỉ cập nhật blockFiles nếu block bị xóa là block media MỚI (có file local)
+                                if (
+                                  blockToDelete.previewUrl?.startsWith("blob:")
+                                ) {
+                                  setBlockFiles((oldFiles) => {
+                                    // Tìm vị trí tương đối của file bị xóa trong mảng oldFiles
+                                    let mediaFileIndex = -1;
+                                    let fileCounter = 0; // Lặp qua tất cả blocks để tìm vị trí index của blockToDelete
+                                    for (let i = 0; i < blocks.length; i++) {
+                                      const isMedia =
+                                        blocks[i].type === "image" ||
+                                        blocks[i].type === "video";
+                                      const isLocalFile =
+                                        blocks[i].previewUrl?.startsWith(
+                                          "blob:"
+                                        );
+                                      if (isMedia && isLocalFile) {
+                                        if (i === idx) {
+                                          mediaFileIndex = fileCounter;
+                                          break;
+                                        }
+                                        fileCounter++;
+                                      }
                                     }
-                                  });
 
-                                  return next.map((nb, newOrder) => ({
-                                    ...nb,
-                                    order: newOrder,
-                                  }));
-                                });
-                              } else {
-                                // block text / videoUrl -> chỉ cần xoá block thôi
-                                setBlocks((old) => {
-                                  const next = old.filter((_, i) => i !== idx);
-                                  return next.map((nb, newOrder) => ({
-                                    ...nb,
-                                    order: newOrder,
-                                  }));
-                                });
+                                    if (mediaFileIndex !== -1) {
+                                      // Xóa file tại vị trí tìm được
+                                      return oldFiles.filter(
+                                        (_, fileIdx) =>
+                                          fileIdx !== mediaFileIndex
+                                      );
+                                    }
+                                    return oldFiles;
+                                  });
+                                }
                               }
                             }}
+                            disabled={isProductSubmitDisabled}
                           >
                             Xoá
                           </button>
@@ -1104,182 +1461,43 @@ export const CreateProduct = () => {
                 )}
               </div>
             </div>
-
-            {showBlockCreator && (
-              <div
-                className="fixed inset-0 bg-white/10 backdrop-blur-sm flex items-center justify-center z-50"
-                onClick={() => setShowBlockCreator(false)}
-              >
-                <div
-                  className=" bg-white border rounded-2xl shadow-lg p-4 w-[90vw] max-w-[700px] text-sm relative"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Chọn loại block */}
-                  <div className="mb-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Loại khối
-                    </label>
-                    <select
-                      className="border rounded-xl px-3 py-2 w-full text-xs md:text-sm"
-                      value={newBlockType}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setNewBlockType(v);
-                        setDraftText("");
-                        setDraftImageCaption("");
-                        setDraftImageAlt("");
-                        setDraftMediaFile(null);
-                        setDraftVideoUrl("");
-                        setDraftVideoUrlDesc("");
-                      }}
-                    >
-                      <option value="text">Đoạn văn bản</option>
-                      <option value="image">Hình ảnh (upload file)</option>
-                      <option value="video">Video (upload file)</option>
-                      <option value="videoUrl">Video link (YouTube,...)</option>
-                    </select>
-                  </div>
-                  <CloseButton
-                    onClick={() => {
-                      setShowBlockCreator(false);
-                    }}
-                    className="absolute top-2 right-2"
-                  />
-
-                  {/* Form theo loại */}
-                  {newBlockType === "text" && (
-                    <div className="mb-3">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Nội dung văn bản
-                      </label>
-                      <textarea
-                        className="border rounded-xl px-3 py-2 w-full text-sm"
-                        rows={4}
-                        placeholder="Nhập mô tả..."
-                        value={draftText}
-                        onChange={(e) => setDraftText(e.target.value)}
-                      />
-                    </div>
-                  )}
-
-                  {(newBlockType === "image" || newBlockType === "video") && (
-                    <>
-                      <div className="mb-3">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Chú thích / mô tả hiển thị
-                        </label>
-                        <input
-                          className="border rounded-xl px-3 py-2 w-full text-sm"
-                          placeholder="Ví dụ: Mặt trước sản phẩm"
-                          value={draftImageCaption}
-                          onChange={(e) => setDraftImageCaption(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Alt (mô tả ảnh cho SEO / hỗ trợ truy cập)
-                        </label>
-                        <input
-                          className="border rounded-xl px-3 py-2 w-full text-sm"
-                          placeholder="Ví dụ: Ảnh chụp iPhone màu xanh"
-                          value={draftImageAlt}
-                          onChange={(e) => setDraftImageAlt(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          File {newBlockType === "image" ? "ảnh" : "video"}
-                        </label>
-                        <input
-                          type="file"
-                          accept={
-                            newBlockType === "image" ? "image/*" : "video/*"
-                          }
-                          className="text-xs"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) {
-                              setDraftMediaFile(f);
-                            }
-                          }}
-                        />
-                        {draftMediaFile && (
-                          <p className="text-[11px] text-gray-600 mt-1 break-all">
-                            {draftMediaFile.name}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                  {newBlockType === "videoUrl" && (
-                    <>
-                      <div className="mb-3">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          URL video
-                        </label>
-                        <input
-                          className="border rounded-xl px-3 py-2 w-full text-sm"
-                          placeholder="https://youtu.be/..."
-                          value={draftVideoUrl}
-                          onChange={(e) => setDraftVideoUrl(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Mô tả / ghi chú
-                        </label>
-                        <input
-                          className="border rounded-xl px-3 py-2 w-full text-sm"
-                          placeholder="Giới thiệu tổng quan..."
-                          value={draftVideoUrlDesc}
-                          onChange={(e) => setDraftVideoUrlDesc(e.target.value)}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex justify-end gap-2 mt-4">
-                    <button
-                      type="button"
-                      className="px-4 py-1  bg-gray-200 rounded-3xl hover:bg-gray-300 text-sm"
-                      onClick={() => {
-                        setShowBlockCreator(false);
-                      }}
-                    >
-                      Hủy
-                    </button>
-
-                    <button
-                      type="button"
-                      className="px-4 py-1  bg-button-bg-ac hover:bg-button-bg-hv text-white rounded-3xl text-sm"
-                      onClick={handleAddBlock}
-                    >
-                      Thêm
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Buttons submit / hoàn tác form sản phẩm */}
-            <div className="md:col-span-2 flex justify-end gap-2">
+            <div className="flex justify-center items-center col-span-2">
               <button
                 type="button"
-                className="px-4 py-1 rounded-3xl bg-gray-200 hover:bg-gray-300 text-sm"
+                className="align-end px-2 py-1  rounded-3xl bg-button-bg hover:bg-button-hv text-black text-xs disabled:opacity-50"
+                onClick={openBlockCreatorModal}
+                disabled={isProductSubmitDisabled}
+              >
+                + Thêm khối nội dung
+              </button>
+            </div>
+
+            {/* Buttons submit / hoàn tác form sản phẩm */}
+            <div className="md:col-span-2 flex justify-end gap-2 ">
+              <button
+                type="button"
+                className="px-4 py-1 rounded-3xl bg-gray-200 hover:bg-gray-300 text-sm disabled:opacity-50"
                 onClick={handleResetProductForm}
+                disabled={isProductSubmitDisabled}
               >
                 Hoàn tác toàn bộ
               </button>
               <button
-                disabled={isSubmittingProduct || isBlock}
+                disabled={isSubmittingProduct || isProductSubmitDisabled}
                 className="bg-button-bg-ac hover:bg-button-bg-hv text-white text-sm font-medium rounded-3xl px-4 py-1 disabled:opacity-50"
+                title={
+                  isShopBlocked
+                    ? "Shop đang bị khóa"
+                    : !servicePlan || servicePlan.subStatus !== "active"
+                    ? "Gói dịch vụ không hợp lệ"
+                    : isCreateLimited
+                    ? `Đã đạt giới hạn ${MAX_PRODUCTS} sản phẩm`
+                    : isEditing
+                    ? "Lưu thay đổi"
+                    : "Tạo sản phẩm"
+                }
               >
-                {productForVar?._id ? "Lưu thay đổi" : "Tạo sản phẩm"}
+                {isEditing ? "Lưu thay đổi" : "Tạo sản phẩm"}
               </button>
             </div>
           </form>
@@ -1293,7 +1511,7 @@ export const CreateProduct = () => {
             <h2 className="font-bold px-2 text-black">Biến thể sản phẩm</h2>
             <button
               type="button"
-              disabled={isBlock}
+              disabled={isOperationDisabled} // Áp dụng cho tạo biến thể mới
               className="px-3 py-1 rounded-2xl bg-button-bg-ac hover:bg-button-bg-hv text-white disabled:opacity-50"
               onClick={() => {
                 prepend(
@@ -1308,6 +1526,11 @@ export const CreateProduct = () => {
                   { shouldFocus: false }
                 );
               }}
+              title={
+                isOperationDisabled
+                  ? "Gói dịch vụ không hợp lệ hoặc shop bị khóa"
+                  : "Thêm biến thể"
+              }
             >
               Thêm biến thể
             </button>
@@ -1326,6 +1549,15 @@ export const CreateProduct = () => {
           {fields.map((field, idx) => {
             const currentVar = watchVarList(`variations.${idx}`);
             const pvImagesList = currentVar?.pvImagesList || [];
+
+            // Lấy giá trị pvPrice (đã được formatMoney loại bỏ)
+            const pvPriceValue = Number(currentVar.pvPrice) || 0;
+            const discountPercent = Number(productDiscountPercent) || 0;
+            const isVarOnSale = discountPercent > 0;
+            const finalPrice = calculateFinalPrice(
+              pvPriceValue,
+              discountPercent
+            );
 
             return (
               <div
@@ -1346,7 +1578,9 @@ export const CreateProduct = () => {
                 {/* Tên biến thể */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1 md:col-span-2">
-                    <label className={`${labelInput}`}>Tên biến thể</label>
+                    <label className={`${labelInput}`}>
+                      Tên biến thể <span className="text-red-500">*</span>
+                    </label>
                     <Controller
                       control={control}
                       name={`variations.${idx}.pvName`}
@@ -1361,6 +1595,7 @@ export const CreateProduct = () => {
                               : ""
                           }`}
                           placeholder="vd. Xanh đậm, Bạc, Cam vũ trụ..."
+                          disabled={isOperationDisabled}
                         />
                       )}
                     />
@@ -1373,7 +1608,9 @@ export const CreateProduct = () => {
 
                   {/* Kho */}
                   <div className="flex flex-col gap-1">
-                    <label className={`${labelInput}`}>Kho biến thể</label>
+                    <label className={`${labelInput}`}>
+                      Kho biến thể <span className="text-red-500">*</span>
+                    </label>
                     <Controller
                       control={control}
                       name={`variations.${idx}.pvStockQuantity`}
@@ -1391,6 +1628,7 @@ export const CreateProduct = () => {
                               : ""
                           }`}
                           placeholder="vd. 10"
+                          disabled={isOperationDisabled}
                         />
                       )}
                     />
@@ -1402,9 +1640,10 @@ export const CreateProduct = () => {
                   </div>
 
                   {/* Giá gốc */}
-                  {/* Giá gốc */}
                   <div className="flex flex-col gap-1">
-                    <label className={`${labelInput}`}>Giá gốc</label>
+                    <label className={`${labelInput}`}>
+                      Giá gốc (đ) <span className="text-red-500">*</span>
+                    </label>
                     <Controller
                       control={control}
                       name={`variations.${idx}.pvOriginalPrice`}
@@ -1424,6 +1663,7 @@ export const CreateProduct = () => {
                           value={formatMoney(value)}
                           onChange={(e) => handleMoneyChange(e, onChange)}
                           placeholder="vd. 39.900.000"
+                          disabled={isOperationDisabled}
                         />
                       )}
                     />
@@ -1436,7 +1676,9 @@ export const CreateProduct = () => {
 
                   {/* Giá bán */}
                   <div className="flex flex-col gap-1 col-span-2">
-                    <label className={`${labelInput}`}>Giá bán</label>
+                    <label className={`${labelInput}`}>
+                      Giá bán (đ) <span className="text-red-500">*</span>
+                    </label>
                     <Controller
                       control={control}
                       name={`variations.${idx}.pvPrice`}
@@ -1456,6 +1698,7 @@ export const CreateProduct = () => {
                           value={formatMoney(value)}
                           onChange={(e) => handleMoneyChange(e, onChange)}
                           placeholder="vd. 38.900.000"
+                          disabled={isOperationDisabled}
                         />
                       )}
                     />
@@ -1464,75 +1707,57 @@ export const CreateProduct = () => {
                         {varErrors.variations[idx].pvPrice.message}
                       </p>
                     )}
+                    {/* Hiển thị giá cuối cùng của biến thể */}
+                    {isVarOnSale && pvPriceValue > 0 && (
+                      <div className="px-2 text-sm text-gray-700 mt-1 flex items-baseline gap-2">
+                        <span className="text-red-500 font-bold">
+                          GIÁ CUỐI: {formatMoney(finalPrice)}đ
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          (Sale {discountPercent}%)
+                        </span>
+                      </div>
+                    )}
+                    {isVarOnSale && pvPriceValue === 0 && (
+                      <div className="px-2 text-xs text-gray-500 mt-1">
+                        Vui lòng nhập Giá bán để tính Giá cuối cùng (Sale{" "}
+                        {discountPercent}%)
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Ảnh biến thể kiểu banner */}
                 <div className="flex flex-col gap-1">
-                  <label className={`${labelInput}`}>Ảnh biến thể</label>
+                  <label className={labelInput}>Ảnh biến thể</label>
+                  <ImageUploader
+                    multiple={true}
+                    value={pvImagesList.map((img) => img.file)} // [File]
+                    previews={pvImagesList.map((img) => img.preview)} // [string]
+                    onChange={(newFiles) => {
+                      // Xóa blob cũ
+                      pvImagesList.forEach((img) => {
+                        if (img.preview?.startsWith("blob:")) {
+                          URL.revokeObjectURL(img.preview);
+                        }
+                      });
 
-                  <div
-                    className="flex-1 border-2 border-dashed rounded-xl p-6 text-center transition cursor-pointer hover:bg-gray-50"
-                    onDrop={(e) => handleDropImagesAtIndex(e, idx)}
-                    onDragOver={handleDragOverVar}
-                    onClick={() =>
-                      document.getElementById(`var-images-${idx}`)?.click()
-                    }
-                  >
-                    <div className="flex flex-wrap gap-3 justify-center">
-                      {pvImagesList.length > 0 ? (
-                        pvImagesList.map((imgObj, pIdx) => (
-                          <div
-                            key={pIdx}
-                            className="relative w-[120px] h-[120px] border rounded-xl overflow-hidden"
-                          >
-                            <img
-                              src={imgObj.preview}
-                              alt={`pv-${idx}-${pIdx}`}
-                              className="w-full h-full object-cover"
-                            />
-                            <CloseButton
-                              className="absolute top-1 right-1"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeImageFromVariation(idx, pIdx);
-                              }}
-                            />
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex flex-wrap gap-3 justify-center">
-                          {[...Array(2)].map((_, i) => (
-                            <div
-                              key={i}
-                              className="w-[120px] h-[120px] border rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 text-xs"
-                            >
-                              Ảnh sản phẩm
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                      // Tạo blob mới
+                      const newEntries = newFiles.map((file) => ({
+                        file,
+                        preview: URL.createObjectURL(file),
+                      }));
 
-                    <p className="text-center text-sm text-blue-600 mt-4">
-                      Kéo thả ảnh vào đây hoặc{" "}
-                      <span className="underline cursor-pointer">
-                        chọn file
-                      </span>
-                    </p>
-
-                    <input
-                      id={`var-images-${idx}`}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => {
-                        addImagesToVariation(idx, e.target.files);
-                        e.target.value = "";
-                      }}
-                    />
-                  </div>
+                      setValueVarList(
+                        `variations.${idx}.pvImagesList`,
+                        newEntries,
+                        {
+                          shouldDirty: true,
+                        }
+                      );
+                    }}
+                    label="ảnh"
+                  />
                 </div>
 
                 {/* Actions cho biến thể */}
@@ -1568,12 +1793,20 @@ export const CreateProduct = () => {
                                 });
 
                                 remove(idx);
+                                // Cập nhật lại productForVar sau khi xóa biến thể
+                                setProductForVar((prev) => ({
+                                  ...prev,
+                                  variations: (prev?.variations || []).filter(
+                                    (v) => v._id !== currentVar._id
+                                  ),
+                                }));
                                 dispatch(
                                   showAlert({
                                     title: "Xóa thành công",
                                     message: "Biến thể đã được xóa.",
                                     variant: "success",
                                     duration: 1500,
+                                    showConfirmButton: false,
                                   })
                                 );
                               }
@@ -1613,6 +1846,12 @@ export const CreateProduct = () => {
                         remove(idx);
                       }
                     }}
+                    disabled={isOperationDisabled}
+                    title={
+                      isOperationDisabled
+                        ? "Gói dịch vụ không hợp lệ hoặc shop bị khóa"
+                        : "Xóa biến thể"
+                    }
                   >
                     Xóa biến thể
                   </button>
@@ -1620,9 +1859,22 @@ export const CreateProduct = () => {
                   {/* Lưu / cập nhật biến thể */}
                   <button
                     type="button"
-                    disabled={isSubmittingVarList || !productForVar?._id}
+                    disabled={
+                      isSubmittingVarList ||
+                      !productForVar?._id ||
+                      isOperationDisabled
+                    }
                     className="bg-button-bg-ac hover:bg-button-bg-hv text-white rounded-2xl px-4 py-1.5 disabled:opacity-50 text-sm font-medium"
                     onClick={() => submitOneVariation(idx)}
+                    title={
+                      !productForVar?._id
+                        ? "Vui lòng lưu sản phẩm trước"
+                        : isOperationDisabled
+                        ? "Gói dịch vụ không hợp lệ hoặc shop bị khóa"
+                        : currentVar._id
+                        ? "Cập nhật biến thể"
+                        : "Tạo biến thể"
+                    }
                   >
                     {currentVar._id ? "Cập nhật biến thể" : "Tạo biến thể"}
                   </button>

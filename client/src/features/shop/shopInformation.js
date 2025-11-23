@@ -2,10 +2,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import defaultAvatar from "assets/avatarDefault.png";
+import moment from "moment";
 import { apiUpdateShop } from "../../services/shop.api";
 import { showAlert, showModal } from "store/app/appSlice";
 import { setSeller } from "store/seller/sellerSlice";
-import { CloseButton, Loading, ImageUploader } from "../../components";
+import { Loading, ImageUploader } from "../../components";
+import { SubscriptionsServicePlan } from "../shop/subscriptionsServicePlanModal";
 
 const STATUS_LABELS = {
   pending: "Đang chờ duyệt",
@@ -17,13 +19,16 @@ export const ShopInformation = () => {
   const dispatch = useDispatch();
   const { current } = useSelector((s) => s.seller);
 
+  // Lấy thông tin gói dịch vụ từ Redux store
+  const activeSubscription = current?.activeSubscription;
+  const servicePlan = current?.currentService; // Thông tin Service Plan chi tiết
+
+  // ===== LOGIC VÀ STATE KHÁC GIỮ NGUYÊN =====
+
   // ===== LOGO PREVIEW =====
   const [previewLogo, setPreviewLogo] = useState(null);
 
   // ===== BACKGROUND STATE =====
-  // bgLocal: File | null (ảnh mới chọn). null nghĩa là không có file mới.
-  // bgPreview: string | "" (blob url hoặc url server hoặc rỗng = muốn xoá)
-  // bgOriginalUrlRef: string (URL nền ban đầu từ server)
   const [bgLocal, setBgLocal] = useState(null);
   const [bgPreview, setBgPreview] = useState(null);
   const bgOriginalUrlRef = useRef("");
@@ -32,15 +37,9 @@ export const ShopInformation = () => {
   const [bgSubmitting, setBgSubmitting] = useState(false);
 
   // ===== BANNER STATE =====
-  // bannerList = [{ file: File, preview: string }]
-  // bannerOriginalRef.current = snapshot lúc tải từ server
   const [bannerList, setBannerList] = useState([]);
   const bannerOriginalRef = useRef([]);
   const [bannerSubmitting, setBannerSubmitting] = useState(false);
-
-  // refs
-  const bgDropRef = useRef(null);
-  const bannerInputRef = useRef(null);
 
   // === FORM 1: Logo ===
   const {
@@ -99,13 +98,11 @@ export const ShopInformation = () => {
   }, []);
 
   // ==========================================================
-  // Khi current thay đổi:
-  // - reset Info / Logo
-  // - nạp Background state từ server
-  // - nạp Banner state từ server và snapshot gốc
+  // Khi current thay đổi: (Đã loại bỏ fetchSubscription())
   // ==========================================================
   useEffect(() => {
     if (!current) return;
+    // Đã loại bỏ: fetchSubscription();
 
     // reset form Info
     resetInfo({
@@ -123,7 +120,6 @@ export const ShopInformation = () => {
     setBgLocal(null);
     setBgPreview(originalBgUrl); // có thể là "" nếu không có nền
 
-    // BANNER
     // BANNER
     const serverBanners = Array.isArray(current.shopBanner)
       ? current.shopBanner
@@ -179,6 +175,27 @@ export const ShopInformation = () => {
   // ==========================================================
   // API helper chung
   // ==========================================================
+
+  // Đã loại bỏ fetchSubscription vì đã có dữ liệu trong Redux
+
+  const handleSubscription = (servicePlan, subscriptionId) => {
+    dispatch(
+      showModal({
+        isShowModal: true,
+        modalChildren: (
+          <SubscriptionsServicePlan
+            onClose={() =>
+              dispatch(showModal({ isShowModal: false, modalChildren: null }))
+            }
+            shopId={current._id}
+            subscriptionId={subscriptionId}
+            currentService={servicePlan}
+          />
+        ),
+      })
+    );
+  };
+
   const updateShop = async (fd, fieldLabel) => {
     if (!current?._id) {
       dispatch(
@@ -235,7 +252,9 @@ export const ShopInformation = () => {
   const onLogoSubmit = async (data) => {
     const fd = new FormData();
     if (data.shopLogo) fd.append("shopLogo", data.shopLogo);
+    dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
     const ok = await updateShop(fd, "logo");
+    dispatch(showModal({ isShowModal: false }));
     if (ok) {
       resetLogo();
       setPreviewLogo(null);
@@ -247,7 +266,9 @@ export const ShopInformation = () => {
     fd.append("shopName", data.shopName.trim());
     fd.append("shopDescription", data.shopDescription.trim());
 
+    dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
     const ok = await updateShop(fd, "thông tin");
+    dispatch(showModal({ isShowModal: false }));
     if (ok) {
       resetInfo({
         shopName: data.shopName.trim(),
@@ -257,9 +278,8 @@ export const ShopInformation = () => {
   };
 
   // ==========================================================
-  // Dirty check logic
+  // Dirty check logic (Giữ nguyên)
   // ==========================================================
-  // Banner dirty so sánh current bannerList với snapshot bannerOriginalRef.current
   const sameBannerState = (a, b) => {
     if (a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) {
@@ -274,11 +294,6 @@ export const ShopInformation = () => {
   };
   const bannerDirty = !sameBannerState(bannerList, bannerOriginalRef.current);
 
-  // Background dirty:
-  // - nếu bgLocal tồn tại => người dùng đã chọn ảnh mới => dirty
-  // - nếu bgLocal = null:
-  //     + nếu bgPreview === "" nhưng bgOriginalUrlRef.current khác "" => dirty (nghĩa là xoá)
-  //     + nếu bgPreview === original => không dirty
   const bgDirty = (() => {
     if (bgLocal) return true;
     const original = bgOriginalUrlRef.current || "";
@@ -291,7 +306,7 @@ export const ShopInformation = () => {
   })();
 
   // ==========================================================
-  // BACKGROUND handlers
+  // BACKGROUND handlers (Giữ nguyên)
   // ==========================================================
 
   const handleUndoBackground = () => {
@@ -318,17 +333,13 @@ export const ShopInformation = () => {
     const ok = await updateShop(fd, "ảnh nền");
     dispatch(showModal({ isShowModal: false }));
     if (ok) {
-      // Cập nhật "gốc"
       bgOriginalUrlRef.current = bgPreview;
-      // Nếu vừa xoá thì bgPreview = "" là gốc mới
-      // Nếu vừa up ảnh mới thì blobUrl là gốc mới
       setBgLocal(null);
     }
     setBgSubmitting(false);
   };
 
   const handleUndoBanner = () => {
-    // thu hồi blob hiện tại
     bannerList.forEach((b) => {
       if (b.preview?.startsWith("blob:")) {
         URL.revokeObjectURL(b.preview);
@@ -505,6 +516,55 @@ export const ShopInformation = () => {
           )}
         </div>
       </form>
+
+      {/* ====== Gói dịch vụ ==== */}
+      <div>
+        <h1 className={titleCls}>Gói dịch vụ</h1>
+        <div className={sectionCls}>
+          <div className={`${inputRow} `}>
+            <p>Tên gói: </p>
+            <button
+              onClick={() =>
+                handleSubscription(servicePlan, activeSubscription?._id)
+              }
+              className="bg-button-bg py-0.5 px-1 rounded-xl"
+            >
+              {servicePlan?.serviceName || "Chưa đăng ký"}
+            </button>
+          </div>
+          {activeSubscription && (
+            <>
+              {activeSubscription.subStartDate && (
+                <div className={`${inputRow} `}>
+                  <p>Ngày đăng ký: </p>
+                  {moment(activeSubscription.subStartDate).format("DD/MM/YYYY")}
+                </div>
+              )}
+              {activeSubscription.subExpirationDate && (
+                <div className={`${inputRow} `}>
+                  <p>Ngày hết hạn: </p>
+                  {moment(activeSubscription.subExpirationDate).format(
+                    "DD/MM/YYYY"
+                  )}
+                </div>
+              )}
+
+              <div className={`${inputRow} border-b-0`}>
+                <p>Trạng thái gói: </p>
+                <p className="">
+                  {activeSubscription.subStatus === "active"
+                    ? "Đang hoạt động"
+                    : activeSubscription.subStatus === "expired"
+                    ? "Đã hết hạn"
+                    : activeSubscription.subStatus === "canceled"
+                    ? "Đã hủy"
+                    : "Không xác định"}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* === 3. ẢNH NỀN GIAN HÀNG === */}
       <div>

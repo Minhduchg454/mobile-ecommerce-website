@@ -16,7 +16,7 @@ export const PaymentResult = () => {
     "rounded-3xl px-2 py-1 border border border-black  text-black hover:bg-button-hv transition-transform text-sm md:text-base";
 
   return (
-    <div className="min-h-[300px] xl:mx-auto xl:w-main bg-white m-4 rounded-3xl p-2 shadow-md md:p-4 flex flex-col justify-center items-center animate-fadeIn">
+    <div className="min-h-[300px] lg:mx-auto lg:w-[800px] bg-white m-4 rounded-3xl p-2 shadow-md md:p-4 flex flex-col justify-center items-center animate-fadeIn">
       {status === "success" ? (
         <>
           <img src={orderSuccess} alt="" className="w-36 h-36 mb-2" />
@@ -33,7 +33,7 @@ export const PaymentResult = () => {
               Trang chủ
             </Link>
             <Link
-              to={`/${path.CUSTOMER}/${current?._id}/${path.C_ORDER}`}
+              to={`/${path.CUSTOMER}/${current?._id}/${path.C_ORDER}/?orderStatusName=Pending`}
               className={buttonAction}
             >
               Đơn mua

@@ -3,17 +3,14 @@ const Brand = require("./entities/brand.model");
 const Category = require("./entities/category.model");
 const slugify = require("slugify");
 const ProductVariation = require("./entities/productVariation.model");
-const SpecificProduct = require("./entities/specificProduct.model");
 const Theme = require("./entities/theme.model");
 const ProductTheme = require("./entities/product-theme.model");
 const { Types } = require("mongoose");
 const { ObjectId } = require("mongoose").Types;
 const ShopService = require("../shop/shop.service");
 const mongoose = require("mongoose");
-
-/**
- Backend sử dụng MongoDB, nhưng module ObjectId (thường từ mongodb hoặc mongoose) không được import trong file product.service.js. Điều này khiến việc parse after cursor thất bại, và backend không thể tạo điều kiện $or để lọc các bản ghi tiếp theo.
- */
+const NotificationService = require("../notification/notification.service");
+const { getSystemOwnerId } = require("../../ultils/systemOwner");
 
 /*
  *Category service
@@ -212,15 +209,26 @@ exports.deteleCategory = async (cId) => {
  *Brand service
  */
 
-exports.createBrand = async (body, file) => {
-  const { brandName } = body;
+exports.createBrand = async (body, file, io) => {
+  const {
+    brandName,
+    isAdmin,
+    brandDescription,
+    brandWebsite,
+    brandRequestedById,
+  } = body;
+
+  const systemId = await getSystemOwnerId();
+
   if (!brandName || !file) {
-    const err = new Error("Thiếu tên thương hiệu hoặc hình ảnh đại diện");
+    const err = new Error("Thiếu tên thương hiệu hoặc hình ảnh đại diện");
     err.status = 400;
     throw err;
   }
+
   const slug = slugify(brandName.trim(), { lower: true });
 
+  // Kiểm tra trùng lặp
   const existing = await Brand.findOne({
     isDeleted: false,
     $or: [{ brandName: brandName.trim() }, { brandSlug: slug }],
@@ -234,52 +242,91 @@ exports.createBrand = async (body, file) => {
     throw err;
   }
 
+  // LOGIC TRẠNG THÁI: Admin tạo -> approved, User tạo -> pending
+  const initialStatus = isAdmin ? "approved" : "pending";
+
   const brand = await Brand.create({
     brandName,
     brandSlug: slug,
     brandLogo: file.path,
+    brandDescription: brandDescription || "",
+    brandWebsite: brandWebsite || "",
+    brandStatus: initialStatus,
+    brandRequestedById: isAdmin ? null : brandRequestedById,
   });
+
+  if (brand.brandStatus === "pending" && brandRequestedById) {
+    let requestSourceName = "Một cửa hàng";
+    const shopInfo = await ShopService.getShopByUser(brandRequestedById);
+    if (shopInfo) requestSourceName = shopInfo.shop.shopName;
+
+    const notiData = {
+      recipientId: systemId,
+      recipientRole: "admin",
+      title: `Yêu cầu phê duyệt thương hiệu`,
+      message: `${requestSourceName} vừa yêu cầu đăng ký thương hiệu mới: "${brandName}". Vui lòng xét duyệt.`,
+      type: "BRAND_CREATE",
+      sourceId: brand._id,
+      sourceModel: "Brand",
+    };
+
+    try {
+      await NotificationService.createNotificationAndEmit(notiData, io);
+    } catch (err) {
+      console.error(
+        "[Thông báo] Lỗi khi gửi thông báo yêu thông thêm thương hiệu",
+        err.message
+      );
+    }
+  }
 
   return {
     success: true,
-    message: "Tạo thương hiệu thành công",
+    message: isAdmin
+      ? "Tạo thương hiệu thành công"
+      : "Yêu cầu tạo thương hiệu đã được gửi, vui lòng chờ duyệt",
     brand,
   };
 };
 
-// Nhớ đảm bảo file này đã có:
-// const mongoose = require("mongoose");
-// const Brand = require("...");
-
 exports.getBrand = async (query = {}) => {
-  const { s, brandName, includeDeleted, isDeleted, sort } = query;
+  const { s, brandName, includeDeleted, isDeleted, sort, status, isAdmin } =
+    query;
 
-  console.log("Gia tri loc nhan duoc", query);
   const filter = {};
 
   // 1. Lọc xóa mềm
   if (includeDeleted === "true" || includeDeleted === true) {
-    // được phép thấy cả deleted / not deleted
     if (isDeleted === "true" || isDeleted === true) filter.isDeleted = true;
     else if (isDeleted === "false" || isDeleted === false)
       filter.isDeleted = false;
-    // nếu không truyền isDeleted thì không filter field này
   } else {
-    // mặc định chỉ lấy chưa xóa
     filter.isDeleted = false;
   }
 
-  // 2. Từ khóa s: tìm theo tên hoặc slug
+  // 2. Tìm kiếm
   if (s) {
     const keyword = String(s).trim();
-    const regex = new RegExp(keyword, "i"); // không phân biệt hoa/thường
+    const regex = new RegExp(keyword, "i");
     filter.$or = [{ brandName: regex }, { brandSlug: regex }];
   }
   if (brandName) {
     filter.brandName = brandName;
   }
 
-  // 4. Sort
+  // 3. LOGIC LỌC TRẠNG THÁI (ĐÃ CẬP NHẬT)
+  // Convert isAdmin sang boolean để chắc chắn (vì query params thường là string "true")
+  const checkIsAdmin = isAdmin === "true" || isAdmin === true;
+
+  if (checkIsAdmin) {
+    if (status) {
+      filter.brandStatus = status;
+    }
+  } else {
+    filter.brandStatus = "approved";
+  }
+
+  // 4. Sắp xếp
   let sortOption = {};
   switch (sort) {
     case "oldest":
@@ -295,7 +342,6 @@ exports.getBrand = async (query = {}) => {
       sortOption = { brandName: -1 };
       break;
     default:
-      // mặc định: mới nhất
       sortOption = { createdAt: -1 };
       break;
   }
@@ -309,9 +355,15 @@ exports.getBrand = async (query = {}) => {
   };
 };
 
-exports.updateBrand = async (params, body, file) => {
+exports.updateBrand = async (params, body, file, io) => {
   const { bId } = params;
-  const { brandName } = body;
+  const {
+    brandName,
+    brandDescription,
+    brandWebsite,
+    brandStatus,
+    brandReviewReason,
+  } = body;
 
   if (!mongoose.isValidObjectId(bId)) {
     const err = new Error("ID thương hiệu không hợp lệ");
@@ -326,7 +378,7 @@ exports.updateBrand = async (params, body, file) => {
     const slug = slugify(nameTrim, { lower: true });
 
     const existing = await Brand.findOne({
-      _id: { $ne: bId }, // loại trừ bản ghi hiện tại
+      _id: { $ne: bId },
       isDeleted: false,
       $or: [{ brandName: nameTrim }, { brandSlug: slug }],
     });
@@ -349,7 +401,20 @@ exports.updateBrand = async (params, body, file) => {
     dataUpdate.brandLogo = file.path;
   }
 
-  // Nếu chẳng có gì để update
+  // Cập nhật các trường thông tin bổ sung
+  if (brandDescription !== undefined)
+    dataUpdate.brandDescription = brandDescription;
+  if (brandWebsite !== undefined) dataUpdate.brandWebsite = brandWebsite;
+
+  if (brandStatus) {
+    dataUpdate.brandStatus = brandStatus;
+    dataUpdate.brandReviewedAt = new Date(); // Ghi nhận thời gian duyệt
+
+    if (brandStatus === "rejected" && brandReviewReason) {
+      dataUpdate.brandReviewReason = brandReviewReason;
+    }
+  }
+
   if (Object.keys(dataUpdate).length === 0) {
     const err = new Error("Không có dữ liệu nào để cập nhật");
     err.status = 400;
@@ -368,9 +433,59 @@ exports.updateBrand = async (params, body, file) => {
     throw err;
   }
 
+  if (brandStatus && updatedBrand.brandRequestedById) {
+    const shopId = updatedBrand.brandRequestedById;
+    let title = "Cập nhật thông tin thương hiệu";
+    let message = `Thông tin thương hiệu "${updatedBrand.brandName}" đã được cập nhật.`;
+
+    switch (brandStatus) {
+      case "approved":
+        title = "Thương hiệu đã được phê duyệt";
+        message = `Chúc mừng! Thương hiệu "${updatedBrand.brandName}" của bạn đã được duyệt và hiển thị trên sàn.`;
+        break;
+
+      case "rejected":
+        title = "Thương hiệu bị từ chối ";
+        message = `Rất tiếc, yêu cầu đăng ký thương hiệu "${updatedBrand.brandName}" đã bị từ chối.`;
+        if (updatedBrand.brandReviewReason) {
+          message += ` Lý do: ${updatedBrand.brandReviewReason}`;
+        }
+        break;
+
+      case "blocked":
+        title = "Thương hiệu bị khóa ";
+        message = `Thương hiệu "${updatedBrand.brandName}" tạm thời bị khóa. Vui lòng liên hệ BQT để biết thêm chi tiết.`;
+        break;
+
+      case "pending":
+        title = "Thương hiệu đang chờ duyệt lại ";
+        message = `Thương hiệu "${updatedBrand.brandName}" đã chuyển sang trạng thái chờ duyệt.`;
+        break;
+    }
+
+    const notiData = {
+      recipientId: shopId,
+      recipientRole: "shop",
+      title: title,
+      message: message,
+      type: "BRAND_STATUS_UPDATE",
+      sourceId: updatedBrand._id,
+      sourceModel: "Brand",
+    };
+
+    try {
+      await NotificationService.createNotificationAndEmit(notiData, io);
+    } catch (err) {
+      console.error(
+        "[Thông báo] Lỗi khi gửi thông báo cập nhật thương hiệu:",
+        err.message
+      );
+    }
+  }
+
   return {
     success: true,
-    message: "Cập nhật thương hiệu thành công",
+    message: "Cập nhật thương hiệu thành công",
     brand: updatedBrand,
   };
 };
@@ -379,7 +494,7 @@ exports.deleteBrand = async (bid) => {
   const isUsed = await Product.findOne({ brandId: bid });
   if (isUsed) {
     const err = new Error(
-      "Không thể xoá thương hiệu vì đang được sử dụng bởi sản phẩm."
+      "Không thể xoá thương hiệu vì đang được sử dụng bởi sản phẩm."
     );
     err.status = 400;
     throw err;
@@ -394,7 +509,49 @@ exports.deleteBrand = async (bid) => {
 
   return {
     success: true,
-    message: "Xoá thương hiệu thành công",
+    message: "Xoá thương hiệu thành công",
+  };
+};
+
+exports.getBrandStats = async () => {
+  // Sử dụng Aggregation để nhóm và đếm
+  const stats = await Brand.aggregate([
+    // 1. Lọc bỏ các bản ghi đã xoá mềm
+    { $match: { isDeleted: false } },
+
+    {
+      $group: {
+        _id: "$brandStatus",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // 3. Format lại dữ liệu trả về cho đẹp
+  // Khởi tạo giá trị mặc định (đề phòng trường hợp database chưa có status nào đó thì vẫn hiện số 0)
+  const formattedStats = {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    blocked: 0,
+  };
+
+  // Map dữ liệu từ Aggregation vào object kết quả
+  stats.forEach((item) => {
+    // item có dạng: { _id: "pending", count: 5 }
+    const status = item._id;
+    if (formattedStats.hasOwnProperty(status)) {
+      formattedStats[status] = item.count;
+      // Cộng dồn vào tổng số
+      formattedStats.total += item.count;
+    }
+  });
+
+  return {
+    success: true,
+    message: "Lấy thống kê thương hiệu thành công",
+    data: formattedStats,
   };
 };
 
@@ -413,11 +570,14 @@ const parseBlocks = (raw) => {
 
 exports.createProduct = async (reqBody, files = {}) => {
   const body = { ...reqBody };
-  //console.log("Nhận thông tin đăng ký", reqBody);
+
   // thumbnail
   if (files?.productThumb?.[0]?.path) {
     body.productThumb = files.productThumb[0].path;
   }
+
+  const themeIds = toList(body.themeId);
+  delete body.themeId;
 
   const blocks = parseBlocks(body.blocks);
   const mediaFiles = files?.blockFiles || [];
@@ -477,6 +637,25 @@ exports.createProduct = async (reqBody, files = {}) => {
   }
 
   const product = await Product.create(body);
+
+  if (themeIds.length > 0) {
+    try {
+      // Tạo một mảng Promises để gọi createProductTheme cho từng ID
+      const themePromises = themeIds.map((themeId) =>
+        exports.createProductTheme({
+          productId: product._id,
+          themeId: themeId,
+        })
+      );
+      await Promise.all(themePromises);
+    } catch (themeError) {
+      console.error(
+        `Lỗi khi gắn theme cho sản phẩm ${product._id}:`,
+        themeError.message
+      );
+    }
+  }
+
   if (exports.recalcShopAggregates) {
     await exports.recalcShopAggregates(product.shopId).catch(() => {});
   }
@@ -531,6 +710,13 @@ const toList = (v) => {
   return s.split(",").map((x) => x.trim());
 };
 
+const removeDiacritics = (str) => {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+};
+
 exports.getProducts = async (query) => {
   const {
     s,
@@ -539,7 +725,7 @@ exports.getProducts = async (query) => {
     categoryId,
     themeId,
     shopId,
-    limit = 20,
+    limit,
     sortKey = "createdAt",
     sortDir = "desc",
     hasSale,
@@ -548,9 +734,14 @@ exports.getProducts = async (query) => {
     excludeIds,
     status,
     viewer,
+    productIds,
   } = query;
+  console.log("Nhan tham so truy van", query);
 
-  const filter = { isDeleted: { $ne: true } };
+  const filter = {
+    deletedAt: null,
+    isDeleted: { $ne: true },
+  };
 
   // loại trừ các id
   const eIds = toList(excludeIds);
@@ -585,8 +776,14 @@ exports.getProducts = async (query) => {
   // chỉ lấy sản phẩm đã có variationId
   filter.variationId = { $ne: null };
 
+  //Loc theo id
+  const pIds = toList(productIds); // productIds là biến mới trong query
+  if (pIds.length) filter._id = { $in: pIds };
+
   // --- Search theo tên ---
-  if (s) filter.productName = { $regex: s, $options: "i" };
+  if (s) {
+    filter.$text = { $search: s };
+  }
 
   // --- Các filter theo id (hỗ trợ string, mảng, "a,b") ---
   const bIds = toList(brandId);
@@ -604,6 +801,7 @@ exports.getProducts = async (query) => {
   // --- Lọc theo sale ---
   if (hasSale === "true" || hasSale === true) {
     filter.productIsOnSale = true;
+    filter.productDiscountPercent = { $gt: 0 };
   }
 
   // --- Lọc theo theme ---
@@ -632,10 +830,8 @@ exports.getProducts = async (query) => {
   let approvedShopIds = null;
 
   if (role === "public") {
-    // 1 lần duy nhất cho public
     const approvedShopsRes = await ShopService.getShops({
       status: "approved",
-      // không truyền limit ⇒ trong getShops .limit(0) => lấy hết
     });
 
     approvedShops = approvedShopsRes.shops || [];
@@ -651,7 +847,6 @@ exports.getProducts = async (query) => {
       };
     }
 
-    // Áp filter: chỉ lấy sản phẩm thuộc shop đã duyệt
     if (filter.shopId && filter.shopId.$in) {
       const allowed = filter.shopId.$in.filter((id) =>
         approvedShopIds.includes(String(id))
@@ -665,7 +860,6 @@ exports.getProducts = async (query) => {
   // --- Lọc theo Mall (shopOfficial = true) ---
   if (hasMall === "true" || hasMall === true) {
     if (role === "public") {
-      // Dùng lại approvedShops đã query phía trên, không gọi DB lần 2
       const mallShopIds = (approvedShops || [])
         .filter((s) => s.shopIsOfficial === true)
         .map((s) => String(s._id));
@@ -680,7 +874,6 @@ exports.getProducts = async (query) => {
         };
       }
 
-      // giao với filter.shopId (hiện tại đã là approved shops)
       if (filter.shopId && filter.shopId.$in) {
         const allowed = filter.shopId.$in.filter((id) =>
           mallShopIds.includes(String(id))
@@ -690,7 +883,6 @@ exports.getProducts = async (query) => {
         filter.shopId = { $in: mallShopIds };
       }
     } else {
-      // Admin / shop nhưng muốn lọc Mall → query riêng, vì trên không gọi approvedShops
       const mallResult = await ShopService.getShops({
         isMall: true,
         limit: 500,
@@ -719,8 +911,14 @@ exports.getProducts = async (query) => {
     }
   }
 
-  // --- Giới hạn an toàn ---
-  const limitNum = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+  // --- XỬ LÝ LIMIT LINH HOẠT ---
+  let limitNum = null;
+  if (limit !== undefined && limit !== null && limit !== "") {
+    const parsed = parseInt(limit, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      limitNum = Math.min(parsed, 100); // Giới hạn tối đa 100
+    }
+  }
 
   // --- Mapping các trường sort trong DB ---
   const mapSort = {
@@ -734,8 +932,8 @@ exports.getProducts = async (query) => {
   const dir = String(sortDir).toLowerCase() === "asc" ? 1 : -1;
   const sortObj = { [field]: dir, _id: dir };
 
-  // --- Cursor filter (keyset pagination) ---
-  if (after) {
+  // --- Cursor filter (CHỈ ÁP DỤNG KHI CÓ limitNum) ---
+  if (limitNum !== null && after) {
     try {
       const { id, field: fvRaw } = b64.decode(after);
       const afterId = new ObjectId(id);
@@ -763,30 +961,43 @@ exports.getProducts = async (query) => {
   }
 
   // --- Truy vấn ---
-  const items = await Product.find(filter)
+  const queryBuilder = Product.find(filter)
     .populate("brandId", "brandName brandSlug")
     .populate("categoryId", "categoryName categorySlug")
-    .populate("shopId", "shopName shopSlug shopLogo shopOfficial shopStatus")
+    .populate("shopId", "shopName shopSlug shopLogo shopIsOfficial shopStatus")
     .sort(sortObj)
-    .limit(limitNum + 1)
     .lean();
 
-  const hasMore = items.length > limitNum;
-  if (hasMore) items.pop();
+  // Chỉ thêm .limit() nếu có limitNum
+  if (limitNum !== null) {
+    queryBuilder.limit(limitNum + 1); // +1 để kiểm tra hasMore
+  }
 
-  const last = items[items.length - 1] || null;
-  const nextCursor = last
-    ? b64.encode({
-        id: String(last._id),
-        field:
-          field === "productCreateAt"
-            ? (last.productCreateAt &&
-                last.productCreateAt.toISOString &&
-                last.productCreateAt.toISOString()) ||
-              null
-            : Number(last[field] ?? 0),
-      })
-    : null;
+  const items = await queryBuilder;
+
+  // --- XỬ LÝ PHÂN TRANG (CHỈ KHI CÓ limitNum) ---
+  let hasMore = false;
+  let nextCursor = null;
+
+  if (limitNum !== null) {
+    hasMore = items.length > limitNum;
+    if (hasMore) items.pop();
+
+    const last = items[items.length - 1] || null;
+    nextCursor = last
+      ? b64.encode({
+          id: String(last._id),
+          field:
+            field === "productCreateAt"
+              ? last.productCreateAt?.toISOString() || null
+              : Number(last[field] ?? 0),
+        })
+      : null;
+  } else {
+    // Không có limit → lấy hết → không phân trang
+    hasMore = false;
+    nextCursor = null;
+  }
 
   return {
     success: true,
@@ -797,7 +1008,16 @@ exports.getProducts = async (query) => {
   };
 };
 
-exports.updateProduct = async (params, reqBody, files = {}) => {
+function getStatusText(status) {
+  const map = {
+    approved: "Đã được duyệt",
+    blocked: "Đã bị khóa",
+    pending: "đang chờ duyệt",
+  };
+  return map[status] || status;
+}
+
+exports.updateProduct = async (params, reqBody, files = {}, io) => {
   const { pId } = params;
   const body = { ...reqBody };
 
@@ -805,103 +1025,103 @@ exports.updateProduct = async (params, reqBody, files = {}) => {
     _id: pId,
     isDeleted: { $ne: true },
   });
+
   if (!product) {
     const err = new Error("Không tìm thấy sản phẩm");
     err.status = 404;
     throw err;
   }
 
-  // 1) Thumbnail (nếu có file mới)
   if (files?.productThumb?.[0]?.path) {
-    body.productThumb = files.productThumb[0].path; // đường dẫn (ví dụ Cloudinary URL)
-  } else {
-    //Nếu không gửi gì bỏ qua
-    if (!Object.prototype.hasOwnProperty.call(files, "productThumb")) {
-      // Nếu không có file upload và KHÔNG có field text productThumb trong body,
-      // body.productThumb sẽ là undefined => DB giữ nguyên
-      // Nếu có field text productThumb="" thì body.productThumb === "" -> DB set ""
-      // => Không cần làm gì thêm ở đây, chỉ giải thích.
-    }
+    body.productThumb = files.productThumb[0].path;
   }
 
-  // 2) Blocks: nếu client gửi "blocks" => coi như thay toàn bộ mảng
+  const themeIds = toList(body.themeId);
+  if (Object.prototype.hasOwnProperty.call(body, "themeId")) {
+    await ProductTheme.deleteMany({ productId: pId });
+
+    // 2. Tạo liên kết theme mới (nếu themeIds không rỗng)
+    if (themeIds.length > 0) {
+      try {
+        const themePromises = themeIds.map((themeId) =>
+          exports.createProductTheme({
+            productId: pId,
+            themeId: themeId,
+          })
+        );
+        await Promise.all(themePromises);
+      } catch (themeError) {
+        console.error(`Lỗi khi cập nhật theme ${pId}:`, themeError.message);
+      }
+    }
+    delete body.themeId;
+  }
+
+  // 1) Thumbnail (nếu có file mới)
   if (typeof body.blocks !== "undefined") {
     const blocks = parseBlocks(body.blocks);
 
     const mediaFiles = files?.blockFiles || [];
-    const mediaBlocks = blocks.filter(
-      (b) => b.type === "image" || b.type === "video"
+
+    // FIX: Chỉ đếm các block media không có URL (cần file mới)
+    const blocksRequiringNewFile = blocks.filter(
+      // Block là media VÀ KHÔNG có URL (file mới)
+      (b) => (b.type === "image" || b.type === "video") && !b.url
     );
 
-    let productContentBlocks = [];
+    // Kiểm tra số lượng file: số file mới phải khớp số block cần file
+    if (mediaFiles.length !== blocksRequiringNewFile.length) {
+      const err = new Error(
+        // Thông báo lỗi chính xác hơn
+        `Số file (${mediaFiles.length}) không khớp số block media cần file mới (${blocksRequiringNewFile.length}).`
+      );
+      err.status = 400;
+      throw err;
+    }
 
-    if (mediaFiles.length > 0) {
-      // 2A) Chế độ reupload media: số file phải khớp số media blocks
-      if (mediaFiles.length !== mediaBlocks.length) {
-        const err = new Error(
-          `Số file (${mediaFiles.length}) không khớp số block media (${mediaBlocks.length}).`
-        );
-        err.status = 400;
-        throw err;
-      }
+    let mediaIndex = 0; // Bộ đếm cho mediaFiles
+    const productContentBlocks = blocks.map((b, idx) => {
+      const orderVal = Number.isFinite(b.order) ? Number(b.order) : idx;
 
-      let mediaIndex = 0;
-      productContentBlocks = blocks.map((b, idx) => {
-        const orderVal = Number.isFinite(b.order) ? Number(b.order) : idx;
-
-        if (b.type === "image" || b.type === "video") {
+      if (b.type === "image" || b.type === "video") {
+        if (!b.url) {
+          // Trường hợp 1: Block MỚI hoặc bị xóa URL -> Dùng file upload mới
           const f = mediaFiles[mediaIndex++];
           return {
             type: b.type,
-            url: f?.path || "",
+            url: f?.path || "", // Lấy URL từ file upload mới
             content: b.content || "",
             alt: b.alt || "",
             order: orderVal,
           };
-        }
-        if (b.type === "videoUrl") {
-          return {
-            type: "videoUrl",
-            url: b?.url || "",
-            content: b.content || "",
-            alt: b.alt || "",
-            order: Number.isFinite(b.order) ? Number(b.order) : idx,
-          };
-        }
-        // text block
-        return {
-          type: "text",
-          content: b.content || "",
-          order: orderVal,
-        };
-      });
-    } else {
-      // 2B) Chế độ không reupload: dùng URL từ block (yêu cầu media block phải có url)
-      productContentBlocks = blocks.map((b, idx) => {
-        const orderVal = Number.isFinite(b.order) ? Number(b.order) : idx;
-        if (b.type === "image" || b.type === "video") {
-          if (!b.url || !String(b.url).startsWith("http")) {
-            const err = new Error(
-              `Block media thiếu URL ở vị trí ${idx}. Gửi lại 'url' hoặc upload file mới qua 'blockFiles'.`
-            );
-            err.status = 400;
-            throw err;
-          }
+        } else {
+          // Trường hợp 2: Block media cũ -> GIỮ URL CŨ (Bản ghi từ server)
           return {
             type: b.type,
-            url: b.url,
+            url: b.url, // GIỮ URL CŨ
             content: b.content || "",
             alt: b.alt || "",
             order: orderVal,
           };
         }
+      }
+
+      // Xử lý các loại blocks khác (videoUrl, text)
+      if (b.type === "videoUrl") {
         return {
-          type: "text",
+          type: "videoUrl",
+          url: b?.url || "",
           content: b.content || "",
+          alt: b.alt || "",
           order: orderVal,
         };
-      });
-    }
+      }
+      return {
+        type: "text",
+        content: b.content || "",
+        order: orderVal,
+      };
+    });
 
     body.productContentBlocks = productContentBlocks;
   }
@@ -917,6 +1137,35 @@ exports.updateProduct = async (params, reqBody, files = {}) => {
     body,
     { new: true }
   );
+
+  //Gui thong bao
+  if (body.productStatus) {
+    const shopId = updatedProduct.shopId;
+    if (!shopId) {
+      console.warn(
+        `[Thông báo] Sản phẩm ${pId} không có shopId → bỏ qua gửi thông báo`
+      );
+    } else {
+      const notiData = {
+        recipientId: shopId.toString(), // Chủ shop
+        recipientRole: "shop",
+        title: `Sản phẩm "${updatedProduct.productName}" đã được cập nhật trạng thái`,
+        message: `Trạng thái mới: ${getStatusText(body.productStatus)}`,
+        type: "PRODUCT_STATUS_UPDATE",
+        sourceId: updatedProduct._id,
+        sourceModel: "Product",
+      };
+
+      try {
+        await NotificationService.createNotificationAndEmit(notiData, io);
+      } catch (err) {
+        console.error(
+          "[Thông báo] Lỗi khi gửi cập nhật trạng thái sản phẩm:",
+          err.message
+        );
+      }
+    }
+  }
 
   // 5) Re-aggregate (nếu có)
   if (exports.recalcShopAggregates) {
@@ -935,7 +1184,7 @@ exports.updateProduct = async (params, reqBody, files = {}) => {
  */
 exports.getProductStats = async (params) => {
   // Xây dựng filter động
-  console.log("Tham so nhan duoc truy van");
+
   const { shopId } = params;
   const filter = { isDeleted: { $ne: true } };
 
@@ -978,6 +1227,21 @@ exports.getProductStats = async (params) => {
           { $match: { variations: { $size: 0 } } },
           { $count: "count" },
         ],
+
+        // === [BỔ SUNG] Thống kê theo productStatus ===
+        pending: [
+          { $match: { productStatus: "pending" } },
+          { $count: "count" },
+        ],
+        approved: [
+          { $match: { productStatus: "approved" } },
+          { $count: "count" },
+        ],
+        blocked: [
+          { $match: { productStatus: "blocked" } },
+          { $count: "count" },
+        ],
+        // ===========================================
       },
     },
 
@@ -995,6 +1259,11 @@ exports.getProductStats = async (params) => {
         noVariation: {
           $ifNull: [{ $arrayElemAt: ["$noVariation.count", 0] }, 0],
         },
+        // === [BỔ SUNG] Chuẩn hóa output cho status ===
+        pending: { $ifNull: [{ $arrayElemAt: ["$pending.count", 0] }, 0] },
+        approved: { $ifNull: [{ $arrayElemAt: ["$approved.count", 0] }, 0] },
+        blocked: { $ifNull: [{ $arrayElemAt: ["$blocked.count", 0] }, 0] },
+        // ===========================================
       },
     },
   ]);
@@ -1005,6 +1274,11 @@ exports.getProductStats = async (params) => {
     inStock: 0,
     onSale: 0,
     noVariation: 0,
+    // === [BỔ SUNG] Default values cho status ===
+    pending: 0,
+    approved: 0,
+    blocked: 0,
+    // ===========================================
   };
 
   return {
@@ -1030,7 +1304,6 @@ exports.getShopProductsWithVariations = async (query = {}) => {
     sortKey = "createdAt",
     sortDir = "desc",
   } = query;
-  console.log("Nhan truy van", query);
 
   if (!shopId) {
     const err = new Error("Thiếu shopId");
@@ -1098,7 +1371,34 @@ exports.getShopProductsWithVariations = async (query = {}) => {
       },
     },
 
-    // JOIN categoryId -> categoryInfo
+    {
+      $lookup: {
+        from: "productthemes",
+        localField: "_id",
+        foreignField: "productId",
+        as: "themeLinks",
+        // Chỉ cần lấy themeId từ liên kết
+        pipeline: [{ $project: { themeId: 1, _id: 0 } }],
+      },
+    },
+
+    {
+      $lookup: {
+        from: "themes",
+        localField: "themeLinks.themeId", // Dùng themeId từ liên kết
+        foreignField: "_id",
+        as: "productThemes", // Trường mới chứa mảng các theme
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              themeName: 1,
+              themeSlug: 1,
+            },
+          },
+        ],
+      },
+    },
     {
       $lookup: {
         from: "categories",
@@ -1186,15 +1486,12 @@ exports.getShopProductsWithVariations = async (query = {}) => {
           csName: "$categoryShopInfo.csName",
           csSlug: "$categoryShopInfo.csSlug",
         },
-
-        // thay vì trả categoryInfo + categoryId tách biệt
+        productThemes: 1,
         categoryId: {
           _id: "$categoryInfo._id",
           categoryName: "$categoryInfo.categoryName",
           categorySlug: "$categoryInfo.categorySlug",
         },
-
-        // thay vì trả brandInfo + brandId tách biệt
         brandId: {
           _id: "$brandInfo._id",
           brandName: "$brandInfo.brandName",
@@ -1429,10 +1726,10 @@ exports.getProductVariationById = async (params) => {
     isDeleted: { $ne: true },
   }).populate({
     path: "productId",
-    select: "productName shopId",
+    select: "productName shopId productDiscountPercent",
     populate: {
       path: "shopId",
-      select: "shopName shopLogo shopOfficial",
+      select: "shopName shopLogo shopIsOfficial",
     },
   });
   if (!doc) {
@@ -1470,19 +1767,14 @@ exports.getProductVariations = async (query) => {
 
 // UPDATE
 exports.updateProductVariation = async (params, body, files) => {
-  //console.log("Duoc goi cap nhat bien the", params, body, files);
   const { pvId } = params;
 
   if (files?.length > 0) {
-    // Có file upload mới
     body.pvImages = files.map((f) => f.path);
   } else if (Object.prototype.hasOwnProperty.call(body, "pvImages")) {
-    // Không có file nhưng có field pvImages
     if (typeof body.pvImages === "string" && body.pvImages.trim() === "[]") {
-      // Gửi mảng rỗng → clear ảnh
       body.pvImages = [];
     }
-    // Nếu không gửi gì → giữ nguyên, không làm gì
   }
 
   // nếu có chỉnh giá/stock thì validate tối thiểu
@@ -1933,6 +2225,10 @@ exports.recalcProductAggregates = async (productId) => {
         totalSold: { $sum: "$pvSoldCount" },
         minPrice: { $min: "$pvPrice" },
         minOriginalPrice: { $min: "$pvOriginalPrice" },
+        totalRateCount: { $sum: "$pvRateCount" },
+        totalRate: {
+          $sum: { $multiply: ["$pvRateAvg", "$pvRateCount"] },
+        },
       },
     },
   ]);
@@ -1944,16 +2240,29 @@ exports.recalcProductAggregates = async (productId) => {
     .sort({ pvPrice: 1, _id: 1 })
     .select("_id");
 
+  let newProductRateAvg =
+    agg?.totalRateCount > 0
+      ? (agg.totalRate / agg.totalRateCount).toFixed(1)
+      : 5;
+
   const update = {
     productStockQuantity: agg?.totalStock ?? 0,
     productSoldCount: agg?.totalSold ?? 0,
     productMinPrice: agg?.minPrice ?? 0,
     productMinOriginalPrice: agg?.minOriginalPrice ?? 0,
+    productRateCount: agg?.totalRateCount ?? 0,
+    productRateAvg: Number(newProductRateAvg),
     variationId: cheapest?._id ?? null,
   };
 
-  //await exports.updateProduct(params, update);
-  await Product.findByIdAndUpdate(productId, update);
+  const updatedProduct = await Product.findByIdAndUpdate(productId, update, {
+    new: true,
+  });
+
+  // 2. Kích hoạt cập nhật Shop
+  if (updatedProduct?.shopId) {
+    await exports.recalcShopAggregates(updatedProduct.shopId);
+  }
 };
 
 //Dùng khi thêm sửa xóa sản phẩm:
@@ -1974,9 +2283,13 @@ exports.recalcShopAggregates = async (shopId) => {
     },
   ]);
 
+  const rawRateAvg = agg?.shopRateAvg || 0;
+
+  const roundedRateAvg = Number(rawRateAvg.toFixed(1));
+
   await ShopService.updateShop(shopId, {
     shopProductCount: agg?.shopProductCount || 0,
-    shopRateAvg: agg?.shopRateAvg || 0,
+    shopRateAvg: roundedRateAvg,
   });
 };
 
@@ -2037,7 +2350,6 @@ exports.getProductDashboardReport = async (query = {}) => {
 
     {
       $facet: {
-        // 1) Summary cho dashboard
         summary: [
           {
             $group: {
@@ -2056,6 +2368,21 @@ exports.getProductDashboardReport = async (query = {}) => {
                 },
               },
               avgRating: { $avg: "$productRateAvg" },
+              pendingCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$productStatus", "pending"] }, 1, 0],
+                },
+              },
+              approvedCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$productStatus", "approved"] }, 1, 0],
+                },
+              },
+              blockedCount: {
+                $sum: {
+                  $cond: [{ $eq: ["$productStatus", "blocked"] }, 1, 0],
+                },
+              },
             },
           },
         ],
@@ -2080,8 +2407,6 @@ exports.getProductDashboardReport = async (query = {}) => {
             },
           },
         ],
-
-        // 3) Tổng số document để tính total trang
         totalDocs: [{ $count: "count" }],
       },
     },
@@ -2121,7 +2446,7 @@ exports.getProductDashboardReport = async (query = {}) => {
       },
     },
     filter: {
-      shopId: shopId || null, // giờ có thể null nếu lấy toàn hệ thống
+      shopId: shopId || null,
       sortKey,
       sortDir,
       hasSale: !!(hasSale === "true" || hasSale === true),
