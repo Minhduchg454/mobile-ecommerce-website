@@ -91,7 +91,7 @@ export const ImageBrowser = ({
     >
       {/* Ảnh chính */}
       <div
-        className={`relative w-full h-full bg-white flex items-center justify-center overflow-hidden rounded-3xl ${className} `}
+        className={`relative w-full h-full  flex items-center justify-center overflow-hidden rounded-3xl ${className} `}
       >
         <img
           src={images[index]}

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { apiGetProducts } from "../../services/catalog.api";
-import { ProductCard1, HorizontalScroller } from "../../components";
+import { ProductCard, HorizontalScroller } from "../../components";
 
-export const RecommentList = ({ brandId, excludeProductId }) => {
+export const RecommentList = ({ brandId, excludeProductId, categoryId }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,6 +12,7 @@ export const RecommentList = ({ brandId, excludeProductId }) => {
         setLoading(true);
         const res = await apiGetProducts({
           brandId,
+          categoryId,
           limit: 10,
           excludeIds: excludeProductId,
         });
@@ -21,7 +22,6 @@ export const RecommentList = ({ brandId, excludeProductId }) => {
           setProducts([]);
         }
       } catch (e) {
-        console.log("Lỗi khi tải sản phẩm gợi ý", e);
         setProducts([]);
       } finally {
         setLoading(false);
@@ -31,12 +31,12 @@ export const RecommentList = ({ brandId, excludeProductId }) => {
 
   return (
     <div className="w-full">
-      {loading ? (
-        <div className="flex gap-2 mx-2 md:mx-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+      {loading || products.length === 0 ? (
+        <div className="first:pl-2 first:md:pl-28 flex gap-4 md:mx-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="w-[250px] h-[350px] rounded-xl bg-gray-200/70 animate-pulse"
+              className="w-[100px] h-[150px] rounded-xl bg-gray-200/70 animate-pulse"
             />
           ))}
         </div>
@@ -46,7 +46,7 @@ export const RecommentList = ({ brandId, excludeProductId }) => {
           items={products}
           keyExtractor={(p) => p._id}
           renderItem={(p) => (
-            <ProductCard1
+            <ProductCard
               totalSold={p.productSoldCount}
               productMinOriginalPrice={p.productMinOriginalPrice}
               productMinPrice={p.productMinPrice}

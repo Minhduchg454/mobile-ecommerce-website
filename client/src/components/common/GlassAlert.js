@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import React, { useEffect, useRef } from "react";
 
 function Portal({ children }) {
-  const elRef = useRef(document.createElement("div")); // Tái sử dụng div
+  const elRef = useRef(document.createElement("div"));
 
   useEffect(() => {
     const el = elRef.current;
@@ -30,6 +30,7 @@ export const GlassAlert = ({
   showConfirmButton = true,
   showCancelButton = false,
   variant = "default", // default | success | danger
+  zIndexClass = "z-[10000]",
 }) => {
   if (!open) return null;
 
@@ -42,12 +43,24 @@ export const GlassAlert = ({
 
   return (
     <Portal>
-      <div className="fixed inset-0  bg-black/20 flex items-center justify-center z-50">
-        <div className="bg-white/60 backdrop-blur-sm border rounded-2xl shadow-lg p-5 w-[min(80vw,350px)]">
-          <h3 className="text-lg font-semibold mb-2 text-center">{title}</h3>
+      {/* Overlay — thêm onClick để đóng khi ấn ngoài */}
+      <div
+        className={`fixed inset-0 ${zIndexClass} bg-black/10  flex items-center justify-center transition duration-300 ease-in-out`}
+        onClick={onClose}
+      >
+        {/* Nội dung alert */}
+        <div
+          onClick={(e) => e.stopPropagation()} // ngăn click lan ra overlay
+          className="bg-white/60 backdrop-blur-sm border  rounded-2xl shadow-md p-5 w-[min(85vw,380px)] "
+        >
+          <h3 className="text-black text-lg font-semibold mb-2 text-center">
+            {title}
+          </h3>
+
           {message && (
-            <p className="text-sm text-gray-700 mb-4 text-center">{message}</p>
+            <p className="text-base text-black mb-4 text-center">{message}</p>
           )}
+
           <div className="w-full flex justify-end gap-2">
             {showCancelButton && (
               <button
@@ -61,7 +74,7 @@ export const GlassAlert = ({
             {showConfirmButton && (
               <button
                 onClick={onConfirm || onClose}
-                className={`w-full px-4 py-1 ${variantColor} text-white rounded-2xl shadow-sm`}
+                className={`w-full px-4 py-1 ${variantColor} text-white rounded-2xl shadow-sm transition`}
               >
                 {confirmText}
               </button>

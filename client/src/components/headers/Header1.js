@@ -1,6 +1,5 @@
 import {
   Link,
-  NavLink,
   createSearchParams,
   useNavigate,
   useSearchParams,
@@ -10,37 +9,73 @@ import { APP_INFO } from "../../ultils/contants";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { FaRegHeart } from "react-icons/fa";
 import React, { useState, useRef, useEffect } from "react";
-import { ShowSwal, InputFormSearch, GlassAlert } from "components";
+import { showAlert } from "store/app/appSlice";
+import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import defaultAvatar from "assets/avatarDefault.png";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "store/user/userSlice";
+import { clearSeller } from "store/seller/sellerSlice";
+import { clearChatData } from "store/chat/chatSlice";
 import { persistor } from "store/redux";
 import {
   AiOutlineUser,
   AiOutlineSearch,
-  AiOutlineHistory,
   AiOutlineClose,
-  AiOutlineArrowDown,
+  AiOutlineShop,
 } from "react-icons/ai";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiSettings } from "react-icons/fi";
 import { HiOutlineClipboardList } from "react-icons/hi";
-import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
+import {
+  MdKeyboardArrowDown,
+  MdKeyboardArrowUp,
+  MdOutlineNotifications,
+} from "react-icons/md";
+import { fetchUnreadCount } from "../../store/notification/asynsAction";
+import { getSocket } from "../../ultils/socket";
 
 export const Header1 = () => {
   const [isShowMenu, setIsShowMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const menuRef = useRef(null);
+  const { currentCart } = useSelector((state) => state.user);
   const { current, isLoggedIn } = useSelector((state) => state.user);
-  const [openLogout, setOpenLogout] = useState(false);
+  const { unreadCount } = useSelector((state) => state.notification);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const isAdmin = Boolean(current?.roles?.includes("admin"));
+  const isLogged = Boolean(isLoggedIn);
+  const countCart = currentCart?.length || 0;
 
   const handleLogout = () => {
     setIsShowMenu(false);
-    setOpenLogout(true);
+    const id = nextAlertId();
+    registerHandlers(id, {
+      onConfirm: () => {
+        dispatch(logout());
+        dispatch(clearSeller());
+        dispatch(clearChatData());
+        navigate(`/`);
+        persistor.purge();
+      },
+      onCancel: () => {},
+      onClose: () => {},
+    });
+
+    dispatch(
+      showAlert({
+        id,
+        title: "Xác nhận đăng xuất",
+        message: "Bạn có chắc chắn muốn đăng xuất không?",
+        variant: "danger",
+        showCancelButton: true,
+        confirmText: "Đăng xuất",
+        cancelText: "Huỷ",
+      })
+    );
   };
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener("resize", handleResize);
@@ -52,13 +87,13 @@ export const Header1 = () => {
       label: "Yêu thích",
       icon: <FaRegHeart size="25" />,
       path: `${path.WISHLIST}`,
-      isShow: isLoggedIn,
+      isShow: isLogged && !isAdmin,
     },
     {
       label: "Giỏ hàng",
       icon: <MdOutlineShoppingCart size="27" />,
-      path: `${path.DETAIL_CART}`,
-      isShow: true,
+      path: `${path.CART}`,
+      isShow: !isAdmin,
     },
   ];
 
@@ -67,13 +102,25 @@ export const Header1 = () => {
       label: "Thông tin tài khoản",
       icon: <AiOutlineUser size="16" />,
       path: `/${path.CUSTOMER}/${current?._id}/${path.C_PROFILE}`,
-      isShow: true,
+      isShow: !current?.roles?.includes("admin"),
     },
     {
       label: "Đơn hàng của tôi",
       icon: <HiOutlineClipboardList size="16" />,
       path: `/${path.CUSTOMER}/${current?._id}/${path.C_ORDER}`,
-      isShow: true,
+      isShow: current?.roles?.includes("shop", "customer") || false,
+    },
+    {
+      label: "Kênh quản lý hệ thống",
+      icon: <FiSettings size="16" />,
+      path: `/${path.ADMIN}/${current?._id}/${path.A_DASHBOARD}`,
+      isShow: isAdmin,
+    },
+    {
+      label: "Kênh bán hàng",
+      icon: <AiOutlineShop size="16" />,
+      path: `/${path.SELLER}/${current?._id}/${path.S_DASHBOARD}`,
+      isShow: current?.roles?.includes("shop") || false,
     },
     {
       label: "Đăng xuất",
@@ -87,7 +134,6 @@ export const Header1 = () => {
     ? [...dataButtons.filter((b) => b.isShow), ...userMenu]
     : userMenu;
 
-  // Ẩn menu khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -111,6 +157,31 @@ export const Header1 = () => {
     searchParams.delete("s");
     setSearchParams(searchParams, { replace: true });
   };
+
+  useEffect(() => {
+    if (!current?._id) return;
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleUpdate = () => {
+      dispatch(fetchUnreadCount());
+    };
+
+    socket.on("new_notification", handleUpdate);
+    socket.on("update_unread_count", handleUpdate);
+
+    return () => {
+      socket.off("new_notification", handleUpdate);
+      socket.off("update_unread_count", handleUpdate);
+    };
+  }, [current, dispatch]);
+
+  useEffect(() => {
+    if (current) {
+      dispatch(fetchUnreadCount());
+    }
+  }, [current, dispatch]);
 
   return (
     <div className="bg-white/50 backdrop-blur-sm w-full flex justify-between items-center h-[50px] px-2 lg:px-10 ">
@@ -159,23 +230,47 @@ export const Header1 = () => {
         )}
       </div>
 
-      <div className="flex items-center">
-        {/* Group Button — chỉ hiện khi không phải mobile */}
-        {!isMobile && (
-          <div className="flex gap-4 mx-4 border rounded-3xl py-1 px-3 bg-button-bg/60">
-            {dataButtons.map(
-              (btn, idx) =>
-                btn.isShow && (
-                  <Link
-                    key={idx}
-                    to={btn.path}
-                    className="flex items-center hover:text-button-t-hv transition"
-                  >
-                    {btn.icon}
-                  </Link>
-                )
-            )}
+      <div className="flex items-center gap-2">
+        {/* Group Button — chỉ hiện khi không phải mobile, và không phải admin */}
+        {!isAdmin && !isMobile && (
+          <div className="flex gap-4 border rounded-3xl py-1 px-3 bg-button-bg/60">
+            {dataButtons
+              .filter((btn) => btn.isShow)
+              .map((btn, idx) => (
+                <Link
+                  key={idx}
+                  to={btn.path}
+                  className="relative flex items-center hover:text-button-t-hv transition"
+                >
+                  {btn.icon}
+                  {/* Badge số lượng */}
+                  {btn.path === path.CART && countCart > 0 && (
+                    <span className="absolute -top-1 -right-1 border border-white bg-black text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                      {countCart > 99 ? "99+" : countCart}
+                    </span>
+                  )}
+                </Link>
+              ))}
           </div>
+        )}
+
+        {isLogged && (
+          <button
+            onClick={() => navigate(`${path.NOTIFICATION}`)}
+            className="border rounded-3xl py-1 px-3 bg-button-bg/60"
+          >
+            <div className="relative">
+              <MdOutlineNotifications
+                size="27"
+                className=" hover:text-button-t-hv transition"
+              />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-black border border-white text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </div>
+          </button>
         )}
 
         {/* Account */}
@@ -207,66 +302,51 @@ export const Header1 = () => {
           ) : (
             <Link
               to={`/${path.LOGIN}`}
-              className="rounded-3xl p-1  md:px-2 md:py-1.5 bg-button-bg-ac backdrop-blur-sm text-white hover:scale-105 transition-transform"
+              className="rounded-3xl px-2 py-2 md:py-1 bg-button-bg-ac backdrop-blur-sm text-white hover:scale-105 transition-transform"
             >
-              <p className="text-xs lg:text-base text-center font-normal">
+              <p className="text-xs lg:text-base text-center font-normal whitespace-nowrap">
                 Đăng nhập
               </p>
             </Link>
           )}
 
           {/* Dropdown menu */}
-          {isShowMenu && current?.roles?.includes("customer") && (
-            <div className="bg-white absolute right-0 top-full mt-2 w-[250px] border rounded-md shadow-lg    ">
-              {mergedMenu.map((item, idx) => {
-                // nếu icon tồn tại thì gán lại size mới
-                const iconEl = item.icon
-                  ? React.cloneElement(item.icon, {
-                      size: 20,
-                      className: "text-gray-600",
-                    })
-                  : null;
+          {isShowMenu && (
+            <div className="bg-white absolute right-0 top-full mt-2 w-[250px] border rounded-3xl shadow-lg">
+              {mergedMenu
+                .filter((item) => item.isShow)
+                .map((item, idx) => {
+                  const iconEl = item.icon
+                    ? React.cloneElement(item.icon, {
+                        size: 20,
+                        className: "text-gray-600",
+                      })
+                    : null;
 
-                return item.onClick ? (
-                  <button
-                    key={idx}
-                    onClick={item.onClick}
-                    className="w-full flex items-center gap-2 px-4 py-2 hover:bg-menu-hover text-left"
-                  >
-                    {iconEl}
-                    {item.label}
-                  </button>
-                ) : (
-                  <Link
-                    key={idx}
-                    to={item.path}
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
-                  >
-                    {iconEl}
-                    {item.label}
-                  </Link>
-                );
-              })}
+                  return item.onClick ? (
+                    <button
+                      key={idx}
+                      onClick={item.onClick}
+                      className="w-full flex items-center gap-2 px-4 py-2 hover:bg-menu-hover rounded-3xl text-left"
+                    >
+                      {iconEl}
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link
+                      key={idx}
+                      to={item.path}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-menu-hover rounded-3xl"
+                    >
+                      {iconEl}
+                      {item.label}
+                    </Link>
+                  );
+                })}
             </div>
           )}
         </div>
       </div>
-      <GlassAlert
-        open={openLogout}
-        title="Xác nhận đăng xuất"
-        message="Bạn có chắc chắn muốn đăng xuất không?"
-        showCancelButton
-        confirmText="Đăng xuất"
-        cancelText="Huỷ"
-        variant="danger"
-        onConfirm={() => {
-          dispatch(logout());
-          persistor.purge();
-          setOpenLogout(false);
-        }}
-        onCancel={() => setOpenLogout(false)}
-        onClose={() => setOpenLogout(false)}
-      />
     </div>
   );
 };

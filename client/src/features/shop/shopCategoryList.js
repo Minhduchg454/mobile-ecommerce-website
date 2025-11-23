@@ -1,4 +1,4 @@
-import { ShopCard, Breadcrumb, ListPage, ProductCard1 } from "../../components";
+import { ShopCard, Breadcrumb, ListPage, ProductCard } from "../../components";
 import { apiGetProducts } from "../../services/catalog.api";
 import { apiGetShopCategories } from "../../services/shop.api";
 
@@ -8,7 +8,7 @@ export const ShopCategoryList = ({ shopId }) => {
       fetchItems={apiGetProducts}
       fetchCategoriesShop={apiGetShopCategories}
       renderItem={(p) => (
-        <ProductCard1
+        <ProductCard
           totalSold={p.productSoldCount}
           productMinOriginalPrice={p.productMinOriginalPrice}
           productMinPrice={p.productMinPrice}
@@ -22,7 +22,7 @@ export const ShopCategoryList = ({ shopId }) => {
           shopName={p.shopId?.shopName}
           shopSlug={p.shopId?.shopSlug}
           shopLogo={p.shopId?.shopLogo}
-          shopOfficial={p.shopId?.shopOfficial}
+          shopOfficial={p.shopId?.shopIsOfficial}
           productIsOnSale={p.productIsOnSale}
           productDiscountPercent={p.productDiscountPercent}
         />

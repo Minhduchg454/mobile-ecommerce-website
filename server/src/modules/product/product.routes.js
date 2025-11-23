@@ -4,39 +4,43 @@ const uploadCloud = require("../../config/cloudinary.config");
 
 //Category
 router.put(
-  "/category/:cid",
+  "/categories/:cId",
   uploadCloud.single("categoryThumb"),
   productController.updateCategory
 );
 router.post(
-  "/category",
+  "/categories",
   uploadCloud.single("categoryThumb"),
   productController.createCategory
 );
-router.get("/category", productController.getCategory);
-router.delete("/category/:cid", productController.deleteCategory);
+router.get("/categories", productController.getCategory);
+router.delete("/categories/:cId", productController.deleteCategory);
 
 //Brand
 router.post(
-  "/brand",
+  "/brands",
   uploadCloud.single("brandLogo"),
   productController.createBrand
 );
 router.get("/brands", productController.getBrand);
+router.get("/brand-stats", productController.getBrandStats);
 router.put(
-  "/brand/:bid",
+  "/brands/:bId",
   uploadCloud.single("brandLogo"),
   productController.updateBrand
 );
-router.delete("/brand/:bid", productController.deleteBrand);
+router.delete("/brands/:bId", productController.deleteBrand);
 
 //Product
 router.get("/products", productController.getProduct);
+router.get("/products/dash-board", productController.getProductDashboardReport);
+router.get("/products/stats/:shopId?", productController.getProductStats);
 router.get("/product/:pId", productController.getProductById);
+router.get("/shop-products/", productController.getShopProductsWithVariations);
 router.post(
   "/product",
   uploadCloud.fields([
-    { name: "productThumb", maxCount: 1 }, // optional
+    { name: "productThumb", maxCount: 1 },
     { name: "blockFiles", maxCount: 20 },
   ]),
   productController.createProduct

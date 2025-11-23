@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { RiVipCrown2Line } from "react-icons/ri";
+import { CloseButton } from "../../components";
 import {
   MdKeyboardArrowDown,
   MdKeyboardArrowUp,
@@ -11,6 +12,7 @@ import {
   MdLocalOffer,
   MdColorLens,
 } from "react-icons/md";
+import noData from "../../assets/data-No.png";
 
 const FilterPanel = ({
   categories = [],
@@ -42,7 +44,6 @@ const FilterPanel = ({
   showMall = true,
   showSale = true,
 }) => {
-  const filterH1 = "text-sm md:text-base font-bold mt-2";
   const filterLi =
     "text-sm md:text-base ml-1 py-1 px-2 hover:bg-sidebar-hv rounded-xl cursor-pointer";
   const H1 = ({ icon: Icon, children }) => (
@@ -59,24 +60,16 @@ const FilterPanel = ({
   };
 
   return (
-    <>
-      <div className="w-full font-semibold text-title sticky top-0 z-10 bg-white/60 backdrop-blur-md md:pt-4 mb-1">
-        <p className="font-bold text-lg md:text-xl flex items-center gap-2">
-          {/* <MdFilterList size={22} className="text-gray-700" /> */}
-          Bộ lọc
-        </p>
-        <div className="absolute top-0.5 right-0.5 z-10 flex items-center justify-center rounded-2xl">
-          <button
-            className="md:hidden inline-flex items-center gap-1 p-2 rounded-full border shadow-md bg-sidebar-hover hover:bg-white"
-            onClick={onClose}
-            aria-label="Đóng bộ lọc"
-          >
-            <MdClose size={15} />
-          </button>
-        </div>
+    <div className="relative  bg-white rounded-3xl flex flex-col h-full md:py-0 px-4 overflow-y-auto scroll-hidden">
+      <div className="sticky  top-0 z-10  text-title  rounded-tr-xl  rounded-tl-xl bg-white/60 backdrop-blur-sm pt-2 md:pt-4">
+        <p className="font-bold text-lg md:text-xl">Bộ lọc</p>
+        <CloseButton
+          onClick={onClose}
+          className="absolute top-2 right-0 block md:hidden"
+        />
       </div>
 
-      <div className="pb-[1000px]">
+      <div className="flex flex-col mt-2 flex-1">
         {showCategory && categories.length > 0 && (
           <div>
             <H1 icon={MdCategory}>Danh mục</H1>
@@ -86,7 +79,7 @@ const FilterPanel = ({
                   key={c._id || c.categorySlug}
                   className={`${filterLi} ${
                     selectedCategoryIds.includes(c._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -100,30 +93,38 @@ const FilterPanel = ({
           </div>
         )}
 
-        {showCategoryShop && categoriesShop.length > 0 && (
+        {showCategoryShop && (
           <div>
-            <H1 icon={MdCategory}>Danh mục cửa hàng</H1>
-            <ul>
-              {categoriesShop.map((cs) => (
-                <li
-                  key={cs._id || cs.categorySlug}
-                  className={`${filterLi} ${
-                    selectedCategoryShopIds.includes(cs._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    toggle(
-                      cs._id,
-                      selectedCategoryShopIds,
-                      setSelectedCategoryShopIds
-                    )
-                  }
-                >
-                  {cs.csName}
+            <H1 icon={MdStorefront}>Danh mục cửa hàng</H1>
+            {categoriesShop.length > 0 ? (
+              <ul>
+                {categoriesShop.map((cs) => (
+                  <li
+                    key={cs._id || cs.categorySlug}
+                    className={`${filterLi} ${
+                      selectedCategoryShopIds.includes(cs._id)
+                        ? "text-sidebar-t-select font-bold"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      toggle(
+                        cs._id,
+                        selectedCategoryShopIds,
+                        setSelectedCategoryShopIds
+                      )
+                    }
+                  >
+                    {cs.csName}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul>
+                <li className={`${filterLi} font-bold text-gray-500`}>
+                  Tất cả
                 </li>
-              ))}
-            </ul>
+              </ul>
+            )}
           </div>
         )}
 
@@ -147,7 +148,7 @@ const FilterPanel = ({
                   key={b._id || b.brandSlug}
                   className={`${filterLi} ${
                     selectedBrandIds.includes(b._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -166,7 +167,7 @@ const FilterPanel = ({
             <H1 icon={MdLocalOffer}>Khuyến mãi, ưu đãi</H1>
             <label
               className={`${filterLi} ${
-                hasSale ? "text-sidebar-t-select bg-sidebar-bg-select" : ""
+                hasSale ? "text-sidebar-t-select font-bold" : ""
               }`}
             >
               <input
@@ -185,7 +186,7 @@ const FilterPanel = ({
             <H1 icon={RiVipCrown2Line}>Loại cửa hàng</H1>
             <label
               className={`${filterLi} ${
-                hasMall ? "text-sidebar-t-select bg-sidebar-bg-select" : ""
+                hasMall ? "text-sidebar-t-select font-bold" : ""
               }`}
             >
               <input
@@ -208,7 +209,7 @@ const FilterPanel = ({
                   key={s._id || s.shopSlug}
                   className={`${filterLi} ${
                     selectedShopIds.includes(s._id)
-                      ? "text-sidebar-t-select bg-sidebar-bg-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -231,7 +232,7 @@ const FilterPanel = ({
                   key={t._id || t.themeSlug}
                   className={`${filterLi} ${
                     selectedThemeIds.includes(t._id)
-                      ? "text-sidebar-t-select"
+                      ? "text-sidebar-t-select font-bold"
                       : ""
                   }`}
                   onClick={() =>
@@ -246,15 +247,15 @@ const FilterPanel = ({
         )}
       </div>
 
-      <div className="sticky bottom-0 z-10 backdrop-blur-md pb-4 md:bg-white/90">
+      <div className="sticky bottom-0 z-10 rounded-br-sm  rounded-bl-sm pb-4 bg-white/90 ">
         <button
-          className="w-full px-3 py-1 font-bold border shadow-md rounded-3xl bg-gray-action hover:text-text-ac hover:scale-103 transition"
+          className="w-full px-3 py-1 font-bold border shadow-md rounded-3xl bg-gray-action hover:text-red-600 hover:scale-103 transition"
           onClick={onClearAll}
         >
           Xóa tất cả
         </button>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -341,7 +342,8 @@ export const ListPage = ({
     (async () => {
       try {
         const promises = [];
-        if (showCategory && fetchCategories) promises.push(fetchCategories());
+        if (showCategory && fetchCategories)
+          promises.push(fetchCategories({ sort: "oldest" }));
         if (showCategoryShop && fetchCategoriesShop) {
           promises.push(fetchCategoriesShop({ shopId }));
         }
@@ -390,6 +392,7 @@ export const ListPage = ({
     showShop,
     showTheme,
   ]);
+  const topRef = useRef(null);
 
   useEffect(() => {
     if (!dataLoaded || hydrated) return;
@@ -431,7 +434,6 @@ export const ListPage = ({
 
     setHasSale(parseBool(searchParams.get("hasSale")));
     setHasMall(parseBool(searchParams.get("hasMall")));
-
     setHydrated(true);
   }, [
     dataLoaded,
@@ -540,7 +542,7 @@ export const ListPage = ({
     const q = {
       sortKey: sortKeyRaw || "createdAt",
       sortDir: sortDirRaw || "desc",
-      limit: 8,
+      limit: 15,
     };
 
     if (showSale && hasSale) q.hasSale = true;
@@ -555,6 +557,7 @@ export const ListPage = ({
     } else if (showShop && selectedShopIds.length) q.shopId = selectedShopIds;
     if (showTheme && selectedThemeIds.length) q.themeId = selectedThemeIds;
     if (s) q.s = s;
+    q.viewer = "public";
 
     return q;
   }, [
@@ -642,7 +645,7 @@ export const ListPage = ({
 
   return (
     <div className="h-full m-2 md:m-4 grid grid-cols-12 gap-4">
-      <div className="relative min-w-0 min-h-0 h-full hidden md:block md:col-span-3 lg:col-span-2 px-4 pt-0 pb-0 rounded-3xl shadow-md overflow-y-auto glass scroll-hidden">
+      <div className="relative h-full hidden md:block md:col-span-4 lg:col-span-3  overflow-y-auto scroll-hidden">
         <FilterPanel
           categories={categories}
           categoriesShop={categoriesShop}
@@ -676,8 +679,9 @@ export const ListPage = ({
 
       {/* Bên phải kết quả */}
       <div
-        className="col-span-12 md:col-span-9 lg:col-span-10 min-h-0 h-full overflow-y-auto scroll-hidden"
-        style={{ scrollbarGutter: "stable" }}
+        className="col-span-12 md:col-span-8 lg:col-span-9 min-h-0 h-full overflow-y-auto scroll-hidden"
+        style={{ scrollbarGutter: "stable", scrollMarginTop: "120px" }}
+        ref={topRef}
       >
         <div className="sticky top-0 z-10 mb-4 flex justify-between items-center bg-white/10 backdrop-blur-sm">
           <div className="flex justify-start items-center gap-2 md:gap-3">
@@ -747,8 +751,25 @@ export const ListPage = ({
           )}
           {!loading && !err && (
             <>
-              <div className="flex flex-wrap justify-start items-start gap-3 md:gap-5 px-2 md:px-6">
-                {items.map((item) => renderItem(item))}
+              <div className="animate-fadeIn">
+                {items.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 auto-rows-fr">
+                    {items.map((item, index) => (
+                      <div key={index} className="flex justify-center">
+                        {renderItem(item)}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col items-center justify-center p-6 h-[500px] bg-white rounded-3xl">
+                    <img
+                      src={noData}
+                      alt="No Data"
+                      className="w-32 h-32 mb-4 opacity-50"
+                    />
+                    <p className="text-black">Không có sản phẩm nào</p>
+                  </div>
+                )}
               </div>
               <div className="flex justify-center py-4">
                 {pageInfo?.hasMore ? (
@@ -777,11 +798,11 @@ export const ListPage = ({
             onClick={() => setIsFilterOpen(false)}
           />
           <div
-            className={`absolute left-2.5 top-4 rounded-2xl w-[85%] max-w-[330px] h-[calc(100vh-32px)] bg-white backdrop-blur-md shadow-2xl border transform transition-transform duration-300 ${
+            className={`absolute left-2.5 top-3 w-[85%] max-w-[330px] h-[calc(100vh-82px)] transform transition-transform duration-300  ${
               isFilterOpen ? "translate-x-0" : "-translate-x-full"
             }`}
           >
-            <div className="h-full overflow-y-auto scroll-hidden px-4 pt-0 pb-0 rounded-3xl shadow-md ">
+            <div className="h-full overflow-y-auto scroll-hidden ">
               <FilterPanel
                 onClose={() => setIsFilterOpen(false)}
                 categories={categories}

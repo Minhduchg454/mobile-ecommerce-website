@@ -10,14 +10,15 @@ import {
 } from "../../features/";
 
 export const HomePage = () => {
-  const card = "mb-5 md:mb-11";
+  const card = "mb-5 md:mb-11 animate-fadeIn ";
   const title = "font-bold text-base md:text-xl ml-2 md:ml-28 my-3 ";
 
   return (
     <div className="w-full ">
-      <div>
+      <div className="animate-fadeIn ">
         <BannerHomePage />
       </div>
+
       <div className={`${card}`}>
         <p className={`${title}`}>Khám phá danh mục nổi bật</p>
         <CategoryList />

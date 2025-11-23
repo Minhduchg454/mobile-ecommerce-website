@@ -1,30 +1,35 @@
-import clsx from 'clsx'
-import { useSearchParams, useNavigate, createSearchParams, useLocation } from 'react-router-dom'
-import { memo } from 'react'
+import React, { memo } from "react";
 
-const PagiItem = ({ children }) => {
-    const navigate = useNavigate()
-    const [params] = useSearchParams()
-    const location = useLocation()
+const PagiItem = ({ page, currentPage, onPageChange, isEllipsis = false }) => {
+  // Nếu là dấu ba chấm, không làm gì cả
+  if (isEllipsis) {
+    return <span className="px-2 py-1 mx-1 text-gray-500">...</span>;
+  }
 
-    const handlePagination = () => {
-        const queries = Object.fromEntries([...params])
-        if (Number(children)) queries.page = children
-        navigate({
-            pathname: location.pathname,
-            search: createSearchParams(queries).toString()
-        })
+  const handleClick = () => {
+    if (typeof page === "number" && page !== currentPage) {
+      onPageChange(page);
     }
-    return (
-        <button
-            className={clsx('w-10 h-10 flex justify-center', !Number(children) && 'items-end pb-2', Number(children) && 'items-center hover:rounded-full hover:bg-gray-300', +params.get('page') === +children && 'rounded-full bg-gray-300', !+params.get('page') && +children === 1 && 'rounded-full bg-gray-300')}
-            onClick={handlePagination}
-            type='button'
-            disabled={!Number(children)}
-        >
-            {children}
-        </button>
-    )
-}
+  };
 
-export default memo(PagiItem)
+  const isActive = page === currentPage;
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={isActive}
+      className={`rounded-full p-0.5 w-7 h-7 text-sm transition-colors 
+            ${
+              isActive
+                ? "bg-[#DEDEE2] text-black font-extrabold cursor-default "
+                : "bg-[#DEDEE2]/40 text-gray-400 font-light"
+            }
+            ${typeof page !== "number" ? "hidden" : ""}
+            `}
+    >
+      {page}
+    </button>
+  );
+};
+
+export default memo(PagiItem);

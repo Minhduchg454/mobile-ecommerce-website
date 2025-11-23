@@ -1,0 +1,8 @@
+//Backup terminal
+
+mongodump \
+  --db ecommerce_dev \
+  --out /Users/nguyenhuuduc/Public/Personal/Learning/CTU-Onedrive/CTU/2025-2026/HK01/CT553-LuanVanTotNghiep/mobile-ecommerce-website/database/$(date +%F) \
+  --gzip
+
+

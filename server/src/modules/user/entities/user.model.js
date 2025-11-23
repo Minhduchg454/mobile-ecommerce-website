@@ -1,15 +1,14 @@
 const mongoose = require("mongoose");
 
-// Định nghĩa schema chung cho User, Customer, Admin
 const userBaseSchema = new mongoose.Schema(
   {
     userFirstName: {
-      type: String, // Họ
+      type: String,
       required: true,
       trim: true,
     },
     userLastName: {
-      type: String, // Tên
+      type: String,
       required: true,
       trim: true,
     },
@@ -21,12 +20,12 @@ const userBaseSchema = new mongoose.Schema(
       index: true,
     },
     userAvatar: {
-      type: String, // Đường dẫn ảnh đại diện
+      type: String,
     },
     userMobile: {
       type: String,
       unique: true,
-      sparse: true, // chỉ yêu cầu unique nếu có giá trị
+      sparse: true,
       trim: true,
       default: undefined,
     },
@@ -52,9 +51,17 @@ const userBaseSchema = new mongoose.Schema(
       ref: "ShoppingCart",
       required: false,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
   },
   {
-    timestamps: true, // Tự động thêm createdAt và updatedAt
+    timestamps: true,
   }
 );
 

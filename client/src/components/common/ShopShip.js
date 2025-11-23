@@ -1,11 +1,7 @@
 // components/ShopChip.jsx
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import path from "../../ultils/path";
 
 export function ShopChip({ shopSlug, shopName, shopLogo, onClick, shopId }) {
-  const navigate = useNavigate();
-
   const initial = (shopName || "S")[0]?.toUpperCase();
 
   return (

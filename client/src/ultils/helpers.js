@@ -2,6 +2,93 @@ import icons from "./icons";
 
 const { AiOutlineStar, AiFillStar } = icons;
 
+const degToRad = (deg) => {
+  return deg * (Math.PI / 180);
+};
+export const calculateDistance = (addressFrom, addressTo) => {
+  // Bán kính Trái Đất (đơn vị: km)
+  const R = 6371;
+
+  const lat1 = addressFrom.addressLatitude;
+  const lon1 = addressFrom.addressLongitude;
+  const lat2 = addressTo.addressLatitude;
+  const lon2 = addressTo.addressLongitude;
+
+  // Kiểm tra tính hợp lệ của tọa độ
+  if (!lat1 || !lon1 || !lat2 || !lon2) {
+    console.error("Lỗi: Thiếu tọa độ (addressLatitude hoặc addressLongitude)!");
+    return 0;
+  }
+
+  // Tính sự chênh lệch vĩ độ và kinh độ
+  const dLat = degToRad(lat2 - lat1);
+  const dLon = degToRad(lon2 - lon1);
+
+  // Áp dụng công thức Haversine
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(degToRad(lat1)) *
+      Math.cos(degToRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+
+  return distance;
+};
+
+export const calculateShippingCost = (addressFrom, addressTo) => {
+  const SHIPPING_RATE_PER_KM = 100;
+  const BASE_FEE = 10000;
+
+  const distanceInKm = calculateDistance(addressFrom, addressTo);
+
+  if (distanceInKm === 0) {
+    return 0;
+  }
+
+  // 2. Tính chi phí theo khoảng cách
+  const costByDistance = distanceInKm * SHIPPING_RATE_PER_KM;
+
+  // 3. Tổng chi phí
+  const totalCost = BASE_FEE + costByDistance;
+
+  return Math.ceil(totalCost / 1000) * 1000;
+};
+
+export const getServiceFeatureValue = (servicePlan, key, defaultValue) => {
+  if (!servicePlan?.serviceId?.serviceFeatures) return defaultValue;
+
+  const feature = servicePlan.serviceId.serviceFeatures.find(
+    (f) => f.key === key
+  );
+
+  if (feature) {
+    // Chuyển sang số nếu là loại number, nếu không thì lấy giá trị
+    return feature.type === "number" ? Number(feature.value) : feature.value;
+  }
+  return defaultValue;
+};
+
+// Trong file helpers.js
+export const calculateFinalPrice = (pvPrice, discountPercent) => {
+  const basePrice = Number(pvPrice);
+  const discount = Number(discountPercent);
+
+  // 1. Kiểm tra giá bán cơ bản (pvPrice)
+  if (isNaN(basePrice) || basePrice <= 0) return 0;
+
+  // 2. Kiểm tra và áp dụng chiết khấu (productDiscountPercent)
+  if (isNaN(discount) || discount <= 0 || discount >= 100) {
+    return basePrice;
+  }
+
+  // 3. Tính toán giá cuối cùng và làm tròn (cần thiết cho tiền tệ)
+  const finalPrice = basePrice * (1 - discount / 100);
+  return Math.round(finalPrice);
+};
+
 export const createSlug = (string) =>
   string
     .toLowerCase()
@@ -10,19 +97,35 @@ export const createSlug = (string) =>
     .split(" ")
     .join("-");
 
-export const formatMoney = (number) =>
-  Number(number?.toFixed(1)).toLocaleString();
+export const formatMoney = (number) => {
+  if (number === null || number === undefined || number === "") return "";
+  const num = Number(String(number).replace(/\D/g, "")) || 0;
+  return num.toLocaleString("vi-VN");
+};
 
-export const renderStarFromNumber = (number, size) => {
-  if (!Number(number)) return;
+export const handleMoneyChange = (e, onChange) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  onChange(Number(raw || 0));
+};
+
+export const renderStarFromNumber = (number, color = "orange", size) => {
+  // [CẬP NHẬT] Chỉ thoát nếu đầu vào không phải là số (NaN)
+  // Nếu number là 0, nó vẫn là Number(0) = 0 (false), nhưng vẫn cần kiểm tra cụ thể.
+  if (isNaN(Number(number))) return;
   const stars = [];
-  number = Math.round(number);
-  if (number > 5) number = 5;
+  let roundedNumber = Math.round(Number(number) || 0);
+  if (roundedNumber > 5) roundedNumber = 5;
 
-  for (let i = 0; i < +number; i++)
-    stars.push(<AiFillStar color="orange" size={size || 16} />);
-  for (let i = 5; i > +number; i--)
-    stars.push(<AiOutlineStar color="orange" size={size || 16} />);
+  for (let i = 0; i < roundedNumber; i++) {
+    stars.push(
+      <AiFillStar key={`fill-${i}`} color={color} size={size || 16} />
+    );
+  }
+  for (let i = roundedNumber; i < 5; i++) {
+    stars.push(
+      <AiOutlineStar key={`empty-${i}`} color={color} size={size || 16} />
+    );
+  }
   return stars;
 };
 export function secondsToHms(d) {
@@ -154,3 +257,16 @@ export const formatVnDate = (dateStr) =>
 
 export const formatVnCurrency = (value) =>
   typeof value === "number" ? value.toLocaleString("vi-VN") + "₫" : value;
+
+export const getDistanceBetweenProvinces = (
+  province1,
+  province2,
+  locationsData
+) => {
+  if (!locationsData[province1] || !locationsData[province2]) {
+    return null;
+  }
+  const { lat: lat1, lng: lng1 } = locationsData[province1].center;
+  const { lat: lat2, lng: lng2 } = locationsData[province2].center;
+  return calculateDistance(lat1, lng1, lat2, lng2);
+};

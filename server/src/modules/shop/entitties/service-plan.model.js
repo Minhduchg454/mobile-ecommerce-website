@@ -1,7 +1,8 @@
 // models/ServicePlan.js
 const mongoose = require("mongoose");
+const { Schema, model } = mongoose;
 
-const servicePlanSchema = new mongoose.Schema(
+const servicePlanSchema = new Schema(
   {
     serviceName: {
       type: String,
@@ -13,8 +14,9 @@ const servicePlanSchema = new mongoose.Schema(
       trim: true,
     },
     serviceBillingCycle: {
-      type: String, // ví dụ: 'monthly', 'yearly'
+      type: String,
       required: true,
+      enum: ["monthly", "yearly"],
     },
     servicePrice: {
       type: Number,
@@ -23,10 +25,69 @@ const servicePlanSchema = new mongoose.Schema(
     },
     serviceColor: {
       type: String,
-      default: "#FFFFFF", // mặc định màu trắng
+      default: "#FFFFFF",
+    },
+    serviceSubscriberCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    serviceFeatures: {
+      type: [
+        {
+          key: {
+            type: String,
+            required: true,
+            trim: true,
+            enum: [
+              "MAX_PRODUCTS",
+              "SUPPORT",
+              "ANALYTICS",
+              "ADS_BOOST",
+              "MULTI_CATEGORY",
+              "DISCOUNT",
+            ],
+          },
+          label: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          value: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          type: {
+            type: String,
+            enum: ["string", "number", "boolean"],
+            default: "string",
+          },
+          unit: {
+            type: String,
+          },
+        },
+      ],
+      default: [],
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("ServicePlan", servicePlanSchema);
+servicePlanSchema.index(
+  { serviceName: 1, serviceBillingCycle: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: { $ne: true } },
+  }
+);
+
+module.exports = model("ServicePlan", servicePlanSchema);

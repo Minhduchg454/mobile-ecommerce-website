@@ -5,15 +5,15 @@ const mongoose = require("mongoose");
 const previewSchema = new mongoose.Schema(
   {
     previewComment: {
-      type: String, // Nội dung đánh giá
+      type: String,
       trim: true,
     },
     previewDate: {
-      type: Date, // Ngày đánh giá
+      type: Date,
       default: Date.now,
     },
     previewRate: {
-      type: Number, // Điểm đánh giá (1-5)
+      type: Number,
       required: true,
       min: 1,
       max: 5,
@@ -23,19 +23,16 @@ const previewSchema = new mongoose.Schema(
       default: [],
     },
     previewVideos: {
-      type: [String],
-      default: [],
+      type: String,
+      default: "",
     },
-
-    // Liên kết với User: mỗi Preview thuộc về một User (khách hàng)
     customerId: {
-      type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến Customer
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
       required: true,
     },
-    // Liên kết với ProductVariation: mỗi Preview đánh giá một ProductVariation cụ thể
     pvId: {
-      type: mongoose.Schema.Types.ObjectId, // Tham chiếu đến ProductVariation
+      type: mongoose.Schema.Types.ObjectId,
       ref: "ProductVariation",
       required: true,
     },
@@ -43,6 +40,19 @@ const previewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
       required: true,
+    },
+    isEdited: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
     },
   },
   {

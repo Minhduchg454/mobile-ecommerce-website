@@ -5,26 +5,23 @@ const couponSchema = new mongoose.Schema(
   {
     // Bạn có thể thêm các trường bổ sung thường có cho coupon như:
     couponCode: {
-      // Mã code thực tế để người dùng nhập (ví dụ: 'SALE20')
       type: String,
-      unique: true,
       trim: true,
-      uppercase: true, // Chuyển đổi thành chữ in hoa
-      // required: true // Thường là bắt buộc
+      uppercase: true,
+      required: true,
     },
     couponDescription: {
-      // Theo biểu đồ: description: String
       type: String,
       trim: true, // Loại bỏ khoảng trắng ở đầu/cuối
     },
-    // Bổ sung loại giảm giá (phần trăm hay giá trị cố định)
     couponDiscountType: {
       type: String,
       enum: ["percentage", "fixed_amount"], // Ví dụ: 'percentage' (%), 'fixed_amount' (giá trị cố định)
       required: true,
     },
+
+    //Gia tri giam dua tren couponDiscountType
     couponDiscount: {
-      // Theo biểu đồ: discount: NumberDouble (mức giảm giá)
       type: Number,
       required: true,
       min: 0, // Giảm giá không thể âm
@@ -47,13 +44,10 @@ const couponSchema = new mongoose.Schema(
       default: true,
     },
     couponUsageLimit: {
-      // Số lần coupon có thể được sử dụng (tổng cộng)
       type: Number,
-      default: -1, // -1 có thể biểu thị không giới hạn
+      default: -1,
     },
-
     couponUsedCount: {
-      // Số lần coupon đã được sử dụng
       type: Number,
       default: 0,
     },
@@ -62,24 +56,36 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    couponmaxDiscountAmount: {
+    couponMaxDiscountAmount: {
       type: Number,
       default: null,
     },
     createdByType: {
       type: String,
-      enum: ["Shop", "Admin"], // tên model
+      enum: ["Shop", "Admin"],
       required: true,
     },
     createdById: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "createdByType", // tên field chứa model cần ref
+      refPath: "createdByType",
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
     },
   },
   {
     timestamps: true, // Tự động thêm createdAt và updatedAt
   }
+);
+couponSchema.index(
+  { couponCode: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } }
 );
 
 module.exports = mongoose.model("Coupon", couponSchema);

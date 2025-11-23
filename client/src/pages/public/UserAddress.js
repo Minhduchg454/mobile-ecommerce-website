@@ -1,3 +1,8 @@
+import { AddressManage } from "../../features";
 export const UserAddress = () => {
-  return <div>Địa chỉ nguòi dùng</div>;
+  return (
+    <div className="animate-fadeIn">
+      <AddressManage />
+    </div>
+  );
 };

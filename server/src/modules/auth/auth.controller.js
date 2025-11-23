@@ -28,6 +28,15 @@ exports.registerShop = async (req, res, next) => {
   }
 };
 
+exports.changePassword = async (req, res, next) => {
+  try {
+    const result = await authService.changePassword(req.body);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.login = async (req, res, next) => {
   try {
     const result = await authService.login(req.body);
@@ -39,7 +48,7 @@ exports.login = async (req, res, next) => {
 
 exports.loginGoogle = async (req, res, next) => {
   try {
-    const result = await authService.loginGoogle(req.body);
+    const result = await authService.googleLogin(req.body);
     res.status(201).json(result);
   } catch (err) {
     next(err);

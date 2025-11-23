@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import appSlice from "./app/appSlice"; //quan ly ui
-import productSlice from "./products/productSlice"; // du lieu san pham
 import userSlice from "./user/userSlice"; //du lieu nguoi dung: token, thong tin
+import sellerSlice from "./seller/sellerSlice";
 import storage from "redux-persist/lib/storage"; //Luu vao localStorage
-import { persistReducer, persistStore } from "redux-persist"; //ket hop reducer voi co che luu tru, khoi tao co che luu va phuc hoi du lieu tu localStorage
+import notificationSlice from "./notification/notificationSlice";
+import chatSlice from "./chat/chatSlice";
 
+import { persistReducer, persistStore } from "redux-persist";
 //Redux: Quan ly du lieu dung chung giua cac component trong React
 const commonConfig = {
   storage,
@@ -13,24 +15,43 @@ const commonConfig = {
 //Luu cac bien isLoggedIn, token,... vao localStorage theo shop/user
 const userConfig = {
   ...commonConfig,
-  whitelist: ["isLoggedIn", "token", "current", "currentCart"],
+  whitelist: ["isLoggedIn", "token", "current", "currentCart", "wishList"],
   key: "shop/user",
 };
 
-//Luu dealDaily vao localStorage de khong phai goi API moi lan reload
-const productConfig = {
+const sellerConfig = {
   ...commonConfig,
-  whitelist: ["dealDaily"],
-  key: "shop/deal",
+  whitelist: ["current"],
+  key: "shop/seller",
+};
+
+const notificationConfig = {
+  ...commonConfig,
+  whitelist: ["unreadCount", "notifications", "loading"],
+  key: "shop/notification",
+};
+
+const chatConfig = {
+  ...commonConfig,
+  whitelist: [
+    "conversations",
+    "totalUnreadChat",
+    "messagesByConverId",
+    "loadingConversations",
+    "loadingMessages",
+    "currentConverId",
+  ],
+  key: "shop/chat",
 };
 
 //Khoi tao redux store
 export const store = configureStore({
   reducer: {
-    //Chia state thanh ba thanh phan de luu lau dai: trang thai ui, du lieu san pham , user
     app: appSlice,
-    products: persistReducer(productConfig, productSlice),
     user: persistReducer(userConfig, userSlice),
+    seller: persistReducer(sellerConfig, sellerSlice),
+    notification: persistReducer(notificationConfig, notificationSlice),
+    chat: persistReducer(chatConfig, chatSlice),
   },
   //Tat canh bao khi reudux xu ly du lieu khong thuan tuy nhu class, date, function
   middleware: (getDefaultMiddleware) =>

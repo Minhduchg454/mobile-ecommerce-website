@@ -2,11 +2,11 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import path from "../../ultils/path";
-import { MdInventory2 } from "react-icons/md";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
-import { BsSuitHeart } from "react-icons/bs";
+import noPhoto from "../../assets/image-not-found.png";
 import { MdAccessTimeFilled, MdShoppingCart } from "react-icons/md";
 import { FaBoxOpen } from "react-icons/fa";
+import defaultBackground from "../../assets/default.jpg";
 
 export const ShopCard = (props) => {
   const {
@@ -20,6 +20,7 @@ export const ShopCard = (props) => {
     shopProductCount,
     shopBackground,
     shopId,
+    shopIsOfficial,
   } = props;
 
   const navigate = useNavigate();
@@ -43,26 +44,29 @@ export const ShopCard = (props) => {
       onClick={handleNavigate}
       className="card-default cursor-pointer w-[250px] md:w-[300px] h-[230px] md:h-[250px] border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden"
       style={{
-        backgroundImage: shopBackground ? `url(${shopBackground})` : "none",
+        backgroundImage: shopBackground
+          ? `url(${shopBackground})`
+          : `url(${defaultBackground})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
       {/* Lớp phủ mờ để dễ đọc chữ khi có hình nền */}
-      <div className="w-full h-full bg-black/30 p-4 flex flex-col justify-start text-white">
+      <div className="w-full h-full bg-black/10 p-4 flex flex-col justify-start text-white">
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
-          {shopLogo ? (
+          <div className="relative ">
             <img
-              src={shopLogo}
+              src={shopLogo || noPhoto}
               alt={shopName}
-              className="h-12 w-12 rounded-full object-cover border border-gray-300"
+              className="h-12 w-12 rounded-full border border-gray-300  object-cover "
             />
-          ) : (
-            <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-semibold">
-              {initial}
-            </div>
-          )}
+            {shopIsOfficial && (
+              <div className="w-fit  px-1 py-0.5 absolute -bottom-2 right-1/2 translate-x-1/2 border rounded-md bg-red-600 text-white text-[5px] md:text-[10px] text-center whitespace-nowrap">
+                Mall
+              </div>
+            )}
+          </div>
 
           <div className="flex flex-col flex-1 min-w-0 mb-2">
             <span className="font-semibold truncate text-base">{shopName}</span>

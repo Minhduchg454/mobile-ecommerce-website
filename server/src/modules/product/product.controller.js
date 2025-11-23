@@ -3,7 +3,6 @@ const productService = require("./product.service");
 //Category controller
 exports.createCategory = async (req, res, next) => {
   try {
-    //service chi nhan du lieu thuan
     const result = await productService.createCategory(req.body, req.file);
     res.status(201).json(result);
   } catch (err) {
@@ -13,8 +12,7 @@ exports.createCategory = async (req, res, next) => {
 
 exports.getCategory = async (req, res, next) => {
   try {
-    const { sort } = req.query;
-    const result = await productService.getCategory(sort);
+    const result = await productService.getCategory(req.query);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -23,10 +21,11 @@ exports.getCategory = async (req, res, next) => {
 
 exports.updateCategory = async (req, res, next) => {
   try {
-    const { cid } = req.params;
-    const { categoryName } = req.body;
-    const file = req.file;
-    const result = await productService.updateCategory(cid, categoryName, file);
+    const result = await productService.updateCategory(
+      req.params,
+      req.body,
+      req.file
+    );
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -35,8 +34,8 @@ exports.updateCategory = async (req, res, next) => {
 
 exports.deleteCategory = async (req, res, next) => {
   try {
-    const { cid } = req.params;
-    const result = await productService.deteleCategory(cid);
+    const { cId } = req.params;
+    const result = await productService.deteleCategory(cId);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -44,11 +43,14 @@ exports.deleteCategory = async (req, res, next) => {
 };
 
 //Brand controller
-// Brand controller
 exports.createBrand = async (req, res, next) => {
   try {
-    const result = await productService.createBrand(req.body, req.file);
-    res.status(201).json(result); // created
+    const result = await productService.createBrand(
+      req.body,
+      req.file,
+      req.app
+    );
+    res.status(201).json(result);
   } catch (err) {
     next(err);
   }
@@ -56,8 +58,16 @@ exports.createBrand = async (req, res, next) => {
 
 exports.getBrand = async (req, res, next) => {
   try {
-    const { sort } = req.query;
-    const result = await productService.getBrand(sort);
+    const result = await productService.getBrand(req.query);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getBrandStats = async (req, res, next) => {
+  try {
+    const result = await productService.getBrandStats();
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -66,10 +76,12 @@ exports.getBrand = async (req, res, next) => {
 
 exports.updateBrand = async (req, res, next) => {
   try {
-    const { bid } = req.params; // brand id
-    const { brandName } = req.body;
-    const file = req.file;
-    const result = await productService.updateBrand(bid, brandName, file);
+    const result = await productService.updateBrand(
+      req.params,
+      req.body,
+      req.file,
+      req.app
+    );
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -78,8 +90,8 @@ exports.updateBrand = async (req, res, next) => {
 
 exports.deleteBrand = async (req, res, next) => {
   try {
-    const { bid } = req.params; // brand id
-    const result = await productService.deleteBrand(bid);
+    const { bId } = req.params; // brand id
+    const result = await productService.deleteBrand(bId);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -115,12 +127,24 @@ exports.getProduct = async (req, res, next) => {
   }
 };
 
+exports.getShopProductsWithVariations = async (req, res, next) => {
+  try {
+    const result = await productService.getShopProductsWithVariations(
+      req.query
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.updateProduct = async (req, res, next) => {
   try {
     const result = await productService.updateProduct(
       req.params,
       req.body,
-      req.files
+      req.files,
+      req.app
     );
     res.status(200).json(result);
   } catch (err) {
@@ -133,6 +157,24 @@ exports.deleteProduct = async (req, res, next) => {
     const params = req.params;
     const result = await productService.deleteProduct(params);
     res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getProductStats = async (req, res, next) => {
+  try {
+    const result = await productService.getProductStats(req.params);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getProductDashboardReport = async (req, res, next) => {
+  try {
+    const result = await productService.getProductDashboardReport(req.query);
+    return res.json(result);
   } catch (err) {
     next(err);
   }

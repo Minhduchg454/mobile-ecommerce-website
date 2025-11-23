@@ -5,6 +5,8 @@ const uploadCloud = require("../../config/cloudinary.config");
 
 router.post("/register/customer", authController.registerCustomer);
 router.post("/register/admin", authController.registerAdmin);
+router.post("/change-password", authController.changePassword);
+
 router.post(
   "/register/shop",
   uploadCloud.fields([
@@ -15,6 +17,6 @@ router.post(
   authController.registerShop
 );
 router.post("/login", authController.login);
-router.post("/google-login", authController.login);
+router.post("/google-login", authController.loginGoogle);
 
 module.exports = router;

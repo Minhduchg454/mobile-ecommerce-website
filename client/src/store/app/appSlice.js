@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-import * as actions from "./asyncActions";
 
 export const appSlice = createSlice({
   name: "app",
@@ -10,6 +9,8 @@ export const appSlice = createSlice({
     modalChildren: null,
     isShowCart: false,
     isShowWishlist: false,
+    isShowAlert: false,
+    alertData: null,
   },
   reducers: {
     showModal: (state, action) => {
@@ -22,8 +23,18 @@ export const appSlice = createSlice({
     showWishlist: (state) => {
       state.isShowWishlist = !state.isShowWishlist;
     },
+    showAlert: (state, action) => {
+      if (!action.payload) {
+        state.isShowAlert = false;
+        state.alertData = null;
+      } else {
+        state.isShowAlert = true;
+        state.alertData = action.payload;
+      }
+    },
   },
 });
-export const { showModal, showCart, showWishlist } = appSlice.actions;
+export const { showModal, showCart, showWishlist, showAlert } =
+  appSlice.actions;
 
 export default appSlice.reducer;

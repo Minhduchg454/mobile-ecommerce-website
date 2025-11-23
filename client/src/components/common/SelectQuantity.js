@@ -6,7 +6,7 @@ const SelectQuantity = ({ quantity, handleQuantity, handleChangeQuantity }) => {
       {/* Nút "-" */}
       <button
         onClick={() => handleChangeQuantity("minus")}
-        className="w-10 text-gray-500 border-r border-gray-300 text-xl hover:bg-gray-100"
+        className="w-10 text-gray-500 border-r border-gray-300 text-xs  md:text-sm  hover:bg-gray-100"
       >
         –
       </button>
@@ -22,7 +22,7 @@ const SelectQuantity = ({ quantity, handleQuantity, handleChangeQuantity }) => {
       {/* Nút "+" */}
       <button
         onClick={() => handleChangeQuantity("plus")}
-        className="w-10 text-gray-500 border-l  border-gray-300 text-xl hover:bg-gray-100"
+        className="w-10 text-gray-500 border-l  border-gray-300 text-xs  md:text-sm hover:bg-gray-100"
       >
         +
       </button>

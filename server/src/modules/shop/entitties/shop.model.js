@@ -16,25 +16,39 @@ const shopSchema = new Schema(
       required: true,
       trim: true,
       lowercase: true,
-      unique: true,
     },
     shopDescription: { type: String },
     shopLogo: { type: String },
     shopBanner: { type: [String], default: [] },
     shopBackground: { type: String },
     shopCreateAt: { type: Date, default: Date.now },
-    shopRateAvg: { type: Number, default: 5, min: 0, max: 5 },
+    shopRateAvg: { type: Number, default: 0, min: 0, max: 5 },
     shopRateCount: { type: Number, default: 0 },
     shopProductCount: { type: Number, default: 0 },
     shopSoldCount: { type: Number, default: 0 },
-    shopColor: { type: String, default: "#ffffff" },
     shopStatus: {
       type: String,
-      enum: ["pending", "approved", "blocked"], // chỉ cho phép 3 giá trị
-      default: "pending", // mặc định khi tạo shop mới
+      enum: ["pending", "approved", "blocked"],
+      default: "pending",
     },
-    shopIsOffical: { type: Boolean },
-    default: false,
+    shopIsOfficial: { type: Boolean, default: false },
+    shopReviewReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    shopReviewedAt: {
+      type: Date,
+      default: null,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
   },
   { _id: false },
   { timestamps: true }

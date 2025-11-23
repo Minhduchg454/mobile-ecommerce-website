@@ -2,10 +2,6 @@
 const mongoose = require("mongoose");
 
 const paymentSchema = new mongoose.Schema({
-  paymentAccountNumber: {
-    type: String,
-    required: true,
-  },
   paymentStatus: {
     type: String,
     required: true,
@@ -15,7 +11,7 @@ const paymentSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    enum: ["Credit Card", "Cash on Delivery", "Bank Transfer", "E-Wallet"],
+    enum: ["VNpay", "COD", "QR", "BANK"],
   },
   paymentDate: {
     type: Date,

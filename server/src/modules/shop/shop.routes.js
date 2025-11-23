@@ -1,7 +1,5 @@
 const uploadCloud = require("../../config/cloudinary.config");
 const router = require("express").Router();
-const shopController = require("./shop.controller");
-
 const controller = require("./shop.controller");
 
 //Shop
@@ -18,6 +16,7 @@ router.post(
   controller.createShop
 );
 router.get("/profiles", controller.getShops);
+router.get("/profiles/dash-board", controller.getShopDashboardStats);
 router.get(
   "/profile/:userId",
   /* verifyAccessToken, */ controller.getShopByUser
@@ -40,13 +39,13 @@ router.delete(
 //ServicePlan
 router.post("/service-plans", controller.createServicePlan);
 router.get("/service-plans", controller.getServicePlans);
-router.put("/service-plans/:sid", controller.updateServicePlan);
-router.delete("/service-plans/:sid", controller.deleteServicePlan);
+router.put("/service-plans/:sId", controller.updateServicePlan);
+router.delete("/service-plans/:sId", controller.deleteServicePlan);
 
 //ShopSubscrible
 router.post("/subscribles", controller.createSubscription);
-router.get("/subscribles/:shopId", controller.getSubscriptionsByShop);
-router.patch("/subscribles/cancel/:subId", controller.cancelSubscription); //dung patch do chi cap nhat mot phan tai nguyen
+router.get("/subscribles", controller.getSubscriptions);
+router.put("/subscribles/cancel/:subId", controller.cancelSubscription); //dung patch do chi cap nhat mot phan tai nguyen
 
 //Category-Shop
 router.post(
@@ -55,12 +54,11 @@ router.post(
   controller.createCategoryShop
 );
 router.get("/category-shop", controller.getCategoryShops);
-router.patch(
+router.put(
   "/category-shop/:csId",
-  uploadCloud.single("thumb"),
+  uploadCloud.single("csThumb"),
   controller.updateCategoryShop
 );
-
 router.delete("/category-shop/:csId", controller.deleteCategoryShop);
 
 module.exports = router;

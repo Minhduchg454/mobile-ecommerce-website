@@ -7,6 +7,7 @@ import {
   syncCartFromServer,
   fetchWishlist,
 } from "store/user/asyncActions";
+import { fetchNotifications } from "../../store/notification/asynsAction";
 import { apiRegister, apiLogin } from "apis/user";
 import { ShowSwal } from "components";
 import path from "ultils/path";
@@ -106,14 +107,14 @@ const Login = () => {
             const user = res.payload;
 
             if (user.roleId?.roleName === "customer") {
-              dispatch(syncCartFromServer(user._id)); // mới tách riêng
+              dispatch(syncCartFromServer(user._id));
               dispatch(fetchWishlist());
             }
             navigate("/");
           } else {
           }
         });
-
+        dispatch(fetchNotifications());
         navigate(redirectPath);
       } else {
         ShowSwal({
@@ -194,12 +195,13 @@ const Login = () => {
           showConfirmButton: false,
         });
         dispatch(getCurrent());
+        dispatch(fetchNotifications());
         const redirectPath = searchParams.get("redirect") || `/${path.HOME}`;
         navigate(redirectPath);
       } else {
         ShowSwal({
           title: "Lỗi",
-          text: res.mes || res.error || "Đăng nhập thất bại",
+          message: res.message || res.error || "Đăng nhập thất bại",
           icon: "error",
         });
       }

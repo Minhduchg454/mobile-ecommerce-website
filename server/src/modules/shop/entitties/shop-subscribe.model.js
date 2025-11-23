@@ -14,13 +14,13 @@ const shopSubscribeSchema = new mongoose.Schema(
     },
     subStatus: {
       type: String,
-      enum: ["pending", "active", "expired", "canceled"],
-      default: "pending",
+      enum: ["active", "expired", "canceled"],
+      default: "active",
       index: true,
     },
     subAutoRenew: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     subPrice: {
       type: Number,

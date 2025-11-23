@@ -1,17 +1,14 @@
-const mongoose = require("mongoose"); // Erase if already required
+const mongoose = require("mongoose");
 
-// Declare the Schema of the Mongo model
 var categorySchema = new mongoose.Schema(
   {
     categoryName: {
       type: String,
       required: true,
-      unique: true,
     },
     categorySlug: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
     },
     categoryThumb: {
@@ -22,11 +19,34 @@ var categorySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-//Export the model
+categorySchema.index(
+  { categoryName: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: { $ne: true } },
+  }
+);
+
+categorySchema.index(
+  { categorySlug: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: { $ne: true } },
+  }
+);
+
 module.exports = mongoose.model("Category", categorySchema);

@@ -5,7 +5,14 @@ var orderStatusSchema = new mongoose.Schema(
   {
     orderStatusName: {
       type: String,
-      enum: ["Pending", "Confirmed", "Shipping", "Succeeded", "Cancelled"],
+      enum: [
+        "Pending",
+        "Confirmed",
+        "Shipping",
+        "Delivered",
+        "Succeeded",
+        "Cancelled",
+      ],
       required: true,
       unique: true,
     },
