@@ -176,7 +176,7 @@ export const BalanceWithdrawForm = ({
             control={control}
             rules={{
               required: "Vui lòng nhập số tiền",
-              min: { value: 10000, message: "Số tiền rút tối thiểu 10.000đ" }, // Thêm validate min
+              min: { value: 10000, message: "Số tiền rút tối thiểu 10.000đ" },
               max: {
                 value: currentBalance,
                 message: `Không được vượt quá số dư (${formatMoney(

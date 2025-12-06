@@ -209,9 +209,9 @@ export const InformationUserPage = () => {
 
     try {
       const res = await apiChangePassword({
-        oldPassword, // đúng key theo API
-        newPassword, // đúng key theo API
-        uId: current?._id, // gửi kèm user id
+        oldPassword,
+        newPassword,
+        uId: current?._id,
       });
 
       if (res?.success) {

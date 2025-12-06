@@ -245,7 +245,7 @@ export const VoucherForm = ({
           </div>
 
           <div className="flex-1">
-            <label className={labelInput}>Đơn hàng tối thiểu</label>
+            <label className={labelInput}>Đơn hàng tối thiểu (đ)</label>
             <Controller
               name="couponMinOrderAmount"
               control={control}
@@ -266,7 +266,7 @@ export const VoucherForm = ({
         {/* Giảm tối đa + Trạng thái */}
         <div className="flex flex-col md:flex-row gap-2">
           <div className="flex-1">
-            <label className={labelInput}>Giảm tối đa</label>
+            <label className={labelInput}>Giảm tối đa (đ)</label>
             <Controller
               name="couponMaxDiscountAmount"
               control={control}

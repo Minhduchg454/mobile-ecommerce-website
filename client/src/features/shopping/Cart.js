@@ -398,13 +398,9 @@ export const Carts = () => {
                   {g.items.map((it) => {
                     const pv = it.productVariation || {};
                     const p = it.product || {};
-
-                    // [CẬP NHẬT] Lấy giá bán cơ bản và phần trăm giảm giá của sản phẩm cha
                     const basePrice = it?.priceAtTime ?? pv.pvPrice ?? 0;
                     const productDiscountPercent =
                       p.productDiscountPercent ?? 0;
-
-                    // [CẬP NHẬT] Tính toán giá cuối cùng để hiển thị
                     const finalPrice = calculateFinalPrice(
                       basePrice,
                       productDiscountPercent
@@ -416,8 +412,6 @@ export const Carts = () => {
                     const isDisabled = isDeleted || isOutOfStock;
                     const pvId = pv._id;
                     const itemChecked = pvId && selectedPvIds.has(pvId);
-
-                    // Kiểm tra nếu có giảm giá để hiển thị giá gốc gạch ngang
                     const isOnSale = productDiscountPercent > 0;
 
                     return (
@@ -462,7 +456,7 @@ export const Carts = () => {
                           </div>
                         </td>
                         <td className="text-center">{pv.pvName}</td>
-                        {/* [CẬP NHẬT] Hiển thị đơn giá sau khi tính toán */}
+
                         <td className="text-center">
                           <div className="flex flex-col items-center">
                             {isOnSale && (

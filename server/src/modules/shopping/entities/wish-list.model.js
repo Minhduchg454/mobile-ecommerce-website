@@ -15,7 +15,7 @@ const wishListSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Tự động tạo createdAt và updatedAt
+    timestamps: true,
   }
 );
 

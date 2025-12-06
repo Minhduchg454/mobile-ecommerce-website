@@ -6,7 +6,7 @@ import {
   apiDeleteProduct,
 } from "../../services/catalog.api";
 import { showAlert, showModal } from "store/app/appSlice";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { AiOutlineDelete, AiOutlineExclamationCircle } from "react-icons/ai";
 import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import noData from "../../assets/data-No.png";
@@ -15,7 +15,7 @@ import React from "react";
 import { formatMoney } from "ultils/helpers";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
-import { IoLockClosedOutline } from "react-icons/io5";
+import { IoLockClosedOutline, IoLockOpenOutline } from "react-icons/io5";
 import moment from "moment";
 import { Loading, ReasonModal } from "../../components";
 import { STATUS_LABELS } from "../../ultils/contants";
@@ -29,7 +29,7 @@ export const ProductApproval = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const searchKeyword = searchParams.get("s") || "";
-  const statusParam = searchParams.get("status"); // null nếu không có
+  const statusParam = searchParams.get("status");
   const sortParam = searchParams.get("sort") || "newest";
 
   const [isShowSort, setIsShowSort] = useState(false);
@@ -54,14 +54,13 @@ export const ProductApproval = () => {
     { label: "Đã bị khóa", value: "blocked" },
   ];
 
-  // Xác định currentStatus: ưu tiên statusParam, nếu null hoặc "all" → chọn "all"
   const currentStatus =
     statusOptions.find((opt) => {
       if (!statusParam || statusParam === "all") return opt.value === "all";
       return opt.value === statusParam;
     }) || statusOptions[0];
 
-  // Chỉ set default status=pending khi truy cập lần đầu (không có status)
+  // Set default status=pending lần đầu
   useEffect(() => {
     if (!searchParams.get("status")) {
       setSearchParams(
@@ -74,14 +73,12 @@ export const ProductApproval = () => {
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Chỉ chạy 1 lần khi mount
+  }, []);
 
   // Fetch products
   const fetchProducts = async () => {
     try {
       setLoading(true);
-
-      // Chỉ gửi status nếu không phải "all" và không null
       const statusToQuery =
         statusParam && statusParam !== "all" ? statusParam : null;
 
@@ -139,23 +136,26 @@ export const ProductApproval = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchKeyword, sortParam, statusParam]);
 
-  // Xử lý thay đổi trạng thái
+  // --- XỬ LÝ CẬP NHẬT TRẠNG THÁI (Logic giống ShopManage) ---
   const executeStatusChange = async (product, newStatus, reason = null) => {
     try {
       const updateData = {
         productStatus: newStatus,
-        shopId: product.shopId._id,
+        // Một số API yêu cầu shopId khi update product của shop khác, giữ lại nếu cần
+        shopId: product.shopId?._id,
       };
 
       if (newStatus === "blocked" || newStatus === "pending") {
+        // BẮT BUỘC: phải gửi lý do khi khóa hoặc chuyển về pending/từ chối
         updateData.productReviewReason = reason;
-      } else if (newStatus === "approved") {
+      } else if (product.productReviewReason) {
+        // Nếu là phê duyệt/mở khóa, xóa lý do cũ
         updateData.productReviewReason = null;
       }
 
       const res = await apiUpdateProduct(updateData, product._id);
 
-      dispatch(showModal({ isShowModal: false }));
+      dispatch(showModal({ isShowModal: false })); // Đóng modal
 
       if (res?.success) {
         dispatch(
@@ -182,6 +182,36 @@ export const ProductApproval = () => {
       }
     } catch (err) {
       throw err;
+    }
+  };
+
+  const handleChangeStatus = (product, newStatus) => {
+    const shouldAskReason = newStatus === "blocked" || newStatus === "pending";
+    const actionLabel = newStatus === "blocked" ? "Khóa" : "Từ chối";
+
+    // Đóng modal cũ trước
+    dispatch(showModal({ isShowModal: false }));
+
+    if (shouldAskReason) {
+      dispatch(
+        showModal({
+          isShowModal: true,
+          modalChildren: (
+            <ReasonModal
+              title={`${actionLabel} sản phẩm: ${product.productName}`}
+              itemName={product.productName}
+              actionName={actionLabel}
+              onCancel={() => dispatch(showModal({ isShowModal: false }))}
+              onSubmit={(reason) =>
+                executeStatusChange(product, newStatus, reason)
+              }
+            />
+          ),
+        })
+      );
+    } else {
+      dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
+      executeStatusChange(product, newStatus, null);
     }
   };
 
@@ -238,7 +268,7 @@ export const ProductApproval = () => {
       showAlert({
         id: alertId,
         title: "Xác nhận xóa sản phẩm?",
-        message: `Bạn muốn xóa vĩnh viễn sản phẩm "${product.productName}"? (Xóa mềm)`,
+        message: `Bạn muốn xóa vĩnh viễn sản phẩm "${product.productName}"?`,
         variant: "danger",
         showCancelButton: true,
         confirmText: "Xóa",
@@ -247,39 +277,13 @@ export const ProductApproval = () => {
     );
   };
 
-  const handleChangeStatus = (product, newStatus) => {
-    const shouldAskReason = newStatus === "blocked" || newStatus === "pending";
-    const actionLabel = newStatus === "blocked" ? "Khóa" : "Từ chối/Pending";
-
-    if (shouldAskReason) {
-      dispatch(
-        showModal({
-          isShowModal: true,
-          modalChildren: (
-            <ReasonModal
-              title={`${actionLabel} sản phẩm: ${product.productName}`}
-              item={product}
-              actionName={actionLabel}
-              onCancel={() => dispatch(showModal({ isShowModal: false }))}
-              onSubmit={(reason) =>
-                executeStatusChange(product, newStatus, reason)
-              }
-            />
-          ),
-        })
-      );
-    } else {
-      dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
-      executeStatusChange(product, newStatus, null);
-    }
-  };
-
-  const titleCls = "font-bold mb-1";
+  const titleCls = "font-bold mb-1 line-clamp-1";
   const buttonAction =
-    "text-xs md:text-sm whitespace-nowrap border px-2 py-1 rounded-3xl flex items-center gap-1 text-black bg-white hover:bg-button-hv";
+    "text-xs md:text-sm whitespace-nowrap border px-2 py-1 rounded-3xl flex items-center justify-center gap-1 text-black bg-white hover:bg-button-hv";
 
   const renderProductItem = (p) => {
     const statusInfo = STATUS_LABELS[p.productStatus];
+    const status = p.productStatus;
 
     return (
       <div
@@ -287,19 +291,24 @@ export const ProductApproval = () => {
         className="bg-white border rounded-3xl p-3 flex justify-between items-center"
       >
         <div className="flex flex-col items-start gap-2">
+          {/* Shop Info */}
           <div className="flex justify-start items-center gap-2">
             <img
               src={p.shopId?.shopLogo || noPhoto}
               alt={p.shopId?.shopName}
               className="w-6 h-6 border rounded-full object-contain"
             />
-            <p className="text-xs md:text-sm">{p.shopId?.shopName || "N/A"}</p>
+            <p className="text-xs md:text-sm font-medium text-gray-700">
+              {p.shopId?.shopName || "N/A"}
+            </p>
             {p.shopId?.shopIsOfficial && (
               <div className="border rounded-lg line-clamp-1 bg-red-600 text-white py-0.5 px-1 text-[8px]">
                 Mall
               </div>
             )}
           </div>
+
+          {/* Product Info */}
           <div className="flex gap-2 items-center justify-start">
             <img
               src={p.productThumb || noPhoto}
@@ -313,11 +322,15 @@ export const ProductApproval = () => {
 
               <div className="text-xs md:text-sm flex items-center gap-2">
                 Trạng thái:
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
-                >
-                  {statusInfo.label}
-                </span>
+                {statusInfo ? (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
+                  >
+                    {statusInfo.label}
+                  </span>
+                ) : (
+                  <span className="text-gray-400 italic">Không xác định</span>
+                )}
               </div>
 
               {p.productReviewReason && (
@@ -327,11 +340,11 @@ export const ProductApproval = () => {
                 </div>
               )}
 
-              <div className="text-xs md:text-sm">
+              <div className="text-xs md:text-sm mt-1">
                 Danh mục: {p.categoryId?.categoryName}
               </div>
 
-              <div className="text-xs md:text-sm">
+              <div className="text-xs md:text-sm ">
                 Giá: {formatMoney(p.productMinPrice)} đ
               </div>
               <div className="text-[11px] text-gray-500 italic">
@@ -341,35 +354,75 @@ export const ProductApproval = () => {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-2">
-          {(p.productStatus === "pending" || p.productStatus === "blocked") && (
-            <button
-              className={buttonAction}
-              onClick={() => handleChangeStatus(p, "approved")}
-            >
-              <IoMdCheckmark size={16} />
-              Phê duyệt
-            </button>
+        {/* ACTIONS INLINE (Giống ShopManage) */}
+        <div className="flex flex-col md:flex-row gap-2">
+          {status === "pending" && (
+            <>
+              <button
+                className={buttonAction}
+                onClick={() => handleChangeStatus(p, "approved")}
+              >
+                <IoMdCheckmark size={16} />
+                Phê duyệt
+              </button>
+              <button
+                className={buttonAction}
+                onClick={() => handleChangeStatus(p, "blocked")}
+              >
+                <IoLockClosedOutline size={16} />
+                Từ chối
+              </button>
+            </>
           )}
 
-          {(p.productStatus === "approved" ||
-            p.productStatus === "pending") && (
-            <button
-              className={buttonAction}
-              onClick={() => handleChangeStatus(p, "blocked")}
-            >
-              <IoLockClosedOutline size={16} />
-              Khóa
-            </button>
+          {status === "approved" && (
+            <>
+              <button
+                className={buttonAction}
+                onClick={() => handleChangeStatus(p, "blocked")}
+              >
+                <IoLockClosedOutline size={16} />
+                Khóa
+              </button>
+              <button
+                className={buttonAction}
+                onClick={() => handlerDeleteProduct(p)}
+              >
+                <AiOutlineDelete size={16} />
+                Xóa
+              </button>
+            </>
           )}
 
-          <button
-            className={buttonAction}
-            onClick={() => handlerDeleteProduct(p)}
-          >
-            <AiOutlineDelete size={16} />
-            Xóa
-          </button>
+          {status === "blocked" && (
+            <>
+              <button
+                className={buttonAction}
+                onClick={() => handleChangeStatus(p, "approved")}
+              >
+                <IoLockOpenOutline size={16} />
+                Mở khóa
+              </button>
+              <button
+                className={buttonAction}
+                onClick={() => handlerDeleteProduct(p)}
+              >
+                <AiOutlineDelete size={16} />
+                Xóa
+              </button>
+            </>
+          )}
+
+          {/* Fallback */}
+          {!["pending", "approved", "blocked"].includes(status) && (
+            <button
+              className={buttonAction}
+              onClick={() => handlerDeleteProduct(p)}
+            >
+              <AiOutlineDelete size={16} />
+              Xóa
+            </button>
+          )}
         </div>
       </div>
     );
@@ -381,7 +434,7 @@ export const ProductApproval = () => {
       <div className="bg-app-bg/60 backdrop-blur-sm rounded-3xl px-3 py-2 md:px-4 sticky top-[50px] z-10 flex justify-between items-center">
         <h1 className={titleCls}>{count} sản phẩm</h1>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center justify-end">
           {/* Lọc trạng thái */}
           <div className="relative">
             <button

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "store/user/userSlice";
-import { showAlert } from "store/app/appSlice";
+import { showAlert, showModal } from "store/app/appSlice";
 import {
   getCurrent,
   syncCartFromServer,
@@ -15,6 +15,7 @@ import path from "ultils/path";
 import axios from "axios";
 import { FaLock, FaPhone, FaEye, FaEyeSlash } from "react-icons/fa";
 import { connectSocket } from "../../ultils/socket";
+import { Loading } from "../../components";
 
 export const LoginForm = () => {
   const [payload, setPayload] = useState({ password: "", accountName: "" });
@@ -68,7 +69,6 @@ export const LoginForm = () => {
 
     // 2. Đợi getCurrent để lấy user object đầy đủ (bao gồm trạng thái block)
     const getCurrentResult = await dispatch(getCurrent());
-
     if (getCurrentResult.meta.requestStatus === "fulfilled") {
       const user = getCurrentResult.payload;
       const roles = user?.roles || [];
@@ -87,10 +87,10 @@ export const LoginForm = () => {
             confirmText: "Đóng",
           })
         );
-        return; // Dừng luồng xử lý
+        return;
       }
+      dispatch(showModal({ isShowModal: false }));
 
-      // 4. === HIỆN THÔNG BÁO CHÀO MỪNG (CHỈ KHI ĐÃ XÁC NHẬN KHÔNG BỊ KHÓA) ===
       dispatch(
         showAlert({
           title: "Chào mừng",
@@ -101,10 +101,6 @@ export const LoginForm = () => {
         })
       );
 
-      // 5. Kết nối Socket
-      //connectSocket(user._id);
-
-      // 6. Xử lý logic tải dữ liệu và điều hướng
       if (roles.includes("shop")) {
         dispatch(fetchSellerCurrent(user._id, { includeSubscription: true }));
       }
@@ -113,7 +109,6 @@ export const LoginForm = () => {
         dispatch(fetchWishlist());
       }
 
-      // 7. Điều hướng cuối cùng
       navigatePath(roles, user._id);
     } else {
       // Xử lý khi gọi getCurrent thất bại
@@ -128,14 +123,12 @@ export const LoginForm = () => {
     }
   };
 
-  /**
-   * Xử lý đăng nhập Google (đã cập nhật)
-   */
   const handleGoogleLogin = async (credentialResponse) => {
     const token = credentialResponse?.credential;
     if (!token) return;
 
     try {
+      dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
       // 1. Gọi API
       const res = await apiGoogleLogin({ token });
 
@@ -168,6 +161,7 @@ export const LoginForm = () => {
     if (!validateInput()) return;
 
     try {
+      dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
       // 1. Gọi API
       const res = await apiLogin({
         accountName: payload.accountName,

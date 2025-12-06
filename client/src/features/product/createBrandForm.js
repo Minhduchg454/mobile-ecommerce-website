@@ -164,129 +164,148 @@ export const CreateBrandForm = ({
         e.stopPropagation();
       }}
       onSubmit={handleSubmit(onSubmit)}
-      className="relative p-4 bg-white rounded-3xl border w-[90vw] max-w-[500px]"
+      // Tăng width lên max-w-[800px] để chứa đủ 2 cột
+      className="relative p-6 bg-white rounded-3xl border w-[95vw] max-w-[800px] shadow-xl"
     >
-      <p className="text-lg font-bold mb-4 text-center">{formTitle}</p>
-
-      {!isAdmin && (
-        <p className="text-justify text-xs  text-gray-400 mb-3">
-          Trong thời gian chờ phê duyệt, vui lòng để sản phẩm không thương hiệu
-          và chờ thông báo mới để cập nhật
-        </p>
-      )}
-
       <CloseButton
-        className="absolute top-2 right-2"
+        className="absolute top-3 right-3"
         onClick={() => onCancel?.()}
       />
 
-      {/* Tên thương hiệu */}
-      <div className="mb-3">
-        <label className="block text-sm mb-1 px-2">
-          Tên thương hiệu <span className="text-red-500">*</span>
-        </label>
-        <input
-          {...register("brandName", { required: true })}
-          className="border rounded-xl p-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Nhập tên thương hiệu"
-          disabled={isSubmitting}
-        />
-      </div>
+      <p className="text-xl font-bold mb-6 text-center text-gray-800">
+        {formTitle}
+      </p>
 
-      {/* Website */}
-      <div className="mb-3">
-        <label className="block text-sm mb-1 px-2">Website (Tùy chọn)</label>
-        <input
-          {...register("brandWebsite")}
-          className="border rounded-xl p-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="https://example.com"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      {/* Mô tả */}
-      <div className="mb-3">
-        <label className="block text-sm mb-1 px-2">Mô tả (Tùy chọn)</label>
-        <textarea
-          {...register("brandDescription")}
-          rows={3}
-          className="border rounded-xl p-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-          placeholder="Giới thiệu ngắn về thương hiệu..."
-          disabled={isSubmitting}
-        />
-      </div>
-
-      {/* --- KHU VỰC CỦA ADMIN --- */}
-
-      {/* Ảnh thương hiệu */}
-      <div className="mb-3">
-        <label className="block text-sm mb-1 px-2">Logo thương hiệu</label>
-        <ImageUploader
-          multiple={false}
-          value={thumbFile}
-          previews={thumbPreview}
-          label="ảnh thương hiệu"
-          onChange={(file) => {
-            if (thumbPreview?.startsWith("blob:")) {
-              URL.revokeObjectURL(thumbPreview);
-            }
-
-            if (file) {
-              const url = URL.createObjectURL(file);
-              setThumbFile(file);
-              setThumbPreview(url);
-            } else {
-              setThumbFile(null);
-              setThumbPreview("");
-            }
-          }}
-        />
-        <p className="mt-1 text-[11px] text-gray-500 px-2 italic">
-          * Hỗ trợ kéo thả hoặc chọn file. Nếu tạo mới không chọn ảnh, hệ thống
-          sẽ dùng ảnh mặc định.
+      {!isAdmin && (
+        <p className="text-center text-xs text-gray-500 mb-6 italic">
+          Trong thời gian chờ phê duyệt, vui lòng để sản phẩm không thương hiệu
+          và chờ thông báo mới để cập nhật.
         </p>
-      </div>
+      )}
 
-      {isAdmin && (
-        <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-          <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">
-            Dành cho quản trị viên
-          </p>
+      {/* Grid Layout 2 Cột */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* --- CỘT TRÁI: Thông tin chung --- */}
+        <div className="flex flex-col gap-4">
+          {/* Tên thương hiệu */}
+          <div>
+            <label className="block text-sm font-medium mb-1 px-1">
+              Tên thương hiệu <span className="text-red-500">*</span>
+            </label>
+            <input
+              {...register("brandName", { required: true })}
+              className="border border-gray-300 rounded-xl p-2.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Nhập tên thương hiệu"
+              disabled={isSubmitting}
+            />
+          </div>
 
-          <label className="block text-sm mb-1">Trạng thái duyệt</label>
-          <select
-            {...register("brandStatus")}
-            className="border rounded-xl p-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-            disabled={isSubmitting}
-          >
-            <option value="pending">Đang chờ duyệt</option>
-            <option value="approved">Đã phê duyệt</option>
-            <option value="rejected">Từ chối / Không duyệt</option>
-            <option value="blocked">Khóa (Block)</option>
-          </select>
+          {/* Website */}
+          <div>
+            <label className="block text-sm font-medium mb-1 px-1">
+              Website (Tùy chọn)
+            </label>
+            <input
+              {...register("brandWebsite")}
+              className="border border-gray-300 rounded-xl p-2.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="https://example.com"
+              disabled={isSubmitting}
+            />
+          </div>
 
-          {/* Nếu chọn Từ chối -> Hiện ô nhập lý do */}
-          {currentStatus === "rejected" && (
-            <div className="animate-fade-in mt-2">
-              <label className="block text-sm mb-1 text-red-600">
-                Lý do từ chối
-              </label>
-              <textarea
-                {...register("brandReviewReason", {
-                  required: currentStatus === "rejected",
-                })}
-                rows={2}
-                className="border border-red-300 bg-red-50 rounded-xl p-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                placeholder="Nhập lý do từ chối để gửi cho shop..."
-                disabled={isSubmitting}
+          {/* Mô tả */}
+          <div className="flex-1 flex flex-col">
+            <label className="block text-sm font-medium mb-1 px-1">
+              Mô tả (Tùy chọn)
+            </label>
+            <textarea
+              {...register("brandDescription")}
+              className="border border-gray-300 rounded-xl p-2.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none flex-1 transition-all h-full min-h-[120px]"
+              placeholder="Giới thiệu ngắn về thương hiệu..."
+              disabled={isSubmitting}
+            />
+          </div>
+        </div>
+
+        {/* --- CỘT PHẢI: Hình ảnh & Admin --- */}
+        <div className="flex flex-col gap-4">
+          {/* Ảnh thương hiệu */}
+          <div>
+            <label className="block text-sm font-medium mb-1 px-1">
+              Logo thương hiệu
+            </label>
+            <div className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+              <ImageUploader
+                multiple={false}
+                value={thumbFile}
+                previews={thumbPreview}
+                label="ảnh thương hiệu"
+                onChange={(file) => {
+                  if (thumbPreview?.startsWith("blob:")) {
+                    URL.revokeObjectURL(thumbPreview);
+                  }
+                  if (file) {
+                    const url = URL.createObjectURL(file);
+                    setThumbFile(file);
+                    setThumbPreview(url);
+                  } else {
+                    setThumbFile(null);
+                    setThumbPreview("");
+                  }
+                }}
               />
+            </div>
+          </div>
+
+          {/* Phần dành cho ADMIN */}
+          {isAdmin && (
+            <div className="p-4 bg-blue-50/50 rounded-xl border border-dashed border-blue-300 flex-1">
+              <p className="text-xs font-bold text-blue-600 mb-3 uppercase flex items-center gap-1">
+                ⚙️ Dành cho quản trị viên
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-gray-700">
+                    Trạng thái duyệt
+                  </label>
+                  <select
+                    {...register("brandStatus")}
+                    className="border border-gray-300 rounded-lg p-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    disabled={isSubmitting}
+                  >
+                    <option value="pending">Đang chờ duyệt</option>
+                    <option value="approved">Đã phê duyệt</option>
+                    <option value="rejected">Từ chối / Không duyệt</option>
+                    <option value="blocked">Khóa (Block)</option>
+                  </select>
+                </div>
+
+                {/* Nếu chọn Từ chối -> Hiện ô nhập lý do */}
+                {currentStatus === "rejected" && (
+                  <div className="animate-fade-in-up">
+                    <label className="block text-xs font-semibold mb-1 text-red-600">
+                      Lý do từ chối
+                    </label>
+                    <textarea
+                      {...register("brandReviewReason", {
+                        required: currentStatus === "rejected",
+                      })}
+                      rows={3}
+                      className="border border-red-300 bg-red-50 rounded-lg p-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                      placeholder="Nhập lý do từ chối để gửi cho shop..."
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
-      )}
-      {/* ------------------------- */}
+      </div>
 
-      <div className="flex justify-end gap-2 mt-4">
+      {/* Footer Buttons */}
+      <div className="flex justify-end gap-3 mt-4">
         <button
           type="button"
           onClick={() => {
@@ -307,7 +326,7 @@ export const CreateBrandForm = ({
               setThumbPreview("");
             }
           }}
-          className="px-4 py-2 bg-gray-200 rounded-3xl hover:bg-gray-300 text-sm font-medium"
+          className="px-6 py-2.5 bg-gray-100 rounded-full hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
           disabled={isSubmitting}
         >
           {brand?._id ? "Hủy bỏ" : "Làm mới"}
@@ -315,10 +334,14 @@ export const CreateBrandForm = ({
 
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 text-sm font-medium disabled:opacity-50 shadow-md"
+          className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:shadow-lg hover:from-blue-700 hover:to-blue-800 text-sm font-medium disabled:opacity-50 transition-all transform active:scale-95"
           disabled={isSubmitting}
         >
-          {brand?._id ? "Cập nhật" : isAdmin ? "Tạo mới" : "Gửi đăng ký"}
+          {brand?._id
+            ? "Cập nhật thương hiệu"
+            : isAdmin
+            ? "Tạo mới"
+            : "Gửi đăng ký"}
         </button>
       </div>
     </form>

@@ -1,6 +1,5 @@
 // tools/order.tools.js
 const orderService = require("../../order/order.service");
-const shopService = require("../../shop/shop.service"); // DÙNG SERVICE, KHÔNG DÙNG MODEL
 const { ResultTypeEnum } = require("../typeEnum/resultTypeEnum");
 
 const formatMoney = (amount) =>
@@ -227,23 +226,23 @@ exports.get_revenue_stats = async () => {
     let statusReport = "";
     if (byStatus.length > 0) {
       byStatus.forEach((status) => {
-        const statusName = orderStatusMap[status._id] || status._id;
+        const statusLabel = STATUS_BADGE[status._id]?.label || status._id;
+
         const revenue = formatMoney(status.revenue);
         const count = status.count;
-        statusReport += `${statusName}: ${count} đơn (${revenue})\n`;
+        statusReport += `${statusLabel}: ${count} đơn (${revenue})\n`;
       });
     } else {
       statusReport += "\n_Không có dữ liệu chi tiết._";
     }
 
-    // [CẬP NHẬT] Thêm báo cáo trạng thái vào text trả về
     return {
       type: ResultTypeEnum.TEXT,
       text: `
 **Thống kê doanh thu (toàn hệ thống)**
+Tổng doanh thu: ${formatMoney(s.totalRevenue)}  
+Tổng đơn hàng: ${s.totalOrders}
 
-**Tổng đơn hàng**: ${s.totalOrders}  
-**Tổng doanh thu**: ${formatMoney(s.totalRevenue)}  
 **Chi tiết theo trạng thái**:
 ${statusReport}
       `.trim(),

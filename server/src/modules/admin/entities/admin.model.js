@@ -9,6 +9,6 @@ const adminSchema = new mongoose.Schema(
     },
   },
   { _id: false }
-); // Không tự sinh _id mới
+);
 
 module.exports = mongoose.model("Admin", adminSchema, "admins");

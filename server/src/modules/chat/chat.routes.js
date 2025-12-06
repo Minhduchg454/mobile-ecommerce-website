@@ -13,5 +13,9 @@ router.get("/conversations/:conver_id/messages", chatController.getMessages);
 
 router.post("/conversations/:conver_id/read", chatController.markAsRead);
 router.put("/conversations/:conver_id/hide", chatController.hideConversation);
+router.delete(
+  "/conversations/:conver_id/delete",
+  chatController.deleteConversation
+);
 
 module.exports = router;

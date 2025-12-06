@@ -6,6 +6,7 @@ import { CloseButton } from "../../components";
 import { showAlert } from "store/app/appSlice";
 import { locations } from "../../ultils/contants";
 import { FaCheck } from "react-icons/fa";
+import { fetchSellerCurrent } from "store/seller/asynsActions";
 
 export const AddressFormModal = ({
   onClose,
@@ -165,6 +166,9 @@ export const AddressFormModal = ({
           })
         );
         reset();
+      }
+      if (addressFor === "shop") {
+        dispatch(fetchSellerCurrent());
       }
 
       onSuccess?.(savedAddress);

@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 const User = require("../user/entities/user.model");
 const Customer = require("../customer/entities/customer.model");
 const Account = require("./entities/account.model");
-const UserStatus = require("../user/entities/user-status.model");
 const ShoppingCart = require("../shopping/entities/shopping-cart.model");
 const Admin = require("./../admin/entities/admin.model");
 const UserRole = require("../user/entities/user-role.model");
@@ -24,7 +23,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = process.env.JWT_EXPIRES || "7d";
 const slugify = require("slugify");
 
-//Dang ky tai khoan khach hang
 //Dang ky tai khoan khach hang
 exports.registerCustomer = async (body) => {
   const {
@@ -515,7 +513,7 @@ exports.googleLogin = async (body) => {
     userRole: null,
     user: null,
     cart: null,
-    balance: null, // <-- THÊM BALANCE VÀO ĐÂY
+    balance: null,
   };
 
   try {
@@ -588,11 +586,7 @@ exports.googleLogin = async (body) => {
       });
       createdDocs.customer = customer;
 
-      // 3.7) TẠO BALANCE loại 'customer' <-- BƯỚC MỚI
-      const balanceRes = await userService.createBalance(
-        user._id,
-        "customer" // Mặc định là customer
-      );
+      const balanceRes = await userService.createBalance(user._id, "customer");
       createdDocs.balance = balanceRes.balance;
 
       // 3.8) Tạo Account Google (không cần password)
@@ -604,8 +598,6 @@ exports.googleLogin = async (body) => {
       });
       createdDocs.account = acc;
     } else {
-      // TH: ĐÃ TỒN TẠI
-      // (Tuỳ chọn) đảm bảo có Account 'google' cho user này (nếu user đăng ký bằng pass trước đó)
       const existedAcc = await Account.findOne({
         userId: user._id,
         accountType: "google",
@@ -632,7 +624,6 @@ exports.googleLogin = async (body) => {
     });
 
     // 6) Chuẩn hoá user trả về
-    // Tận dụng userService.getCurrent để lấy user object đầy đủ
     const current = await userService.getCurrent({ id: user._id });
     const userObj = current.user.toObject
       ? current.user.toObject()

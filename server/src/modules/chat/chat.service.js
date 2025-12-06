@@ -325,21 +325,17 @@ exports.deleteConversation = async (conver_id, userId, app) => {
         userId: { $ne: userId },
       }).select("userId");
 
-      // Thông báo realtime: "cuộc trò chuyện này đã bị xóa"
       io.to(conver_id.toString()).emit("conversation_deleted", {
         conver_id,
         deletedBy: userId,
       });
 
-      // Gửi riêng cho từng user còn lại để họ xóa khỏi danh sách
       remainingParticipants.forEach((p) => {
         io.to(p.userId.toString()).emit("conversation_deleted", {
           conver_id,
           deletedBy: userId,
         });
       });
-
-      console.log(`Conversation ${conver_id} đã bị xóa bởi ${userId}`);
     }
 
     return {

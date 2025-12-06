@@ -1,5 +1,3 @@
-// createCategoryForm.jsx
-
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
@@ -30,7 +28,6 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
     category?.categoryThumb || ""
   );
 
-  // ⚠️ TRẠNG THÁI MỚI: Theo dõi xem người dùng có cố tình xóa ảnh hay không
   const [isThumbCleared, setIsThumbCleared] = useState(false);
 
   useEffect(() => {
@@ -68,10 +65,6 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
     const fd = new FormData();
     fd.append("categoryName", name);
 
-    // =======================================================
-    // 🎯 LOGIC XỬ LÝ ẢNH (BẮT BUỘC CHO TẠO MỚI, TÙY CHỌN CHO CẬP NHẬT)
-    // =======================================================
-
     // 1. Nếu là TẠO MỚI VÀ KHÔNG CÓ FILE -> Dùng ảnh mặc định
     if (!category?._id && !thumbFile) {
       const response = await fetch(noPhoto);
@@ -85,8 +78,6 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
     }
     // 3. Nếu KHÔNG CÓ FILE và KHÔNG CÓ PREVIEW (Cập nhật và xóa ảnh)
     else if (category?._id && !thumbPreview) {
-      // Đây là trường hợp người dùng xóa ảnh trong chế độ sửa (đã set thumbPreview="")
-      // Gửi chuỗi rỗng để server xóa ảnh (hoặc update URL thành rỗng)
       fd.append("categoryThumb", "");
     }
     // 4. Nếu KHÔNG CÓ FILE và CÓ PREVIEW (Cập nhật và giữ nguyên ảnh cũ) -> KHÔNG APPEND GÌ
@@ -122,8 +113,6 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
           showCancelButton: false,
         })
       );
-
-      // cho cha tự reload list + đóng modal
       onSuccess?.();
     } else {
       dispatch(
@@ -149,7 +138,6 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
       setIsThumbCleared(false);
     } else {
       setThumbFile(null);
-      // Nếu đã từng có ảnh gốc (category?._id), việc xóa này sẽ gửi "" lên server
       setThumbPreview("");
       setIsThumbCleared(true);
     }
@@ -200,12 +188,10 @@ export const CreateCategoryForm = ({ category, onSuccess, onCancel }) => {
           type="button"
           onClick={() => {
             if (category?._id) {
-              // edit: hủy = đóng popup
               onCancel?.();
             } else {
-              // create: reset form + xóa ảnh
               reset({ categoryName: "" });
-              handleImageChange(null); // Reset ảnh
+              handleImageChange(null);
             }
           }}
           className="px-3 py-1.5 bg-gray-200 rounded-3xl hover:bg-gray-300 text-sm"

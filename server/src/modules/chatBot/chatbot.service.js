@@ -246,10 +246,19 @@ const instructions_content = `
         Các thương hiệu phổ biến phải nhận diện ngay: iPhone, Apple, Samsung, Oppo, Vivo, Xiaomi, Redmi, Realme, Sony, LG, Panasonic, Toshiba, Aqua, Electrolux, Daikin, Casper, Sharp, Philips, Bosch, v.v.
    
       
-   3. **Trích xuất Giá (options):** Tìm bất kỳ khoảng giá nào (minPrice, maxPrice). Ví dụ:
-      - "dưới 10 triệu" -> maxPrice: 10000000
-      - "trên 5 triệu" -> minPrice: 5000000
-   
+  3. **Trích xuất và KIỂM TRA LOGIC Giá (options):** 
+        - **Bước 1: Trích xuất số.** Tìm bất kỳ khoảng giá nào (minPrice, maxPrice).
+          • "dưới 10 triệu" -> maxPrice: 10000000
+          • "trên 5 triệu" -> minPrice: 5000000
+        
+        - **Bước 2: VALIDATE (QUAN TRỌNG - CHẶN GIÁ VÔ LÝ):**
+          • Nếu phát hiện số tiền là **SỐ ÂM** (ví dụ: -50k, âm 2 triệu) hoặc **BẰNG 0** (0 đồng, miễn phí):
+            → **HÀNH ĐỘNG:** NGỪNG SUY LUẬN, **TUYỆT ĐỐI KHÔNG GỌI HÀM search_product**.
+            → **PHẢN HỒI NGAY:** Trả lời trực tiếp: "Dạ, giá sản phẩm không thể là số âm hoặc bằng 0 được ạ. Bạn thử nhập một mức giá hợp lý hơn nhé!"
+
+          • Nếu người dùng đưa ra mức giá **QUÁ THẤP** (Ví dụ: "iPhone 15 giá 50 ngàn"):
+            → **HÀNH ĐỘNG:** Vẫn GỌI HÀM search_product với đúng giá đó (maxPrice: 50000) để hệ thống tự trả về kết quả (có thể là không tìm thấy).
+    
    4. **Xử lý Query rỗng:** Nếu người dùng CHỈ HỎI GIÁ (ví dụ: "tìm sản phẩm dưới 10 triệu") hoặc từ khóa bị lọc hết (ví dụ: "tìm điện thoại"), hãy đặt 'query' là một chuỗi rỗng ("") và chỉ truyền 'maxPrice' (nếu có).
 
 
@@ -305,12 +314,13 @@ const instructions_content = `
   - **KHÔNG gọi hàm đơn hàng** nếu người dùng hỏi về **sản phẩm, giá, danh mục**.
   - Backend tự kiểm tra "userId", "roles" → AI **không cần truyền**.
       
-⚠️ LƯU Ý CHUNG
+LƯU Ý CHUNG
   • Không bao giờ tự tạo link sản phẩm.
+  • Nếu gặp giá vô lý (âm/bằng 0), hãy từ chối lịch sự chứ không gọi hàm.
   • Luôn trả lời tự nhiên, thân thiện, nhiệt tình.
   • Nếu không chắc chắn → cứ gọi tool, đừng tự suy diễn.
 
-  Cảm ơn bạn đã hỗ trợ khách hàng thật tốt nhé! ❤️   
+  Cảm ơn bạn đã hỗ trợ khách hàng thật tốt nhé! 
       `;
 
 function prepareContents(message, history) {
@@ -345,16 +355,13 @@ async function generateGeminiResponse(contents) {
 exports.getResponse = async (body) => {
   const { history, message, userId, roles } = body;
   global.current = { _id: userId, roles: roles || [] };
-
   if (!message) {
     const err = new Error("Không có câu hỏi");
     err.status = 400;
     throw err;
   }
-
   let contents = prepareContents(message, history);
   const responseContent = [];
-
   try {
     const MAX_LOOP = 5;
     for (let loopCount = 0; loopCount < MAX_LOOP; loopCount++) {
@@ -369,12 +376,9 @@ exports.getResponse = async (body) => {
         if (modelContent) {
           contents.push(modelContent);
         }
-
         const result = await functionToCall(functionArgs);
-
         if (result?.type === ResultTypeEnum.DISPLAY) {
           const items = Array.isArray(result.data) ? result.data : [];
-
           let detailText = "";
           if (
             result.displayType === ResultTypeEnum.DISPLAY_PRODUCT &&
@@ -390,7 +394,6 @@ exports.getResponse = async (body) => {
               details: detailText,
             })
           );
-
           responseContent.push({
             type: ResultTypeEnum.DISPLAY,
             displayType: result.displayType,
@@ -404,7 +407,6 @@ exports.getResponse = async (body) => {
             type: ResultTypeEnum.TEXT,
             text: finalResponseText,
           });
-
           return {
             role: "bot",
             responseContent: responseContent,
@@ -421,16 +423,13 @@ exports.getResponse = async (body) => {
       } else {
         const defaultMessage =
           "Tiếc quá, mình chưa tìm thấy thông tin này. Bạn thử đổi từ khóa hoặc mô tả chi tiết hơn giúp mình nhé!";
-
         const finalResponseText =
           response?.candidates?.[0]?.content?.parts?.[0]?.text ||
           defaultMessage;
-
         responseContent.push({
           type: ResultTypeEnum.TEXT,
           text: finalResponseText,
         });
-
         return {
           role: "bot",
           responseContent: responseContent,
@@ -438,14 +437,12 @@ exports.getResponse = async (body) => {
         };
       }
     }
-
     if (responseContent.length > 0) {
       return {
         role: "bot",
         responseContent: responseContent,
       };
     }
-
     const err = new Error(
       "Quá nhiều vòng function call, không thể tạo phản hồi."
     );

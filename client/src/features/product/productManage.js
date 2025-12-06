@@ -23,13 +23,17 @@ import { AiOutlineExclamationCircle } from "react-icons/ai";
 
 export const ProductManage = () => {
   const { current } = useSelector((s) => s.seller);
-  const servicePlan = current?.activeSubscription; // Lấy gói đang hoạt động
+  const servicePlan = current?.activeSubscription;
   const isShopBlocked = current?.shopStatus === "blocked";
+  const isNoAddress = !current?.address;
 
   const MAX_PRODUCTS = getServiceFeatureValue(servicePlan, "MAX_PRODUCTS", 0);
 
   const isOperationDisabled =
-    isShopBlocked || !servicePlan || servicePlan.subStatus !== "active";
+    isShopBlocked ||
+    !servicePlan ||
+    servicePlan.subStatus !== "active" ||
+    isNoAddress;
 
   const [shopProducts, setShopProducts] = useState([]);
   const [count, setCount] = useState(0);
@@ -60,7 +64,6 @@ export const ProductManage = () => {
     { label: "Đã bị khóa", value: "blocked" },
   ];
 
-  // Giá trị sort lấy từ URL, fallback mặc định
   const statusParam = searchParams.get("status") || "";
   const sortKeyParam = searchParams.get("sortKey") || "createdAt";
   const sortDirParam = searchParams.get("sortDir") || "desc";
@@ -68,7 +71,6 @@ export const ProductManage = () => {
   const currentStatus =
     statusOptions.find((opt) => opt.value === statusParam) || statusOptions[0];
 
-  // Tìm option đang được chọn
   const currentSort =
     sortOptions.find(
       (opt) => opt.sortKey === sortKeyParam && opt.sortDir === sortDirParam
@@ -143,6 +145,16 @@ export const ProductManage = () => {
           </span>
         </div>
       )}
+      {isNoAddress && (
+        <div className="flex gap-2 justify-center items-center border border-orange-400 bg-orange-50 text-xs md:text-sm rounded-3xl px-3 py-2">
+          <AiOutlineExclamationCircle size={16} className="text-orange-500" />
+          <span className="font-medium">
+            Không có địa chỉ giao hàng. Vui lòng thêm địa chỉ để tạo mới sản
+            phẩm
+          </span>
+        </div>
+      )}
+
       {/* Thanh tiêu đề / thêm mới */}
       <div className="bg-app-bg/60 backdrop-blur-sm rounded-3xl px-3 py-2 md:px-4 sticky top-[50px] z-10 flex justify-between items-center">
         <h1 className={titleCls}>
@@ -258,7 +270,6 @@ export const ProductManage = () => {
               </div>
             )}
           </div>
-          {/* NÚT THÊM SẢN PHẨM MỚI (ÁP DỤNG LOGIC KHÓA/GIỚI HẠN) */}
           <button
             disabled={isCreateProductDisabled}
             onClick={handleCreateProduct}
@@ -274,6 +285,8 @@ export const ProductManage = () => {
                 ? "Shop chưa có gói dịch vụ hoặc gói đã hết hạn"
                 : count >= MAX_PRODUCTS
                 ? `Đã đạt giới hạn ${MAX_PRODUCTS} sản phẩm`
+                : isNoAddress
+                ? `Shop chưa có địa chỉ giao hàng`
                 : "Thêm sản phẩm mới"
             }
           >

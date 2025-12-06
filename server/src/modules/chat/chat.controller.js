@@ -96,7 +96,8 @@ exports.markAsRead = async (req, res, next) => {
 
 exports.deleteConversation = async (req, res, next) => {
   try {
-    const { conver_id, userId } = req.body;
+    const { userId } = req.body;
+    const { conver_id } = req.params;
 
     if (!conver_id) {
       return res.status(400).json({

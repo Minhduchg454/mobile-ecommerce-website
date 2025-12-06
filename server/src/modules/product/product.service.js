@@ -1,16 +1,18 @@
 const Product = require("./entities/product.model");
 const Brand = require("./entities/brand.model");
 const Category = require("./entities/category.model");
-const slugify = require("slugify");
 const ProductVariation = require("./entities/productVariation.model");
 const Theme = require("./entities/theme.model");
 const ProductTheme = require("./entities/product-theme.model");
+
+const ShopService = require("../shop/shop.service");
+const NotificationService = require("../notification/notification.service");
+
+const { getSystemOwnerId } = require("../../ultils/systemOwner");
+const slugify = require("slugify");
+const mongoose = require("mongoose");
 const { Types } = require("mongoose");
 const { ObjectId } = require("mongoose").Types;
-const ShopService = require("../shop/shop.service");
-const mongoose = require("mongoose");
-const NotificationService = require("../notification/notification.service");
-const { getSystemOwnerId } = require("../../ultils/systemOwner");
 
 /*
  *Category service
@@ -736,7 +738,6 @@ exports.getProducts = async (query) => {
     viewer,
     productIds,
   } = query;
-  console.log("Nhan tham so truy van", query);
 
   const filter = {
     deletedAt: null,
@@ -777,7 +778,7 @@ exports.getProducts = async (query) => {
   filter.variationId = { $ne: null };
 
   //Loc theo id
-  const pIds = toList(productIds); // productIds là biến mới trong query
+  const pIds = toList(productIds);
   if (pIds.length) filter._id = { $in: pIds };
 
   // --- Search theo tên ---
@@ -930,7 +931,16 @@ exports.getProducts = async (query) => {
   };
   const field = mapSort[sortKey] || "productCreateAt";
   const dir = String(sortDir).toLowerCase() === "asc" ? 1 : -1;
-  const sortObj = { [field]: dir, _id: dir };
+  let sortObj = {};
+  let projection = {}; // Cần thêm projection để lấy điểm score
+
+  // LOGIC SẮP XẾP QUAN TRỌNG
+  if (s) {
+    projection = { score: { $meta: "textScore" } };
+    sortObj = { score: { $meta: "textScore" } };
+  } else {
+    sortObj = { [field]: dir, _id: dir };
+  }
 
   // --- Cursor filter (CHỈ ÁP DỤNG KHI CÓ limitNum) ---
   if (limitNum !== null && after) {
@@ -961,7 +971,7 @@ exports.getProducts = async (query) => {
   }
 
   // --- Truy vấn ---
-  const queryBuilder = Product.find(filter)
+  const queryBuilder = Product.find(filter, projection)
     .populate("brandId", "brandName brandSlug")
     .populate("categoryId", "categoryName categorySlug")
     .populate("shopId", "shopName shopSlug shopLogo shopIsOfficial shopStatus")
@@ -970,7 +980,7 @@ exports.getProducts = async (query) => {
 
   // Chỉ thêm .limit() nếu có limitNum
   if (limitNum !== null) {
-    queryBuilder.limit(limitNum + 1); // +1 để kiểm tra hasMore
+    queryBuilder.limit(limitNum + 1);
   }
 
   const items = await queryBuilder;
@@ -1676,7 +1686,6 @@ exports.creatProductVariation = async (body, files) => {
   if (files?.length > 0) {
     body.pvImages = files.map((file) => file.path);
   }
-  //console.log("Nhan thong tin dang ky bien the", body, files);
 
   // tránh coi 0 là thiếu
   const requiredFields = ["productId", "pvName", "pvPrice", "pvStockQuantity"];
@@ -1696,16 +1705,20 @@ exports.creatProductVariation = async (body, files) => {
     throw err;
   }
 
-  //Kiem tra so luong san pham
-  if (
-    !Number.isInteger(Number(body.pvStockQuantity)) ||
-    Number(body.pvStockQuantity) < 0
-  ) {
-    const err = new Error("Số lượng sản phẩm trong kho: >= 0");
+  const stockQty = Number(body.pvStockQuantity);
+  // 1. Kiểm tra xem có phải là số nguyên không (Tương ứng TC12: nhập 1.5)
+  if (!Number.isInteger(stockQty)) {
+    const err = new Error("Số lượng kho phải là số nguyên");
     err.status = 400;
     throw err;
   }
 
+  // 2. Kiểm tra xem có bị âm không (Tương ứng TC06: nhập -5)
+  if (stockQty < 0) {
+    const err = new Error("Số lượng kho phải lớn hơn hoặc bằng 0");
+    err.status = 400;
+    throw err;
+  }
   if (!body.pvSlug && body.pvName) {
     body.pvSlug = slugify(body.pvName, { lower: true, strict: true });
   }
@@ -1714,7 +1727,6 @@ exports.creatProductVariation = async (body, files) => {
 
   // đồng bộ tổng tồn kho + giá min cho Product
   await exports.recalcProductAggregates(body.productId);
-
   return { success: true, message: "thành công", productVariation };
 };
 
@@ -1783,10 +1795,17 @@ exports.updateProductVariation = async (params, body, files) => {
     err.status = 400;
     throw err;
   }
-  if (body.pvStockQuantity != null) {
-    const n = Number(body.pvStockQuantity);
-    if (!Number.isInteger(n) || n < 0) {
-      const err = new Error("Số lượng sản phẩm trong kho: >= 0");
+
+  if (body.pvStockQuantity) {
+    const stockQty = Number(body.pvStockQuantity);
+    if (!Number.isInteger(stockQty)) {
+      const err = new Error("Số lượng kho phải là số nguyên");
+      err.status = 400;
+      throw err;
+    }
+
+    if (stockQty < 0) {
+      const err = new Error("Số lượng kho phải lớn hơn hoặc bằng 0");
       err.status = 400;
       throw err;
     }

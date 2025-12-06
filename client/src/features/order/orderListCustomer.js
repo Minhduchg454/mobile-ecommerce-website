@@ -131,16 +131,14 @@ export const OrderListCustomer = ({ statusOrder }) => {
 
   // ================== Handlers ==================
 
-  // Hàm mới: Mở modal đánh giá
   const handleOpenPreviewModal = async (item, order) => {
     const previewId = item.previewInfo?._id;
     const edited = item?.previewInfo?.isEdited || false;
-    let oldPreview = item.previewInfo; // Giữ lại thông tin cơ bản
+    let oldPreview = item.previewInfo;
 
     // Tải dữ liệu chi tiết nếu đã có ID đánh giá (Lazy loading)
     if (previewId) {
       try {
-        // [Chưa xác minh] Giả định API getPreviews hỗ trợ lấy chi tiết theo ID
         const res = await apiGetPreviews({ _id: previewId });
         if (res?.success && res.previews?.length > 0) {
           oldPreview = res.previews[0]; // Cập nhật với dữ liệu chi tiết

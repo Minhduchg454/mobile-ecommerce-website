@@ -32,4 +32,5 @@ router.use("/previews", previewRouter);
 router.use("/notifications", notificationRouter);
 router.use("/recommendations", recommendationRouter);
 router.use("/chats", chatRouter);
+
 module.exports = router;

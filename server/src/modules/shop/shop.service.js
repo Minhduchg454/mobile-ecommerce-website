@@ -1138,7 +1138,6 @@ exports.updateCategoryShop = async (csId, shopId, body, file) => {
 
 // Xoá (csId từ params, shopId từ body)
 exports.deleteCategoryShop = async (csId) => {
-  //console.log("Giu lieu gui den", csId);
   if (!csId) {
     const e = new Error("Thiếu csId");
     e.status = 400;

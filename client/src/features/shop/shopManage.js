@@ -452,12 +452,10 @@ export const ShopManage = ({ status }) => {
 
   return (
     <div className="relative flex flex-col gap-4">
-      {/* HEADER (Giữ nguyên) */}
       <div className="bg-app-bg/60 backdrop-blur-sm rounded-3xl px-3 py-2 md:px-4 sticky top-[50px] z-10 flex justify-between items-center gap-2">
         <h1 className={titleCls}>{count} shop</h1>
 
         <div className="flex items-center justify-end gap-2 ">
-          {/* FILTER STATUS - giống style sort */}
           {!status && (
             <div className="relative">
               <button

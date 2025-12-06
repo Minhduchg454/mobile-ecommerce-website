@@ -49,7 +49,7 @@ const NotificationSchema = new Schema(
     isRead: {
       type: Boolean,
       default: false,
-      index: true, // Quan trọng cho việc đếm thông báo chưa đọc
+      index: true,
     },
     createdAt: {
       type: Date,
