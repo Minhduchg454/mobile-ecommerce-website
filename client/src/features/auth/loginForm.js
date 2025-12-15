@@ -89,7 +89,6 @@ export const LoginForm = () => {
         );
         return;
       }
-      dispatch(showModal({ isShowModal: false }));
 
       dispatch(
         showAlert({
@@ -111,7 +110,6 @@ export const LoginForm = () => {
 
       navigatePath(roles, user._id);
     } else {
-      // Xử lý khi gọi getCurrent thất bại
       dispatch(
         showAlert({
           title: "Lỗi",
@@ -131,7 +129,7 @@ export const LoginForm = () => {
       dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
       // 1. Gọi API
       const res = await apiGoogleLogin({ token });
-
+      dispatch(showModal({ isShowModal: false }));
       // 2. Kiểm tra lỗi
       if (!res.success || !res.token || !res.user) {
         throw new Error(res.message || "Đăng nhập Google thất bại");
@@ -167,6 +165,7 @@ export const LoginForm = () => {
         accountName: payload.accountName,
         password: payload.password,
       });
+      dispatch(showModal({ isShowModal: false }));
 
       // 2. Kiểm tra lỗi
       if (!res.success || !res.token || !res.user) {

@@ -3,11 +3,16 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import defaultAvatar from "assets/avatarDefault.png";
 import moment from "moment";
-import { apiUpdateShop } from "../../services/shop.api";
+import { apiUpdateShop, apiDeleteShop } from "../../services/shop.api";
 import { showAlert, showModal } from "store/app/appSlice";
-import { setSeller } from "store/seller/sellerSlice";
+import { setSeller, clearSeller } from "store/seller/sellerSlice";
+import { logout } from "store/user/userSlice";
+import { clearChatData } from "store/chat/chatSlice";
 import { Loading, ImageUploader } from "../../components";
+import { nextAlertId, registerHandlers } from "store/alert/alertBus";
 import { SubscriptionsServicePlan } from "../shop/subscriptionsServicePlanModal";
+import { APP_INFO } from "../../ultils/contants";
+import { useNavigate } from "react-router-dom";
 
 const STATUS_LABELS = {
   pending: "Đang chờ duyệt",
@@ -19,9 +24,10 @@ export const ShopInformation = () => {
   const dispatch = useDispatch();
   const { current } = useSelector((s) => s.seller);
 
+  const navigate = useNavigate();
   // Lấy thông tin gói dịch vụ từ Redux store
   const activeSubscription = current?.activeSubscription;
-  const servicePlan = current?.currentService; // Thông tin Service Plan chi tiết
+  const servicePlan = current?.currentService;
 
   // ===== LOGIC VÀ STATE KHÁC GIỮ NGUYÊN =====
 
@@ -212,6 +218,7 @@ export const ShopInformation = () => {
       const res = await apiUpdateShop(fd, current._id);
 
       if (res?.success && res?.shop) {
+        console.log("Cập nhật shop thành công:", res.shop);
         dispatch(setSeller(res.shop));
 
         dispatch(
@@ -277,9 +284,6 @@ export const ShopInformation = () => {
     }
   };
 
-  // ==========================================================
-  // Dirty check logic (Giữ nguyên)
-  // ==========================================================
   const sameBannerState = (a, b) => {
     if (a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) {
@@ -304,10 +308,6 @@ export const ShopInformation = () => {
     // giữ nguyên
     return bgPreview !== original;
   })();
-
-  // ==========================================================
-  // BACKGROUND handlers (Giữ nguyên)
-  // ==========================================================
 
   const handleUndoBackground = () => {
     // quay lại trạng thái gốc
@@ -362,6 +362,95 @@ export const ShopInformation = () => {
       </div>
     );
   }
+
+  const handleDeleteShop = (shop) => {
+    const alertId = nextAlertId();
+
+    registerHandlers(alertId, {
+      onConfirm: async () => {
+        try {
+          dispatch(
+            showModal({ isShowModal: true, modalChildren: <Loading /> })
+          );
+
+          dispatch(showModal({ isShowModal: false }));
+          const res = await apiDeleteShop({}, shop._id);
+          if (res?.success) {
+            dispatch(
+              showAlert({
+                title: "Đã xoá cửa hàng",
+                message: shop.shopName,
+                variant: "success",
+                duration: 1500,
+                showConfirmButton: false,
+                showCancelButton: false,
+              })
+            );
+            dispatch(logout());
+            dispatch(clearSeller());
+            dispatch(clearChatData());
+            navigate(`/`);
+          } else {
+            dispatch(
+              showAlert({
+                title: "Xoá thất bại",
+                message:
+                  res?.message || "Không thể xoá shop. Vui lòng thử lại.",
+                variant: "danger",
+                showCancelButton: false,
+              })
+            );
+          }
+        } catch (err) {
+          console.error("delete shop error:", err);
+          dispatch(showModal({ isShowModal: false }));
+          dispatch(
+            showAlert({
+              title: "Lỗi",
+              message: err?.message || "Không thể xoá shop",
+              variant: "danger",
+              duration: 3500,
+            })
+          );
+        }
+      },
+    });
+
+    dispatch(
+      showAlert({
+        id: alertId,
+        title: "Xác nhận xoá cửa hàng",
+        message: (
+          <div className="text-center">
+            <ul className="text-left text-sm list-disc pl-4 space-y-1">
+              <li>
+                Sau khi xác nhận xóa, bạn sẽ không thể khôi phục lại cửa hàng
+                này.
+              </li>
+              <li>Toàn bộ sản phẩm và đơn hàng liên quan sẽ bị ảnh hưởng.</li>
+              <li>
+                Việc xóa sẽ không thực hiện được nếu bạn còn đơn hàng chưa hoàn
+                tất.
+              </li>
+              <li>
+                Sau khi xoá tài khoản, {APP_INFO.NAME} có thể lưu trữ một số dữ
+                liệu của bạn theo quy định tại Chính sách bảo mật của
+                {APP_INFO.NAME} và quy định pháp luật có liên quan.
+              </li>
+              <li>
+                Việc xoá tài khoản không đồng nghĩa với việc loại bỏ tất cả
+                trách nhiệm và nghĩa vụ liên quan của bạn trên tài khoản đã xóa.
+              </li>
+            </ul>
+          </div>
+        ),
+        variant: "danger",
+        showCancelButton: true,
+        confirmText: "Xoá",
+        cancelText: "Hủy",
+      })
+    );
+  };
 
   // ===================== RENDER UI =====================
   const sectionCls = "bg-white p-3 md:p-4 rounded-3xl mb-4";
@@ -439,7 +528,7 @@ export const ShopInformation = () => {
           <div className="space-y-4">
             <div className={inputRow}>
               <label className={labelCls} htmlFor="shopName">
-                Tên cửa hàng:
+                Tên cửa hàng
               </label>
               <input
                 id="shopName"
@@ -460,7 +549,7 @@ export const ShopInformation = () => {
 
             <div className={inputRow}>
               <label className={labelCls} htmlFor="shopDescription">
-                Mô tả:
+                Mô tả
               </label>
               <textarea
                 id="shopDescription"
@@ -479,19 +568,19 @@ export const ShopInformation = () => {
             )}
 
             <div className={inputRow}>
-              <p>Trạng thái: </p>
+              <p>Trạng thái</p>
               {STATUS_LABELS[current.shopStatus] || "Không xác định"}
             </div>
             <div className={inputRow}>
-              <p>Sản phẩm: </p>
+              <p>Sản phẩm</p>
               {current.shopProductCount ?? 0}
             </div>
             <div className={inputRow}>
-              <p>Đã bán: </p>
+              <p>Đã bán</p>
               {current.shopSoldCount ?? 0}
             </div>
             <div className={`${inputRow} border-none`}>
-              <p>Đánh giá: </p>
+              <p>Đánh giá</p>
               {current.shopRateAvg ?? 0}/5
             </div>
           </div>
@@ -521,8 +610,8 @@ export const ShopInformation = () => {
       <div>
         <h1 className={titleCls}>Gói dịch vụ</h1>
         <div className={sectionCls}>
-          <div className={`${inputRow} `}>
-            <p>Tên gói: </p>
+          <div className={`${inputRow}`}>
+            <p>Tên gói</p>
             <button
               onClick={() =>
                 handleSubscription(servicePlan, activeSubscription?._id)
@@ -536,13 +625,13 @@ export const ShopInformation = () => {
             <>
               {activeSubscription.subStartDate && (
                 <div className={`${inputRow} `}>
-                  <p>Ngày đăng ký: </p>
+                  <p>Ngày đăng ký</p>
                   {moment(activeSubscription.subStartDate).format("DD/MM/YYYY")}
                 </div>
               )}
               {activeSubscription.subExpirationDate && (
                 <div className={`${inputRow} `}>
-                  <p>Ngày hết hạn: </p>
+                  <p>Ngày hết hạn</p>
                   {moment(activeSubscription.subExpirationDate).format(
                     "DD/MM/YYYY"
                   )}
@@ -550,7 +639,7 @@ export const ShopInformation = () => {
               )}
 
               <div className={`${inputRow} border-b-0`}>
-                <p>Trạng thái gói: </p>
+                <p>Trạng thái gói</p>
                 <p className="">
                   {activeSubscription.subStatus === "active"
                     ? "Đang hoạt động"
@@ -679,7 +768,6 @@ export const ShopInformation = () => {
                 const ok = await updateShop(fd, "banner");
                 dispatch(showModal({ isShowModal: false }));
                 if (ok) {
-                  // KHÔNG cần revoke nữa vì snapshot đang chỉ giữ File
                   bannerOriginalRef.current = bannerList.map((b) => ({
                     file: b.file,
                   }));
@@ -688,6 +776,21 @@ export const ShopInformation = () => {
               }}
             >
               {bannerSubmitting ? "Đang lưu..." : "Thay thế banner"}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h1 className={titleCls}>Tài khoản</h1>
+
+        <div className={sectionCls}>
+          <div className={`${inputRow} border-none pb-0`}>
+            <p>Yêu cầu xóa cửa hàng</p>
+            <button
+              onClick={() => handleDeleteShop(current)}
+              className="px-4 py-1.5 rounded-xl bg-red-500 hover:bg-red-800 text-sm text-white"
+            >
+              Xóa
             </button>
           </div>
         </div>

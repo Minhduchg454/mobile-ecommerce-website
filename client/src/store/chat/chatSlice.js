@@ -11,6 +11,7 @@ const initialState = {
   currentConverId: null,
   isChatOpen: false,
   targetConversationId: null,
+  onlineUsers: {},
 };
 
 const chatSlice = createSlice({
@@ -25,8 +26,11 @@ const chatSlice = createSlice({
       state.isChatOpen = false;
       state.targetConversationId = null;
     },
+    updateUserOnlineStatus: (state, action) => {
+      const { userId, isOnline } = action.payload;
+      state.onlineUsers[userId] = isOnline;
+    },
 
-    // Chỉ nhận tin nhắn vào danh sách tin nhắn
     receiveMessage: (state, action) => {
       const msg = action.payload;
       const cid = msg.conver_id?.toString();
@@ -58,7 +62,6 @@ const chatSlice = createSlice({
       }
     },
 
-    // CHỈ DÙNG CÁI NÀY – TỐI ƯU NHẤT
     updateConversationFromSocket: (state, action) => {
       const { conver_id, lastMessage, unreadCount, isSender } = action.payload;
       if (!conver_id) return;
@@ -129,7 +132,6 @@ const chatSlice = createSlice({
         const { conver_id, messages } = action.payload;
         state.messagesByConverId[conver_id] = messages;
       });
-    // Có thể xóa markConversationRead.fulfilled nếu muốn gọn hơn
   },
 });
 

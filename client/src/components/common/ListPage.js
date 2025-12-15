@@ -200,29 +200,6 @@ const FilterPanel = ({
           </div>
         )}
 
-        {showShop && shops.length > 0 && (
-          <div>
-            <H1 icon={MdStorefront}>Cửa hàng</H1>
-            <ul>
-              {shops.map((s) => (
-                <li
-                  key={s._id || s.shopSlug}
-                  className={`${filterLi} ${
-                    selectedShopIds.includes(s._id)
-                      ? "text-sidebar-t-select font-bold"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    toggle(s._id, selectedShopIds, setSelectedShopIds)
-                  }
-                >
-                  {s.shopName}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         {showTheme && themes.length > 0 && (
           <div>
             <H1 icon={MdColorLens}>Chủ đề</H1>
@@ -240,6 +217,29 @@ const FilterPanel = ({
                   }
                 >
                   {t.themeName}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {showShop && shops.length > 0 && (
+          <div>
+            <H1 icon={MdStorefront}>Cửa hàng</H1>
+            <ul>
+              {shops.map((s) => (
+                <li
+                  key={s._id || s.shopSlug}
+                  className={`${filterLi} ${
+                    selectedShopIds.includes(s._id)
+                      ? "text-sidebar-t-select font-bold"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    toggle(s._id, selectedShopIds, setSelectedShopIds)
+                  }
+                >
+                  {s.shopName}
                 </li>
               ))}
             </ul>

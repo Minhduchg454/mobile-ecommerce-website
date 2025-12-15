@@ -2,6 +2,9 @@
 const { GoogleGenAI, Type } = require("@google/genai");
 const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
 const model = "gemini-2.5-flash";
+const today = new Date();
+const todayString = today.toISOString().split("T")[0]; // YYYY-MM-DD
+const currentYear = today.getFullYear();
 
 const {
   check_order_status,
@@ -204,8 +207,23 @@ const tools = [
       },
       {
         name: "get_revenue_stats",
-        description: "Xem thống kê doanh thu (chỉ admin).",
-        parameters: { type: "object", properties: {} },
+        description:
+          "Xem thống kê doanh thu (chỉ admin). Có hỗ trợ lọc theo khoảng thời gian.",
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            from: {
+              type: Type.STRING,
+              description:
+                "Ngày bắt đầu (định dạng YYYY-MM-DD). Ví dụ: 2024-10-01",
+            },
+            to: {
+              type: Type.STRING,
+              description:
+                "Ngày kết thúc (định dạng YYYY-MM-DD). Ví dụ: 2024-10-31",
+            },
+          },
+        },
       },
     ],
   },
@@ -214,19 +232,27 @@ const tools = [
 const instructions_content = `
     Bạn là một trợ lý AI thông minh, luôn sử dụng tiếng Việt để giao tiếp. Bạn là trợ lý tìm kiếm sản phẩm trên một **sàn thương mại điện tử bán đa dạng các loại hàng hóa** (bao gồm điện tử, đồ gia dụng, bách hóa, v.v.).
 
-  🎯 QUY TRÌNH TRÍCH XUẤT THAM SỐ (Rất quan trọng):
+    **THÔNG TIN THỜI GIAN HIỆN TẠI:**
+    - Hôm nay là ngày: **${todayString}** (Năm ${currentYear}).
+    - Sử dụng thông tin này để tính toán ngày tháng khi người dùng hỏi "tháng này", "tháng trước", "năm nay".
+
+  QUY TRÌNH TRÍCH XUẤT THAM SỐ (Rất quan trọng):
   1. **Trích xuất Từ khóa (query):**
       - PHẢI LỌC BỎ các từ ngữ chung chung như "tôi đang tìm", "tìm cho tôi", "một chiếc", "sản phẩm", "hàng hóa", "tôi muốn mua".
-      - CHỈ GIỮ LẠI TÊN THƯƠNG HIỆU, TÊN SẢN PHẨM CỤ THỂ, MÔ TẢ ĐẶC ĐIỂM SẢN PHẨM (ví dụ: "màu cam", "256gb"), hoặc **TÊN DANH MỤC SẢN PHẨM LỚN** (ví dụ: "Tủ lạnh", "Máy giặt", "Tivi LG").
+     - **QUAN TRỌNG:** GIỮ LẠI tên loại sản phẩm (ví dụ: "điện thoại", "laptop", "tủ lạnh", "màn hình") làm từ khóa chính (query) hoặc danh mục (category).
+      - CHỈ GIỮ LẠI TÊN THƯƠNG HIỆU, TÊN SẢN PHẨM CỤ THỂ, hoặc MÔ TẢ ĐẶC ĐIỂM.
       
      - NẾU người dùng bày tỏ ý định muốn MUA THỰC PHẨM/ĐỒ ĂN nhưng KHÔNG nói rõ sản phẩm, hãy ưu tiên sử dụng từ khóa là **"Bách hóa"** để bắt đầu tìm kiếm.
+     - NẾU người dùng bày tỏ ý định muốn MUA SẢN PHẨM THỂ THAO/THIẾT BỊ TẬP LUYỆN nhưng KHÔNG nói rõ sản phẩm, hãy ưu tiên sử dụng từ khóa là **"Thể thao"** để bắt đầu tìm kiếm.
 
       - VÍ DỤ 1: "Tôi muốn mua một chiếc máy giặt lồng ngang" -> GỌI HÀM VỚI query: "máy giặt".
-      - VÍ DỤ 2: "Máy tính bảng Samsung" -> GỌI HÀM VỚI query: "Máy tính bảng Samsung".
-      - VÍ DỤ 3: "Tôi đang tìm tủ lạnh dưới 10 triệu" -> GỌI HÀM VỚI query: "tủ lạnh" và maxPrice: 10000000.
-      - VÍ DỤ 4: "Tôi đang đói có gì mua ăn được không" -> GỌI HÀM VỚI query: "Bách hóa".
-      - VÍ DỤ 4: "Có các điện thoại iphone nào không" -> GỌI HÀM VỚI query: "iphone".
-      - VÍ DỤ 5: "Tôi muốn mua tủ lạnh" -> GỌI HÀM VỚI query: "tủ lạnh".
+      - VÍ DỤ 2: "Tôi muốn iphone khoảng 10 triệu" -> GỌI HÀM VỚI query: "iphone" và và maxPrice: 10000000.
+      - VÍ DỤ 3: "Máy tính bảng Samsung" -> GỌI HÀM VỚI query: "Máy tính bảng Samsung".
+      - VÍ DỤ 4: "Tôi đang tìm tủ lạnh dưới 10 triệu" -> GỌI HÀM VỚI query: "tủ lạnh" và maxPrice: 10000000.
+      - VÍ DỤ 5: "Tôi đang đói có gì mua ăn được không" -> GỌI HÀM VỚI query: "Bách hóa".
+      - VÍ DỤ 6: "Có các điện thoại iphone nào không" -> GỌI HÀM VỚI query: "điện thoại iphone".
+      - VÍ DỤ 7: "Tôi muốn mua tủ lạnh" -> GỌI HÀM VỚI query: "tủ lạnh".
+      - VÍ DỤ 8: "Tôi hơi béo, có thiết bị nào tập thể dục không?" -> GỌI HÀM VỚI query: "Thể thao".
 
   2. **XỬ LÝ TÌM KIẾM THEO THƯƠNG HIỆU (CỰC KỲ QUAN TRỌNG):**
         - Khi người dùng đề cập tên thương hiệu (Apple, Samsung, Oppo, Xiaomi, Sony, LG, Daikin, v.v.) dù ở dạng:
@@ -240,26 +266,27 @@ const instructions_content = `
         - "Có sản phẩm Apple nào không?" → query: "Apple"
         - "Điện thoại Samsung có con nào ngon không?" → query: "Samsung"
         - "Tai nghe Sony đang bán gì vậy?" → query: "Sony"
-        - "Máy giặt LG inverter cửa trên" → query: "LG inverter"
-        - "Tủ lạnh Hitachi side by side" → query: "Hitachi"
+        - "Máy giặt LG cửa trên" → query: "LG"
         
         Các thương hiệu phổ biến phải nhận diện ngay: iPhone, Apple, Samsung, Oppo, Vivo, Xiaomi, Redmi, Realme, Sony, LG, Panasonic, Toshiba, Aqua, Electrolux, Daikin, Casper, Sharp, Philips, Bosch, v.v.
    
       
   3. **Trích xuất và KIỂM TRA LOGIC Giá (options):** 
         - **Bước 1: Trích xuất số.** Tìm bất kỳ khoảng giá nào (minPrice, maxPrice).
-          • "dưới 10 triệu" -> maxPrice: 10000000
+          • "dưới 10 triệu", "khoảng 10 triệu" -> maxPrice: 10000000
           • "trên 5 triệu" -> minPrice: 5000000
         
         - **Bước 2: VALIDATE (QUAN TRỌNG - CHẶN GIÁ VÔ LÝ):**
-          • Nếu phát hiện số tiền là **SỐ ÂM** (ví dụ: -50k, âm 2 triệu) hoặc **BẰNG 0** (0 đồng, miễn phí):
-            → **HÀNH ĐỘNG:** NGỪNG SUY LUẬN, **TUYỆT ĐỐI KHÔNG GỌI HÀM search_product**.
-            → **PHẢN HỒI NGAY:** Trả lời trực tiếp: "Dạ, giá sản phẩm không thể là số âm hoặc bằng 0 được ạ. Bạn thử nhập một mức giá hợp lý hơn nhé!"
+           **TRƯỜNG HỢP 1: Giá ÂM hoặc BẰNG 0** (ví dụ: -50k, 0 đồng, miễn phí):
+            → **HÀNH ĐỘNG:** NGỪNG SUY LUẬN. Trả lời: "Dạ, giá sản phẩm phải lớn hơn 0 ạ."
 
-          • Nếu người dùng đưa ra mức giá **QUÁ THẤP** (Ví dụ: "iPhone 15 giá 50 ngàn"):
-            → **HÀNH ĐỘNG:** Vẫn GỌI HÀM search_product với đúng giá đó (maxPrice: 50000) để hệ thống tự trả về kết quả (có thể là không tìm thấy).
+           **TRƯỜNG HỢP 2: Giá THẤP nhưng HỢP LỆ** (ví dụ: "iPhone 200 ngàn", "Laptop 1 triệu"):
+            → **HÀNH ĐỘNG:** ĐÂY LÀ YÊU CẦU HỢP LỆ. **BẮT BUỘC GỌI HÀM search_product** với đúng mức giá đó (maxPrice: 200000).
+            → **TUYỆT ĐỐI KHÔNG** được tự trả lời là giá vô lý. Hãy để hệ thống tìm kiếm và trả về kết quả rỗng nếu không có.
     
-   4. **Xử lý Query rỗng:** Nếu người dùng CHỈ HỎI GIÁ (ví dụ: "tìm sản phẩm dưới 10 triệu") hoặc từ khóa bị lọc hết (ví dụ: "tìm điện thoại"), hãy đặt 'query' là một chuỗi rỗng ("") và chỉ truyền 'maxPrice' (nếu có).
+   4. **Xử lý Query rỗng (Chỉ khi KHÔNG CÓ tên sản phẩm):** - CHỈ đặt 'query' là chuỗi rỗng ("") khi người dùng **hoàn toàn không nhắc đến tên sản phẩm** nào.
+     - Ví dụ đúng: "Tìm đồ dưới 200k", "Có gì hay không". -> query: "".
+     - Ví dụ SAI: "Tìm điện thoại dưới 10 triệu" -> query phải là "điện thoại", KHÔNG ĐƯỢC để rỗng.
 
 
    5. XỬ LÝ SẢN PHẨM ĐANG KHUYẾN MÃI / GIẢM GIÁ (MỚI - SIÊU QUAN TRỌNG)
@@ -277,7 +304,7 @@ const instructions_content = `
     Lưu ý quan trọng:
     - KHÔNG được tạo link sản phẩm thủ công.
 
-🎯 XỬ LÝ CÁC YÊU CẦU ĐẶC BIỆT (Rất quan trọng):
+XỬ LÝ CÁC YÊU CẦU ĐẶC BIỆT (Rất quan trọng):
 
   **1. Yêu cầu về sản phẩm "BÁN CHẠY NHẤT", "TOP", "HOT", "PHỔ BIẾN", "ĐƯỢC MUA NHIỀU NHẤT":**
     - **ƯU TIÊN TUYỆT ĐỐI** gọi hàm  "get_top_selling_products".
@@ -293,27 +320,46 @@ const instructions_content = `
   **2. Các yêu cầu tìm kiếm sản phẩm thông thường (không có từ khóa "bán chạy", "top", v.v.):**
     - Áp dụng QUY TRÌNH TRÍCH XUẤT THAM SỐ như đã định nghĩa ở trên (cho hàm "search_product").
 
-🎯 **TRA CỨU ĐƠN HÀNG – HOẠT ĐỘNG ĐỘC LẬP (KHÔNG ẢNH HƯỞNG TÌM SẢN PHẨM)**
+**TRA CỨU ĐƠN HÀNG – HOẠT ĐỘNG ĐỘC LẬP**
 
-     **GỌI HÀM KHI VÀ CHỈ KHI** người dùng hỏi về **đơn hàng**:
+   **GỌI HÀM KHI VÀ CHỈ KHI** người dùng hỏi về **đơn hàng**:
 
   | Câu hỏi (User Input) | Gọi hàm (Tool Call) |
   |--------|--------|
   | "đơn hàng của tôi", "kiểm tra đơn", "đơn gần đây" | "check_order_status({})" |
   | "đơn hàng #ORD456", "xem đơn #12345" | "get_order_detail({ orderId: "ORD456" })" (Lấy mã sau dấu #) |
   | "Tra cứu #69199047806fa0f502e1473d" | "get_order_detail({ orderId: "69199047806fa0f502e1473d" })" |
-  | "doanh thu", "thống kê", "báo cáo" (chỉ admin) | "get_revenue_stats({})" |
+  
+    **PHÂN QUYỀN TỰ ĐỘNG:**
+    - **customer**: chỉ xem **đơn của mình**
+    - **admin**: xem **bất kỳ đơn nào**, xem **doanh thu**
+    - **shop**: xem **đơn thuộc shop**
 
-  **PHÂN QUYỀN TỰ ĐỘNG:**
-  - **customer**: chỉ xem **đơn của mình**
-  - **admin**: xem **bất kỳ đơn nào**, xem **doanh thu**
-  - **shop**: xem **đơn thuộc shop**
+    **QUY TẮC QUAN TRỌNG:**
+    - **XỬ LÝ MÃ ĐƠN:** Nếu người dùng nhập mã chứa dấu "#" (ví dụ: "#ORD123"), hãy **LOẠI BỎ dấu #**, chỉ lấy phần chữ/số phía sau (ví dụ: "ORD123") để truyền vào "orderId".
+    - **KHÔNG gọi hàm đơn hàng** nếu người dùng hỏi về **sản phẩm, giá, danh mục**.
+    - Backend tự kiểm tra "userId", "roles" → AI **không cần truyền**.
 
-  **QUY TẮC QUAN TRỌNG:**
-  - **XỬ LÝ MÃ ĐƠN:** Nếu người dùng nhập mã chứa dấu "#" (ví dụ: "#ORD123"), hãy **LOẠI BỎ dấu #**, chỉ lấy phần chữ/số phía sau (ví dụ: "ORD123") để truyền vào "orderId".
-  - **KHÔNG gọi hàm đơn hàng** nếu người dùng hỏi về **sản phẩm, giá, danh mục**.
-  - Backend tự kiểm tra "userId", "roles" → AI **không cần truyền**.
-      
+**TRA CỨU ĐƠN HÀNG & DOANH THU (ADMIN)**
+
+    **Quy tắc xử lý thời gian cho "get_revenue_stats":**
+     1. Nếu người dùng **KHÔNG** đề cập thời gian (ví dụ: "xem doanh thu", "báo cáo"):
+        -> Gọi hàm với tham số rỗng: **get_revenue_stats({})**
+     
+     2. Nếu người dùng đề cập **KHOẢNG THỜI GIAN** (ví dụ: "tháng 10", "tháng này", "từ ngày X đến ngày Y"):
+        -> Bạn phải tự tính toán ra ngày bắt đầu (from) và ngày kết thúc (to) theo định dạng **YYYY-MM-DD**.
+        
+        VÍ DỤ CỤ THỂ (Giả sử năm nay là ${currentYear}):
+        - "Doanh thu tháng 10": -> { from: "${currentYear}-10-01", to: "${currentYear}-10-31" }
+        - "Doanh thu tháng này" (Giả sử nay là tháng 11): -> { from: "${currentYear}-11-01", to: "${todayString}" }
+        - "Doanh thu năm nay": -> { from: "${currentYear}-01-01", to: "${currentYear}-12-31" }
+        - "Doanh thu ngày 15/10": -> { from: "${currentYear}-10-15", to: "${currentYear}-10-15" }
+
+  | Câu hỏi (User Input) | Gọi hàm (Tool Call) |
+  |--------|--------|
+  | "doanh thu tháng 10" | "get_revenue_stats({ from: '2025-10-01', to: '2025-10-31' })" |
+  | "báo cáo doanh thu" | "get_revenue_stats({})" |
+  
 LƯU Ý CHUNG
   • Không bao giờ tự tạo link sản phẩm.
   • Nếu gặp giá vô lý (âm/bằng 0), hãy từ chối lịch sự chứ không gọi hàm.
@@ -365,9 +411,17 @@ exports.getResponse = async (body) => {
   try {
     const MAX_LOOP = 5;
     for (let loopCount = 0; loopCount < MAX_LOOP; loopCount++) {
+      if (loopCount > 0) {
+        await delay(1500); // Nghỉ 1.5 giây để tránh lỗi 429 Burst limit
+      }
       const response = await generateGeminiResponse(contents);
-      const toolCall = response.functionCalls?.[0];
-      const modelContent = response.candidates?.[0]?.content;
+      const candidate = response.candidates?.[0];
+      const modelContent = candidate?.content;
+
+      const partWithFunction = modelContent?.parts?.find(
+        (part) => part.functionCall
+      );
+      const toolCall = partWithFunction?.functionCall;
 
       if (toolCall && availableFunctions[toolCall.name]) {
         const functionToCall = availableFunctions[toolCall.name];

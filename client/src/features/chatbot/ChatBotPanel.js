@@ -70,9 +70,13 @@ export const ChatBotPanel = () => {
     setIsLoading(true);
 
     try {
+      const historyToSend = messages.filter(
+        (msg) => !initialMessages.some((initMsg) => initMsg.text === msg.text)
+      );
+
       const res = await apiGetResponse({
         message: userMessage.text,
-        history: messages,
+        history: historyToSend,
         userId: current?._id,
         roles: current?.roles || [],
       });
@@ -113,7 +117,7 @@ export const ChatBotPanel = () => {
       <div className="flex-1 overflow-y-auto scroll-hidden rounded-3xl">
         <div className="sticky top-0 z-10 p-2 rounded-t-3xl flex items-center justify-center ">
           <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full border-2 border-black bg-white shadow-md p-1">
+            <div className="w-12 h-12 rounded-full border-[1px] border-black bg-white shadow-md p-1">
               <img
                 src={aiAvatar}
                 alt="Admin avatar"
@@ -126,7 +130,6 @@ export const ChatBotPanel = () => {
           </div>
         </div>
 
-        {/* Messages List (Logic render gốc) */}
         <div className="px-2 py-3 flex flex-col space-y-2">
           {messages.map((msg, index) => (
             <div

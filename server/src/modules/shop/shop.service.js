@@ -7,6 +7,9 @@ const CategoryShop = require("./entitties/category-shop.model");
 const slugify = require("slugify");
 const UserService = require("../user/user.service");
 const NotificationService = require("../notification/notification.service");
+const OrderService = require("../order/order.service");
+const productService = require("../product/product.service");
+const { formatCurrency } = require("../../ultils/databaseHelpers");
 const { getSystemOwnerId } = require("../../ultils/systemOwner");
 const mongoose = require("mongoose");
 
@@ -53,7 +56,7 @@ exports.createShop = async (body, files, io) => {
   });
 
   const notiData = {
-    recipientId: userId,
+    recipientId: body.userId,
     recipientRole: "shop",
     title: "Tạo cửa hàng thành công!",
     message: `Cửa hàng "${shop.shopName}" đã được tạo. Bắt đầu kinh doanh ngay!`,
@@ -185,14 +188,12 @@ exports.getShops = async (query) => {
 
   const shopIds = shops.map((shop) => shop._id);
 
-  // === BƯỚC 1: ĐỒNG BỘ GÓI HẾT HẠN CỦA TẤT CẢ SHOPS TÌM ĐƯỢC ===
   // Đảm bảo dữ liệu gói là chính xác nhất trước khi đọc
   await syncExpiredActiveSubscriptions(shopIds);
 
   // === BƯỚC 2: GẮN SUBSCRIPTION NẾU CÓ FLAG ===
   if (includeSubscription === "true" || includeSubscription === true) {
     // 1. Tìm tất cả các gói đăng ký active cho các shops này
-    // (Chỉ tìm ACTIVE vì những gói hết hạn đã được sync và chuyển sang EXPIRED)
     const activeSubs = await ShopSubscribe.find({
       shopId: { $in: shopIds },
       subStatus: "active",
@@ -251,9 +252,6 @@ exports.updateShop = async (userId, body, files, io) => {
   // ========== BACKGROUND ==========
   if (files?.shopBackground?.[0]) {
     payload.shopBackground = files.shopBackground[0].path;
-  } else {
-    if (Object.prototype.hasOwnProperty.call(payload, "shopBackground")) {
-    }
   }
 
   // ========== BANNER ==========
@@ -270,7 +268,7 @@ exports.updateShop = async (userId, body, files, io) => {
     }
   }
 
-  // Chỉ update shop chưa bị xoá
+  // Cập nhật shop trong DB
   const updated = await Shop.findOneAndUpdate(
     { _id: userId, isDeleted: false },
     payload,
@@ -282,7 +280,11 @@ exports.updateShop = async (userId, body, files, io) => {
     err.status = 404;
     throw err;
   }
+  if (payload.shopStatus || payload.isDeleted) {
+    recalculateAndSyncShopProducts(updated._id);
+  }
 
+  // Gửi thông báo khi thay đổi trạng thái
   if (payload.shopStatus) {
     const notiData = {
       recipientId: userId,
@@ -303,18 +305,86 @@ exports.updateShop = async (userId, body, files, io) => {
     }
   }
 
+  await syncExpiredActiveSubscriptions([updated._id]);
+
+  const activeSub = await ShopSubscribe.findOne({
+    shopId: updated._id,
+    subStatus: "active",
+  }).populate(
+    "serviceId",
+    "serviceName servicePrice serviceBillingCycle serviceFeatures serviceDescription serviceColor"
+  );
+
+  const shopPlain = updated.toObject();
+
+  shopPlain.activeSubscription = activeSub || null;
+  shopPlain.currentService = activeSub?.serviceId || null;
+
   return {
     success: true,
     message: "Cập nhật shop thành công",
-    shop: updated,
+    shop: shopPlain,
   };
 };
 
-exports.deleteShop = async (userId, io) => {
+exports.deleteShop = async (userId, body, io) => {
+  const { isAdmin } = body || {};
+
   if (!userId) {
     const err = new Error("Thiếu userId");
     err.status = 400;
     throw err;
+  }
+
+  if (!isAdmin) {
+    //1.1 Kiểm tra đơn hàng chưa hoàn tất
+    const orderStats = await OrderService.getOrderCountsByStatus({
+      shopId: userId,
+    });
+
+    if (orderStats.success && orderStats.counts) {
+      const pendingCount = orderStats.counts["Pending"] || 0;
+      const confirmedCount = orderStats.counts["Confirmed"] || 0;
+      const shippingCount = orderStats.counts["Shipping"] || 0;
+      const totalActiveOrders = pendingCount + confirmedCount + shippingCount;
+
+      if (totalActiveOrders > 0) {
+        const err = new Error(
+          `Không thể xoá shop vì còn ${totalActiveOrders} đơn hàng chưa hoàn tất.`
+        );
+        err.status = 400;
+        throw err;
+      }
+    }
+
+    // 1.2 Kiểm tra số dư
+    try {
+      const balanceResult = await UserService.getBalanceByUserIdAndFor(
+        userId,
+        "shop"
+      );
+
+      if (balanceResult?.success && balanceResult?.balance) {
+        const currentBalance = balanceResult.balance.balanceCurrent || 0;
+
+        if (currentBalance > 0) {
+          const formattedMoney = formatCurrency(currentBalance);
+
+          const err = new Error(
+            `Ví cửa hàng vẫn còn dư ${formattedMoney}. Vui lòng rút hết tiền trước khi xóa shop.`
+          );
+          err.status = 400;
+          throw err;
+        }
+      }
+    } catch (error) {
+      if (error.status === 400) throw error;
+
+      console.error("[Delete Shop] Lỗi kiểm tra số dư:", error);
+      const err = new Error("Lỗi hệ thống khi kiểm tra số dư ví shop.");
+      err.status = 500;
+      throw err;
+    }
   }
 
   const deleted = await Shop.findByIdAndUpdate(
@@ -323,6 +393,7 @@ exports.deleteShop = async (userId, io) => {
       $set: {
         isDeleted: true,
         deletedAt: new Date(),
+        ...(isAdmin && { shopStatus: "blocked" }),
       },
     },
     { new: true }
@@ -333,11 +404,11 @@ exports.deleteShop = async (userId, io) => {
     err.status = 404;
     throw err;
   }
+  await productService.syncShopStatusToProducts(userId, false);
 
-  // XÓA VAI TRÒ "SHOP" CỦA NGƯỜI DÙNG
+  // 3.1 Xóa role
   try {
     const SHOP_ROLE_NAME = "shop";
-
     const roleResult = await UserService.getRole({ roleName: SHOP_ROLE_NAME });
     const shopRole = roleResult.role;
 
@@ -356,12 +427,31 @@ exports.deleteShop = async (userId, io) => {
     );
   }
 
+  //Xoa so du
+  try {
+    const balanceFor = "shop";
+    await UserService.deleteBalance(userId, balanceFor);
+  } catch (error) {
+    console.error(
+      `[Delete Balance] Lỗi khi xóa ví 'shop' cho user ${userId}:`,
+      error.message
+    );
+  }
+
+  // 3.2 Chuẩn bị nội dung thông báo tùy ngữ cảnh
+  const notiTitle = isAdmin
+    ? "Cửa hàng đã bị xóa bởi Admin"
+    : "Cửa hàng đã bị xóa";
+  const notiMessage = isAdmin
+    ? `Cửa hàng "${deleted.shopName}" đã bị Quản trị viên xóa.`
+    : `Cửa hàng "${deleted.shopName}" của bạn đã xoá thành công.`;
+
   const notiData = {
     recipientId: userId,
     recipientRole: "shop",
-    title: "Cửa hàng đã bị xóa",
-    message: `Cửa hàng "${deleted.shopName}" của bạn đã xoá`,
-    link: `/shop/${deleted.shopSlug}/settings`,
+    title: notiTitle,
+    message: notiMessage,
+    link: `/user/notifications`,
     type: "SHOP_DELETED",
     sourceId: deleted._id,
     sourceModel: "Shop",
@@ -375,7 +465,9 @@ exports.deleteShop = async (userId, io) => {
 
   return {
     success: true,
-    message: "Xoá shop thành công",
+    message: isAdmin
+      ? "Đã cưỡng chế xóa shop thành công"
+      : "Xoá shop thành công",
   };
 };
 
@@ -716,11 +808,12 @@ exports.createSubscription = async (body) => {
       session
     );
 
-    // 3. Tăng subscriber count (hàm cũ KHÔNG hỗ trợ session)
+    // 3. Tăng subscriber count
 
     await exports.incrementSubscriberCount(serviceId, 1);
 
     await session.commitTransaction();
+    await recalculateAndSyncShopProducts(shopId);
 
     return {
       success: true,
@@ -735,7 +828,6 @@ exports.createSubscription = async (body) => {
         await exports.incrementSubscriberCount(serviceId, -1);
       } catch (e) {
         console.error("Không thể rollback subscriber count:", e);
-        // Ghi log để admin xử lý thủ công sau (rất hiếm xảy ra)
       }
     }
 
@@ -760,6 +852,40 @@ exports.getSubscriptionsByShop = async (shopId) => {
 /**
  */
 // === HÀM PHỤ TRỢ ===
+// Tính lại và đồng bộ trạng thái sản phẩm của shop dựa trên trạng thái shop và gói dịch vụ
+const recalculateAndSyncShopProducts = async (shopId) => {
+  try {
+    // 1. Lấy thông tin Shop
+    const shop = await Shop.findById(shopId).select("shopStatus isDeleted");
+    if (!shop || shop.isDeleted) {
+      await productService.syncShopStatusToProducts(shopId, false);
+      return;
+    }
+
+    // 2. Nếu shop bị khóa/chờ duyệt -> Ẩn ngay, không cần check gói
+    if (shop.shopStatus !== "approved") {
+      await productService.syncShopStatusToProducts(shopId, false);
+      return;
+    }
+
+    // 3. Nếu shop Approved -> Kiểm tra xem còn gói Active không
+    const now = new Date();
+    const activeSub = await ShopSubscribe.findOne({
+      shopId: shopId,
+      subStatus: "active",
+      subExpirationDate: { $gt: now },
+    });
+
+    const isShopActive = !!activeSub;
+
+    // 4. Gọi ProductService để update
+    await productService.syncShopStatusToProducts(shopId, isShopActive);
+  } catch (error) {
+    console.error(`[Sync Product] Lỗi đồng bộ shop ${shopId}:`, error.message);
+  }
+};
+
+//Dam bao dong bo cac goi het han truoc khi tra danh sach shop
 const syncExpiredActiveSubscriptions = async (shopIds) => {
   if (!shopIds || shopIds.length === 0) return;
 
@@ -769,14 +895,19 @@ const syncExpiredActiveSubscriptions = async (shopIds) => {
   const subscriptions = await ShopSubscribe.find({
     shopId: { $in: shopIds },
     subStatus: "active",
-    subExpirationDate: { $lt: now }, // Chỉ cần tìm các gói đã quá hạn
-  }).select("_id"); // Chỉ cần ID để thực hiện bulkWrite
+    subExpirationDate: { $lt: now },
+  }).select("_id shopId"); // Lấy thêm shopId
 
   if (subscriptions.length === 0) return;
 
   const toUpdateIds = subscriptions.map((sub) => sub._id);
 
-  // 2. Thực hiện cập nhật trạng thái trong DB
+  // Lấy danh sách Shop ID bị hết hạn để update sản phẩm
+  const expiredShopIds = [
+    ...new Set(subscriptions.map((s) => String(s.shopId))),
+  ];
+
+  // 2. Thực hiện cập nhật trạng thái gói trong DB
   const bulkOps = toUpdateIds.map((id) => ({
     updateOne: {
       filter: { _id: id },
@@ -786,6 +917,13 @@ const syncExpiredActiveSubscriptions = async (shopIds) => {
 
   try {
     await ShopSubscribe.bulkWrite(bulkOps, { ordered: false });
+    Promise.all(
+      expiredShopIds.map((sId) =>
+        productService.syncShopStatusToProducts(sId, false)
+      )
+    ).catch((err) =>
+      console.error("Lỗi update product status khi expire:", err)
+    );
   } catch (error) {
     console.error(
       "[Sync] Lỗi khi cập nhật trạng thái expired trong getShops:",
@@ -794,20 +932,23 @@ const syncExpiredActiveSubscriptions = async (shopIds) => {
   }
 };
 
+// Đồng bộ trạng thái expired cho một danh sách subscription đã lấy sẵn
 const syncExpiredSubscriptionsInList = async (
   subscriptions,
   now = new Date()
 ) => {
   if (!subscriptions || subscriptions.length === 0) return;
 
-  const toUpdate = subscriptions
-    .filter(
-      (sub) =>
-        sub._id && sub.subExpirationDate < now && sub.subStatus !== "expired"
-    )
-    .map((sub) => sub._id);
+  const expiredSubs = subscriptions.filter(
+    (sub) =>
+      sub._id && sub.subExpirationDate < now && sub.subStatus !== "expired"
+  );
 
-  if (toUpdate.length === 0) return;
+  if (expiredSubs.length === 0) return;
+
+  const toUpdate = expiredSubs.map((sub) => sub._id);
+
+  const expiredShopIds = [...new Set(expiredSubs.map((s) => String(s.shopId)))];
 
   const bulkOps = toUpdate.map((id) => ({
     updateOne: {
@@ -818,12 +959,91 @@ const syncExpiredSubscriptionsInList = async (
 
   try {
     await ShopSubscribe.bulkWrite(bulkOps, { ordered: false });
+    expiredShopIds.forEach((sId) => {
+      productService
+        .syncShopStatusToProducts(sId, false)
+        .catch((e) => console.error(`Lỗi sync shop ${sId}:`, e));
+    });
   } catch (error) {
     console.error("[Sync] Lỗi khi cập nhật trạng thái expired:", error);
   }
 };
 
-// === HÀM CHÍNH ===
+// === HÀM DÀNH CHO CRON JOB: QUÉT TOÀN BỘ HỆ THỐNG ===
+exports.scanAndSyncExpiredSubscriptions = async () => {
+  const now = new Date();
+  console.log(
+    `[Cron Scan] Bắt đầu quét gói hết hạn lúc ${now.toISOString()}...`
+  );
+
+  const BATCH_SIZE = 500; // Có thể tăng lên 500-1000 nếu server mạnh
+
+  try {
+    let processedSubs = 0;
+    let processedShops = 0;
+
+    // Tạo cursor với batchSize nhỏ để driver tự fetch từng lô từ server
+    const cursor = ShopSubscribe.find({
+      subStatus: "active",
+      subExpirationDate: { $lt: now },
+    })
+      .select("_id shopId")
+      .batchSize(BATCH_SIZE) // Quan trọng: driver sẽ fetch từng batch này
+      .lean()
+      .cursor(); // Trả về Cursor (stream)
+
+    let batch = [];
+    let currentShopIds = new Set();
+
+    for await (const sub of cursor) {
+      batch.push(sub);
+      currentShopIds.add(String(sub.shopId));
+
+      // Khi đủ một batch đầy (hoặc cuối cùng)
+      if (batch.length === BATCH_SIZE || cursor.closed) {
+        if (batch.length > 0) {
+          const subIds = batch.map((s) => s._id);
+
+          // Update trạng thái expired
+          await ShopSubscribe.updateMany(
+            { _id: { $in: subIds } },
+            { $set: { subStatus: "expired" } }
+          );
+
+          processedSubs += batch.length;
+
+          // Đồng bộ sản phẩm cho các shop trong batch này
+          const syncPromises = Array.from(currentShopIds).map((shopId) =>
+            recalculateAndSyncShopProducts(shopId).catch((err) =>
+              console.error(
+                `[Cron Scan] Lỗi đồng bộ shop ${shopId}:`,
+                err.message
+              )
+            )
+          );
+          await Promise.all(syncPromises);
+          processedShops += currentShopIds.size;
+
+          console.log(
+            `[Cron Scan] Đã xử lý ${batch.length} subscription (tổng: ${processedSubs}), ${currentShopIds.size} shop (tổng: ${processedShops})`
+          );
+
+          // Reset cho batch tiếp theo
+          batch = [];
+          currentShopIds = new Set();
+        }
+      }
+    }
+
+    console.log(
+      `[Cron Scan] Hoàn tất. Tổng: ${processedSubs} subscription expired, ${processedShops} shop đồng bộ.`
+    );
+  } catch (error) {
+    console.error("[Cron Scan] Lỗi nghiêm trọng:", error);
+  }
+};
+
+//Subscription
 exports.getSubscriptions = async (query = {}) => {
   const { shopId, serviceId, subStatus, s, sort, page = 1, limit } = query;
 
@@ -840,7 +1060,7 @@ exports.getSubscriptions = async (query = {}) => {
       : serviceId;
   }
 
-  const now = new Date(); // DÙNG CHUNG
+  const now = new Date();
 
   // === TÌM KIẾM SERVICE ===
   if (s) {
@@ -1077,7 +1297,7 @@ exports.getCategoryShops = async (query) => {
   };
   const sortOption = sortMap[sort] || { createdAt: 1 };
 
-  // ⚙️ Truy vấn
+  // Truy vấn
   const items = await CategoryShop.find(filter)
     .sort(sortOption)
     .populate("shopId", "shopName")

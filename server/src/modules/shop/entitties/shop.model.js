@@ -4,7 +4,6 @@ const { Schema } = mongoose;
 
 const shopSchema = new Schema(
   {
-    //Khoa chinh
     _id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -28,7 +27,7 @@ const shopSchema = new Schema(
     shopSoldCount: { type: Number, default: 0 },
     shopStatus: {
       type: String,
-      enum: ["pending", "approved", "blocked"],
+      enum: ["pending", "rejected", "approved", "blocked"],
       default: "pending",
     },
     shopIsOfficial: { type: Boolean, default: false },

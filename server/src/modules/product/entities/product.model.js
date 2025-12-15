@@ -114,6 +114,11 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Brand",
   },
+  isShopActive: {
+    type: Boolean,
+    default: true,
+    index: true,
+  },
   isDeleted: {
     type: Boolean,
     default: false,

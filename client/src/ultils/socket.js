@@ -7,7 +7,7 @@ import { updateConversationFromSocket } from "../store/chat/chatSlice";
 let socket = null;
 
 export const connectSocket = (userId) => {
-  if (socket?.connected) return; //neu ket noi roi thi khong lam gi nua tranh trung lap
+  if (socket?.connected) return;
 
   const user = store.getState().user.current;
   if (!user?._id) return;
@@ -52,6 +52,13 @@ export const connectSocket = (userId) => {
         unreadCount: 0,
       })
     );
+  });
+
+  socket.on("user_online_status", (data) => {
+    store.dispatch({
+      type: "chat/updateUserOnlineStatus",
+      payload: data,
+    });
   });
 };
 

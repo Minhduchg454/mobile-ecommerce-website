@@ -426,7 +426,6 @@ exports.createOrder = async (payload = {}, io) => {
       });
     }
 
-    // --- [MỚI] 4) GỬI THÔNG BÁO (NOTIFICATION) ---
     try {
       const idStr = orderDoc._id.toString().slice(-6).toUpperCase();
 
@@ -458,7 +457,7 @@ exports.createOrder = async (payload = {}, io) => {
         message: `Đơn hàng #${idStr} với giá trị ${orderTotalPrice.toLocaleString(
           "vi-VN"
         )}đ đang chờ xác nhận. Chuẩn bị hàng ngay nhé!`,
-        type: "ORDER_CREATED",
+        type: "SHOP_ORDER_CREATED",
         sourceId: orderDoc._id,
         sourceModel: "Order",
         metaData: { status: "Pending" },

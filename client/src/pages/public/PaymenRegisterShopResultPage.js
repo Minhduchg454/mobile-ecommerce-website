@@ -11,8 +11,7 @@ import path from "ultils/path";
 
 export const RegisterShopResultPage = () => {
   const [params] = useSearchParams();
-  const status = params.get("status"); // success | fail | pending
-  const paymentMethod = params.get("paymentMethod");
+  const status = params.get("status");
   const [processing, setProcessing] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -90,8 +89,8 @@ export const RegisterShopResultPage = () => {
         }
 
         // 4. Refresh + cleanup
-        dispatch(fetchSellerCurrent(shop._id));
         dispatch(getCurrent());
+        dispatch(fetchSellerCurrent(current._id || shop._id));
         sessionStorage.removeItem("registerShopPayload");
         setDone(true);
       } catch (e) {

@@ -7,9 +7,7 @@ const accountSchema = new Schema(
     accountName: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
-      index: true,
     },
     accountPassword: {
       type: String,
@@ -35,8 +33,18 @@ const accountSchema = new Schema(
       required: true,
       index: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   { timestamps: true }
+);
+
+accountSchema.index(
+  { accountName: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } }
 );
 
 module.exports = mongoose.model("Account", accountSchema);

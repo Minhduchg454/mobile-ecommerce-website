@@ -141,7 +141,7 @@ export const OrderListCustomer = ({ statusOrder }) => {
       try {
         const res = await apiGetPreviews({ _id: previewId });
         if (res?.success && res.previews?.length > 0) {
-          oldPreview = res.previews[0]; // Cập nhật với dữ liệu chi tiết
+          oldPreview = res.previews[0];
         }
       } catch (e) {
         console.error("Lỗi khi tải chi tiết đánh giá:", e);
@@ -152,10 +152,9 @@ export const OrderListCustomer = ({ statusOrder }) => {
             variant: "danger",
           })
         );
-        // dispatch(showModal({ isShowModal: false, modalChildren: null })); // Đóng modal nếu lỗi
+        dispatch(showModal({ isShowModal: false, modalChildren: null }));
         return;
       } finally {
-        // [Suy luận] Nếu có hiển thị Loading, cần ẩn nó đi ở đây
       }
     }
 
@@ -183,7 +182,6 @@ export const OrderListCustomer = ({ statusOrder }) => {
 
   // Hàm mới: Kiểm tra sản phẩm đã được đánh giá chưa
   const checkIfPreviewed = (item) => {
-    // [Chưa xác minh] Giả định server trả về item.previewInfo khi đã đánh giá
     return !!item.previewInfo?._id;
   };
 
@@ -372,7 +370,7 @@ export const OrderListCustomer = ({ statusOrder }) => {
                         }
                         src={o.shopId?.shopLogo}
                         alt={o.shopId?.shopName}
-                        className="w-10 h-10 rounded-full object-cover border cursor-pointer border-gray-300"
+                        className="w-10 h-10 rounded-full object-contain border cursor-pointer border-gray-300"
                       />
                       {o.shopId?.shopIsOfficial && (
                         <div className="border rounded-lg line-clamp-1 absolute -bottom-2 right-1/2 translate-x-1/2 bg-red-600 text-white py-0.5 px-1 text-[8px]">

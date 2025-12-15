@@ -60,7 +60,7 @@ exports.registerCustomer = async (body) => {
 
   try {
     // 1) Check account trùng
-    const exists = await Account.findOne({ accountName });
+    const exists = await Account.findOne({ accountName, isDeleted: false });
     if (exists) {
       const err = new Error("Tài khoản đã tồn tại");
       err.status = 409;
@@ -182,7 +182,7 @@ exports.registerAdmin = async (body) => {
 
   try {
     // 2) Check account trùng
-    const exists = await Account.findOne({ accountName });
+    const exists = await Account.findOne({ accountName, isDeleted: false });
     if (exists) {
       const err = new Error("Tài khoản đã tồn tại");
       err.status = 409;
@@ -192,13 +192,20 @@ exports.registerAdmin = async (body) => {
     // 3) KIỂM TRA TÍNH DUY NHẤT CỦA ADMIN
     const adminRole = await userService.getRole({ roleName: "admin" });
     if (adminRole.role) {
-      const existingAdmin = await UserRole.findOne({
+      const adminUserRoles = await UserRole.find({
         roleId: adminRole.role._id,
       });
 
-      if (existingAdmin) {
+      const adminUserIds = adminUserRoles.map((ur) => ur.userId);
+
+      const activeAdmin = await User.findOne({
+        _id: { $in: adminUserIds },
+        isDeleted: false,
+      });
+
+      if (activeAdmin) {
         const err = new Error(
-          "Chỉ được phép có MỘT tài khoản admin duy nhất trong hệ thống."
+          "Chỉ được phép có MỘT tài khoản admin duy nhất đang hoạt động."
         );
         err.status = 403;
         throw err;
@@ -443,7 +450,6 @@ exports.changePassword = async (body) => {
 
 exports.login = async (body) => {
   const { accountName, password } = body;
-  //console.log("Nhan thong tin", accountName, password);
 
   // 1) Validate input
   if (!accountName || !password) {
@@ -455,7 +461,7 @@ exports.login = async (body) => {
   }
 
   // 2) Tìm account
-  const account = await Account.findOne({ accountName });
+  const account = await Account.findOne({ accountName, isDeleted: false });
   if (!account) {
     const err = new Error("Không tìm thấy tài khoản");
     err.status = 404;
@@ -535,14 +541,12 @@ exports.googleLogin = async (body) => {
     }
 
     // 2) Tìm user theo email
-    let user = await User.findOne({ userEmail: email }).populate(
-      "userStatusId",
-      "userStatusName"
-    );
+    let user = await User.findOne({
+      userEmail: email,
+      isDeleted: false,
+    }).populate("userStatusId", "userStatusName");
 
     if (!user) {
-      // 3) TH: TẠO MỚI (Flow tương tự registerCustomer)
-
       // Lấy tên
       const parts = name.split(" ").filter(Boolean);
       const firstName = parts[0] || "";
@@ -567,7 +571,7 @@ exports.googleLogin = async (body) => {
         userStatusId: activeStatusId,
       });
       createdDocs.user = userRes.user;
-      user = userRes.user; // Gán user mới để sử dụng ở bước 4
+      user = userRes.user;
 
       // 3.4) Lấy / tạo role 'customer'
       const customerRole = await userService.getRole({ roleName: "customer" });
@@ -685,5 +689,18 @@ exports.getAccountName = async (userId) => {
     success: true,
     mesage: "Lấy tên tài khoản thành công",
     accountName: account.accountName,
+  };
+};
+
+exports.deleteAccount = async (userId) => {
+  if (!userId) {
+    const err = new Error("Không có id tài khoản");
+    err.status = 404;
+    throw err;
+  }
+  await Account.updateMany({ userId }, { isDeleted: true });
+  return {
+    success: true,
+    message: "Xóa tài khoản người dùng thành công",
   };
 };

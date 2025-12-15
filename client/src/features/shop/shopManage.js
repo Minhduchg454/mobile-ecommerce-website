@@ -234,7 +234,7 @@ export const ShopManage = ({ status }) => {
           dispatch(
             showModal({ isShowModal: true, modalChildren: <Loading /> })
           );
-          const res = await apiDeleteShop(shop._id);
+          const res = await apiDeleteShop({ isAdmin: true }, shop._id);
           dispatch(showModal({ isShowModal: false }));
 
           if (res?.success) {

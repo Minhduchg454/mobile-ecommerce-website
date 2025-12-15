@@ -14,10 +14,11 @@ export const apiGetUsers = (query) =>
     params: query,
   });
 
-export const apiDeleteUser = (uId) =>
+export const apiDeleteUser = (data, uId) =>
   axios({
     url: "users/profiles/" + uId,
     method: "delete",
+    data,
   });
 
 /**

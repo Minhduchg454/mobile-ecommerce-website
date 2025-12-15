@@ -966,7 +966,8 @@ export const CreateProduct = () => {
   const tabCss =
     "flex-1 py-1 px-2 transition-all duration-200 rounded-2xl hover:bg-gray-200";
   const labelInput = "px-2 text-sm";
-  const InputCss = "border rounded-xl px-3 py-2 text-base";
+  const InputCss =
+    "border rounded-xl px-3 py-2 text-base w-full bg-white outline-none focus:border-button-bg-ac transition-colors";
   const previewContent = "w-full md:w-[300px] h-auto";
 
   return (
@@ -1077,7 +1078,7 @@ export const CreateProduct = () => {
             </div>
 
             {/* Mô tả nhanh */}
-            <div className="flex flex-col gap-1 md:col-span-2">
+            <div className="flex flex-col gap-1 col-span-2">
               <label className={labelInput}>Mô tả nhanh</label>
               <textarea
                 className={`${InputCss}`}
@@ -1092,7 +1093,7 @@ export const CreateProduct = () => {
             <div className="flex flex-col gap-1">
               <label className={labelInput}>Thương hiệu</label>
               <select
-                className={`${InputCss}`}
+                className={`${InputCss} h-10`}
                 {...registerProduct("brandId")}
                 disabled={isProductSubmitDisabled}
                 onChange={(e) => {
@@ -1128,7 +1129,7 @@ export const CreateProduct = () => {
               <select
                 className={`${InputCss} ${
                   productErrors.categoryId ? "border-red-500" : ""
-                }`}
+                } h-10`}
                 {...registerProduct("categoryId", {
                   required: "Bạn phải chọn danh mục sản phẩm",
                 })}
@@ -1151,14 +1152,12 @@ export const CreateProduct = () => {
             {/* Danh mục shop */}
             <div className="flex flex-col gap-1">
               <label className={labelInput}>Danh mục shop</label>
-
               <select
-                className={`${InputCss}`}
+                className={`${InputCss} h-10`}
                 {...registerProduct("categoryShopId")}
                 disabled={isProductSubmitDisabled}
                 onChange={(e) => {
                   const value = e.target.value;
-                  // Khi người dùng chọn dòng "Thêm danh mục mới"
                   if (value === "ADD_NEW_CATEGORY_SHOP") {
                     e.target.value = "";
                     navigate(
@@ -1462,7 +1461,7 @@ export const CreateProduct = () => {
             </div>
 
             {/* Buttons submit / hoàn tác form sản phẩm */}
-            <div className="md:col-span-2 flex justify-end gap-2 ">
+            <div className="col-span-2 flex justify-end gap-2 ">
               <button
                 type="button"
                 className="px-4 py-1 rounded-3xl bg-gray-200 hover:bg-gray-300 text-sm disabled:opacity-50"

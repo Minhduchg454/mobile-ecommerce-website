@@ -58,10 +58,6 @@ export const AddressFormModal = ({
 
   const phoneRegex = /^(?:\+?84|0)(\d{8,10})$/;
 
-  const vName = watch("addressUserName");
-  const vPhone = watch("addressNumberPhone");
-  const vStreet = watch("addressStreet");
-  const vWard = watch("addressWard");
   const vDistrict = watch("addressDistrict");
   const vCity = watch("addressCity");
 
@@ -167,10 +163,10 @@ export const AddressFormModal = ({
         );
         reset();
       }
-      if (addressFor === "shop") {
-        dispatch(fetchSellerCurrent());
-      }
 
+      if (addressFor === "shop") {
+        dispatch(fetchSellerCurrent(userId));
+      }
       onSuccess?.(savedAddress);
       handleClose();
     } catch (e) {
@@ -249,7 +245,7 @@ export const AddressFormModal = ({
               {...register("addressCity", {
                 required: "Vui lòng chọn thành phố/tỉnh",
               })}
-              className="border rounded-xl w-full p-2 mt-1"
+              className="border rounded-xl w-full p-2 mt-1 h-10"
             >
               <option value="">Chọn thành phố/tỉnh</option>
               {provinces.map((province) => (
@@ -271,7 +267,7 @@ export const AddressFormModal = ({
               {...register("addressDistrict", {
                 required: "Vui lòng chọn quận/huyện",
               })}
-              className="border rounded-xl w-full p-2 mt-1"
+              className="border rounded-xl w-full p-2 mt-1 h-10"
             >
               <option value="">Chọn quận/huyện</option>
               {districts.map((district) => (

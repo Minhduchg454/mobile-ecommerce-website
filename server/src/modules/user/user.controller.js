@@ -22,7 +22,8 @@ exports.getUsers = async (req, res, next) => {
 
 exports.deleteUser = async (req, res, next) => {
   try {
-    const result = await userService.deleteUser(req.params.uId);
+    const { uId } = req.params;
+    const result = await userService.deleteUser(uId, req.body);
     res.status(201).json(result);
   } catch (err) {
     next(err);

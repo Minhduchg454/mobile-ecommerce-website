@@ -265,7 +265,7 @@ class RecommendationService {
       // Tối ưu vòng lặp: Chỉ duyệt các item User A có
       for (const [idx, scoreA] of Object.entries(vecA)) {
         const scoreB = vecB[idx] || 0;
-        if (scoreB > 0) dot += scoreA * scoreB; // Sản phẩm chung
+        if (scoreB > 0) dot += scoreA * scoreB;
         normA += scoreA * scoreA;
       }
       for (const score of Object.values(vecB)) {

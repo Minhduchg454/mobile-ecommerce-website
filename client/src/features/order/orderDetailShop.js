@@ -197,12 +197,14 @@ export const OrderDetailShop = () => {
                 key={it._id}
                 className="flex items-center gap-3 border rounded-2xl p-3"
               >
-                <img
-                  src={thumb}
-                  onError={(e) => (e.currentTarget.src = "/no-image.png")}
-                  className="w-20 h-20 object-cover rounded-lg border"
-                  alt=""
-                />
+                <div className="w-20 h-20 border rounded-lg overflow-hidden bg-white flex items-center justify-center shrink-0">
+                  <img
+                    src={thumb}
+                    onError={(e) => (e.currentTarget.src = "/no-image.png")}
+                    className="w-full h-full object-contain"
+                    alt=""
+                  />
+                </div>
                 <div className="flex-1">
                   <div className="font-medium">
                     {" "}

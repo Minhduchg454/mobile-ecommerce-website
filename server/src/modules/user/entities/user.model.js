@@ -14,7 +14,6 @@ const userBaseSchema = new mongoose.Schema(
     },
     userEmail: {
       type: String,
-      unique: true,
       trim: true,
       lowercase: true,
       index: true,
@@ -24,7 +23,6 @@ const userBaseSchema = new mongoose.Schema(
     },
     userMobile: {
       type: String,
-      unique: true,
       sparse: true,
       trim: true,
       default: undefined,
@@ -63,6 +61,16 @@ const userBaseSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+);
+
+userBaseSchema.index(
+  { userEmail: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } }
+);
+
+userBaseSchema.index(
+  { userMobile: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } }
 );
 
 module.exports = mongoose.model("User", userBaseSchema);

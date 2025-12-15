@@ -163,7 +163,7 @@ export const UserManage = ({ status }) => {
     registerHandlers(id, {
       onConfirm: async () => {
         dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
-        const res = await apiDeleteUser(user._id);
+        const res = await apiDeleteUser({ isAdmin: true }, user._id);
         dispatch(showModal({ isShowModal: false }));
 
         if (res?.success) {

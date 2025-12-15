@@ -14,6 +14,7 @@ export const sellerSlice = createSlice({
       state.error = null;
     },
     setSeller(state, action) {
+      console.log("Set seller:", action.payload);
       state.current = action.payload;
     },
   },
@@ -24,6 +25,7 @@ export const sellerSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchSellerCurrent.fulfilled, (state, action) => {
+        //console.log("Fetched seller current:", action.payload);
         state.loading = false;
         state.current = action.payload;
       })

@@ -22,10 +22,11 @@ export const apiUpdateShop = (data, userId) =>
     data,
   });
 
-export const apiDeleteShop = (userId) =>
+export const apiDeleteShop = (data, userId) =>
   axios({
     url: "shops/profile/" + userId,
     method: "delete",
+    data,
   });
 
 //-----------------Shop Categrory --------------------

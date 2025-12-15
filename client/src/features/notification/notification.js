@@ -22,22 +22,7 @@ import { HiOutlineClipboardList } from "react-icons/hi"; // đơn hàng
 import { HiOutlineBuildingStorefront } from "react-icons/hi2"; // shop
 import { HiOutlineUserCircle } from "react-icons/hi2"; // hệ thống
 
-// === MAP TYPE → ICON + MÀU + LINK (TRỰC TIẾP TRONG FILE) ===
 const typeConfig = {
-  // SẢN PHẨM
-  PRODUCT_STATUS_UPDATE: {
-    icon: <FiBox size={30} className="text-blue-600 " />,
-    color: "border-blue-500 bg-blue-50",
-    getLink: (sourceId, userId) =>
-      `/${path.SELLER}/${userId}/${path.S_MANAGE_PRODUCTS}`,
-  },
-  PRODUCT_CREATED: {
-    icon: <FiBox size={30} className="text-green-600" />,
-    color: "border-green-500 bg-green-50",
-    getLink: (sourceId, userId) =>
-      `/${path.SELLER}/${userId}/${path.S_MANAGE_PRODUCTS}`,
-  },
-
   ORDER_STATUS_UPDATE: {
     icon: <HiOutlineClipboardList size={30} className="text-purple-600" />,
     color: "border-purple-500 bg-purple-50",
@@ -58,6 +43,26 @@ const typeConfig = {
   },
 
   // SHOP
+  PRODUCT_STATUS_UPDATE: {
+    icon: <FiBox size={30} className="text-blue-600 " />,
+    color: "border-blue-500 bg-blue-50",
+    getLink: (sourceId, userId) =>
+      `/${path.SELLER}/${userId}/${path.S_MANAGE_PRODUCTS}`,
+  },
+  PRODUCT_CREATED: {
+    icon: <FiBox size={30} className="text-green-600" />,
+    color: "border-green-500 bg-green-50",
+    getLink: (sourceId, userId) =>
+      `/${path.SELLER}/${userId}/${path.S_MANAGE_PRODUCTS}`,
+  },
+
+  SHOP_ORDER_CREATED: {
+    icon: <HiOutlineClipboardList size={30} className="text-yellow-400" />,
+    color: "border-indigo-500 bg-indigo-50",
+    getLink: (sourceId, userId) =>
+      `/${path.SELLER}/${userId}/${path.S_ORDER}/${sourceId}`,
+  },
+
   SHOP_STATUS_UPDATE: {
     icon: <HiOutlineBuildingStorefront size={30} className="text-orange-600" />,
     color: "border-orange-500 bg-orange-50",

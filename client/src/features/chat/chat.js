@@ -11,7 +11,6 @@ import {
   setCurrentConversation,
   receiveMessage,
   updateConversationFromSocket,
-  removeConversationLocally, // nếu chưa có action này thì thêm vào slice
 } from "../../store/chat/chatSlice";
 import { apiSendMessage, apiHideConversation } from "../../services/chat.api";
 import {
@@ -34,8 +33,12 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current: user } = useSelector((s) => s.user);
-  const { conversations, messagesByConverId, loadingConversations } =
-    useSelector((s) => s.chat);
+  const {
+    conversations,
+    messagesByConverId,
+    loadingConversations,
+    onlineUsers,
+  } = useSelector((s) => s.chat);
 
   const CHATBOT_ID = "CHATBOT_ID";
 
@@ -195,7 +198,6 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
     );
   };
 
-  // FIX: Sắp xếp danh sách ổn định → không nhảy khi có tin nhắn mới
   const sortedConversations = useMemo(() => {
     return [...conversations].sort((a, b) => {
       const timeA =
@@ -278,10 +280,17 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
                       alt={other?.userName}
                       className="h-full w-full rounded-full object-contain"
                     />
+                    {onlineUsers[other?._id] && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white ring-2 ring-green-300"></div>
+                    )}
+
                     {isUnread && (
                       <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                         {item.unreadCount}
                       </span>
+                    )}
+                    {onlineUsers[other?._id] && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white ring-2 ring-green-300"></div>
                     )}
                   </div>
 
@@ -342,7 +351,7 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
             <div className="flex-1 overflow-y-auto scroll-hidden rounded-3xl">
               <div className="sticky top-0 z-10 p-2 rounded-t-3xl flex items-center justify-center">
                 <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full border-2 border-black bg-white shadow-md p-0.5">
+                  <div className="w-12 h-12 rounded-full border-[1px] border-black bg-white shadow-md p-0.5">
                     <img
                       src={currentConver?.otherUser?.userAvatar || noPhoto}
                       alt="User Avatar"

@@ -177,7 +177,7 @@ export const DetailProductPage = () => {
   // THÊM STATE CHO PHÂN TRANG VÀ DATA ĐÁNH GIÁ ĐÃ PHÂN TRANG
   const [allReviews, setAllReviews] = useState([]);
   const [reviewPage, setReviewPage] = useState(1);
-  const reviewLimit = 1; // Có thể tùy chỉnh số lượng đánh giá trên mỗi trang
+  const reviewLimit = 2;
   const [reviewTotalCount, setReviewTotalCount] = useState(0);
   const [reviewSort, setReviewSort] = useState({});
 
@@ -261,7 +261,7 @@ export const DetailProductPage = () => {
     if (product?._id && variations.length > 0) {
       fetchAllReviews();
     }
-  }, [product, variations, reviewPage, reviewSort]); // THÊM reviewSort
+  }, [product, variations, reviewPage, reviewSort]);
 
   const fetchShop = async (shopId) => {
     try {

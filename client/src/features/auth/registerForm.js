@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiRegisterCustomer } from "../../services/auth.api";
-import { GlassAlert } from "../../components";
 
 import path from "ultils/path";
 import {
@@ -116,7 +115,7 @@ export const RegisterForm = () => {
         setAgree(false);
         navigate("/login");
       } else {
-        console.log("Nhan thhong boa loi", res);
+        console.log("Nhan thong bao loi", res);
         dispatch(
           showAlert({
             title: "Lỗi",
