@@ -31,7 +31,7 @@ export const UserBalance = ({ balanceFor }) => {
   const [loading, setLoading] = useState(true);
   const [tranPage, setTranPage] = useState(1);
   const [tranCount, setTranCount] = useState(0);
-  const tranLimit = 3;
+  const tranLimit = 6;
 
   const istrue = current?.roles?.includes(balanceFor);
   const userId = current?._id;
