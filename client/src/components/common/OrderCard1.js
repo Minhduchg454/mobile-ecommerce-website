@@ -1,10 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; // 1. Import hook
 import { formatMoney } from "ultils/helpers";
 import {
   AiOutlineShop,
   AiOutlineClockCircle,
   AiOutlineCheckCircle,
-  AiOutlineEye,
 } from "react-icons/ai";
 import { MdLocalShipping } from "react-icons/md";
 import path from "ultils/path";
@@ -43,6 +43,8 @@ const statusConfig = {
 };
 
 export const OrderCard1 = ({ order, currentUser }) => {
+  const navigate = useNavigate(); // 2. Khởi tạo hook navigate
+
   if (!order || !currentUser) return null;
 
   const status = order.orderStatusId?.orderStatusName || "Pending";
@@ -52,25 +54,28 @@ export const OrderCard1 = ({ order, currentUser }) => {
   const roles = currentUser.roles || [];
   const userId = currentUser._id;
 
-  // --- ĐÃ XÓA KHỐI LOGIC CHỌN 1 LINK DUY NHẤT ---
-
   return (
     <div className="bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden max-w-2xl ">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 flex items-center justify-between border-b">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 flex items-center justify-between gap-1 border-b">
         <div className="flex items-center gap-3">
           <div>
-            <p className="font-semibold text-gray-800">
+            <p className="font-semibold text-gray-800 text-sm md:text-base">
               {order.shopId?.shopName || "Cửa hàng"}
             </p>
-            <p className="text-xs text-gray-600">#{order._id}</p>
+            <p
+              className="text-xs text-gray-600 cursor-pointer"
+              title={order._id} // Di chuột vào sẽ hiện full ID
+            >
+              #{order._id?.slice(0, 10)}...
+            </p>
           </div>
         </div>
         <div
           className={`flex items-center gap-2 font-semibold ${statusInfo.color}`}
         >
           {statusInfo.icon}
-          <span>{statusInfo.text}</span>
+          <span className="text-xs md:text-sm">{statusInfo.text}</span>
         </div>
       </div>
 
@@ -83,11 +88,13 @@ export const OrderCard1 = ({ order, currentUser }) => {
 
           return (
             <div key={i} className="flex gap-4 pb-3 border-b last:border-0">
-              <div className="w-20 h-20 rounded-lg overflow-hidden border bg-gray-50">
+              {/* Giữ nguyên fix object-contain/cover ở đây nếu bạn đã sửa trước đó */}
+              <div className="w-20 h-20 rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center shrink-0">
                 <img
                   src={thumb || "/placeholder.png"}
                   alt={product.productName}
-                  className="w-full h-full object-cover"
+                  onError={(e) => (e.currentTarget.src = "/no-image.png")}
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex-1">
@@ -128,37 +135,46 @@ export const OrderCard1 = ({ order, currentUser }) => {
         </span>
       </div>
 
-      {/* [CẬP NHẬT] NÚT HÀNH ĐỘNG THEO VAI TRÒ */}
+      {/* [CẬP NHẬT] NÚT HÀNH ĐỘNG DÙNG NAVIGATE */}
       <div className="px-4 py-3 bg-white border-t flex items-center justify-end gap-3 flex-wrap">
         {/* Nút cho Khách hàng */}
         {roles.includes("customer") && (
-          <a
-            href={`/${path.CUSTOMER}/${userId}/${path.C_ORDER}/${order._id}`}
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `/${path.CUSTOMER}/${userId}/${path.C_ORDER}/${order._id}`
+              )
+            }
             className="inline-flex items-center px-3 py-1 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm text-sm"
           >
             Xem đơn hàng
-          </a>
+          </button>
         )}
 
         {/* Nút cho Chủ shop */}
         {roles.includes("shop") && (
-          <a
-            href={`/${path.SELLER}/${userId}/${path.S_ORDER}/${order._id}`}
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/${path.SELLER}/${userId}/${path.S_ORDER}/${order._id}`)
+            }
             className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm text-sm"
           >
             Quản lý đơn
-          </a>
+          </button>
         )}
 
         {/* Nút cho Admin */}
         {roles.includes("admin") && (
-          <a
-            href={`/admin/orders/${order._id}`}
+          <button
+            type="button"
+            onClick={() => navigate(`/admin/orders/${order._id}`)}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition shadow-sm text-sm"
           >
             <AiOutlineCheckCircle />
             Xem (Admin)
-          </a>
+          </button>
         )}
       </div>
     </div>

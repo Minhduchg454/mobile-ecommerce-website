@@ -1,16 +1,18 @@
 const Product = require("./entities/product.model");
 const Brand = require("./entities/brand.model");
 const Category = require("./entities/category.model");
-const slugify = require("slugify");
 const ProductVariation = require("./entities/productVariation.model");
 const Theme = require("./entities/theme.model");
 const ProductTheme = require("./entities/product-theme.model");
+
+const ShopService = require("../shop/shop.service");
+const NotificationService = require("../notification/notification.service");
+
+const { getSystemOwnerId } = require("../../ultils/systemOwner");
+const slugify = require("slugify");
+const mongoose = require("mongoose");
 const { Types } = require("mongoose");
 const { ObjectId } = require("mongoose").Types;
-const ShopService = require("../shop/shop.service");
-const mongoose = require("mongoose");
-const NotificationService = require("../notification/notification.service");
-const { getSystemOwnerId } = require("../../ultils/systemOwner");
 
 /*
  *Category service
@@ -570,6 +572,7 @@ const parseBlocks = (raw) => {
 
 exports.createProduct = async (reqBody, files = {}) => {
   const body = { ...reqBody };
+  //console.log("Nhan thong tin dang ky", body);
 
   // thumbnail
   if (files?.productThumb?.[0]?.path) {
@@ -710,11 +713,25 @@ const toList = (v) => {
   return s.split(",").map((x) => x.trim());
 };
 
-const removeDiacritics = (str) => {
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+//Cap nhat nhanh trang thai
+exports.syncShopStatusToProducts = async (shopId, isActive) => {
+  try {
+    await Product.updateMany(
+      { shopId: shopId },
+      {
+        $set: {
+          isShopActive: isActive,
+        },
+      }
+    );
+    console.log(
+      `Đã đồng bộ ${isActive ? "ACTIVE" : "INACTIVE"} cho shop ${shopId}`
+    );
+    return true;
+  } catch (error) {
+    console.error("Lỗi đồng bộ trạng thái sản phẩm:", error);
+    return false;
+  }
 };
 
 exports.getProducts = async (query) => {
@@ -736,7 +753,6 @@ exports.getProducts = async (query) => {
     viewer,
     productIds,
   } = query;
-  console.log("Nhan tham so truy van", query);
 
   const filter = {
     deletedAt: null,
@@ -769,15 +785,14 @@ exports.getProducts = async (query) => {
       };
     }
   } else {
-    // Khách hàng / public: CHỈ thấy sản phẩm đã duyệt
     filter.productStatus = "approved";
+    filter.isShopActive = true;
   }
 
-  // chỉ lấy sản phẩm đã có variationId
   filter.variationId = { $ne: null };
 
   //Loc theo id
-  const pIds = toList(productIds); // productIds là biến mới trong query
+  const pIds = toList(productIds);
   if (pIds.length) filter._id = { $in: pIds };
 
   // --- Search theo tên ---
@@ -826,88 +841,88 @@ exports.getProducts = async (query) => {
   }
 
   // ====== LỌC SHOP THEO ROLE (DÙNG TỐI ĐA 1 LẦN QUERY CHO PUBLIC) ======
-  let approvedShops = null;
-  let approvedShopIds = null;
+  // let approvedShops = null;
+  // let approvedShopIds = null;
 
-  if (role === "public") {
-    const approvedShopsRes = await ShopService.getShops({
-      status: "approved",
-    });
+  // if (role === "public") {
+  //   const approvedShopsRes = await ShopService.getShops({
+  //     status: "approved",
+  //   });
 
-    approvedShops = approvedShopsRes.shops || [];
-    approvedShopIds = approvedShops.map((s) => String(s._id));
+  //   approvedShops = approvedShopsRes.shops || [];
+  //   approvedShopIds = approvedShops.map((s) => String(s._id));
 
-    if (!approvedShopIds.length) {
+  //   if (!approvedShopIds.length) {
+  //     return {
+  //       success: true,
+  //       message: "Không có shop được duyệt",
+  //       total: 0,
+  //       products: [],
+  //       pageInfo: { hasMore: false, nextCursor: null },
+  //     };
+  //   }
+
+  //   if (filter.shopId && filter.shopId.$in) {
+  //     const allowed = filter.shopId.$in.filter((id) =>
+  //       approvedShopIds.includes(String(id))
+  //     );
+  //     filter.shopId = { $in: allowed };
+  //   } else {
+  //     filter.shopId = { $in: approvedShopIds };
+  //   }
+  // }
+
+  // --- Lọc theo Mall (shopOfficial = true) ---
+  if (hasMall === "true" || hasMall === true) {
+    let mallShopIds = [];
+
+    if (role === "public") {
+      // Chỉ lấy các shop MALL + đã được duyệt (shopStatus = approved/active)
+      const mallResult = await ShopService.getShops({
+        isMall: true,
+        status: "approved", // hoặc "active" tùy bạn định nghĩa
+        limit: 1000,
+      });
+
+      mallShopIds = (mallResult.shops || [])
+        .filter((s) => s.shopStatus === "approved" || s.shopStatus === "active")
+        .map((s) => String(s._id));
+    } else {
+      // Với shop/admin: lấy tất cả shop mall (kể cả pending)
+      const mallResult = await ShopService.getShops({
+        isMall: true,
+        limit: 1000,
+      });
+      mallShopIds = (mallResult.shops || []).map((s) => String(s._id));
+    }
+
+    if (mallShopIds.length === 0) {
       return {
         success: true,
-        message: "Không có shop được duyệt",
+        message: "Không có shop mall nào phù hợp",
         total: 0,
         products: [],
         pageInfo: { hasMore: false, nextCursor: null },
       };
     }
 
-    if (filter.shopId && filter.shopId.$in) {
+    // Giao với shopId hiện tại (nếu có)
+    if (filter.shopId?.$in) {
       const allowed = filter.shopId.$in.filter((id) =>
-        approvedShopIds.includes(String(id))
+        mallShopIds.includes(String(id))
       );
+      if (allowed.length === 0) {
+        return {
+          success: true,
+          message: "Không có sản phẩm từ shop mall",
+          total: 0,
+          products: [],
+          pageInfo: { hasMore: false, nextCursor: null },
+        };
+      }
       filter.shopId = { $in: allowed };
     } else {
-      filter.shopId = { $in: approvedShopIds };
-    }
-  }
-
-  // --- Lọc theo Mall (shopOfficial = true) ---
-  if (hasMall === "true" || hasMall === true) {
-    if (role === "public") {
-      const mallShopIds = (approvedShops || [])
-        .filter((s) => s.shopIsOfficial === true)
-        .map((s) => String(s._id));
-
-      if (!mallShopIds.length) {
-        return {
-          success: true,
-          message: "Không có shop mall đã duyệt",
-          total: 0,
-          products: [],
-          pageInfo: { hasMore: false, nextCursor: null },
-        };
-      }
-
-      if (filter.shopId && filter.shopId.$in) {
-        const allowed = filter.shopId.$in.filter((id) =>
-          mallShopIds.includes(String(id))
-        );
-        filter.shopId = { $in: allowed };
-      } else {
-        filter.shopId = { $in: mallShopIds };
-      }
-    } else {
-      const mallResult = await ShopService.getShops({
-        isMall: true,
-        limit: 500,
-      });
-      const mallShops = mallResult.shops || [];
-      const mallShopIds = mallShops.map((s) => String(s._id));
-
-      if (!mallShopIds.length) {
-        return {
-          success: true,
-          message: "Không có shop mall",
-          total: 0,
-          products: [],
-          pageInfo: { hasMore: false, nextCursor: null },
-        };
-      }
-
-      if (filter.shopId && filter.shopId.$in) {
-        const allowed = filter.shopId.$in.filter((id) =>
-          mallShopIds.includes(String(id))
-        );
-        filter.shopId = { $in: allowed };
-      } else {
-        filter.shopId = { $in: mallShopIds };
-      }
+      filter.shopId = { $in: mallShopIds };
     }
   }
 
@@ -930,7 +945,16 @@ exports.getProducts = async (query) => {
   };
   const field = mapSort[sortKey] || "productCreateAt";
   const dir = String(sortDir).toLowerCase() === "asc" ? 1 : -1;
-  const sortObj = { [field]: dir, _id: dir };
+  let sortObj = {};
+  let projection = {}; // Cần thêm projection để lấy điểm score
+
+  // LOGIC SẮP XẾP QUAN TRỌNG
+  if (s) {
+    projection = { score: { $meta: "textScore" } };
+    sortObj = { score: { $meta: "textScore" } };
+  } else {
+    sortObj = { [field]: dir, _id: dir };
+  }
 
   // --- Cursor filter (CHỈ ÁP DỤNG KHI CÓ limitNum) ---
   if (limitNum !== null && after) {
@@ -961,7 +985,7 @@ exports.getProducts = async (query) => {
   }
 
   // --- Truy vấn ---
-  const queryBuilder = Product.find(filter)
+  const queryBuilder = Product.find(filter, projection)
     .populate("brandId", "brandName brandSlug")
     .populate("categoryId", "categoryName categorySlug")
     .populate("shopId", "shopName shopSlug shopLogo shopIsOfficial shopStatus")
@@ -970,7 +994,7 @@ exports.getProducts = async (query) => {
 
   // Chỉ thêm .limit() nếu có limitNum
   if (limitNum !== null) {
-    queryBuilder.limit(limitNum + 1); // +1 để kiểm tra hasMore
+    queryBuilder.limit(limitNum + 1);
   }
 
   const items = await queryBuilder;
@@ -1676,7 +1700,6 @@ exports.creatProductVariation = async (body, files) => {
   if (files?.length > 0) {
     body.pvImages = files.map((file) => file.path);
   }
-  //console.log("Nhan thong tin dang ky bien the", body, files);
 
   // tránh coi 0 là thiếu
   const requiredFields = ["productId", "pvName", "pvPrice", "pvStockQuantity"];
@@ -1696,16 +1719,20 @@ exports.creatProductVariation = async (body, files) => {
     throw err;
   }
 
-  //Kiem tra so luong san pham
-  if (
-    !Number.isInteger(Number(body.pvStockQuantity)) ||
-    Number(body.pvStockQuantity) < 0
-  ) {
-    const err = new Error("Số lượng sản phẩm trong kho: >= 0");
+  const stockQty = Number(body.pvStockQuantity);
+  // 1. Kiểm tra xem có phải là số nguyên không (Tương ứng TC12: nhập 1.5)
+  if (!Number.isInteger(stockQty)) {
+    const err = new Error("Số lượng kho phải là số nguyên");
     err.status = 400;
     throw err;
   }
 
+  // 2. Kiểm tra xem có bị âm không (Tương ứng TC06: nhập -5)
+  if (stockQty < 0) {
+    const err = new Error("Số lượng kho phải lớn hơn hoặc bằng 0");
+    err.status = 400;
+    throw err;
+  }
   if (!body.pvSlug && body.pvName) {
     body.pvSlug = slugify(body.pvName, { lower: true, strict: true });
   }
@@ -1714,7 +1741,6 @@ exports.creatProductVariation = async (body, files) => {
 
   // đồng bộ tổng tồn kho + giá min cho Product
   await exports.recalcProductAggregates(body.productId);
-
   return { success: true, message: "thành công", productVariation };
 };
 
@@ -1783,10 +1809,17 @@ exports.updateProductVariation = async (params, body, files) => {
     err.status = 400;
     throw err;
   }
-  if (body.pvStockQuantity != null) {
-    const n = Number(body.pvStockQuantity);
-    if (!Number.isInteger(n) || n < 0) {
-      const err = new Error("Số lượng sản phẩm trong kho: >= 0");
+
+  if (body.pvStockQuantity) {
+    const stockQty = Number(body.pvStockQuantity);
+    if (!Number.isInteger(stockQty)) {
+      const err = new Error("Số lượng kho phải là số nguyên");
+      err.status = 400;
+      throw err;
+    }
+
+    if (stockQty < 0) {
+      const err = new Error("Số lượng kho phải lớn hơn hoặc bằng 0");
       err.status = 400;
       throw err;
     }
@@ -2243,7 +2276,7 @@ exports.recalcProductAggregates = async (productId) => {
   let newProductRateAvg =
     agg?.totalRateCount > 0
       ? (agg.totalRate / agg.totalRateCount).toFixed(1)
-      : 5;
+      : 0;
 
   const update = {
     productStockQuantity: agg?.totalStock ?? 0,

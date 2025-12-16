@@ -14,18 +14,17 @@ import { APP_INFO } from "../../ultils/contants";
 
 export const AuthLayout = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-[#4ADEDE] to-[#787FF6] grid lg:flex p-4 justify-around items-center relative animate-fadeIn">
-      {/* Logo MOBILE: absolute để không đẩy layout, ẩn trên lg */}
+    <div className="min-h-screen bg-gradient-to-tr from-[#4ADEDE] to-[#787FF6] flex flex-col lg:flex-row p-4 justify-center lg:justify-around items-center relative animate-fadeIn">
       <Link
         to="/"
-        className="lg:hidden absolute top-5 left-1/2 -translate-x-1/2 text-3xl font-semibold text-white z-10"
+        className="lg:hidden text-3xl font-semibold text-white z-10 mb-8"
       >
         {APP_INFO.NAME}
       </Link>
-      {/* LEFT: Giới thiệu sàn */}
+
+      {/* LEFT CONTENT (Desktop only) */}
       <div className="hidden lg:flex flex-col justify-around h-[600px] w-1/2 relative">
-        {/* Nội dung */}
-        <div className="flex flex-col justify-between  text-left ">
+        <div className="flex flex-col justify-between text-left">
           <div>
             <h1 className="text-gray-100 text-5xl font-bold leading-tight mb-3 mx-auto">
               Sàn giao dịch điện tử <br />
@@ -58,8 +57,7 @@ export const AuthLayout = () => {
         </div>
       </div>
 
-      {/* RIGHT: Đăng nhập/đăng ký */}
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center w-full max-w-md">
         <Outlet />
       </div>
     </div>

@@ -5,47 +5,46 @@ const { Schema } = mongoose;
 const accountSchema = new Schema(
   {
     accountName: {
-      // phone/email (đăng nhập password)
       type: String,
       required: true,
-      unique: true,
       trim: true,
-      index: true,
     },
-
     accountPassword: {
-      // chỉ dùng khi password
       type: String,
       required: function () {
         return !this.isOauth;
       },
     },
-
     accountType: {
-      // "password" | "oauth"
       type: String,
       enum: ["password", "google"],
       default: "password",
       required: true,
       index: true,
     },
-
     isOauth: {
-      // cờ đơn giản cho oauth
       type: Boolean,
       default: false,
       index: true,
     },
-
     userId: {
-      // nên có: 1 User : N Account
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   { timestamps: true }
+);
+
+accountSchema.index(
+  { accountName: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } }
 );
 
 module.exports = mongoose.model("Account", accountSchema);

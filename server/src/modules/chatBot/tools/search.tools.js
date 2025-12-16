@@ -161,19 +161,22 @@ exports.removeVietnameseSigns = removeVietnameseSigns;
 // 1. CẤU HÌNH FUSE TỐI ƯU
 const fuseOptions = {
   includeScore: true,
-  threshold: 0.5,
+  // 0.0 là phải khớp hoàn toàn, 1.0 là khớp cái gì cũng được.
+  // Giảm từ 0.5 xuống 0.3 để loại bỏ các kết quả "rác" như tên Shop trùng ký tự.
+  threshold: 0.3,
   distance: 100,
-  minMatchCharLength: 1,
+  minMatchCharLength: 2, // Tăng lên 2 để bỏ qua các từ quá ngắn
   shouldSort: true,
   ignoreLocation: true,
   keys: [
-    { name: "productName", weight: 4.0 },
-    { name: "productNameNoSign", weight: 3.5 },
-    { name: "variationName", weight: 3.0 },
-    { name: "categoryName", weight: 2.0 },
-    { name: "brandName", weight: 1.8 },
-    { name: "shopName", weight: 0.8 },
-    { name: "descriptionText", weight: 1.0 },
+    // Tăng trọng số cho Tên sản phẩm để nó là ưu tiên số 1
+    { name: "productName", weight: 6.0 },
+    { name: "productNameNoSign", weight: 5.0 },
+    { name: "categoryName", weight: 1.0 },
+    { name: "brandName", weight: 1.5 },
+    { name: "variationName", weight: 0.5 },
+    { name: "shopName", weight: 0.1 },
+    { name: "descriptionText", weight: 0.1 },
   ],
 };
 
@@ -271,6 +274,7 @@ async function buildIndexData() {
   console.log(
     `[Search Service] Xây dựng xong: ${allProductVariations.length} biến thể.`
   );
+  //console.log("Danh sach san pham", allProductVariations);
   return { data: allProductVariations };
 }
 

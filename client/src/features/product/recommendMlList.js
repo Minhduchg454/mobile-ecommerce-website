@@ -18,7 +18,7 @@ export const RecommendMlList = () => {
       try {
         if (current?._id) {
           // 1. GỌI API GỢI Ý ML TRƯỚC
-          const resMl = await apiRecommendations(current._id, limit * 2); // Lấy dư để lọc
+          const resMl = await apiRecommendations(current._id, limit * 2);
 
           if (resMl?.success && resMl?.products?.length > 0) {
             finalProducts = resMl.products;
@@ -43,7 +43,7 @@ export const RecommendMlList = () => {
 
               if (resFallback?.success && resFallback?.products?.length > 0) {
                 const fallbackProducts = resFallback.products
-                  .filter((p) => !mlPvIds.includes(p.variationId || p._id)) // Loại trùng
+                  .filter((p) => !mlPvIds.includes(p.variationId || p._id))
                   .slice(0, need);
 
                 finalProducts = [...finalProducts, ...fallbackProducts];

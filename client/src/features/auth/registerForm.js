@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiRegisterCustomer } from "../../services/auth.api";
-import { GlassAlert } from "../../components";
 
 import path from "ultils/path";
 import {
@@ -116,25 +115,17 @@ export const RegisterForm = () => {
         setAgree(false);
         navigate("/login");
       } else {
-        const msg = res.error || res.message || "Đăng ký thất bại";
-        if (msg.toLowerCase().includes("email"))
-          setErrors({ email: "Email đã được sử dụng." });
-        else if (msg.toLowerCase().includes("account"))
-          setErrors({ email: "Tài khoản đã tồn tại với email này." });
-        else if (msg.toLowerCase().includes("mobile"))
-          setErrors({ mobile: "SĐT đã được sử dụng." });
-        else
-          dispatch(showAlert({ title: "Lỗi", text: msg, variant: "danger" }));
+        console.log("Nhan thong bao loi", res);
+        dispatch(
+          showAlert({
+            title: "Lỗi",
+            message: res?.message || "Không thể đăng ký.",
+            variant: "danger",
+          })
+        );
       }
     } catch (error) {
       console.error("Register error:", error);
-      dispatch(
-        showAlert({
-          title: "Lỗi",
-          message: "Không thể đăng ký.",
-          variant: "danger",
-        })
-      );
     } finally {
       setLoading(false);
     }

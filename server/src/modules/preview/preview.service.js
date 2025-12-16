@@ -142,7 +142,7 @@ exports.getPreview = async (query = {}) => {
     else if (isDeleted === "false" || isDeleted === false)
       filter.isDeleted = false;
   } else {
-    filter.isDeleted = false; // luôn ẩn đã xóa
+    filter.isDeleted = false;
   }
 
   // 2.2 pvId (hỗ trợ mảng hoặc 1 id)
@@ -225,9 +225,8 @@ exports.getPreview = async (query = {}) => {
 
 // 3. Hàm cập nhật Preview (Chỉ cho phép cập nhật nội dung, rate, ảnh/video)
 exports.updatePreview = async (pId, body, files = {}) => {
-  const { previewComment, previewRate } = body; // Lấy các trường không phải file từ body
+  const { previewComment, previewRate } = body;
 
-  // Xử lý files tải lên mới (nếu có)
   const updateData = {
     previewComment,
     previewRate,
@@ -236,17 +235,14 @@ exports.updatePreview = async (pId, body, files = {}) => {
   updateData.isEdited = true;
 
   if (files?.previewImages?.length > 0) {
-    // Nếu có ảnh mới, dùng ảnh mới (có thể cần thêm logic giữ lại ảnh cũ nếu không gửi hết)
     updateData.previewImages = files.previewImages.map((file) => file.path);
   } else if (body.previewImages) {
-    // [Suy luận] Nếu không có file mới nhưng có mảng URLs trong body, dùng mảng này (giữ lại ảnh cũ)
     updateData.previewImages = body.previewImages;
   }
 
   if (files?.previewVideos?.[0]?.path) {
     updateData.previewVideos = files.previewVideos[0].path;
   } else if (body.previewVideos) {
-    // [Suy luận] Nếu không có file mới nhưng có URL trong body, dùng URL này (giữ lại video cũ)
     updateData.previewVideos = body.previewVideos;
   }
 

@@ -119,19 +119,27 @@ export const OrderDetailCustomer = () => {
   return (
     <div className="w-full bg-white rounded-3xl md:p-4 p-2  animate-fadeIn">
       {/* Header */}
-      <div className="flex justify-end items-center gap-2 mb-1">
-        <div className="flex items-center gap-1">
-          <p className="text-sm md:text-base">
-            Mã đơn hàng: <span className="font-mono">{order._id}</span>
-          </p>
-          <CopyText text={order._id} />
-        </div>
-        <p>|</p>
-        <p
-          className={`text-sm md:text-base px-2 py-0.5 rounded-3xl whitespace-nowrap ${badge.bg} ${badge.text}`}
+      <div className="flex justify-between items-center gap-2 mb-1">
+        <button
+          className="border rounded-2xl px-3 py-1 text-xs md:text-sm whitespace-nowrap"
+          onClick={() => navigate(-1)}
         >
-          {badge.label}
-        </p>
+          Quay lại
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <p className="text-sm md:text-base">
+              Mã đơn hàng: <span className="font-mono">{order._id}</span>
+            </p>
+            <CopyText text={order._id} />
+          </div>
+          <p>|</p>
+          <p
+            className={`text-sm md:text-base px-2 py-0.5 rounded-3xl whitespace-nowrap ${badge.bg} ${badge.text}`}
+          >
+            {badge.label}
+          </p>
+        </div>
       </div>
 
       {/* Tiến trình đặt hàng */}
@@ -173,7 +181,7 @@ export const OrderDetailCustomer = () => {
             <img
               src={order.shopId.shopLogo || "/no-image.png"}
               alt=""
-              className="w-10 h-10 rounded-full object-cover border cursor-pointer border-gray-300"
+              className="w-10 h-10 rounded-full object-contain border cursor-pointer border-gray-300"
             />
             {order.shopId.shopIsOfficial && (
               <span className="border rounded-lg line-clamp-1 absolute -bottom-2 right-1/2 translate-x-1/2 bg-red-600 text-white py-0.5 px-1 text-[8px]">
@@ -215,12 +223,14 @@ export const OrderDetailCustomer = () => {
                 }}
                 className="flex gap-2"
               >
-                <img
-                  src={thumb}
-                  onError={(e) => (e.currentTarget.src = "/no-image.png")}
-                  className="w-20 h-20 object-cover rounded-lg border"
-                  alt=""
-                />
+                <div className="w-20 h-20 border rounded-lg overflow-hidden bg-white flex items-center justify-center shrink-0">
+                  <img
+                    src={thumb}
+                    onError={(e) => (e.currentTarget.src = "/no-image.png")}
+                    className="w-full h-full object-contain"
+                    alt=""
+                  />
+                </div>
 
                 <div className="flex flex-col justify-center items-start flex-1">
                   <div className="font-medium">

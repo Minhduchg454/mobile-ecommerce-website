@@ -2,20 +2,26 @@ import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import defaultAvatar from "assets/avatarDefault.png";
-import { apiUpdateUser } from "../../services/user.api";
+import { apiUpdateUser, apiDeleteUser } from "../../services/user.api";
 import { apiChangePassword } from "../../services/auth.api";
-import { showAlert } from "store/app/appSlice";
+import { showAlert, showModal } from "store/app/appSlice";
 import { getCurrent } from "store/user/asyncActions";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { logout } from "store/user/userSlice";
 import { useNavigate } from "react-router-dom";
+import { nextAlertId, registerHandlers } from "store/alert/alertBus";
+import { Loading, ImageUploader } from "../../components";
+import { setSeller, clearSeller } from "store/seller/sellerSlice";
+import { clearChatData } from "store/chat/chatSlice";
 import path from "ultils/path";
+import { APP_INFO } from "../../ultils/contants";
 
 export const InformationUserPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current, updating } = useSelector((state) => state.user);
   const [isShow, setIsShow] = useState(false);
+  const image = current?.userAvatar || defaultAvatar;
 
   const GENDER_OPTIONS = [
     { value: "female", label: "Nữ" },
@@ -45,7 +51,7 @@ export const InformationUserPage = () => {
   });
 
   // ====== AUTO-WIDTH
-  const chWidth = (len, min = 3, max = 40, extraPx = 15) =>
+  const chWidth = (len, min = 3, max = 50, extraPx = 20) =>
     `calc(${Math.min(max, Math.max(min, len || 0))}ch + ${extraPx}px)`;
   const vFirst = watch("firstName");
   const vLast = watch("lastName");
@@ -128,14 +134,6 @@ export const InformationUserPage = () => {
     }
   };
 
-  const title = "px-3 md:px-4 font-bold mb-1";
-  const inputRow =
-    "flex justify-between items-center gap-3 pb-2 border-b border-gray-200 mt-1";
-  const labelCls = "text-sm md:text-base text-gray-700";
-  const inputCls =
-    "inline-block rounded-lg bg-button-bg px-2 py-1 text-right outline-none focus:ring-2 focus:ring-blue-400 transition w-fit";
-  const readOnlyCls = "text-right text-gray-700";
-
   const hasErrors = Object.keys(errors || {}).length > 0;
   const submitDisabled = !isDirty || hasErrors || isSubmitting || updating;
 
@@ -209,15 +207,16 @@ export const InformationUserPage = () => {
 
     try {
       const res = await apiChangePassword({
-        oldPassword, // đúng key theo API
-        newPassword, // đúng key theo API
-        uId: current?._id, // gửi kèm user id
+        oldPassword,
+        newPassword,
+        uId: current?._id,
       });
 
       if (res?.success) {
         setIsShow(false);
         resetPw();
         setShowPw({ old: false, next: false, confirm: false });
+
         dispatch(
           showAlert({
             title: "Thành công",
@@ -227,8 +226,10 @@ export const InformationUserPage = () => {
             showConfirmButton: false,
           })
         );
-        dispatch(logout()); // xoá token, clear redux, purge persist
-        navigate(`/${path.LOGIN}`);
+        dispatch(logout());
+        setTimeout(() => {
+          navigate(`/${path.LOGIN}`, { replace: true });
+        }, 0);
       } else {
         dispatch(
           showAlert({
@@ -248,9 +249,90 @@ export const InformationUserPage = () => {
       );
     }
   };
+  const handleDeleteAccount = async () => {
+    const id = nextAlertId();
+    registerHandlers(id, {
+      onConfirm: async () => {
+        dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
+        const res = await apiDeleteUser({}, current._id);
+        dispatch(showModal({ isShowModal: false }));
+
+        if (res?.success) {
+          dispatch(
+            showAlert({
+              title: "Xóa thành công",
+              message: "Tài khoản đã được xoá",
+              variant: "success",
+              duration: 3500,
+              showCancelButton: false,
+              showConfirmButton: false,
+            })
+          );
+          dispatch(logout());
+          dispatch(clearSeller());
+          dispatch(clearChatData());
+          navigate(`/`);
+        } else {
+          dispatch(
+            showAlert({
+              title: "Xóa thất bại",
+              message:
+                res?.message || "Không thể xóa tài khoản, vui lòng thử lại sau",
+              variant: "danger",
+              showCancelButton: false,
+            })
+          );
+        }
+      },
+    });
+
+    dispatch(
+      showAlert({
+        id,
+        title: "Xác nhận xóa tài khoản",
+        message: (
+          <div className="text-center">
+            <ul className="text-left text-sm list-disc pl-4 space-y-1">
+              <li>
+                Sau khi xác nhận xóa tài khoản, bạn sẽ không thể đăng nhập cũng
+                như khôi phục lại tài khoản. Vui lòng cân nhắc trước khi xác
+                nhận xóa.
+              </li>
+              <li>
+                Việc xóa tài khoản sẽ không thực hiện được nếu bạn có đơn hàng
+                mua/bán chưa hoàn tất, có cửa hàng còn đang mở hoặc các vấn đề
+                liên quan đến pháp lý chưa được xử lý xong (nếu có).
+              </li>
+              <li>
+                Sau khi xoá tài khoản, {APP_INFO.NAME} có thể lưu trữ một số dữ
+                liệu của bạn theo quy định tại Chính sách bảo mật của
+                {APP_INFO.NAME} và quy định pháp luật có liên quan.
+              </li>
+              <li>
+                Việc xoá tài khoản không đồng nghĩa với việc loại bỏ tất cả
+                trách nhiệm và nghĩa vụ liên quan của bạn trên tài khoản đã xóa.
+              </li>
+            </ul>
+          </div>
+        ),
+        variant: "danger",
+        showCancelButton: true,
+        confirmText: "Có",
+        cancelText: "Không",
+      })
+    );
+  };
 
   // điều kiện disable nút xác nhận trong modal
   const pwDisabled = !pwIsDirty || !pwIsValid || pwIsSubmitting;
+
+  const title = "px-3 md:px-4 font-bold mb-1";
+  const inputRow =
+    "flex justify-between items-center gap-3 pb-2 border-b border-gray-200 mt-1";
+  const labelCls = "text-sm md:text-base text-gray-700";
+  const inputCls =
+    "inline-block rounded-lg bg-button-bg px-2 py-1 text-right outline-none focus:ring-2 focus:ring-blue-400 transition w-fit";
+  const readOnlyCls = "text-right text-gray-700";
 
   return (
     <div className="w-full relative animate-fadeIn">
@@ -264,7 +346,7 @@ export const InformationUserPage = () => {
         <div className="col-span-12  p-4 ">
           <div className="flex flex-col justify-center items-center gap-2">
             <img
-              src={avatarPreview || current?.userAvatar || defaultAvatar}
+              src={avatarPreview || image}
               alt="avatar"
               className="aspect-square w-28 h-28 object-cover rounded-full border border-gray-300"
             />
@@ -324,7 +406,7 @@ export const InformationUserPage = () => {
                           shop: "Cửa hàng",
                           admin: "Quản trị viên",
                         };
-                        return map[r] || r; // nếu không khớp thì giữ nguyên
+                        return map[r] || r;
                       })
                       .join(" | ")
                   : "-"}
@@ -340,7 +422,7 @@ export const InformationUserPage = () => {
                 type="text"
                 className={inputCls}
                 placeholder="Nhập họ"
-                style={{ width: chWidth(vLast?.length, 5, 20) }}
+                style={{ width: chWidth(vLast?.length) }}
                 {...register("lastName", {
                   required: "Vui lòng nhập họ",
                   maxLength: { value: 50, message: "Tối đa 50 ký tự" },
@@ -364,7 +446,7 @@ export const InformationUserPage = () => {
                 type="text"
                 className={inputCls}
                 placeholder="Nhập tên"
-                style={{ width: chWidth(vFirst?.length, 3, 20) }}
+                style={{ width: chWidth(vFirst?.length) }}
                 {...register("firstName", {
                   required: "Vui lòng nhập tên",
                   maxLength: { value: 50, message: "Tối đa 50 ký tự" },
@@ -388,7 +470,7 @@ export const InformationUserPage = () => {
                 type="email"
                 className={inputCls}
                 placeholder="Nhập email"
-                style={{ width: chWidth(vEmail?.length, 10, 32) }}
+                style={{ width: chWidth(vEmail?.length) }}
                 {...register("email", {
                   required: "Vui lòng nhập Email",
                   pattern: { value: emailRegex, message: "Email không hợp lệ" },
@@ -512,19 +594,35 @@ export const InformationUserPage = () => {
 
           {/* khối đổi mật khẩu */}
           <h1 className={title}>Bảo mật</h1>
-          <div className="bg-white p-3 md:p-4 rounded-3xl">
-            <div className={`${inputRow} border-none`}>
+          <div className="bg-white p-3 md:p-4 rounded-3xl mb-4">
+            <div className={`flex justify-between items-center gap-3`}>
               <label className={labelCls}>Mật khẩu</label>
               <button
                 type="button"
                 className="px-3 py-1 rounded-xl bg-button-bg text-black"
                 onClick={() => {
                   setIsShow(true);
-                  resetPw(); // mở modal là sạch
+                  resetPw();
                   setShowPw({ old: false, next: false, confirm: false });
                 }}
               >
                 Đổi mật khẩu
+              </button>
+            </div>
+          </div>
+
+          <h1 className={title}>Tài khoản</h1>
+          <div className="bg-white p-3 md:p-4 rounded-3xl ">
+            <div className={`flex justify-between items-center gap-3`}>
+              <label className={labelCls}>Yêu cầu xóa tài khoản</label>
+              <button
+                type="button"
+                className="px-4 py-1.5 rounded-xl bg-red-500 hover:bg-red-800 text-sm text-white"
+                onClick={() => {
+                  handleDeleteAccount();
+                }}
+              >
+                Xóa
               </button>
             </div>
           </div>

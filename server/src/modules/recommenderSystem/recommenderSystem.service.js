@@ -228,6 +228,8 @@ class RecommendationService {
    * Trả về danh sách Product ID.
    */
   static async getRecommendations(userId, limit = 20) {
+    console.log(`\n========== BẮT ĐẦU GỢI Ý CHO USER: ${userId} ==========`);
+
     const cache = await redis.get("cf_matrix_sparse");
     if (!cache) return [];
 
@@ -235,11 +237,22 @@ class RecommendationService {
       JSON.parse(cache);
 
     const userIdx = userIndexMap[userId];
-    if (userIdx === undefined) return [];
+    if (userIdx === undefined) {
+      console.log("User chưa có lịch sử tương tác.");
+      return [];
+    }
+
+    // 1. In ra Vector của user hiện tại (để báo cáo biết user này thích gì)
+    const currentUserVector = sparseMatrix[userIdx];
+    console.log(
+      "1. Lịch sử tương tác của User mục tiêu lấy từ ma trận người dùng - sản phẩm:",
+      JSON.stringify(currentUserVector)
+    );
 
     const similarities = new Array(users.length).fill(0);
+    const neighborLogs = []; // Lưu lại để in báo cáo
 
-    //Tinh do tuong do con Cosine Similarity
+    // --- GIAI ĐOẠN 1: TÍNH ĐỘ TƯƠNG ĐỒNG (COSINE SIMILARITY) ---
     for (let i = 0; i < users.length; i++) {
       if (i === userIdx) continue;
       const vecA = sparseMatrix[userIdx];
@@ -249,15 +262,12 @@ class RecommendationService {
         normA = 0,
         normB = 0;
 
-      // Duyệt các Item ID mà cả 2 đều có
+      // Tối ưu vòng lặp: Chỉ duyệt các item User A có
       for (const [idx, scoreA] of Object.entries(vecA)) {
         const scoreB = vecB[idx] || 0;
-        if (scoreB > 0) {
-          dot += scoreA * scoreB;
-        }
+        if (scoreB > 0) dot += scoreA * scoreB;
         normA += scoreA * scoreA;
       }
-
       for (const score of Object.values(vecB)) {
         normB += score * score;
       }
@@ -265,41 +275,81 @@ class RecommendationService {
       normA = Math.sqrt(normA);
       normB = Math.sqrt(normB);
 
-      similarities[i] = normA && normB ? dot / (normA * normB) : 0;
+      const sim = normA && normB ? dot / (normA * normB) : 0;
+      similarities[i] = sim;
+
+      // Chỉ log những người có độ tương đồng > 0 để báo cáo đỡ rác
+      if (sim > 0.1) {
+        neighborLogs.push({
+          "Mã người dùng": users[i], // Tên/ID người hàng xóm
+          "Độ tương đồng": sim.toFixed(4), // Làm tròn 4 số
+          "Tích vô hướng": dot, // Điểm tích vô hướng (thể hiện mức độ trùng lặp)
+        });
+      }
     }
 
-    // Tính điểm dự đoán cho từng Item ID (Product ID) chưa mua
+    // Sắp xếp neighbor giảm dần để in ra Top 5 người giống nhất
+    neighborLogs.sort((a, b) => b.Similarity - a.Similarity);
+    console.log("\n2.Tính toán độ tương đồng: ");
+    console.table(neighborLogs.slice(0, 5)); // Dùng console.table cực đẹp cho báo cáo
+
+    // --- GIAI ĐOẠN 2: DỰ ĐOÁN ĐIỂM (PREDICTION) ---
     const scores = {};
+    const predictionLogs = []; // Log chi tiết công thức tính
 
     for (let itemIdx = 0; itemIdx < itemIds.length; itemIdx++) {
-      // Bỏ qua item đã tương tác (đã mua hoặc đánh giá)
+      // Bỏ qua item đã mua
       if (sparseMatrix[userIdx].hasOwnProperty(itemIdx)) continue;
-
       let totalScore = 0;
       let totalWeight = 0;
+      let contributors = []; // Ai đóng góp vào điểm số này?
 
       for (let i = 0; i < users.length; i++) {
         const sim = similarities[i];
         if (sim < 0.1) continue;
 
-        // Điểm rating của người dùng tương đồng (i) cho sản phẩm (itemIdx)
         const rating = sparseMatrix[i][itemIdx] ?? 0;
         if (rating > 0) {
           totalScore += sim * rating;
           totalWeight += sim;
+
+          // Lưu lại vết: Người này đóng góp bao nhiêu
+          if (contributors.length < 3) {
+            // Chỉ lấy 3 người đại diện để log
+            contributors.push(
+              `(User ${users[i]} [Sim:${sim.toFixed(2)}] * Rate:${rating})`
+            );
+          }
         }
       }
 
       if (totalWeight > 0) {
-        // Product ID
-        scores[itemIds[itemIdx]] = totalScore / totalWeight;
+        const finalScore = totalScore / totalWeight;
+        const itemId = itemIds[itemIdx];
+        scores[itemId] = finalScore;
+
+        // Log chi tiết công thức cho 3 sản phẩm đầu tiên tìm được
+        if (predictionLogs.length < 3) {
+          predictionLogs.push({
+            "Mã sản phẩm": itemId,
+            "Dự đoán điểm số": finalScore.toFixed(4),
+          });
+        }
       }
     }
 
-    // Sắp xếp + trả về top Product IDs
-    return Object.keys(scores)
+    console.log("\n3. Dự đoán điểm số:");
+    console.table(predictionLogs);
+
+    // --- GIAI ĐOẠN 3: SẮP XẾP VÀ TRẢ VỀ ---
+    const result = Object.keys(scores)
       .sort((a, b) => scores[b] - scores[a])
       .slice(0, limit);
+
+    console.log(`\n4. Kết quả cuối cùng:`, result);
+    console.log("======================================================\n");
+
+    return result;
   }
 
   /**

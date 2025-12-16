@@ -21,10 +21,7 @@ export const AddressManage = ({ role }) => {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // =============== LOGIC KIỂM SOÁT BUTTON THÊM ĐỊA CHỈ ===============
-  // Xác định xem nút "Thêm địa chỉ" có nên được hiển thị hay không
   const shouldShowAddButton = useMemo(() => {
-    // Nếu là customer (addressFor !== 'shop'), luôn cho phép thêm
     if (addressFor !== "shop") {
       return true;
     }
@@ -32,7 +29,6 @@ export const AddressManage = ({ role }) => {
     return count === 0;
   }, [addressFor, count]);
 
-  // =============== DATA ===============
   const fetchAddresses = async () => {
     if (!userId) return;
     setLoading(true);

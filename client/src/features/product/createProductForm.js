@@ -294,26 +294,22 @@ export const CreateProduct = () => {
   const navigate = useNavigate();
   const { current } = useSelector((s) => s.seller);
 
-  // LẤY THÔNG TIN GÓI DỊCH VỤ VÀ SỐ LƯỢNG SẢN PHẨM HIỆN TẠI
   const servicePlan = current?.activeSubscription;
   const isShopBlocked = current?.shopStatus === "blocked";
+  const isNoAddress = !current?.address;
   const productCount = current?.shopProductCount || 0;
-  const isEditing = !!initialProduct; // Đang ở chế độ chỉnh sửa
+  const isEditing = !!initialProduct;
 
-  // 1. Lấy giới hạn sản phẩm (mặc định là 0 nếu không có gói)
-  // Chỉ áp dụng giới hạn khi tạo mới, không giới hạn khi chỉnh sửa
   const MAX_PRODUCTS = getServiceFeatureValue(servicePlan, "MAX_PRODUCTS", 0);
   const isOperationDisabled =
-    isShopBlocked || !servicePlan || servicePlan.subStatus !== "active";
+    isShopBlocked ||
+    !servicePlan ||
+    servicePlan.subStatus !== "active" ||
+    isNoAddress;
   const isCreateLimited = !isEditing && productCount >= MAX_PRODUCTS;
   const isProductSubmitDisabled = isOperationDisabled || isCreateLimited;
-  // ----------------------------------------------------------------------
 
   const fetchUrlAsFile = useFetchUrlAsFile();
-
-  // =========================================================
-  // OPTIONS (brand / category / categoryShop)
-  // =========================================================
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoryShops, setCategoryShops] = useState([]);
@@ -365,9 +361,9 @@ export const CreateProduct = () => {
       }
     });
   };
-  // =========================================================
+
   // STATE / FORM SẢN PHẨM
-  // =========================================================
+
   // productForVar: phiên bản "product hiện tại trên server"
   const [productForVar, setProductForVar] = useState(initialProduct || null);
 
@@ -518,8 +514,6 @@ export const CreateProduct = () => {
   );
 
   //----------------Blocks----------------
-  // Danh sách file thực tế cho block media mới (image/video)
-  // thứ tự TRÙNG với thứ tự xuất hiện của các block có type image/video trong `blocks`
   const [blockFiles, setBlockFiles] = useState([]);
 
   // 1. Hàm xử lý dữ liệu trả về từ Modal và cập nhật state
@@ -696,10 +690,6 @@ export const CreateProduct = () => {
     }
   }, [fields.length]);
 
-  // =========================
-  // SUBMIT MỘT BIẾN THỂ
-  // Gửi toàn bộ state biến thể đó
-  // =========================
   const submitOneVariation = async (idx) => {
     // Check nếu bị khóa (áp dụng cho cả tạo và sửa biến thể)
     if (isOperationDisabled) {
@@ -781,7 +771,6 @@ export const CreateProduct = () => {
           })
         );
         if (res.variation) {
-          // Cần cập nhật lại productForVar để đảm bảo dữ liệu biến thể mới nhất được phản ánh trong productFinalPriceEstimate
           if (productForVar) {
             setProductForVar((prev) => {
               const newVars = (prev?.variations || []).filter(
@@ -823,10 +812,6 @@ export const CreateProduct = () => {
     }
   };
 
-  // =========================
-  // SUBMIT SẢN PHẨM
-  // Gửi full form sản phẩm + trạng thái thumbnail hiện tại
-  // =========================
   const onSubmitProduct = async (data) => {
     if (isProductSubmitDisabled) {
       // Check lại giới hạn khi submit
@@ -896,7 +881,6 @@ export const CreateProduct = () => {
         // user đã xoá thumb
         fd.append("productThumb", "");
       }
-      // Nếu thumbPreview === URL gốc thì không append gì -> giữ nguyên
 
       dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
       let res;
@@ -979,14 +963,11 @@ export const CreateProduct = () => {
     );
   };
 
-  // =========================================================
-  // RENDER
-  // =========================================================
-
   const tabCss =
     "flex-1 py-1 px-2 transition-all duration-200 rounded-2xl hover:bg-gray-200";
   const labelInput = "px-2 text-sm";
-  const InputCss = "border rounded-xl px-3 py-2 text-base";
+  const InputCss =
+    "border rounded-xl px-3 py-2 text-base w-full bg-white outline-none focus:border-button-bg-ac transition-colors";
   const previewContent = "w-full md:w-[300px] h-auto";
 
   return (
@@ -1016,6 +997,15 @@ export const CreateProduct = () => {
           <span className="font-medium">
             Đã đạt giới hạn {MAX_PRODUCTS} sản phẩm theo gói hiện tại. Vui lòng
             nâng cấp gói hoặc xóa bớt sản phẩm để tạo mới.
+          </span>
+        </div>
+      )}
+      {isNoAddress && (
+        <div className="flex gap-2 justify-center items-center border border-orange-400 bg-orange-50 text-xs md:text-sm rounded-3xl px-3 py-2">
+          <AiOutlineExclamationCircle size={16} className="text-orange-500" />
+          <span className="font-medium">
+            Không có địa chỉ giao hàng. Vui lòng thêm địa chỉ để tạo mới sản
+            phẩm
           </span>
         </div>
       )}
@@ -1088,7 +1078,7 @@ export const CreateProduct = () => {
             </div>
 
             {/* Mô tả nhanh */}
-            <div className="flex flex-col gap-1 md:col-span-2">
+            <div className="flex flex-col gap-1 col-span-2">
               <label className={labelInput}>Mô tả nhanh</label>
               <textarea
                 className={`${InputCss}`}
@@ -1103,7 +1093,7 @@ export const CreateProduct = () => {
             <div className="flex flex-col gap-1">
               <label className={labelInput}>Thương hiệu</label>
               <select
-                className={`${InputCss}`}
+                className={`${InputCss} h-10`}
                 {...registerProduct("brandId")}
                 disabled={isProductSubmitDisabled}
                 onChange={(e) => {
@@ -1139,7 +1129,7 @@ export const CreateProduct = () => {
               <select
                 className={`${InputCss} ${
                   productErrors.categoryId ? "border-red-500" : ""
-                }`}
+                } h-10`}
                 {...registerProduct("categoryId", {
                   required: "Bạn phải chọn danh mục sản phẩm",
                 })}
@@ -1162,14 +1152,12 @@ export const CreateProduct = () => {
             {/* Danh mục shop */}
             <div className="flex flex-col gap-1">
               <label className={labelInput}>Danh mục shop</label>
-
               <select
-                className={`${InputCss}`}
+                className={`${InputCss} h-10`}
                 {...registerProduct("categoryShopId")}
                 disabled={isProductSubmitDisabled}
                 onChange={(e) => {
                   const value = e.target.value;
-                  // Khi người dùng chọn dòng "Thêm danh mục mới"
                   if (value === "ADD_NEW_CATEGORY_SHOP") {
                     e.target.value = "";
                     navigate(
@@ -1473,7 +1461,7 @@ export const CreateProduct = () => {
             </div>
 
             {/* Buttons submit / hoàn tác form sản phẩm */}
-            <div className="md:col-span-2 flex justify-end gap-2 ">
+            <div className="col-span-2 flex justify-end gap-2 ">
               <button
                 type="button"
                 className="px-4 py-1 rounded-3xl bg-gray-200 hover:bg-gray-300 text-sm disabled:opacity-50"

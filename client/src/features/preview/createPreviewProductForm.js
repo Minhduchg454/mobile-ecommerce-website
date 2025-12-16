@@ -213,12 +213,7 @@ export const CreatePreviewProductForm = ({
           </div>
         </div>
       ) : (
-        // Nếu không có oldPreview và đang ở chế độ chỉnh sửa (tạo mới)
-        !isReadOnly && (
-          <div className="w-full p-3 text-gray-500 italic border rounded-xl bg-gray-50">
-            Bạn đang thực hiện đánh giá lần đầu tiên cho sản phẩm này.
-          </div>
-        )
+        <></>
       )}
 
       {/* Vùng đánh giá/Chỉnh sửa (CHỈ HIỂN THỊ KHI CÒN HẠN VÀ CHƯA SỬA LẦN NÀO) */}

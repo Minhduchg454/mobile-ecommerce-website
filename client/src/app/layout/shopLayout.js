@@ -53,7 +53,7 @@ const Sidebar = ({
               e.target.src = defaultAvatar;
             }}
             alt="avatar"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
         <p className="-mt-2 font-bold text-base border rounded-3xl p-2 shadow-md z-5">

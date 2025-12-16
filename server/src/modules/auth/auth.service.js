@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 const User = require("../user/entities/user.model");
 const Customer = require("../customer/entities/customer.model");
 const Account = require("./entities/account.model");
-const UserStatus = require("../user/entities/user-status.model");
 const ShoppingCart = require("../shopping/entities/shopping-cart.model");
 const Admin = require("./../admin/entities/admin.model");
 const UserRole = require("../user/entities/user-role.model");
@@ -24,7 +23,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = process.env.JWT_EXPIRES || "7d";
 const slugify = require("slugify");
 
-//Dang ky tai khoan khach hang
 //Dang ky tai khoan khach hang
 exports.registerCustomer = async (body) => {
   const {
@@ -62,7 +60,7 @@ exports.registerCustomer = async (body) => {
 
   try {
     // 1) Check account trùng
-    const exists = await Account.findOne({ accountName });
+    const exists = await Account.findOne({ accountName, isDeleted: false });
     if (exists) {
       const err = new Error("Tài khoản đã tồn tại");
       err.status = 409;
@@ -184,7 +182,7 @@ exports.registerAdmin = async (body) => {
 
   try {
     // 2) Check account trùng
-    const exists = await Account.findOne({ accountName });
+    const exists = await Account.findOne({ accountName, isDeleted: false });
     if (exists) {
       const err = new Error("Tài khoản đã tồn tại");
       err.status = 409;
@@ -194,13 +192,20 @@ exports.registerAdmin = async (body) => {
     // 3) KIỂM TRA TÍNH DUY NHẤT CỦA ADMIN
     const adminRole = await userService.getRole({ roleName: "admin" });
     if (adminRole.role) {
-      const existingAdmin = await UserRole.findOne({
+      const adminUserRoles = await UserRole.find({
         roleId: adminRole.role._id,
       });
 
-      if (existingAdmin) {
+      const adminUserIds = adminUserRoles.map((ur) => ur.userId);
+
+      const activeAdmin = await User.findOne({
+        _id: { $in: adminUserIds },
+        isDeleted: false,
+      });
+
+      if (activeAdmin) {
         const err = new Error(
-          "Chỉ được phép có MỘT tài khoản admin duy nhất trong hệ thống."
+          "Chỉ được phép có MỘT tài khoản admin duy nhất đang hoạt động."
         );
         err.status = 403;
         throw err;
@@ -445,7 +450,6 @@ exports.changePassword = async (body) => {
 
 exports.login = async (body) => {
   const { accountName, password } = body;
-  //console.log("Nhan thong tin", accountName, password);
 
   // 1) Validate input
   if (!accountName || !password) {
@@ -457,7 +461,7 @@ exports.login = async (body) => {
   }
 
   // 2) Tìm account
-  const account = await Account.findOne({ accountName });
+  const account = await Account.findOne({ accountName, isDeleted: false });
   if (!account) {
     const err = new Error("Không tìm thấy tài khoản");
     err.status = 404;
@@ -515,7 +519,7 @@ exports.googleLogin = async (body) => {
     userRole: null,
     user: null,
     cart: null,
-    balance: null, // <-- THÊM BALANCE VÀO ĐÂY
+    balance: null,
   };
 
   try {
@@ -537,14 +541,12 @@ exports.googleLogin = async (body) => {
     }
 
     // 2) Tìm user theo email
-    let user = await User.findOne({ userEmail: email }).populate(
-      "userStatusId",
-      "userStatusName"
-    );
+    let user = await User.findOne({
+      userEmail: email,
+      isDeleted: false,
+    }).populate("userStatusId", "userStatusName");
 
     if (!user) {
-      // 3) TH: TẠO MỚI (Flow tương tự registerCustomer)
-
       // Lấy tên
       const parts = name.split(" ").filter(Boolean);
       const firstName = parts[0] || "";
@@ -569,7 +571,7 @@ exports.googleLogin = async (body) => {
         userStatusId: activeStatusId,
       });
       createdDocs.user = userRes.user;
-      user = userRes.user; // Gán user mới để sử dụng ở bước 4
+      user = userRes.user;
 
       // 3.4) Lấy / tạo role 'customer'
       const customerRole = await userService.getRole({ roleName: "customer" });
@@ -588,11 +590,7 @@ exports.googleLogin = async (body) => {
       });
       createdDocs.customer = customer;
 
-      // 3.7) TẠO BALANCE loại 'customer' <-- BƯỚC MỚI
-      const balanceRes = await userService.createBalance(
-        user._id,
-        "customer" // Mặc định là customer
-      );
+      const balanceRes = await userService.createBalance(user._id, "customer");
       createdDocs.balance = balanceRes.balance;
 
       // 3.8) Tạo Account Google (không cần password)
@@ -604,8 +602,6 @@ exports.googleLogin = async (body) => {
       });
       createdDocs.account = acc;
     } else {
-      // TH: ĐÃ TỒN TẠI
-      // (Tuỳ chọn) đảm bảo có Account 'google' cho user này (nếu user đăng ký bằng pass trước đó)
       const existedAcc = await Account.findOne({
         userId: user._id,
         accountType: "google",
@@ -632,7 +628,6 @@ exports.googleLogin = async (body) => {
     });
 
     // 6) Chuẩn hoá user trả về
-    // Tận dụng userService.getCurrent để lấy user object đầy đủ
     const current = await userService.getCurrent({ id: user._id });
     const userObj = current.user.toObject
       ? current.user.toObject()
@@ -694,5 +689,18 @@ exports.getAccountName = async (userId) => {
     success: true,
     mesage: "Lấy tên tài khoản thành công",
     accountName: account.accountName,
+  };
+};
+
+exports.deleteAccount = async (userId) => {
+  if (!userId) {
+    const err = new Error("Không có id tài khoản");
+    err.status = 404;
+    throw err;
+  }
+  await Account.updateMany({ userId }, { isDeleted: true });
+  return {
+    success: true,
+    message: "Xóa tài khoản người dùng thành công",
   };
 };

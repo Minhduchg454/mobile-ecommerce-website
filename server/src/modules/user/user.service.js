@@ -5,11 +5,15 @@ const Role = require("./entities/role.model");
 const UserRole = require("./entities/user-role.model");
 const AccountService = require("../auth/auth.service");
 const Address = require("./entities/address.model");
+const Account = require("../auth/entities/account.model");
 const Bank = require("./entities/bank.model");
 const PaymentAccount = require("./entities/payment-account.model");
 const Balance = require("./entities/balance.model");
 const Transaction = require("./entities/transaction.model");
+const OrderService = require("../order/order.service");
+const ShopService = require("../shop/shop.service");
 const mongoose = require("mongoose");
+const { formatCurrency } = require("../../ultils/databaseHelpers");
 
 exports.createUser = async (body, file) => {
   // 1) Gắn file (nếu có) vào body
@@ -325,27 +329,108 @@ exports.getUsers = async (query = {}) => {
 };
 
 // Xóa mềm user
-exports.deleteUser = async (uId) => {
+exports.deleteUser = async (uId, body) => {
+  const { isAdmin } = body || {};
   if (!uId) {
     const err = new Error("Thiếu uId");
     err.status = 400;
     throw err;
   }
+  // Nếu KHÔNG PHẢI Admin xóa -> Thực hiện các bước kiểm tra
+  if (!isAdmin) {
+    // --- 1. KIỂM TRA CỬA HÀNG (SHOP) ---
+    try {
+      const isShopOpen = await ShopService.getShopByUser(uId);
+      if (isShopOpen?.shop && !isShopOpen.shop.isDeleted) {
+        const err = new Error(
+          "Tài khoản này đang vận hành một Cửa hàng. Vui lòng đóng cửa hàng trước khi xóa tài khoản."
+        );
+        err.status = 400;
+        throw err;
+      }
+    } catch (error) {
+      if (error.status === 400) throw error;
+      if (error.status !== 404) {
+        console.error("Lỗi check shop:", error);
+      }
+    }
 
+    // --- 2. KIỂM TRA ĐƠN HÀNG (ORDER) ---
+    const orderStats = await OrderService.getOrderCountsByStatus({
+      customerId: uId,
+    });
+
+    if (orderStats.success && orderStats.counts) {
+      const pendingCount = orderStats.counts["Pending"] || 0;
+      const confirmedCount = orderStats.counts["Confirmed"] || 0;
+      const shippingCount = orderStats.counts["Shipping"] || 0;
+      const totalActiveOrders = pendingCount + confirmedCount + shippingCount;
+
+      if (totalActiveOrders > 0) {
+        const err = new Error(
+          `Không thể xóa tài khoản vì còn ${totalActiveOrders} đơn hàng đang xử lý.`
+        );
+        err.status = 400;
+        throw err;
+      }
+    }
+
+    // --- 3. KIỂM TRA SỐ DƯ (BALANCE) ---
+    try {
+      const balanceResult = await exports.getBalanceByUserIdAndFor(
+        uId,
+        "customer"
+      );
+
+      if (balanceResult?.success && balanceResult?.balance) {
+        const currentBalance = balanceResult.balance.balanceCurrent || 0;
+
+        if (currentBalance > 0) {
+          const formattedMoney = formatCurrency(currentBalance);
+
+          const err = new Error(
+            `Ví người dùng vẫn còn dư ${formattedMoney}. Vui lòng rút hết tiền hoặc mua sắm hết trước khi xóa tài khoản.`
+          );
+          err.status = 400;
+          throw err;
+        }
+      }
+    } catch (error) {
+      if (error.status === 400) throw error;
+      console.error("[Delete User] Lỗi kiểm tra số dư:", error);
+      const err = new Error("Lỗi hệ thống khi kiểm tra số dư ví.");
+      err.status = 500;
+      throw err;
+    }
+  }
+
+  //Xoa so du
+  try {
+    const balanceFor = "customer";
+    await exports.deleteBalance(uId, balanceFor);
+  } catch (error) {
+    console.error(
+      `[Delete Balance] Lỗi khi xóa ví 'customer' cho user ${uId}:`,
+      error.message
+    );
+  }
+  //Xoa tai khoan
+  await Account.updateMany({ userId: uId }, { isDeleted: true });
+
+  // --- THỰC HIỆN XÓA (SOFT DELETE) ---
   const user = await User.findById(uId);
   if (!user || user.isDeleted) {
     const err = new Error("Không tìm thấy user hoặc user đã bị xóa");
     err.status = 404;
     throw err;
   }
-
   user.isDeleted = true;
   user.deletedAt = new Date();
   await user.save();
 
   return {
     success: true,
-    message: "Xóa tài khoản (soft delete) thành công",
+    message: "Xóa tài khoản người dùng thành công",
   };
 };
 
@@ -843,7 +928,6 @@ exports.createPaymentAccount = async (body, userId) => {
   }
 
   // 2. Kiểm tra trùng lặp (Thêm paFor vào điều kiện tìm kiếm)
-
   const existing = await PaymentAccount.findOne({
     userId: userId,
     paFor: accountScope,
@@ -1197,6 +1281,59 @@ exports.updateBalance = async (userId, balanceFor, amount, transInfo = {}) => {
     session.endSession();
     throw error;
   }
+};
+
+exports.deleteBalance = async (userId, balanceFor) => {
+  // 1. Validate đầu vào
+  if (!mongoose.isValidObjectId(userId)) {
+    const err = new Error("ID người dùng không hợp lệ");
+    err.status = 400;
+    throw err;
+  }
+
+  if (!balanceFor) {
+    const err = new Error("Thiếu thông tin loại ví (balanceFor)");
+    err.status = 400;
+    throw err;
+  }
+
+  const balanceForLower = balanceFor.toLowerCase();
+
+  // 2. Tìm ví hiện tại
+  const balance = await Balance.findOne({
+    userId,
+    balanceFor: balanceForLower,
+    isDeleted: false,
+  });
+
+  if (!balance) {
+    const err = new Error(
+      `Không tìm thấy ví [${balanceForLower}] hoặc ví đã bị xóa.`
+    );
+    err.status = 404;
+    throw err;
+  }
+
+  // 3. Kiểm tra số dư (An toàn dữ liệu)
+  // Nếu còn tiền thì không cho xóa
+  if (balance.balanceCurrent > 0) {
+    const formattedMoney = formatCurrency(balance.balanceCurrent);
+    const err = new Error(
+      `Ví [${balanceForLower}] vẫn còn dư ${formattedMoney}. Vui lòng rút hết tiền hoặc sử dụng hết trước khi xóa.`
+    );
+    err.status = 400;
+    throw err;
+  }
+
+  // 4. Thực hiện xóa mềm
+  balance.isDeleted = true;
+  balance.deletedAt = new Date();
+  await balance.save();
+
+  return {
+    success: true,
+    message: `Xóa ví [${balanceForLower}] thành công.`,
+  };
 };
 
 //Transaction

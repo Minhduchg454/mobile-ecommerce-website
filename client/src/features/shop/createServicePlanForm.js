@@ -229,7 +229,7 @@ export const CreateServicePlanForm = ({
               </div>
 
               <div className="flex-1">
-                <label className={labelCls}>Giá gói (VNĐ) *</label>
+                <label className={labelCls}>Giá gói (đ) *</label>
 
                 {/* DÙNG CONTROLLER + formatMoney */}
                 <Controller

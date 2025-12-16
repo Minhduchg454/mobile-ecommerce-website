@@ -29,13 +29,12 @@ const orderSchema = new mongoose.Schema(
     },
     orderDate: {
       type: Date,
-      default: Date.now, // Tự động điền ngày hiện tại khi tạo
+      default: Date.now,
     },
     orderDeliveryDate: {
       type: Date,
-      default: null, // Mặc định không có giá trị
+      default: null,
     },
-    //khoa ngoai
     orderStatusId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderStatus",
@@ -63,7 +62,7 @@ const orderSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Tự động thêm createdAt và updatedAt
+    timestamps: true,
   }
 );
 

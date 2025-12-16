@@ -177,7 +177,7 @@ export const DetailProductPage = () => {
   // THÊM STATE CHO PHÂN TRANG VÀ DATA ĐÁNH GIÁ ĐÃ PHÂN TRANG
   const [allReviews, setAllReviews] = useState([]);
   const [reviewPage, setReviewPage] = useState(1);
-  const reviewLimit = 1; // Có thể tùy chỉnh số lượng đánh giá trên mỗi trang
+  const reviewLimit = 2;
   const [reviewTotalCount, setReviewTotalCount] = useState(0);
   const [reviewSort, setReviewSort] = useState({});
 
@@ -261,7 +261,7 @@ export const DetailProductPage = () => {
     if (product?._id && variations.length > 0) {
       fetchAllReviews();
     }
-  }, [product, variations, reviewPage, reviewSort]); // THÊM reviewSort
+  }, [product, variations, reviewPage, reviewSort]);
 
   const fetchShop = async (shopId) => {
     try {
@@ -340,8 +340,20 @@ export const DetailProductPage = () => {
   };
 
   const handleAddToCart = () => {
-    if (!currentProduct || !selectedVariantId) return;
+    if (!isInStock) {
+      dispatch(
+        showAlert({
+          title: "Thất bại",
+          message:
+            "Phân loại tạm hết hàng, vui lòng chọn phân loại hoặc sản phẩm khác",
+          variant: "danger",
+          duration: 2500,
+        })
+      );
+    }
 
+    if (disableAction) return;
+    if (!currentProduct || !selectedVariantId) return;
     const payload = {
       pvId: selectedVariantId,
       cartItemQuantity: quantity,
@@ -484,7 +496,7 @@ export const DetailProductPage = () => {
             message: res?.message || "Vui lòng thử lại",
             variant: "danger",
             showCancelButton: false,
-            duration: 2500,
+            duration: 3000,
           })
         );
         return;
@@ -655,7 +667,6 @@ export const DetailProductPage = () => {
             <div className="flex justify-center items-center gap-3">
               {/* Giỏ hàng */}
               <button
-                disabled={maxQuantity || isAdmin}
                 className={`flex flex-1 justify-center items-center border border-gray-500 rounded-3xl px-2 py-1 gap-2 transition
         ${
           isAdmin

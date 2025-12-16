@@ -17,13 +17,13 @@ exports.getShopByUser = async (req, res, next) => {
     const { userId } = req.params;
     const [shopRes, subsRes] = await Promise.all([
       shopService.getShopByUser(userId),
-      shopService.getActiveSubscription(userId),
+      //shopService.getActiveSubscription(userId),
     ]);
     res.status(200).json({
       success: true,
       message: "Lấy thông tin cửa hàng thành công",
       shop: shopRes.shop,
-      activeSubscription: subsRes.subscription,
+      //activeSubscription: subsRes.subscription,
     });
   } catch (err) {
     next(err);
@@ -66,9 +66,9 @@ exports.updateShop = async (req, res, next) => {
 
 exports.deleteShop = async (req, res, next) => {
   try {
-    const { userId } = req.params;
     const io = req.app;
-    const result = await shopService.deleteShop(userId, io);
+    const { userId } = req.params;
+    const result = await shopService.deleteShop(userId, req.body, io);
     res.status(200).json(result);
   } catch (err) {
     next(err);

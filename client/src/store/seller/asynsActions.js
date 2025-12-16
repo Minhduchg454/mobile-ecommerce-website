@@ -1,10 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { apiGetShops } from "../../services/shop.api";
+import { apiGetAddresses } from "../../services/user.api";
 
 export const fetchSellerCurrent = createAsyncThunk(
   "seller/fetchCurrent",
   async (userId, { rejectWithValue, extra }) => {
-    // Thêm tham số extra
     try {
       const includeSubscription = extra?.includeSubscription ?? true;
       const response = await apiGetShops({
@@ -12,17 +12,30 @@ export const fetchSellerCurrent = createAsyncThunk(
         includeSubscription: includeSubscription,
       });
 
+      const resAddress = await apiGetAddresses({
+        userId,
+        sort: "default_first",
+        addressFor: "shop",
+      });
       if (response?.success) {
-        // KIỂM TRA MẢNG RỖNG:
         if (Array.isArray(response.shops) && response.shops.length > 0) {
-          // Thành công và tìm thấy shop: Trả về shop đầu tiên
-          return response.shops[0];
+          const shopData = response.shops[0];
+          let addressData = null;
+          if (
+            resAddress?.success &&
+            Array.isArray(resAddress.addresses) &&
+            resAddress.addresses.length > 0
+          ) {
+            addressData = resAddress.addresses[0];
+          }
+          return {
+            ...shopData,
+            address: addressData,
+          };
         } else {
-          // Thành công nhưng MẢNG RỖNG: Trả về NULL để xóa Shop cũ khỏi Redux
           return null;
         }
       } else {
-        // API thất bại (success: false): Trả về lỗi
         return rejectWithValue(response.message || "Lỗi tải dữ liệu shop");
       }
     } catch (error) {

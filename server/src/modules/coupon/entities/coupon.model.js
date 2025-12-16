@@ -1,9 +1,7 @@
-// models/Coupon.js
 const mongoose = require("mongoose");
 
 const couponSchema = new mongoose.Schema(
   {
-    // Bạn có thể thêm các trường bổ sung thường có cho coupon như:
     couponCode: {
       type: String,
       trim: true,
@@ -12,34 +10,29 @@ const couponSchema = new mongoose.Schema(
     },
     couponDescription: {
       type: String,
-      trim: true, // Loại bỏ khoảng trắng ở đầu/cuối
+      trim: true,
     },
     couponDiscountType: {
       type: String,
-      enum: ["percentage", "fixed_amount"], // Ví dụ: 'percentage' (%), 'fixed_amount' (giá trị cố định)
+      enum: ["percentage", "fixed_amount"],
       required: true,
     },
-
-    //Gia tri giam dua tren couponDiscountType
     couponDiscount: {
       type: Number,
       required: true,
-      min: 0, // Giảm giá không thể âm
+      min: 0,
     },
 
     couponStartDate: {
-      // Theo biểu đồ: startDate: Date
       type: Date,
-      default: Date.now, // Mặc định là ngày hiện tại khi tạo
+      default: Date.now,
     },
     couponExpirationDate: {
-      // Theo biểu đồ: expirationDate: Date
       type: Date,
-      required: true, // Ngày hết hạn là bắt buộc
+      required: true,
     },
 
     couponIsActive: {
-      // Trạng thái hoạt động của coupon
       type: Boolean,
       default: true,
     },
@@ -52,7 +45,6 @@ const couponSchema = new mongoose.Schema(
       default: 0,
     },
     couponMinOrderAmount: {
-      // Số tiền đơn hàng tối thiểu để áp dụng coupon
       type: Number,
       default: 0,
     },

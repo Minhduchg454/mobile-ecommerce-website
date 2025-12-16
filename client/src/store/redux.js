@@ -40,6 +40,7 @@ const chatConfig = {
     "loadingConversations",
     "loadingMessages",
     "currentConverId",
+    "onlineUsers",
   ],
   key: "shop/chat",
 };

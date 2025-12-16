@@ -243,7 +243,7 @@ export const PaymentAccountForm = ({
             {...register("paAccountNumber", {
               required: !isEditMode && "Vui lòng nhập số tài khoản",
             })}
-            disabled={isEditMode} // KHÓA KHI EDIT
+            disabled={isEditMode}
             className={`border rounded-xl w-full p-2.5 mt-1 outline-none transition-all ${
               isEditMode
                 ? disabledStyle

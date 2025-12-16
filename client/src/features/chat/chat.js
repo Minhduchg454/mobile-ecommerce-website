@@ -1,5 +1,5 @@
 // src/components/Chat/Chat.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ArrowUpIcon } from "@heroicons/react/24/solid";
 import {
@@ -33,44 +33,55 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { current: user } = useSelector((s) => s.user);
-  const { conversations, messagesByConverId, loadingConversations } =
-    useSelector((s) => s.chat);
+  const {
+    conversations,
+    messagesByConverId,
+    loadingConversations,
+    onlineUsers,
+  } = useSelector((s) => s.chat);
 
   const CHATBOT_ID = "CHATBOT_ID";
-  const [selectedId, setSelectedId] = useState(() =>
-    conversationIdFromProps ? null : CHATBOT_ID
-  );
+
+  // FIX 1: Khởi tạo selectedId đúng ngay từ đầu, không để null
+  const [selectedId, setSelectedId] = useState(() => {
+    if (conversationIdFromProps) return conversationIdFromProps;
+    return CHATBOT_ID;
+  });
+
   const [input, setInput] = useState("");
-  const chatContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   // Load danh sách hội thoại
   useEffect(() => {
     if (user?._id) dispatch(fetchMyConversations());
   }, [dispatch, user]);
 
-  // Tự động chọn hội thoại nếu được truyền từ props
+  // FIX 2: Ưu tiên chọn conversation từ props (chỉ chạy 1 lần)
   useEffect(() => {
-    if (conversationIdFromProps && conversations.length > 0) {
-      const target = conversations.find(
-        (c) => c.conversation._id === conversationIdFromProps
-      );
-      if (target && selectedId !== conversationIdFromProps) {
-        handleSelect(conversationIdFromProps);
-      }
+    if (conversationIdFromProps && selectedId !== conversationIdFromProps) {
+      setSelectedId(conversationIdFromProps);
     }
-  }, [conversations, conversationIdFromProps]);
+  }, [conversationIdFromProps]);
 
   // Scroll xuống cuối khi có tin nhắn mới
   useEffect(() => {
-    if (selectedId !== CHATBOT_ID && chatContainerRef.current) {
-      const el = chatContainerRef.current;
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    if (selectedId && selectedId !== CHATBOT_ID) {
+      const timer = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [messagesByConverId, selectedId]);
+  }, [messagesByConverId[selectedId], selectedId]);
 
-  // Xử lý chọn hội thoại
+  // Xử lý chọn hội thoại - FIX: tránh gọi lại nếu đã chọn
   const handleSelect = async (converId) => {
+    if (selectedId === converId) return; // Quan trọng: ngăn double select
+
     setSelectedId(converId);
+
     if (converId === CHATBOT_ID) {
       dispatch(setCurrentConversation(null));
       return;
@@ -81,6 +92,7 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
     dispatch(markConversationRead(converId));
   };
 
+  // Socket handlers
   useEffect(() => {
     if (!selectedId || selectedId === CHATBOT_ID) return;
 
@@ -96,7 +108,6 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
       }
     };
 
-    // XỬ LÝ CẬP NHẬT DANH SÁCH TỪ SOCKET (thay thế fetchMyConversations)
     const handleConversationUpdated = (data) => {
       dispatch(updateConversationFromSocket(data));
     };
@@ -123,7 +134,9 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
   }, [selectedId, user, dispatch]);
 
   const handleSend = async () => {
-    if (!input.trim() || !selectedId || !user?._id) return;
+    if (!input.trim() || !selectedId || !user?._id || selectedId === CHATBOT_ID)
+      return;
+
     const content = input.trim();
     setInput("");
 
@@ -137,7 +150,6 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
 
       if (res?.success && res.populatedMessage) {
         dispatch(receiveMessage(res.populatedMessage));
-        // Khi mình gửi → cũng đánh dấu đã đọc (vì mình đang xem)
         dispatch(markConversationRead(selectedId));
       }
     } catch (err) {
@@ -146,13 +158,22 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
     }
   };
 
-  // Xử lý ẩn hội thoại
+  // FIX: Xóa chat không reload toàn bộ danh sách → mượt hơn
   const handleHideConversation = (converId) => {
     const id = nextAlertId();
     registerHandlers(id, {
       onConfirm: async () => {
         const res = await apiHideConversation(converId, { userId: user?._id });
-        if (!res.success) {
+        if (res.success) {
+          // Chỉ xóa local, không fetch lại → không nhảy
+          dispatch(fetchMyConversations());
+
+          // Nếu đang xem chính nó → chuyển về chatbot
+          if (selectedId === converId) {
+            setSelectedId(CHATBOT_ID);
+            dispatch(setCurrentConversation(null));
+          }
+        } else {
           dispatch(
             showAlert({
               title: "Lỗi",
@@ -161,9 +182,9 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
             })
           );
         }
-        dispatch(fetchMyConversations());
       },
     });
+
     dispatch(
       showAlert({
         id,
@@ -176,6 +197,20 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
       })
     );
   };
+
+  const sortedConversations = useMemo(() => {
+    return [...conversations].sort((a, b) => {
+      const timeA =
+        a.conversation.conver_lastMessageId?.createdAt ||
+        a.conversation.createdAt ||
+        0;
+      const timeB =
+        b.conversation.conver_lastMessageId?.createdAt ||
+        b.conversation.createdAt ||
+        0;
+      return new Date(timeB) - new Date(timeA);
+    });
+  }, [conversations]);
 
   const currentMessages = messagesByConverId[selectedId] || [];
   const currentConver = conversations.find(
@@ -220,12 +255,12 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
           {/* Danh sách người dùng */}
           {loadingConversations ? (
             <div className="p-4 text-center text-gray-500">Đang tải...</div>
-          ) : conversations.length === 0 ? (
+          ) : sortedConversations.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               Chưa có cuộc trò chuyện nào
             </div>
           ) : (
-            conversations.map((item) => {
+            sortedConversations.map((item) => {
               const other = item.otherUser;
               const lastMsg = item.conversation.conver_lastMessageId;
               const isActive = selectedId === item.conversation._id;
@@ -245,10 +280,17 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
                       alt={other?.userName}
                       className="h-full w-full rounded-full object-contain"
                     />
+                    {onlineUsers[other?._id] && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white ring-2 ring-green-300"></div>
+                    )}
+
                     {isUnread && (
                       <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                         {item.unreadCount}
                       </span>
+                    )}
+                    {onlineUsers[other?._id] && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white ring-2 ring-green-300"></div>
                     )}
                   </div>
 
@@ -305,59 +347,58 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
         ) : selectedId === CHATBOT_ID ? (
           <ChatBotPanel />
         ) : (
-          <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="sticky top-0 z-10 p-2 flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full border border-black bg-white shadow-md">
-                  <img
-                    src={currentConver?.otherUser?.userAvatar || noPhoto}
-                    alt=""
-                    className="w-full h-full rounded-full object-contain"
-                  />
+          <div className="h-full flex flex-col rounded-3xl relative">
+            <div className="flex-1 overflow-y-auto scroll-hidden rounded-3xl">
+              <div className="sticky top-0 z-10 p-2 rounded-t-3xl flex items-center justify-center">
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 rounded-full border-[1px] border-black bg-white shadow-md p-0.5">
+                    <img
+                      src={currentConver?.otherUser?.userAvatar || noPhoto}
+                      alt="User Avatar"
+                      className="w-full h-full object-contain rounded-full"
+                    />
+                  </div>
+                  <div className="-mt-1 flex flex-col items-center justify-center bg-white shadow-md text-black px-2 py-0.5 rounded-2xl -z-10">
+                    <p className="font-semibold text-sm text-center">
+                      {currentConver?.otherUser?.userName || "Người dùng"}
+                    </p>
+                  </div>
                 </div>
-                <div className="-mt-1 bg-white border shadow-md px-2 py-0.5 rounded-2xl text-xs md:text-sm">
-                  <p className="font-semibold">
-                    {currentConver?.otherUser?.userName || "Người dùng"}
-                  </p>
-                </div>
+              </div>
+
+              <div className="px-2 py-3 flex flex-col space-y-2">
+                {currentMessages.length === 0 ? (
+                  <div className="text-center text-gray-500 py-10">
+                    Chưa có tin nhắn. Hãy bắt đầu trò chuyện!
+                  </div>
+                ) : (
+                  currentMessages.map((msg) => {
+                    const isMineMsg = isMine(msg, user);
+                    return (
+                      <div
+                        key={msg._id}
+                        className={`flex ${
+                          isMineMsg ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <div
+                          className={`px-3 py-2 rounded-xl text-sm max-w-[85%] shadow-md ${
+                            isMineMsg
+                              ? "bg-blue-600 text-white"
+                              : "bg-white text-gray-900"
+                          }`}
+                        >
+                          {msg.message_content}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
               </div>
             </div>
 
-            {/* Tin nhắn */}
-            <div
-              ref={chatContainerRef}
-              className="flex-1 overflow-y-auto scroll-hidden py-4 space-y-4"
-            >
-              {currentMessages.length === 0 ? (
-                <p className="text-center text-gray-500">Chưa có tin nhắn</p>
-              ) : (
-                currentMessages.map((msg) => {
-                  const isMineMsg = isMine(msg, user);
-                  return (
-                    <div
-                      key={msg._id}
-                      className={`flex ${
-                        isMineMsg ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-xs rounded-2xl px-4 py-2 ${
-                          isMineMsg
-                            ? "bg-blue-500 text-white"
-                            : "bg-white text-gray-800 shadow-md"
-                        }`}
-                      >
-                        {msg.message_content}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Input */}
-            <div className="flex gap-2 pt-3">
+            <div className="sticky bottom-0 z-20 flex gap-2 w-full pt-3 items-center bg-transparent pb-1">
               <input
                 type="text"
                 value={input}
@@ -365,13 +406,13 @@ export const Chat = ({ customClose, conversationIdFromProps }) => {
                 onKeyDown={(e) =>
                   e.key === "Enter" && !e.shiftKey && handleSend()
                 }
+                className="flex-1 px-4 py-2 border bg-button-bg rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                 placeholder="Nhập tin nhắn..."
-                className="flex-1 px-4 py-2 border bg-button-bg rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className="bg-button-bg-ac hover:bg-button-bg-hv text-white p-2 rounded-full disabled:opacity-50 transition"
+                className="bg-button-bg-ac hover:bg-button-bg-hv text-white p-2 rounded-full disabled:opacity-50 transition shadow-sm"
               >
                 <ArrowUpIcon className="w-5 h-5" />
               </button>

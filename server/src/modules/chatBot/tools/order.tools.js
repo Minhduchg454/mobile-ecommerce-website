@@ -1,6 +1,5 @@
 // tools/order.tools.js
 const orderService = require("../../order/order.service");
-const shopService = require("../../shop/shop.service"); // DÙNG SERVICE, KHÔNG DÙNG MODEL
 const { ResultTypeEnum } = require("../typeEnum/resultTypeEnum");
 
 const formatMoney = (amount) =>
@@ -8,38 +7,43 @@ const formatMoney = (amount) =>
     .format(amount)
     .replace("₫", "đ");
 
+// Hàm chuyển đổi YYYY-MM-DD sang DD/MM/YYYY
+const formatDateVN = (dateString) => {
+  if (!dateString) return "";
+  try {
+    const [year, month, day] = dateString.split("-");
+    return `${day}/${month}/${year}`;
+  } catch (e) {
+    return dateString;
+  }
+};
+
 const STATUS_ORDER = ["Pending", "Confirmed", "Shipping", "Delivered"];
 
 // 1. Định nghĩa BADGE (Thay thế cho statusColorMap và orderStatusMap cũ)
 const STATUS_BADGE = {
   Pending: {
     label: "Chờ xác nhận",
-    bg: "bg-yellow-100",
     text: "text-yellow-700",
   },
   Confirmed: {
     label: "Chờ lấy hàng",
-    bg: "bg-blue-100",
     text: "text-blue-700",
   },
   Shipping: {
     label: "Vận chuyển",
-    bg: "bg-sky-100",
     text: "text-sky-700",
   },
   Delivered: {
     label: "Đã giao",
-    bg: "bg-cyan-100",
     text: "text-cyan-700",
   },
   Succeeded: {
     label: "Hoàn thành",
-    bg: "bg-emerald-100",
     text: "text-emerald-700",
   },
   Cancelled: {
     label: "Đã hủy",
-    bg: "bg-gray-200",
     text: "text-gray-700",
   },
 };
@@ -118,7 +122,7 @@ exports.check_order_status = async ({ orderId } = {}) => {
         const { badge, list } = groups[statusEn];
 
         const badgeHtml = `
-<span class="${badge.bg} ${badge.text} ">
+<span class="${badge.text} font-bold">
   ${badge.label} (${list.length})
 </span>`;
 
@@ -133,7 +137,6 @@ exports.check_order_status = async ({ orderId } = {}) => {
     };
     // -------------------------------------------
 
-    // TẠO PHẢN HỒI
     let response = "";
 
     if (activeCust.length) {
@@ -146,8 +149,10 @@ exports.check_order_status = async ({ orderId } = {}) => {
       response += groupAndSort(activeShop, "[Shop] ");
     }
 
-    response +=
-      "\n\n Gõ mã đơn (ví dụ: #69199047806fa0f502e1473d) để xem chi tiết.";
+    const sampleOrder = activeCust[0] || activeShop[0];
+    const exampleId = sampleOrder ? sampleOrder._id : "mã_đơn_hàng";
+
+    response += `\n\n **Gõ mã đơn** \n(ví dụ: #${exampleId}) để xem chi tiết.`;
 
     return {
       type: ResultTypeEnum.TEXT,
@@ -206,7 +211,9 @@ exports.get_order_detail = async ({ orderId }) => {
   }
 };
 
-exports.get_revenue_stats = async () => {
+// tools/order.tools.js
+
+exports.get_revenue_stats = async ({ from, to } = {}) => {
   const current = global.current || {};
   const isAdmin = current.roles?.includes("admin");
 
@@ -218,32 +225,40 @@ exports.get_revenue_stats = async () => {
   }
 
   try {
-    const res = await orderService.getOrderDashboardStats({});
+    // Gọi service với tham số from, to (Service của bạn đã hỗ trợ sẵn logic này)
+    const res = await orderService.getOrderDashboardStats({ from, to });
     if (!res.success) throw new Error("Lỗi lấy thống kê");
 
     const s = res.data.summary;
     const byStatus = res.data.byStatus || [];
 
+    // Tạo tiêu đề báo cáo dựa trên tham số
+    let timeLabel = "(Toàn thời gian)";
+    if (from && to) {
+      timeLabel = `(Từ ${formatDateVN(from)} đến ${formatDateVN(to)})`;
+    } else if (from) {
+      timeLabel = `(Từ ${formatDateVN(from)})`;
+    }
+
     let statusReport = "";
     if (byStatus.length > 0) {
       byStatus.forEach((status) => {
-        const statusName = orderStatusMap[status._id] || status._id;
+        const statusLabel = STATUS_BADGE[status._id]?.label || status._id;
         const revenue = formatMoney(status.revenue);
         const count = status.count;
-        statusReport += `${statusName}: ${count} đơn (${revenue})\n`;
+        statusReport += `${statusLabel}: ${count} đơn (${revenue})\n`;
       });
     } else {
-      statusReport += "\n_Không có dữ liệu chi tiết._";
+      statusReport += "\n_Không có dữ liệu trong khoảng thời gian này._";
     }
 
-    // [CẬP NHẬT] Thêm báo cáo trạng thái vào text trả về
     return {
       type: ResultTypeEnum.TEXT,
       text: `
-**Thống kê doanh thu (toàn hệ thống)**
+**Thống kê doanh thu \n${timeLabel}**
+Tổng doanh thu: ${formatMoney(s.totalRevenue)}  
+Tổng đơn hàng: ${s.totalOrders}
 
-**Tổng đơn hàng**: ${s.totalOrders}  
-**Tổng doanh thu**: ${formatMoney(s.totalRevenue)}  
 **Chi tiết theo trạng thái**:
 ${statusReport}
       `.trim(),

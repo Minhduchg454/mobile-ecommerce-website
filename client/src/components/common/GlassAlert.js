@@ -50,7 +50,7 @@ export const GlassAlert = ({
       >
         {/* Nội dung alert */}
         <div
-          onClick={(e) => e.stopPropagation()} // ngăn click lan ra overlay
+          onClick={(e) => e.stopPropagation()}
           className="bg-white/60 backdrop-blur-sm border  rounded-2xl shadow-md p-5 w-[min(85vw,380px)] "
         >
           <h3 className="text-black text-lg font-semibold mb-2 text-center">
@@ -58,7 +58,9 @@ export const GlassAlert = ({
           </h3>
 
           {message && (
-            <p className="text-base text-black mb-4 text-center">{message}</p>
+            <div className="text-base text-black mb-4 text-center whitespace-pre-line">
+              {message}
+            </div>
           )}
 
           <div className="w-full flex justify-end gap-2">
