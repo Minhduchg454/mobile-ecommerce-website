@@ -161,6 +161,8 @@ export const InformationUserPage = () => {
     return () => URL.revokeObjectURL(url);
   }, [chosenFile]);
 
+  const hasChanges = isDirty || !!chosenFile;
+
   // ===================== useForm đổi mật khẩu (RIÊNG BIỆT)
   const {
     register: registerPw,
@@ -560,36 +562,30 @@ export const InformationUserPage = () => {
               </p>
             )}
 
-            <div className="flex justify-end gap-2 pt-4">
-              <button
-                type="button"
-                className="px-4 py-1 rounded-xl bg-gray-200 hover:bg-gray-300 transition"
-                onClick={() => reset()}
-                title="Hoàn tác về giá trị ban đầu"
-              >
-                Hoàn tác
-              </button>
-              <button
-                type="submit"
-                disabled={submitDisabled || fileTooBig || fileBadType}
-                className={`px-4 py-1 rounded-xl transition ${
-                  submitDisabled || fileTooBig || fileBadType
-                    ? "bg-blue-400/50 text-white cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
-                title={
-                  submitDisabled
-                    ? "Hãy chỉnh sửa và nhập hợp lệ để lưu"
-                    : fileTooBig
-                    ? "Ảnh tối đa 2MB"
-                    : fileBadType
-                    ? "Định dạng ảnh không hỗ trợ"
-                    : "Lưu thay đổi"
-                }
-              >
-                {isSubmitting || updating ? "Đang lưu..." : "Lưu thay đổi"}
-              </button>
-            </div>
+            {hasChanges && (
+              <div className="flex justify-end gap-2 pt-4 animate-fadeIn">
+                <button
+                  type="button"
+                  className="px-4 py-1 rounded-xl bg-gray-200 hover:bg-gray-300 transition"
+                  onClick={() => reset()}
+                  title="Hoàn tác về giá trị ban đầu"
+                >
+                  Hoàn tác
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={submitDisabled || fileTooBig || fileBadType}
+                  className={`px-4 py-1 rounded-xl transition ${
+                    submitDisabled || fileTooBig || fileBadType
+                      ? "bg-blue-400/50 text-white cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }`}
+                >
+                  {isSubmitting || updating ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* khối đổi mật khẩu */}
@@ -599,7 +595,7 @@ export const InformationUserPage = () => {
               <label className={labelCls}>Mật khẩu</label>
               <button
                 type="button"
-                className="px-3 py-1 rounded-xl bg-button-bg text-black"
+                className="px-3 py-1 rounded-xl bg-button-bg hover:bg-button-hv text-black"
                 onClick={() => {
                   setIsShow(true);
                   resetPw();
@@ -617,7 +613,7 @@ export const InformationUserPage = () => {
               <label className={labelCls}>Yêu cầu xóa tài khoản</label>
               <button
                 type="button"
-                className="px-4 py-1.5 rounded-xl bg-red-500 hover:bg-red-800 text-sm text-white"
+                className="px-4 py-1.5 rounded-xl bg-button-bg  hover:bg-button-hv text-sm text-red-500"
                 onClick={() => {
                   handleDeleteAccount();
                 }}

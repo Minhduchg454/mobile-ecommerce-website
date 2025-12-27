@@ -788,7 +788,7 @@ export const ShopInformation = () => {
             <p>Yêu cầu xóa cửa hàng</p>
             <button
               onClick={() => handleDeleteShop(current)}
-              className="px-4 py-1.5 rounded-xl bg-red-500 hover:bg-red-800 text-sm text-white"
+              className="px-4 py-1.5 rounded-xl bg-button-bg  hover:bg-button-hv text-sm text-red-500"
             >
               Xóa
             </button>
